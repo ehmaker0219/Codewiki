@@ -54,6 +54,13 @@
   const sbHomeItem = document.getElementById("sbHomeItem");
   const brandTrackToggle = document.getElementById("brandTrackToggle");
 
+  function isDocumentPending(doc) {
+    return !(doc.sections || []).some(section =>
+      !["관련 문서", "참고", "참고 자료", "필기와 참고 자료"].includes(section.title) &&
+      (section.blocks || []).length > 0
+    );
+  }
+
   function getHomeDocId(track) {
     return track === "ui5" ? "welcome-ui5" : "welcome-abap";
   }
@@ -249,6 +256,14 @@
     categoryNav.innerHTML = trackCategories
       .map(cat => {
         const docsInCat = allDocs.filter(d => d.categoryId === cat.id);
+        if (cat.id === "abap-curriculum") {
+          return `<div class="curriculum-flat-list">${docsInCat.map(d => `
+            <a href="#doc/${d.id}" class="nav-doc-link ${d.id === currentDocId ? "active" : ""}" data-doc="${d.id}">
+              ${d.stepNum ? `<span class="step-num-badge">${d.stepNum}</span>` : ""}
+              <span class="nav-doc-title-text">${d.title}${isDocumentPending(d) ? ' <small class="pending-doc-badge">준비 중</small>' : ""}</span>
+              ${readSet.has(d.id) ? `<span class="read-check-mark" title="완료">✓</span>` : ""}
+            </a>`).join("")}</div>`;
+        }
         const isOpen = expandedCategories.has(cat.id);
         const hasActiveChild = docsInCat.some(d => d.id === currentDocId);
 
@@ -276,7 +291,7 @@
                     d => `
                   <a href="#doc/${d.id}" class="nav-doc-link ${d.id === currentDocId ? "active" : ""}" data-doc="${d.id}">
                     ${d.stepNum ? `<span class="step-num-badge">${d.stepNum}</span>` : ""}
-                    <span class="nav-doc-title-text">${d.title}</span>
+                    <span class="nav-doc-title-text">${d.title}${isDocumentPending(d) ? ' <small class="pending-doc-badge">준비 중</small>' : ""}</span>
                     ${readSet.has(d.id) ? `<span class="read-check-mark" title="완료">✓</span>` : ""}
                   </a>
                 `
@@ -574,13 +589,14 @@
           : ""
       }
 
+      ${isDocumentPending(doc) ? '<div class="pending-doc-notice" role="status"><strong>준비 중</strong><p>아직 본문이 작성되지 않았습니다. 아래 학습 목차에 맞춰 내용을 보강할 예정입니다.</p></div>' : ""}
       <div id="documentTocSlot"></div>
       <div class="doc-sections-wrap">
         ${
           sections.length === 0
             ? `
           <div style="padding:48px 20px; text-align:center; color:var(--text-muted); font-size:13.5px;">
-            등록된 문서 내용이 없습니다.
+            본문 준비 중입니다.
           </div>
         `
             : sections
@@ -591,6 +607,7 @@
               <span class="doc-sec-num">${sIdx + 1}.</span>
               <span>${sec.title}</span>
             </h2>
+            ${!(sec.blocks || []).length ? '<p class="pending-section-note">준비 중 · 본문을 작성하고 있습니다.</p>' : ""}
             ${(sec.blocks || [])
               .map(b => {
                 widgetCounter++;

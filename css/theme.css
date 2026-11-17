@@ -235,3 +235,9 @@ body { background-image: none; }
 @supports selector(::-webkit-scrollbar) {
   .sidebar-scroll-body { scrollbar-width: auto; scrollbar-color: auto; }
 }
+
+.pending-doc-badge { display:inline-block; font-size:10px; font-weight:400; line-height:1.5; margin-left:4px; padding:1px 4px; border:1px solid currentColor; border-radius:3px; opacity:.8; vertical-align:middle; }
+.pending-doc-notice { margin:16px 0; padding:14px 16px; background:var(--bg-subtle); border:1px solid var(--border-subtle); border-left:3px solid var(--toss-blue); font-size:13px; }
+.pending-doc-notice strong { color:var(--toss-blue); }
+.pending-doc-notice p { margin:5px 0 0; color:var(--text-sub); }
+.pending-section-note { font-size:12px; color:var(--text-muted); margin:8px 0 20px; }
