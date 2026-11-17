@@ -330,9 +330,12 @@
           .join("")}
       </div>
 
-      <!-- 위키독스 스타일 하단 학습 완료 체크 & [이전 챕터 / 다음 챕터] 네비게이션 -->
+      <!-- 위키독스 스타일 하단 건의하기 & 학습 완료 체크 & [이전 챕터 / 다음 챕터] 네비게이션 -->
       <div class="wikidocs-pager-wrap">
-        <div class="read-complete-bar">
+        <div class="read-complete-bar" style="justify-content:space-between; flex-wrap:wrap; gap:10px;">
+          <button id="suggestDocEditBtn" class="toss-chip-btn">
+            <span>✏️ 이 문서 수정·추가 건의하기</span>
+          </button>
           <button id="toggleReadBtn" class="toss-chip-btn ${isRead ? "active" : ""}">
             <span>${isRead ? "✓ 이 챕터 학습 완료됨" : "○ 이 챕터 학습 완료 체크하기"}</span>
           </button>
@@ -362,10 +365,17 @@
       </div>
     `;
 
-    // 학습 완료 토글 버튼
+    // 학습 완료 토글 버튼 & 이 문서 건의하기 버튼
     const toggleReadBtn = document.getElementById("toggleReadBtn");
     if (toggleReadBtn) {
       toggleReadBtn.addEventListener("click", () => toggleReadDoc(doc.id));
+    }
+
+    const suggestDocEditBtn = document.getElementById("suggestDocEditBtn");
+    if (suggestDocEditBtn) {
+      suggestDocEditBtn.addEventListener("click", () => {
+        if (window.CodeWikiBoard) window.CodeWikiBoard.openWriteModal(doc.id);
+      });
     }
 
     // 인터랙티브 위젯 슬롯 마운트
@@ -451,10 +461,16 @@
 
   function navigateTo(docId) {
     if (!window.WIKI_DOCS[docId]) return;
+    if (window.CodeWikiBoard) window.CodeWikiBoard.closeIfActive();
     window.location.hash = `#doc/${docId}`;
     renderDocument(docId);
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
+
+  window.CodeWikiApp = {
+    openDoc: navigateTo,
+    getCurrentDocId: () => currentDocId
+  };
 
   function bindWikiLinks() {
     document.querySelectorAll("[data-doc]").forEach(el => {

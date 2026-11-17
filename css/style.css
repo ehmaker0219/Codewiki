@@ -1616,6 +1616,212 @@ body:not(.authenticated) .app-shell {
   line-height: 1.55;
 }
 
+/* ==========================================================================
+   수정 · 업데이트 건의 게시판 (Toss Style Feedback Board)
+   ========================================================================== */
+.app-shell.board-mode-shell {
+  grid-template-columns: 260px minmax(0, 1fr);
+}
+
+.app-shell.board-mode-shell.sidebar-collapsed {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.board-header-wrap {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid var(--border-hairline);
+  margin-bottom: 20px;
+}
+
+.board-filter-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.board-filter-tabs {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.board-post-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.board-post-card {
+  background: var(--bg-subtle);
+  border-radius: var(--tds-radius-lg);
+  padding: 22px 24px;
+  transition: transform 0.15s var(--tds-spring);
+}
+
+.board-post-card.post-done {
+  opacity: 0.82;
+}
+
+.board-post-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.board-post-badges {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.status-pill {
+  font-size: 12px;
+  font-weight: 800;
+  padding: 4px 10px;
+  border-radius: var(--tds-radius-full);
+}
+
+.status-pill.open {
+  background: var(--toss-amber-soft);
+  color: var(--toss-amber);
+}
+
+.status-pill.done {
+  background: var(--toss-green-soft);
+  color: var(--toss-green);
+}
+
+.cat-type-pill {
+  font-size: 12px;
+  font-weight: 700;
+  background: var(--bg-card);
+  color: var(--text-sub);
+  padding: 4px 10px;
+  border-radius: var(--tds-radius-full);
+}
+
+.doc-ref-pill {
+  font-size: 12px;
+  font-weight: 700;
+  background: var(--toss-blue-soft);
+  color: var(--toss-blue);
+  padding: 4px 10px;
+  border-radius: var(--tds-radius-full);
+  text-decoration: none;
+}
+
+.board-post-meta {
+  font-size: 12.5px;
+  color: var(--text-muted);
+}
+
+.board-post-title {
+  font-size: 17.5px;
+  font-weight: 800;
+  color: var(--text-strong);
+  margin-bottom: 8px;
+}
+
+.board-post-content {
+  font-size: 15px;
+  color: var(--text-body);
+  line-height: 1.65;
+  white-space: pre-line;
+}
+
+.board-admin-reply {
+  margin-top: 14px;
+  background: var(--bg-card);
+  border-radius: var(--tds-radius-sm);
+  padding: 12px 15px;
+  font-size: 13.5px;
+  color: var(--text-strong);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.reply-badge {
+  font-size: 11px;
+  font-weight: 800;
+  background: var(--toss-blue);
+  color: #fff;
+  padding: 2px 8px;
+  border-radius: 6px;
+  flex-shrink: 0;
+}
+
+.board-post-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border-hairline);
+}
+
+.board-action-btn {
+  background: var(--bg-card);
+  border: none;
+  border-radius: 9px;
+  padding: 7px 12px;
+  font-size: 12.5px;
+  font-weight: 700;
+  font-family: inherit;
+  color: var(--text-sub);
+  cursor: pointer;
+  transition: all 0.14s;
+}
+
+.board-action-btn:hover {
+  background: var(--bg-chip-hover);
+  color: var(--text-strong);
+}
+
+.board-action-btn.copy-prompt-btn {
+  background: var(--toss-blue-soft);
+  color: var(--toss-blue);
+}
+
+.board-action-btn.copy-prompt-btn:hover {
+  background: var(--toss-blue);
+  color: #fff;
+}
+
+.toss-select,
+.toss-textarea {
+  width: 100%;
+  background: var(--bg-subtle);
+  border: 1.5px solid transparent;
+  border-radius: var(--tds-radius-sm);
+  padding: 12px 14px;
+  font-size: 14.5px;
+  color: var(--text-strong);
+  font-family: inherit;
+  transition: all 0.16s var(--tds-spring);
+}
+
+.toss-select:focus,
+.toss-textarea:focus {
+  outline: none;
+  background: var(--bg-card);
+  border-color: var(--toss-blue);
+  box-shadow: 0 0 0 4px var(--toss-blue-soft);
+}
+
 @media (max-width: 1140px) {
   .app-shell {
     grid-template-columns: 1fr;

@@ -96,9 +96,18 @@
   let authFormMode = "login"; // 'login' | 'signup'
   let authMessage = "";
 
+  let activeUserCache = null;
+
+  window.CodeWikiAuth = {
+    getCurrentUser: () => activeUserCache,
+    isSupabaseConfigured: () => isSupabaseConfigured,
+    getSupabaseClient: () => supabaseClient
+  };
+
   async function renderAuthState() {
     if (!isSupabaseConfigured) {
       const user = getCurrentDemoUser();
+      activeUserCache = user;
       const allUsers = getDemoUsers();
       const pendingCount = allUsers.filter(u => u.status === "pending").length;
 
@@ -117,6 +126,7 @@
         document.body.classList.add("authenticated");
         authGateOverlay.classList.add("hidden");
         renderTopbarAuthControls(user, pendingCount);
+        if (window.CodeWikiBoard) window.CodeWikiBoard.refreshBadge();
         window.scrollTo({ top: 0 });
       }
       return;
@@ -127,6 +137,7 @@
     const sessionUser = sessionData?.session?.user;
 
     if (!sessionUser) {
+      activeUserCache = null;
       document.body.classList.remove("authenticated");
       authGateOverlay.classList.remove("hidden");
       renderPreLoginLanding();
@@ -138,6 +149,8 @@
       .select("*")
       .eq("id", sessionUser.id)
       .single();
+
+    activeUserCache = profile;
 
     if (!profile || (profile.status !== "approved" && profile.role !== "admin")) {
       document.body.classList.remove("authenticated");
@@ -160,6 +173,7 @@
     document.body.classList.add("authenticated");
     authGateOverlay.classList.add("hidden");
     renderTopbarAuthControls(profile, pendingCount);
+    if (window.CodeWikiBoard) window.CodeWikiBoard.refreshBadge();
   }
 
   // 로그인 후 상단바 우측 컨트롤 (관리자 승인 관리 버튼 + 로그아웃 버튼)
@@ -254,9 +268,11 @@
             !isSupabaseConfigured
               ? `
             <div class="prelogin-quick-links">
-              <button type="button" class="quick-link-btn" data-demo-login="admin-1">관리자로 바로 입장 →</button>
+              <button type="button" class="quick-link-btn" data-demo-login="admin-1">관리자 입장</button>
               <span class="quick-divider">·</span>
-              <button type="button" class="quick-link-btn" data-demo-login="stu-1">승인대기 화면 보기</button>
+              <button type="button" class="quick-link-btn" data-demo-login="stu-3">승인된 학생 입장</button>
+              <span class="quick-divider">·</span>
+              <button type="button" class="quick-link-btn" data-demo-login="stu-1">승인대기 화면</button>
             </div>
           `
               : ""

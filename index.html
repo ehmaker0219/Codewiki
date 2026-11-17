@@ -58,8 +58,12 @@
         </div>
       </div>
 
-      <!-- 우측 학습 컨트롤 칩 & 관리자 승인 탭 -->
+      <!-- 우측 학습 컨트롤 칩 & 건의 게시판 & 관리자 승인 탭 -->
       <div class="topbar-right">
+        <button id="openBoardBtn" class="toss-chip-btn" title="수정이나 추가가 필요한 내용을 남기는 게시판">
+          <span>💬 건의 게시판</span>
+          <span id="boardOpenCountBadge" class="pending-badge hidden">0</span>
+        </button>
         <div id="adminBtnWrap" style="display:flex; align-items:center; gap:8px;"></div>
         <button id="quizModeBtn" class="toss-chip-btn" title="핵심 키워드를 가려서 스스로 테스트하는 복습 모드">
           <span class="chip-dot"></span>
@@ -151,10 +155,14 @@
   <!-- 관리자 전용 [우리 반 학생 승인 관리] 모달 -->
   <div id="adminModal" class="admin-modal-backdrop hidden"></div>
 
+  <!-- 수정·업데이트 건의글 작성 모달 -->
+  <div id="boardWriteModal" class="admin-modal-backdrop hidden"></div>
+
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="js/data.js"></script>
   <script src="js/visualizers.js"></script>
   <script src="js/app.js"></script>
   <script src="js/auth.js"></script>
+  <script src="js/board.js"></script>
 </body>
 </html>

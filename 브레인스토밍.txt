@@ -1,0 +1,2 @@
+멘토멘티할때 수업자료로 쓰고 싶은데 아이디어 좀
+예를 들어서 Change request 안에 package가 있고 package 안에 program이 있다는 개념을 좀 시각적으로 알기쉽게 보여주고싶어
