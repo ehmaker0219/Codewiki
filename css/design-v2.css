@@ -142,3 +142,42 @@ body { font-family:Tahoma,'Pretendard',Arial,sans-serif; }
   .workspace-topbar { gap:8px; }
   .ws-topbar-left { min-width:0; }
 }
+
+/* Classic SAP dialog family. */
+.admin-modal-backdrop { background:rgba(205,218,228,.22); backdrop-filter:none; -webkit-backdrop-filter:none; padding:24px; }
+.admin-modal-card { border:1px solid #768dab; border-radius:3px; background:#e9f1f6; box-shadow:2px 3px 0 #6e849529,inset 1px 1px #fff; padding:0 12px 10px; max-height:calc(100dvh - 48px); color:#102b40; font-family:Tahoma,'Pretendard',sans-serif; }
+.admin-modal-header { position:sticky; top:0; z-index:2; min-height:29px; align-items:center; margin:0 -12px 14px; padding:3px 5px 3px 8px; background:linear-gradient(#a9bbd9,#7b90b6); border-bottom:1px solid #7187a6; box-shadow:inset 0 1px #d9e4f6; }
+.admin-modal-header .toss-badge-blue { display:none; }
+.admin-modal-title { margin:0; color:#fff; font-size:13px; line-height:1.5; font-weight:normal; letter-spacing:0; text-shadow:0 1px #617da3; }
+.admin-modal-title::before { content:'▱'; display:inline-block; margin-right:7px; color:#f3f7ff; }
+.admin-modal-header .icon-btn { width:20px; height:20px; min-width:20px; padding:0; background:linear-gradient(#b4c6e2,#8299bc); color:#fff; border:1px solid #6e86a8; border-radius:2px; font-size:12px; box-shadow:inset 1px 1px #d3e1f4; }
+.admin-modal-header .icon-btn:hover { background:#c87361; }
+.admin-modal-card .auth-form { gap:7px; }
+.admin-modal-card .auth-field { display:grid; grid-template-columns:112px minmax(0,1fr); align-items:start; gap:9px; }
+.admin-modal-card .auth-field label { font-size:12px; line-height:26px; font-weight:normal; color:#18354a; margin:0; }
+.admin-modal-card input:not([type=checkbox]):not([type=radio]), .admin-modal-card select, .admin-modal-card textarea { width:100%; min-width:0; height:26px; padding:3px 6px; border:1px solid #9eaab3; border-radius:0; box-shadow:inset 1px 1px #c1c7cd; background:#fff; color:#152f42; font:12px Tahoma,'Pretendard',sans-serif; outline-offset:1px; }
+.admin-modal-card textarea { height:auto; min-height:104px; resize:vertical; line-height:1.6; }
+.admin-modal-card input:focus, .admin-modal-card textarea:focus, .admin-modal-card select:focus { background:#fffde5; border-color:#7a93b4; outline:1px solid #d9ac42; box-shadow:inset 1px 1px #d0c79a; }
+.admin-modal-card input:disabled { background:#e1eaf1; opacity:1 !important; color:#637c8e; }
+.admin-modal-card input[type=checkbox], .admin-modal-card input[type=radio] { accent-color:#6689b0; }
+.admin-modal-card form > button[type=submit] { align-self:flex-end; width:auto; min-width:92px; height:27px; margin:12px 0 0 auto; padding:2px 12px; border:1px solid #a59055; border-radius:2px; background:linear-gradient(#fffbe6,#ffe28a); color:#1b3040; box-shadow:inset 1px 1px #fff; font:12px Tahoma,'Pretendard',sans-serif; }
+.admin-modal-card form > button[type=submit]::before { content:'✓'; color:#438438; font-weight:bold; margin-right:7px; }
+.admin-modal-card form > button[type=submit]:hover { background:linear-gradient(#fff6cc,#ffd257); }
+.admin-modal-card form > button[type=submit]:disabled { opacity:.6; cursor:wait; }
+.admin-modal-card .auth-form { padding-bottom:3px; }
+.admin-modal-card .admin-group-title { font-size:12px; font-weight:normal; background:linear-gradient(#d9e7f1,#bbd0e2); border:1px solid #98b3c7; padding:4px 7px; margin-bottom:0; }
+.admin-modal-card .admin-user-list { gap:0; border:1px solid #a6bdcf; }
+.admin-modal-card .admin-user-row { border-radius:0; padding:8px; background:#e0ecf5; border-bottom:1px solid #bacddb; }
+.admin-modal-card .admin-empty-box { border-radius:0; border:1px solid #b2c5d4; background:#dfebf4; font-size:12px; }
+.admin-modal-card > p { margin:0 0 12px; font-size:12px; }
+.admin-modal-card #replyError:empty { display:none; }
+.admin-modal-card #replyError { padding:7px; border:1px solid #d9aaa2; background:#fff4e7; font-size:12px; }
+.search-dropdown,.hover-preview-card { border:1px solid #90a9bd; border-radius:1px; background:#edf4f9; box-shadow:2px 3px 0 #6e849529; }
+.search-result-item { border-radius:0; }
+.search-result-item:hover { background:#ffe59a; }
+@media(max-width:600px) {
+ .admin-modal-backdrop { padding:12px; }
+ .admin-modal-card { max-height:calc(100dvh - 24px); }
+ .admin-modal-card .auth-field { grid-template-columns:1fr; gap:2px; }
+ .admin-modal-card .auth-field label { line-height:20px; }
+}
