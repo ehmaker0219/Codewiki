@@ -102,7 +102,7 @@
                 }; color:${isLocal ? "var(--text-muted)" : "#fff"};">
                   ${isLocal ? "이관 상자 없음" : "바깥 상자 · Change Request"}
                 </span>
-                <strong style="font-size:16px; color:${isLocal ? "var(--text-muted)" : "var(--text-strong)"};">
+                <strong style="font-size:14px; color:${isLocal ? "var(--text-muted)" : "var(--text-strong)"};">
                   ${
                     isLocal
                       ? "🔒 Change Request 생성 안 됨 (이관 불가)"
@@ -112,7 +112,7 @@
               </div>
               <span class="tcode-pill-badge">${isLocal ? "팝업 안 뜸" : "T-Code · SE09"}</span>
             </div>
-            <div style="font-size:13px; color:var(--text-sub); margin-top:5px;">
+            <div style="font-size:12.5px; color:var(--text-sub); margin-top:4px;">
               ${
                 isLocal
                   ? "패키지를 $TMP로 지정하면 다른 서버(QAS/PRD)로 보낼 일이 없으므로 Change Request 상자로 포장하지 않습니다."
@@ -138,13 +138,13 @@
                   <span style="font-size:11.5px; font-weight:800; padding:3px 10px; border-radius:999px; background:var(--toss-green-soft); color:var(--toss-green);">
                     중간 폴더 · Package
                   </span>
-                  <strong style="font-size:15.5px; color:var(--text-strong);">
+                  <strong style="font-size:13.5px; color:var(--text-strong);">
                     📁 Package : ${isLocal ? "$TMP (Local Object · 내 연습장 폴더)" : "ZEDU_01 (우리 반 실습 정식 폴더)"}
                   </strong>
                 </div>
                 <span class="tcode-pill-badge">T-Code · SE80 / SE21</span>
               </div>
-              <div style="font-size:13px; color:var(--text-sub); margin-top:4px;">
+              <div style="font-size:12.5px; color:var(--text-sub); margin-top:4px;">
                 관련된 프로그램과 테이블들을 주제별로 한곳에 모아두는 폴더입니다.
               </div>
 
@@ -228,11 +228,11 @@
           </div>
 
           <!-- 클릭한 요소 상세 멘토링 설명 카드 -->
-          <div style="margin-top:14px; background:var(--bg-card); border-radius:16px; padding:18px 20px;">
-            <span style="font-size:11.5px; font-weight:800; color:var(--toss-blue);">${detail.badge}</span>
-            <div style="font-size:16px; font-weight:800; color:var(--text-strong); margin-top:4px;">${detail.title}</div>
-            <div style="font-size:14px; font-weight:700; color:var(--toss-green); margin-top:6px;">${detail.analogy.replace(/\*\*(.+?)\*\*/g, "$1")}</div>
-            <p style="font-size:13.5px; color:var(--text-body); margin-top:6px; line-height:1.65;">${detail.desc}</p>
+          <div style="margin-top:14px; background:var(--bg-card); border-radius:16px; padding:16px 18px;">
+            <span style="font-size:11px; font-weight:800; color:var(--toss-blue);">${detail.badge}</span>
+            <div style="font-size:14.5px; font-weight:800; color:var(--text-strong); margin-top:4px;">${detail.title}</div>
+            <div style="font-size:13px; font-weight:700; color:var(--toss-green); margin-top:5px;">${detail.analogy.replace(/\*\*(.+?)\*\*/g, "$1")}</div>
+            <p style="font-size:13px; color:var(--text-body); margin-top:5px; line-height:1.65;">${detail.desc}</p>
           </div>
         `;
 

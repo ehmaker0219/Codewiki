@@ -180,7 +180,7 @@ code, pre, .mono {
 }
 
 .brand-name {
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 800;
   letter-spacing: -0.03em;
 }
@@ -270,12 +270,12 @@ code, pre, .mono {
   width: 100%;
   border: none;
   background: transparent;
-  padding: 9px 12px;
-  border-radius: 10px;
+  padding: 8px 11px;
+  border-radius: 9px;
   display: flex;
   align-items: center;
-  gap: 10px;
-  font-size: 14px;
+  gap: 9px;
+  font-size: 13px;
   font-weight: 600;
   font-family: inherit;
   color: var(--text-sub);
@@ -317,12 +317,12 @@ code, pre, .mono {
   width: 100%;
   border: none;
   background: transparent;
-  padding: 8px 10px;
-  border-radius: 10px;
+  padding: 7px 10px;
+  border-radius: 9px;
   display: flex;
   align-items: center;
-  gap: 9px;
-  font-size: 13.5px;
+  gap: 8px;
+  font-size: 12.5px;
   font-weight: 600;
   font-family: inherit;
   color: var(--text-sub);
@@ -407,11 +407,11 @@ code, pre, .mono {
 .nav-doc-link {
   display: flex;
   align-items: center;
-  gap: 7px;
-  padding: 7px 10px;
-  border-radius: 9px;
+  gap: 6px;
+  padding: 6px 9px;
+  border-radius: 8px;
   text-decoration: none;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 600;
   color: var(--text-sub);
   transition: background 0.14s, color 0.14s;
@@ -614,12 +614,12 @@ code, pre, .mono {
 
 .search-input {
   width: 100%;
-  height: 40px;
+  height: 36px;
   background: var(--bg-chip);
   border: 1.5px solid transparent;
-  border-radius: 10px;
-  padding: 0 38px 0 40px;
-  font-size: 14px;
+  border-radius: 9px;
+  padding: 0 36px 0 38px;
+  font-size: 13px;
   font-weight: 500;
   color: var(--text-strong);
   font-family: inherit;
@@ -689,9 +689,9 @@ code, pre, .mono {
 }
 
 .icon-btn {
-  width: 38px;
-  height: 38px;
-  border-radius: 10px;
+  width: 34px;
+  height: 34px;
+  border-radius: 9px;
   border: none;
   background: var(--bg-chip);
   color: var(--text-sub);
@@ -708,18 +708,18 @@ code, pre, .mono {
 }
 
 .toss-chip-btn {
-  height: 38px;
-  padding: 0 14px;
-  border-radius: 10px;
+  height: 34px;
+  padding: 0 12px;
+  border-radius: 9px;
   border: none;
   background: var(--bg-chip);
   color: var(--text-sub);
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 700;
   font-family: inherit;
   display: inline-flex;
   align-items: center;
-  gap: 7px;
+  gap: 6px;
   cursor: pointer;
   transition: background 0.15s, color 0.15s, transform 0.12s var(--tds-spring);
 }
@@ -789,12 +789,12 @@ code, pre, .mono {
    Namuwiki Navbox (토스 스타일 둘러보기 틀)
    ========================================================================== */
 .navbox-card {
-  margin-bottom: 20px;
+  margin-bottom: 16px;
   overflow: hidden;
 }
 
 .navbox-header {
-  padding: 18px 28px;
+  padding: 13px 22px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -810,20 +810,20 @@ code, pre, .mono {
 .navbox-title-wrap {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
 }
 
 .toss-badge-blue {
   background: var(--toss-blue);
   color: #fff;
-  font-size: 11.5px;
+  font-size: 11px;
   font-weight: 700;
-  padding: 4px 10px;
-  border-radius: var(--tds-radius-xs);
+  padding: 3px 8px;
+  border-radius: 6px;
 }
 
 .navbox-title {
-  font-size: 15.5px;
+  font-size: 13.5px;
   font-weight: 700;
   color: var(--text-strong);
 }
@@ -832,25 +832,25 @@ code, pre, .mono {
   background: var(--bg-chip);
   border: none;
   color: var(--text-sub);
-  font-size: 12.5px;
+  font-size: 11.5px;
   font-weight: 700;
-  padding: 6px 12px;
-  border-radius: var(--tds-radius-xs);
+  padding: 5px 10px;
+  border-radius: 6px;
   cursor: pointer;
 }
 
 .navbox-body {
-  padding: 6px 28px 20px;
+  padding: 4px 22px 16px;
 }
 
 .navbox-grid-row {
   display: grid;
-  grid-template-columns: 155px 1fr;
-  padding: 12px 14px;
-  margin-bottom: 6px;
+  grid-template-columns: 145px 1fr;
+  padding: 9px 12px;
+  margin-bottom: 5px;
   background: var(--bg-subtle);
-  border-radius: var(--tds-radius-sm);
-  font-size: 13.5px;
+  border-radius: 10px;
+  font-size: 12.5px;
   align-items: center;
 }
 
@@ -866,14 +866,14 @@ code, pre, .mono {
 .navbox-links-wrap {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px 14px;
+  gap: 5px 12px;
 }
 
 /* ==========================================================================
-   Main Article Card & Content Blocks (TDS Typography T1 ~ T7 적용)
+   Main Article Card & Content Blocks (컴팩트 타이포그래피 스케일 적용)
    ========================================================================== */
 .article-card {
-  padding: 40px 44px;
+  padding: 32px 36px;
 }
 
 .article-top-meta {
@@ -881,16 +881,16 @@ code, pre, .mono {
   align-items: center;
   justify-content: space-between;
   flex-wrap: wrap;
-  gap: 10px;
-  margin-bottom: 16px;
+  gap: 8px;
+  margin-bottom: 12px;
 }
 
 .category-crumb {
-  font-size: 13px;
+  font-size: 11.5px;
   font-weight: 700;
   color: var(--toss-blue);
   background: var(--toss-blue-soft);
-  padding: 5px 13px;
+  padding: 4px 11px;
   border-radius: var(--tds-radius-full);
 }
 
@@ -902,58 +902,56 @@ code, pre, .mono {
 
 .tcode-pill-badge {
   font-family: "JetBrains Mono", monospace;
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 700;
   color: var(--text-sub);
   background: var(--bg-chip);
-  padding: 5px 11px;
-  border-radius: var(--tds-radius-xs);
+  padding: 4px 9px;
+  border-radius: 6px;
 }
 
-/* TDS Typography T1: 30~32px / 1.35 / Bold */
 .article-main-title {
-  font-size: 32px;
+  font-size: 24px;
   font-weight: 800;
   color: var(--text-strong);
   letter-spacing: -0.03em;
-  line-height: 1.32;
+  line-height: 1.35;
 }
 
-/* TDS Typography T5: 15~16px */
 .article-subtitle {
-  font-size: 15.5px;
+  font-size: 13.5px;
   font-weight: 500;
   color: var(--text-muted);
-  margin-top: 8px;
-  margin-bottom: 28px;
+  margin-top: 6px;
+  margin-bottom: 22px;
 }
 
-/* 한 줄 핵심 요약 배너 (테두리 없이 파스텔 면으로 구분) */
+/* 한 줄 핵심 요약 배너 */
 .summary-hero-box {
   background: var(--toss-blue-soft);
-  border-radius: var(--tds-radius-lg);
-  padding: 20px 24px;
-  margin-bottom: 36px;
+  border-radius: 14px;
+  padding: 15px 18px;
+  margin-bottom: 28px;
   display: flex;
   align-items: flex-start;
-  gap: 14px;
+  gap: 10px;
 }
 
 .summary-hero-icon {
-  font-size: 20px;
-  line-height: 1.4;
+  font-size: 16px;
+  line-height: 1.45;
 }
 
 .summary-hero-text {
-  font-size: 16px;
+  font-size: 13.5px;
   font-weight: 700;
   color: var(--text-strong);
   line-height: 1.6;
 }
 
-/* 섹션 헤더 (TDS T3: 22px) */
+/* 섹션 헤더 */
 .doc-section {
-  margin-bottom: 42px;
+  margin-bottom: 32px;
 }
 
 .doc-section:last-child {
@@ -961,14 +959,14 @@ code, pre, .mono {
 }
 
 .doc-sec-title {
-  font-size: 21px;
+  font-size: 17px;
   font-weight: 800;
   color: var(--text-strong);
-  letter-spacing: -0.025em;
-  margin-bottom: 16px;
+  letter-spacing: -0.02em;
+  margin-bottom: 12px;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
 }
 
 .doc-sec-num {
@@ -978,18 +976,18 @@ code, pre, .mono {
 
 /* 문단 & 인라인 문법 */
 .block-p {
-  font-size: 16px;
+  font-size: 14px;
   color: var(--text-body);
-  margin-bottom: 14px;
-  line-height: 1.75;
+  margin-bottom: 11px;
+  line-height: 1.72;
 }
 
 .block-p code {
-  font-size: 13.5px;
+  font-size: 12.5px;
   background: var(--bg-chip);
   color: var(--toss-blue);
-  padding: 3px 7px;
-  border-radius: 6px;
+  padding: 2px 6px;
+  border-radius: 5px;
   font-weight: 600;
 }
 
@@ -1059,14 +1057,14 @@ body.quiz-mode .quiz-token.revealed {
 }
 
 .callout-title {
-  font-size: 14.5px;
+  font-size: 13.5px;
   font-weight: 800;
-  margin-bottom: 6px;
+  margin-bottom: 5px;
   color: var(--text-strong);
 }
 
 .callout-body {
-  font-size: 14.5px;
+  font-size: 13px;
   color: var(--text-body);
   white-space: pre-line;
   line-height: 1.65;
@@ -1120,16 +1118,16 @@ body.quiz-mode .quiz-token.revealed {
 }
 
 .flow-step-title {
-  font-size: 15px;
+  font-size: 13.5px;
   font-weight: 800;
   color: var(--text-strong);
-  margin-bottom: 4px;
+  margin-bottom: 3px;
 }
 
 .flow-step-desc {
-  font-size: 13px;
+  font-size: 12px;
   color: var(--text-sub);
-  line-height: 1.55;
+  line-height: 1.5;
 }
 
 .flow-arrow {
@@ -1163,18 +1161,18 @@ body.quiz-mode .quiz-token.revealed {
 }
 
 .compare-card-title {
-  font-size: 17px;
+  font-size: 14.5px;
   font-weight: 800;
   color: var(--text-strong);
-  margin-bottom: 12px;
+  margin-bottom: 10px;
 }
 
 .compare-point-list {
   list-style: none;
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  font-size: 14px;
+  gap: 6px;
+  font-size: 13px;
   color: var(--text-body);
 }
 
@@ -1196,12 +1194,12 @@ body.quiz-mode .quiz-token.revealed {
 .toss-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 14px;
+  font-size: 13px;
 }
 
 .toss-table th,
 .toss-table td {
-  padding: 13px 16px;
+  padding: 10px 14px;
   text-align: left;
   border-bottom: 1px solid var(--border-hairline);
 }
@@ -1209,7 +1207,7 @@ body.quiz-mode .quiz-token.revealed {
 .toss-table th {
   font-weight: 700;
   color: var(--text-muted);
-  font-size: 12.5px;
+  font-size: 12px;
 }
 
 .toss-table tr:last-child td {
@@ -1247,10 +1245,10 @@ body.quiz-mode .quiz-token.revealed {
 }
 
 .block-code-wrap pre {
-  padding: 18px;
-  font-size: 13.5px;
+  padding: 14px 16px;
+  font-size: 12.5px;
   overflow-x: auto;
-  line-height: 1.65;
+  line-height: 1.6;
 }
 
 /* 블록 6: 인터랙티브 위젯 슬롯 */
@@ -1334,15 +1332,15 @@ body.quiz-mode .quiz-token.revealed {
 }
 
 .nested-title {
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 800;
   color: var(--text-strong);
 }
 
 .nested-desc {
-  font-size: 13.5px;
+  font-size: 12.5px;
   color: var(--text-sub);
-  margin-top: 4px;
+  margin-top: 3px;
 }
 
 .nested-items-grid {
@@ -1368,13 +1366,13 @@ body.quiz-mode .quiz-token.revealed {
 }
 
 .nested-leaf-name {
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 800;
   color: var(--text-strong);
 }
 
 .nested-leaf-sub {
-  font-size: 12px;
+  font-size: 11.5px;
   color: var(--text-muted);
 }
 
@@ -1382,40 +1380,40 @@ body.quiz-mode .quiz-token.revealed {
 .block-practice {
   background: var(--bg-subtle);
   border-radius: var(--tds-radius-lg);
-  padding: 22px 24px;
-  margin: 18px 0;
+  padding: 18px 20px;
+  margin: 16px 0;
 }
 
 .practice-header {
-  font-size: 15px;
+  font-size: 13.5px;
   font-weight: 800;
   color: var(--text-strong);
-  margin-bottom: 16px;
+  margin-bottom: 12px;
 }
 
 .practice-steps {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
 }
 
 .practice-step-row {
   display: flex;
   align-items: flex-start;
-  gap: 14px;
+  gap: 12px;
   background: var(--bg-card);
-  border-radius: var(--tds-radius-md);
-  padding: 15px 18px;
+  border-radius: 12px;
+  padding: 12px 15px;
   box-shadow: var(--shadow-card);
 }
 
 .practice-step-num {
-  width: 26px;
-  height: 26px;
-  border-radius: 8px;
+  width: 22px;
+  height: 22px;
+  border-radius: 7px;
   background: var(--toss-blue);
   color: #fff;
-  font-size: 13px;
+  font-size: 11.5px;
   font-weight: 800;
   display: inline-flex;
   align-items: center;
@@ -1429,15 +1427,15 @@ body.quiz-mode .quiz-token.revealed {
 }
 
 .practice-step-action {
-  font-size: 15px;
+  font-size: 13.5px;
   font-weight: 700;
   color: var(--text-strong);
 }
 
 .practice-step-detail {
-  font-size: 13.5px;
+  font-size: 12.5px;
   color: var(--text-sub);
-  margin-top: 4px;
+  margin-top: 3px;
 }
 
 /* 위키독스 스타일 하단 [이전 페이지 / 다음 페이지] 네비게이션 */
@@ -1485,13 +1483,13 @@ body.quiz-mode .quiz-token.revealed {
 }
 
 .pager-dir {
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 700;
   color: var(--toss-blue);
 }
 
 .pager-title {
-  font-size: 15.5px;
+  font-size: 13.5px;
   font-weight: 800;
   color: var(--text-strong);
 }
@@ -1504,24 +1502,24 @@ body.quiz-mode .quiz-token.revealed {
   top: 88px;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 14px;
 }
 
 .right-card {
-  padding: 22px 20px;
+  padding: 18px 18px;
 }
 
 .toc-list {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 2px;
 }
 
 .toc-link {
   display: block;
-  padding: 8px 11px;
-  border-radius: var(--tds-radius-sm);
-  font-size: 13.5px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  font-size: 12.5px;
   font-weight: 600;
   color: var(--text-sub);
   text-decoration: none;
@@ -1536,10 +1534,10 @@ body.quiz-mode .quiz-token.revealed {
 .spec-row {
   display: flex;
   justify-content: space-between;
-  padding: 9px 4px;
+  padding: 7px 4px;
   border-bottom: 1px solid var(--border-hairline);
-  font-size: 13.5px;
-  gap: 10px;
+  font-size: 12px;
+  gap: 8px;
 }
 
 .spec-row:last-child {
@@ -1565,9 +1563,9 @@ body.quiz-mode .quiz-token.revealed {
 
 .backlink-pill {
   background: var(--bg-subtle);
-  padding: 7px 12px;
-  border-radius: var(--tds-radius-sm);
-  font-size: 13px;
+  padding: 5px 10px;
+  border-radius: 8px;
+  font-size: 12px;
   font-weight: 700;
   color: var(--toss-blue);
   text-decoration: none;
@@ -1604,16 +1602,16 @@ body.quiz-mode .quiz-token.revealed {
 }
 
 .preview-doc-title {
-  font-size: 15.5px;
+  font-size: 13.5px;
   font-weight: 800;
   color: var(--text-strong);
-  margin-bottom: 6px;
+  margin-bottom: 4px;
 }
 
 .preview-doc-summary {
-  font-size: 13.5px;
+  font-size: 12px;
   color: var(--text-sub);
-  line-height: 1.55;
+  line-height: 1.5;
 }
 
 .hidden {
@@ -1675,7 +1673,7 @@ body:not(.authenticated) .app-layout {
 }
 
 .prelogin-brand-title {
-  font-size: 24px;
+  font-size: 20px;
   font-weight: 800;
   color: var(--text-strong);
   letter-spacing: -0.03em;
@@ -1732,14 +1730,14 @@ body:not(.authenticated) .app-layout {
 }
 
 .auth-tab-btn {
-  height: 38px;
+  height: 34px;
   border: none;
   background: transparent;
   color: var(--text-muted);
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 700;
   font-family: inherit;
-  border-radius: 9px;
+  border-radius: 8px;
   cursor: pointer;
   transition: all 0.16s var(--tds-spring);
 }
@@ -1773,19 +1771,19 @@ body:not(.authenticated) .app-layout {
 }
 
 .auth-field label {
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 700;
   color: var(--text-sub);
   padding-left: 2px;
 }
 
 .auth-field input {
-  height: 48px;
+  height: 42px;
   background: var(--bg-subtle);
   border: 1.5px solid transparent;
-  border-radius: var(--tds-radius-sm);
-  padding: 0 16px;
-  font-size: 15px;
+  border-radius: 10px;
+  padding: 0 14px;
+  font-size: 13.5px;
   color: var(--text-strong);
   font-family: inherit;
   transition: all 0.16s var(--tds-spring);
@@ -1799,17 +1797,17 @@ body:not(.authenticated) .app-layout {
 }
 
 .toss-primary-btn {
-  height: 50px;
+  height: 44px;
   width: 100%;
   border: none;
-  border-radius: var(--tds-radius-sm);
+  border-radius: 10px;
   background: var(--toss-blue);
   color: #fff;
-  font-size: 15.5px;
+  font-size: 14px;
   font-weight: 700;
   font-family: inherit;
   cursor: pointer;
-  margin-top: 6px;
+  margin-top: 4px;
   transition: background 0.15s, transform 0.12s var(--tds-spring);
 }
 
@@ -1870,7 +1868,7 @@ body:not(.authenticated) .app-layout {
 }
 
 .admin-modal-title {
-  font-size: 22px;
+  font-size: 18px;
   font-weight: 800;
   color: var(--text-strong);
   margin-top: 6px;
@@ -2086,14 +2084,14 @@ body:not(.authenticated) .app-layout {
 }
 
 .board-post-title {
-  font-size: 17.5px;
+  font-size: 15px;
   font-weight: 800;
   color: var(--text-strong);
-  margin-bottom: 8px;
+  margin-bottom: 6px;
 }
 
 .board-post-content {
-  font-size: 15px;
+  font-size: 13.5px;
   color: var(--text-body);
   line-height: 1.65;
   white-space: pre-line;
@@ -2164,9 +2162,9 @@ body:not(.authenticated) .app-layout {
   width: 100%;
   background: var(--bg-subtle);
   border: 1.5px solid transparent;
-  border-radius: var(--tds-radius-sm);
-  padding: 12px 14px;
-  font-size: 14.5px;
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-size: 13.5px;
   color: var(--text-strong);
   font-family: inherit;
   transition: all 0.16s var(--tds-spring);
