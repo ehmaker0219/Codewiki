@@ -946,14 +946,7 @@
       }
     });
 
-    const themeToggleBtn = document.getElementById("themeToggleBtn");
-    const themeIcon = document.getElementById("themeIcon");
-    themeToggleBtn.addEventListener("click", () => {
-      const root = document.documentElement;
-      const next = root.getAttribute("data-theme") === "light" ? "dark" : "light";
-      root.setAttribute("data-theme", next);
-      themeIcon.textContent = next === "light" ? "🌙" : "☀️";
-    });
+
   }
 
   function init() {
