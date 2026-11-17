@@ -19,11 +19,10 @@
   const documents = Object.values(window.WIKI_DOCS || {});
   const aliases = [];
   const exactAliases = new Map();
-  const backlinkText = new Map();
   const backlinks = new Map();
   for (const doc of documents) {
-    backlinkText.set(doc.id, JSON.stringify(doc.sections || []) + " " + (doc.summary || ""));
-    for (const alias of doc.aliases || []) {
+    if (doc.track === "ui5") continue;
+    for (const alias of new Set([doc.title, ...(doc.aliases || [])])) {
       const clean = alias.trim();
       if (!clean) continue;
       aliases.push({ alias: clean, docId: doc.id, regex: buildAliasRegex(clean) });
@@ -122,7 +121,7 @@
   }
 
   // 인라인 문법 파서 + 나무위키식 자동 키워드 하이퍼링크 엔진
-  function parseInline(text) {
+  function parseInline(text, sourceDocId = currentDocId) {
     if (!text) return "";
     const tokens = [];
     const stash = html => {
@@ -131,13 +130,17 @@
       return `\uE000${idx}\uE001`;
     };
 
-    let out = text;
+    let out = String(text);
+    // Existing HTML links and code are opaque; never link inside attributes.
+    out = out.replace(/<(a|code|pre)\b[^>]*>[\s\S]*?<\/\1>/gi, stash);
+    out = out.replace(/<[^>]+>/g, stash);
 
     // 1) 수동 명시 링크 [[문서ID|표시이름]] 보호 및 변환
     out = out.replace(/\[\[([^\]|]+)(?:\|([^\]]+))?\]\]/g, (_, targetId, label) => {
       const id = targetId.trim();
       const targetDoc = window.WIKI_DOCS[id];
       const textLabel = label ? label.trim() : targetDoc ? targetDoc.title : id;
+      if (targetDoc?.track === "ui5" || id === sourceDocId) return stash(textLabel);
       if (!targetDoc) {
         return stash(
           `<a href="#missing/${id}" class="wiki-link missing-wiki-link" data-missing-doc="${textLabel}" title="아직 미작성된 문서입니다. 클릭하여 추가 건의하기">${textLabel}</a>`
@@ -154,7 +157,7 @@
     // 3) 인라인 코드 `코드` 변환 (만약 등록된 T-Code/개념 키워드라면 링크도 함께 연결!)
     out = out.replace(/`([^`]+)`/g, (_, codeStr) => {
       const matchedDocId = findDocIdByExactAlias(codeStr);
-      if (matchedDocId && matchedDocId !== currentDocId) {
+      if (matchedDocId && matchedDocId !== sourceDocId) {
         return stash(
           `<a href="#doc/${matchedDocId}" class="wiki-link code-wiki-link" data-doc="${matchedDocId}"><code>${codeStr}</code></a>`
         );
@@ -164,7 +167,7 @@
 
     // 4) 평문 속 등록 키워드(aliases) 자동 감지 → 하이퍼링크 연결 (현재 보고 있는 자기 자신 문서는 제외)
     for (const entry of aliases) {
-      if (entry.docId === currentDocId) continue;
+      if (entry.docId === sourceDocId) continue;
       out = out.replace(entry.regex, matchedText =>
         stash(`<a href="#doc/${entry.docId}" class="wiki-link" data-doc="${entry.docId}">${matchedText}</a>`)
       );
@@ -191,16 +194,30 @@
     const targetDoc = window.WIKI_DOCS[targetId];
     if (!targetDoc) return [];
 
-    const escapedId = escapeRegExp(targetId);
-    const explicitPattern = new RegExp(`\\[\\[${escapedId}(?:\\|[^\\]]+)?\\]\\]`, "i");
-    const aliasRegexes = (targetDoc.aliases || []).map(a => a.trim()).filter(Boolean)
-      .map(alias => new RegExp(buildAliasRegex(alias).source, "i"));
-
+    // Derive backlinks from the same inline renderer as the visible content.
+    // Metadata, code samples and aliases inside external URLs are not references.
+    const inlineValues = doc => {
+      const values = [doc.summary, ...Object.values(doc.specs || {})];
+      const walk = block => {
+        if (!block || typeof block !== "object" || block.type === "code") return;
+        for (const [key, value] of Object.entries(block)) {
+          if (["type", "title", "id", "widget", "widgetId", "code", "label"].includes(key)) continue;
+          if (typeof value === "string") values.push(value);
+          else if (Array.isArray(value)) value.forEach(item => {
+            if (typeof item === "string") values.push(item);
+            else if (Array.isArray(item)) item.forEach(cell => values.push(String(cell)));
+            else walk(item);
+          });
+        }
+      };
+      (doc.sections || []).forEach(section => (section.blocks || []).forEach(walk));
+      return values.filter(Boolean);
+    };
     const matches = documents.filter(doc => {
-      if (doc.id === targetId) return false;
-      const raw = backlinkText.get(doc.id);
-      if (explicitPattern.test(raw)) return true;
-      return aliasRegexes.some(rx => rx.test(raw));
+      if (doc.id === targetId || doc.track === "ui5") return false;
+      return inlineValues(doc).some(value =>
+        parseInline(value, doc.id).includes(`data-doc="${targetId}"`)
+      );
     });
     backlinks.set(targetId, matches);
     return matches;
@@ -479,6 +496,10 @@
 
   // 메인 문서 렌더링 (하단 위키독스식 이전/다음 챕터 이동 바 포함)
   function renderDocument(docId) {
+    if (docId === "erp-setup") {
+      docId = "sap-architecture";
+      history.replaceState(null, "", "#doc/sap-architecture");
+    }
     if (window.WIKI_DOCS[docId]?.track === "ui5") {
       docId = "welcome-abap";
       history.replaceState(null, "", "#doc/welcome-abap");
@@ -513,6 +534,8 @@
     const hasMetaTop = Boolean(doc.categoryId || doc.stepNum || (doc.tcodes && doc.tcodes.length > 0));
     const showFooter = !doc.isHome || prevDoc || nextDoc;
 
+    // Preserve the shared TOC node before replacing the current document.
+    if (tocCardWrap) sidebarRight?.prepend(tocCardWrap);
     articleContainer.innerHTML = `
       ${
         hasMetaTop
@@ -551,6 +574,7 @@
           : ""
       }
 
+      <div id="documentTocSlot"></div>
       <div class="doc-sections-wrap">
         ${
           sections.length === 0
@@ -685,7 +709,8 @@
     metaCardWrap?.classList.toggle("hidden", !hasSpecs);
     backlinkCardWrap?.classList.toggle("hidden", !hasBacklinks);
 
-    const hasAnyRightCard = hasToc || hasSpecs || hasBacklinks;
+    document.getElementById("documentTocSlot")?.append(tocCardWrap);
+    const hasAnyRightCard = hasSpecs || hasBacklinks;
     sidebarRight?.classList.toggle("hidden", !hasAnyRightCard);
     appShell?.classList.toggle("single-col", !hasAnyRightCard);
 
@@ -897,7 +922,7 @@
       const h = window.location.hash;
       if (h.startsWith("#doc/")) {
         const target = h.replace("#doc/", "");
-        if (window.WIKI_DOCS[target] && target !== currentDocId) {
+        if ((window.WIKI_DOCS[target] || target === "erp-setup") && target !== currentDocId) {
           if (window.CodeWikiBoard) window.CodeWikiBoard.closeIfActive();
           renderDocument(target);
           window.scrollTo({ top: 0, behavior: "smooth" });
@@ -938,7 +963,7 @@
     const hash = window.location.hash;
     if (hash.startsWith("#doc/")) {
       const target = hash.replace("#doc/", "");
-      if (window.WIKI_DOCS[target]) currentDocId = target;
+      if (window.WIKI_DOCS[target] || target === "erp-setup") currentDocId = target;
     }
 
     renderDocument(currentDocId);

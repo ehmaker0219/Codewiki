@@ -107,10 +107,10 @@
             전체 (${posts.length})
           </button>
           <button class="toss-chip-btn ${currentFilter === "open" ? "active" : ""}" data-filter="open">
-            🟡 반영 대기 (${openCount})
+            <span class="board-status-dot is-open" aria-hidden="true"></span> 반영 대기 (${openCount})
           </button>
           <button class="toss-chip-btn ${currentFilter === "done" ? "active" : ""}" data-filter="done">
-            🟢 반영 완료 (${doneCount})
+            <span class="board-status-dot is-done" aria-hidden="true"></span> 반영 완료 (${doneCount})
           </button>
         </div>
         <button id="backToWikiBtn" class="toss-chip-btn">
@@ -271,26 +271,7 @@
         const pid = Number(btn.getAttribute("data-post-id"));
         const target = posts.find(p => p.id === pid);
         if (!target) return;
-        const note = window.prompt("건의한 친구에게 보여줄 관리자 답변 메모를 입력하세요:", target.admin_note || "반영 완료했어! 고마워 🙌");
-        if (note === null) return;
-
-        const isSupa = window.CodeWikiAuth?.isSupabaseConfigured();
-        const client = window.CodeWikiAuth?.getSupabaseClient();
-        if (!isSupa || !client) {
-          const updated = getLocalPosts().map(p =>
-            p.id === pid ? { ...p, admin_note: note.trim(), status: note.trim() ? "done" : p.status } : p
-          );
-          saveLocalPosts(updated);
-        } else {
-          await client.rpc("cw_update_post", {
-            p_token: window.CodeWikiAuth?.getSessionToken(),
-            p_post_id: pid,
-            p_status: note.trim() ? "done" : target.status,
-            p_admin_note: note.trim()
-          });
-        }
-        await refreshBadge();
-        openBoardView();
+        openReplyModal(target, btn);
       });
     });
 
@@ -312,6 +293,75 @@
         await refreshBadge();
         openBoardView();
       });
+    });
+  }
+
+  function openReplyModal(target, trigger) {
+    writeModal.classList.remove("hidden");
+    writeModal.innerHTML = `
+      <div class="admin-modal-card toss-card" role="dialog" aria-modal="true" aria-labelledby="replyTitle" style="max-width:540px;">
+        <div class="admin-modal-header">
+          <h3 id="replyTitle" class="admin-modal-title">관리자 답변 메모</h3>
+          <button type="button" id="closeReplyBtn" class="icon-btn" aria-label="답변 창 닫기">✕</button>
+        </div>
+        <p>${escapeHtml(target.title)}</p>
+        <form id="replyForm" class="auth-form">
+          <div class="auth-field">
+            <label for="replyNote">답변 내용</label>
+            <textarea id="replyNote" rows="5" placeholder="작성자에게 전달할 답변을 입력하세요."></textarea>
+          </div>
+          <label><input id="replyDone" type="checkbox" ${target.status === "done" ? "checked" : ""}> 반영 완료로 표시</label>
+          <p id="replyError" role="alert" style="color:var(--toss-red, #c53030);"></p>
+          <button type="submit" id="saveReplyBtn" class="toss-chip-btn">답변 저장</button>
+        </form>
+      </div>`;
+    const form = document.getElementById("replyForm");
+    const input = document.getElementById("replyNote");
+    const save = document.getElementById("saveReplyBtn");
+    const close = document.getElementById("closeReplyBtn");
+    let saving = false;
+    input.value = target.admin_note || "";
+    input.focus();
+    const dismiss = () => {
+      if (saving) return;
+      writeModal.classList.add("hidden");
+      trigger?.focus();
+    };
+    close.addEventListener("click", dismiss);
+    form.addEventListener("keydown", e => { if (e.key === "Escape") dismiss(); });
+    form.addEventListener("submit", async e => {
+      e.preventDefault();
+      if (saving) return;
+      saving = true;
+      save.disabled = close.disabled = true;
+      save.textContent = "저장 중…";
+      const errorBox = document.getElementById("replyError");
+      errorBox.textContent = "";
+      try {
+        const note = input.value.trim();
+        const status = document.getElementById("replyDone").checked ? "done" : "open";
+        const isSupa = window.CodeWikiAuth?.isSupabaseConfigured();
+        const client = window.CodeWikiAuth?.getSupabaseClient();
+        if (isSupa) {
+          if (!client) throw new Error("서버 연결을 확인한 뒤 다시 시도해 주세요.");
+          const { error } = await client.rpc("cw_update_post", {
+            p_token: window.CodeWikiAuth?.getSessionToken(),
+            p_post_id: target.id, p_status: status, p_admin_note: note
+          });
+          if (error) throw error;
+        } else {
+          saveLocalPosts(getLocalPosts().map(p => p.id === target.id ? { ...p, admin_note: note, status } : p));
+        }
+        writeModal.classList.add("hidden");
+        await refreshBadge();
+        await openBoardView();
+      } catch (error) {
+        errorBox.textContent = `답변을 저장하지 못했습니다. ${error.message || "잠시 후 다시 시도해 주세요."}`;
+      } finally {
+        saving = false;
+        save.disabled = close.disabled = false;
+        save.textContent = "답변 저장";
+      }
     });
   }
 

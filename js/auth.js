@@ -684,7 +684,7 @@
           }; color:${isRejected ? "var(--toss-red)" : "var(--toss-blue)"}; margin-bottom:14px;">
             ${isRejected ? "승인 반려됨" : "승인 대기 중"}
           </div>
-          <h2 style="font-size:20px; font-weight:800; color:var(--text-strong);">
+          <h2 class="auth-status-title">
             ${isRejected ? "접근 승인이 반려되었습니다" : "관리자 승인을 기다리고 있어요"}
           </h2>
           <p class="auth-desc" style="margin-top:8px;">
