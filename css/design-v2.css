@@ -73,3 +73,62 @@ body { background:#e8eff3; font-family:Arial,'Pretendard',sans-serif; font-size:
 @media(max-width:820px) { .workspace-area { margin-left:12px; } .docked-sidebar { z-index:150; } .sap-window-title { font-size:12px; } .sap-window-title span { display:none; } .sap-command-bar strong { font-size:12px; } .sap-command-bar a { padding:3px 5px; font-size:10px; } .article-card { padding:16px; } #documentTocSlot .toc-list { grid-template-columns:1fr; } }
 
 .doc-section { scroll-margin-top: 140px; }
+
+/* Classic desktop proportions: fixed shell, recessed document pane, dense tree. */
+@media(min-width:821px) {
+  body { overflow:hidden; }
+  .workspace-area { height:100vh; padding-top:153px; margin-left:326px; }
+  .app-shell, .app-shell.single-col { height:calc(100vh - 179px); padding:0 9px 8px 0; display:block; }
+  .main-content { height:100%; overflow:auto; background:white; border:1px solid #7e96a7; box-shadow:inset 1px 1px #667f92; scrollbar-color:#b8cddd #e8eff5; scrollbar-width:thin; }
+  .article-card { border:0; padding:18px 22px 28px; min-height:100%; }
+  .sidebar-right { display:none; }
+  .docked-sidebar { top:153px; width:302px; bottom:34px; }
+}
+body { font-family:Tahoma,'Pretendard',Arial,sans-serif; }
+.sap-window-title { height:31px; background:linear-gradient(#c0d1e1 0,#fff 14%,#f5f8fc 75%,#d7e3ed); border-bottom:1px solid #c0cddb; font-size:17px; font-weight:700; color:#6b8297; text-shadow:1px 1px #fff; }
+.workspace-topbar { top:31px; height:39px; background:linear-gradient(#fff,#f2f6fa); }
+.ws-topbar-left { max-width:265px; }
+.search-input { height:24px; padding-left:30px; font-family:Tahoma,'Pretendard',sans-serif; border:1px solid #8c9ba6; background:#fff; box-shadow:inset 1px 1px #b5bdc6; }
+.sap-command-bar { top:78px; height:32px; padding-left:13px; background:linear-gradient(#d6e6f0,#acc5d8); box-shadow:inset 1px 1px #f8fcff; }
+.sap-command-bar strong { font-size:17px; font-style:italic; color:#102332; }
+.sap-command-bar a { border:0; background:transparent; box-shadow:none; padding:2px 9px; }
+.sap-command-bar a:hover { background:#ffdf7e; outline:1px solid #b69c58; }
+.sap-tool-row { position:fixed; top:110px; left:12px; right:12px; height:33px; z-index:90; display:flex; align-items:center; gap:4px; padding:3px 8px; background:#d2e0eb; border:1px solid #9eb5c6; border-top:0; }
+.sap-tool-row a, .sap-tool-row button { display:inline-flex; align-items:center; justify-content:center; height:23px; padding:2px 8px; border:1px solid transparent; border-radius:0; background:transparent; color:#203c50; font:12px Tahoma,'Pretendard',sans-serif; text-decoration:none; cursor:pointer; }
+.sap-tool-row a:hover, .sap-tool-row button:hover { border-color:#b5a066; background:linear-gradient(#fff9dd,#ffdf7e); }
+.sap-tool-row svg { width:16px; height:16px; stroke:#1277a9; fill:none; stroke-width:1.7; margin-right:5px; }
+.sap-tool-separator { height:20px; border-left:1px solid #a4b9c9; border-right:1px solid #f4f8fb; margin:0 5px; }
+.edge-collapse-btn { top:38px; left:auto; right:60px; border:1px solid #a6bac9; height:24px; background:linear-gradient(#fff,#d6e3ed); }
+.app-layout.sidebar-collapsed .edge-collapse-btn { left:auto; right:60px; }
+.brand-logo { height:24px; background:#ffdc6b; border:1px solid #a8955f; box-shadow:inset 1px 1px #fff2b6; padding:2px 5px; }
+.brand-name { font-size:13px; font-family:Tahoma,sans-serif; }
+.brand-track-toggle { margin:6px 7px; height:25px; box-shadow:inset 1px 1px #b2bac1; }
+.sb-group { gap:0; }
+.sidebar-scroll-body { gap:10px; background:#e8f0f6; padding:0 6px 6px; }
+.sb-group-label { font-size:12px; height:23px; margin-bottom:0; font-weight:normal; background:linear-gradient(#e1e7ec,#c7d1d9); }
+.sb-folder-row { height:23px; min-height:23px; padding:1px 5px; }
+.sb-folder-children { margin-left:16px; padding-left:6px; }
+.nav-doc-link { font-family:Tahoma,'Pretendard',sans-serif; font-size:12px; height:22px; min-height:22px; padding:0 3px; background:#d6e5f2; border-bottom:1px solid #a9c0d3; gap:5px; }
+.nav-doc-link:nth-child(even) { background:#edf4fa; }
+.nav-doc-link::before { content:''; width:12px; height:9px; flex-shrink:0; border:1px solid #c48c16; background:#ffda56; box-shadow:inset 1px 1px #fff1ac; }
+.nav-doc-link.active { background:#ffdf7d; font-weight:normal; }
+.step-num-badge { display:none; }
+.nav-doc-title-text { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.article-top-meta { background:#e8f0f5; border-bottom:1px solid #acbfcb; margin:-18px -22px 18px; padding:5px 12px; }
+.category-crumb { border-radius:0; background:transparent; padding:0; font-size:12px; font-weight:normal; }
+.article-main-title { font-size:19px; font-weight:600; }
+.tcode-pill-badge { border:1px solid #a4b9c7; background:#dceaf3; border-radius:0; padding:0 6px; }
+.doc-sec-title { font-size:14px; font-weight:600; background:#dbe8f2; }
+.summary-hero-box { background:#f3f6f8; border:1px solid #bdccd6; border-left:3px solid #d4ae40; }
+#documentTocSlot .right-card { display:table; background:#f7fafc; border:1px solid #afc0cd; }
+.block-code-wrap pre { font-family:'Courier New',monospace; font-size:14px; line-height:1.5; color:#0000cc; }
+.toss-table th { font-size:12px; background:linear-gradient(#e1e8ee,#bdcdd9); }
+.doc-section { scroll-margin-top:12px; }
+.sap-statusbar { height:26px; background:#e7f0f6; border-top:1px solid #9eb5c6; box-shadow:inset 0 1px white; }
+@media(max-width:820px) { .workspace-area { padding-top:153px; } .docked-sidebar { top:153px; } .sap-command-bar strong { font-size:13px; } .sap-tool-row a, .sap-tool-row button { font-size:10px; padding:2px 4px; } .article-top-meta { margin:0 0 14px; } }
+@media print {
+  body { overflow:visible; }
+  .sap-window-title,.sap-command-bar,.sap-tool-row,.sap-statusbar,.docked-sidebar,.workspace-topbar,.edge-collapse-btn { display:none !important; }
+  .workspace-area { height:auto; margin:0; padding:0; }
+  .app-shell,.app-shell.single-col,.main-content { height:auto; overflow:visible; padding:0; border:0; }
+}
