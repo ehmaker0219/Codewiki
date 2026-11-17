@@ -46,30 +46,121 @@
     return found ? found.name : categoryId;
   }
 
-  // 인라인 문법 파서: [[id|이름]], {{빈칸키워드}}, ~~취소선~~, **굵게**, `코드`
-  function parseInline(text) {
-    if (!text) return "";
-    return text
-      .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
-      .replace(/~~(.+?)~~/g, '<del class="wiki-del" title="취소선 메모">$1</del>')
-      .replace(/`([^`]+)`/g, "<code>$1</code>")
-      .replace(/\{\{(.+?)\}\}/g, '<span class="quiz-token" title="클릭하여 정답 확인">$1</span>')
-      .replace(/\[\[([^\]|]+)(?:\|([^\]]+))?\]\]/g, (_, targetId, label) => {
-        const id = targetId.trim();
-        const targetDoc = window.WIKI_DOCS[id];
-        const textLabel = label ? label.trim() : targetDoc ? targetDoc.title : id;
-        return `<a href="#doc/${id}" class="wiki-link" data-doc="${id}">${textLabel}</a>`;
-      });
+  function escapeRegExp(str) {
+    return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   }
 
-  // 특정 문서를 참조하는 역링크(Backlinks) 자동 검색
+  function buildAliasRegex(alias) {
+    const escaped = escapeRegExp(alias);
+    const leftBound = /^[A-Za-z0-9_$]/.test(alias) ? "(?<![A-Za-z0-9_$])" : "";
+    const rightBound = /[A-Za-z0-9_]$/.test(alias) ? "(?![A-Za-z0-9_])" : "";
+    return new RegExp(`${leftBound}${escaped}${rightBound}`, "gi");
+  }
+
+  // 전체 문서의 aliases 키워드를 긴 단어 우선 순으로 정렬하여 반환
+  function getSortedAliases() {
+    const list = [];
+    Object.values(window.WIKI_DOCS || {}).forEach(doc => {
+      (doc.aliases || []).forEach(alias => {
+        const clean = alias.trim();
+        if (clean) {
+          list.push({ alias: clean, docId: doc.id, regex: buildAliasRegex(clean) });
+        }
+      });
+    });
+    list.sort((a, b) => b.alias.length - a.alias.length);
+    return list;
+  }
+
+  function findDocIdByExactAlias(word) {
+    const lower = word.trim().toLowerCase();
+    for (const doc of Object.values(window.WIKI_DOCS || {})) {
+      if ((doc.aliases || []).some(a => a.trim().toLowerCase() === lower)) {
+        return doc.id;
+      }
+    }
+    return null;
+  }
+
+  // 인라인 문법 파서 + 나무위키식 자동 키워드 하이퍼링크 엔진
+  function parseInline(text) {
+    if (!text) return "";
+    const tokens = [];
+    const stash = html => {
+      const idx = tokens.length;
+      tokens.push(html);
+      return `\uE000${idx}\uE001`;
+    };
+
+    let out = text;
+
+    // 1) 수동 명시 링크 [[문서ID|표시이름]] 보호 및 변환
+    out = out.replace(/\[\[([^\]|]+)(?:\|([^\]]+))?\]\]/g, (_, targetId, label) => {
+      const id = targetId.trim();
+      const targetDoc = window.WIKI_DOCS[id];
+      const textLabel = label ? label.trim() : targetDoc ? targetDoc.title : id;
+      if (!targetDoc) {
+        return stash(
+          `<a href="#missing/${id}" class="wiki-link missing-wiki-link" data-missing-doc="${textLabel}" title="아직 미작성된 문서입니다. 클릭하여 추가 건의하기">${textLabel}</a>`
+        );
+      }
+      return stash(`<a href="#doc/${id}" class="wiki-link" data-doc="${id}">${textLabel}</a>`);
+    });
+
+    // 2) 암기 모드 빈칸 토큰 {{키워드}} 보호
+    out = out.replace(/\{\{(.+?)\}\}/g, (_, inner) =>
+      stash(`<span class="quiz-token" title="클릭하여 정답 확인">${inner}</span>`)
+    );
+
+    // 3) 인라인 코드 `코드` 변환 (만약 등록된 T-Code/개념 키워드라면 링크도 함께 연결!)
+    out = out.replace(/`([^`]+)`/g, (_, codeStr) => {
+      const matchedDocId = findDocIdByExactAlias(codeStr);
+      if (matchedDocId && matchedDocId !== currentDocId) {
+        return stash(
+          `<a href="#doc/${matchedDocId}" class="wiki-link code-wiki-link" data-doc="${matchedDocId}"><code>${codeStr}</code></a>`
+        );
+      }
+      return stash(`<code>${codeStr}</code>`);
+    });
+
+    // 4) 평문 속 등록 키워드(aliases) 자동 감지 → 하이퍼링크 연결 (현재 보고 있는 자기 자신 문서는 제외)
+    const aliasEntries = getSortedAliases();
+    for (const entry of aliasEntries) {
+      if (entry.docId === currentDocId) continue;
+      out = out.replace(entry.regex, matchedText =>
+        stash(`<a href="#doc/${entry.docId}" class="wiki-link" data-doc="${entry.docId}">${matchedText}</a>`)
+      );
+    }
+
+    // 5) 굵은 글씨 및 취소선 메모 적용
+    out = out
+      .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
+      .replace(/~~(.+?)~~/g, '<del class="wiki-del" title="취소선 메모">$1</del>');
+
+    // 6) 보호해 둔 토큰 복원
+    let guard = 0;
+    while (out.includes("\uE000") && guard < 5) {
+      out = out.replace(/\uE000(\d+)\uE001/g, (_, idx) => tokens[Number(idx)] || "");
+      guard++;
+    }
+
+    return out;
+  }
+
+  // 특정 문서를 참조하는 역링크(Backlinks) 자동 검색 (수동 [[링크]] + 자동 aliases 언급 모두 포함!)
   function computeBacklinks(targetId) {
-    const escaped = targetId.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-    const pattern = new RegExp(`\\[\\[${escaped}(?:\\|[^\\]]+)?\\]\\]`, "i");
+    const targetDoc = window.WIKI_DOCS[targetId];
+    if (!targetDoc) return [];
+
+    const escapedId = escapeRegExp(targetId);
+    const explicitPattern = new RegExp(`\\[\\[${escapedId}(?:\\|[^\\]]+)?\\]\\]`, "i");
+    const aliasRegexes = (targetDoc.aliases || []).map(a => buildAliasRegex(a.trim()));
+
     return Object.values(window.WIKI_DOCS).filter(doc => {
       if (doc.id === targetId) return false;
-      const raw = JSON.stringify(doc.sections || []) + (doc.summary || "");
-      return pattern.test(raw);
+      const raw = JSON.stringify(doc.sections || []) + " " + (doc.summary || "");
+      if (explicitPattern.test(raw)) return true;
+      return aliasRegexes.some(rx => rx.test(raw));
     });
   }
 
@@ -379,7 +470,15 @@
           ${doc.stepNum ? `<span class="tcode-pill-badge">Chapter ${doc.stepNum}</span>` : ""}
         </div>
         <div class="tcode-badge-row">
-          ${(doc.tcodes || []).map(tc => `<span class="tcode-pill-badge">T-Code · ${tc}</span>`).join("")}
+          ${(doc.tcodes || [])
+            .map(tc => {
+              const tcDocId = findDocIdByExactAlias(tc);
+              if (tcDocId && tcDocId !== doc.id) {
+                return `<a href="#doc/${tcDocId}" class="tcode-pill-badge wiki-link" data-doc="${tcDocId}" style="text-decoration:none;">T-Code · ${tc}</a>`;
+              }
+              return `<span class="tcode-pill-badge">T-Code · ${tc}</span>`;
+            })
+            .join("")}
         </div>
       </div>
 
@@ -522,7 +621,7 @@
               ([k, v]) => `
             <div class="spec-row">
               <span class="spec-key">${k}</span>
-              <span class="spec-val">${v}</span>
+              <span class="spec-val">${parseInline(String(v))}</span>
             </div>
           `
             )
@@ -561,6 +660,15 @@
   };
 
   function bindWikiLinks() {
+    document.querySelectorAll("[data-missing-doc]").forEach(el => {
+      el.onclick = e => {
+        e.preventDefault();
+        if (window.CodeWikiBoard) {
+          window.CodeWikiBoard.openWriteModal("");
+        }
+      };
+    });
+
     document.querySelectorAll("[data-doc]").forEach(el => {
       el.onclick = e => {
         e.preventDefault();

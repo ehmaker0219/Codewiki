@@ -995,14 +995,30 @@ code, pre, .mono {
   color: var(--toss-blue);
   text-decoration: none;
   font-weight: 700;
-  padding: 1px 4px;
-  border-radius: 6px;
-  transition: background 0.14s, color 0.14s;
+  padding: 0 2px;
+  border-radius: 5px;
+  border-bottom: 1px dashed rgba(49, 130, 246, 0.38);
+  transition: background 0.14s, color 0.14s, border-color 0.14s;
 }
 
 .wiki-link:hover {
   background: var(--toss-blue-soft);
   color: var(--toss-blue-hover);
+  border-bottom-color: var(--toss-blue);
+}
+
+.wiki-link.missing-wiki-link {
+  color: var(--toss-red);
+  border-bottom-color: rgba(240, 68, 82, 0.45);
+}
+
+.wiki-link.missing-wiki-link:hover {
+  background: var(--toss-red-soft);
+}
+
+.wiki-link.code-wiki-link {
+  border-bottom: none;
+  padding: 0;
 }
 
 /* 나무위키식 취소선 메모 */
