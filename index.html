@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="ko" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>코드위키</title>
+  <link rel="icon" type="image/svg+xml" href="assets/logo-symbol.svg" />
+  <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <!-- 로그인 후 전체 레이아웃: 좌측 고정 일체형 사이드바 + 우측 워크스페이스 -->
+  <div class="app-layout" id="appLayout">
+    <!-- 접기(<) / 펼치기(>) 통합 원형 화살표 버튼 -->
+    <button id="sidebarToggleBtn" class="edge-collapse-btn" title="사이드바 접기" aria-label="사이드바 토글">
+      <svg class="toggle-arrow-svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="15 18 9 12 15 6"></polyline>
+      </svg>
+    </button>
+
+    <!-- 1. 좌측 고정 사이드바 (Quest-On 스타일 도킹 바) -->
+    <aside class="docked-sidebar" id="dockedSidebar">
+      <!-- 상단 브랜드 로고 + 트랙 전환 토글 -->
+      <div class="sidebar-top-brand">
+        <a href="#doc/welcome-abap" class="brand-logo" id="brandHomeLink">
+          <span class="brand-symbol" aria-label="코드위키 심볼">
+            <svg width="19" height="19" viewBox="0 0 120 120" fill="currentColor">
+              <path d="M12 12 H54 V54 H41 V40 H15 V28.5 H41 V23.5 H12 Z" />
+              <path d="M66 12 H108 V25 H79 V41 H108 V54 H66 Z" />
+              <path fill-rule="evenodd" clip-rule="evenodd" d="M33 66 A21 21 0 1 0 33 108 A21 21 0 1 0 33 66 Z M33 79 A8 8 0 1 1 33 95 A8 8 0 1 1 33 79 Z" />
+              <path d="M66 66 H108 V108 H95 V94 H69 V82.5 H95 V77.5 H66 Z" />
+            </svg>
+          </span>
+          <span class="brand-name">코드위키</span>
+        </a>
+
+        <div class="brand-track-toggle" id="brandTrackToggle" role="group" aria-label="학습 트랙 전환">
+          <button type="button" class="brand-track-btn active" data-track-switch="abap">ABAP</button>
+          <button type="button" class="brand-track-btn" data-track-switch="ui5">UI5/Fiori</button>
+        </div>
+      </div>
+
+      <!-- 중앙 스크롤 메뉴 영역 -->
+      <div class="sidebar-scroll-body">
+        <div class="sb-group">
+          <a href="#doc/welcome-abap" class="sb-menu-item" id="sbHomeItem" data-doc="welcome-abap">
+            <svg class="sb-icon" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="3" width="7" height="7" rx="1.5"></rect>
+              <rect x="14" y="3" width="7" height="7" rx="1.5"></rect>
+              <rect x="3" y="14" width="7" height="7" rx="1.5"></rect>
+              <rect x="14" y="14" width="7" height="7" rx="1.5"></rect>
+            </svg>
+            <span>홈</span>
+          </a>
+          <button type="button" id="openBoardBtn" class="sb-menu-item">
+            <svg class="sb-icon" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+            </svg>
+            <span>건의 게시판</span>
+            <span id="boardOpenCountBadge" class="pending-badge hidden" style="margin-left:auto;">0</span>
+          </button>
+          <div id="adminSidebarSlot"></div>
+        </div>
+
+        <!-- 카테고리 폴더 섹션 -->
+        <div class="sb-group">
+          <div class="sb-group-label">목차</div>
+          <nav id="categoryNav" class="category-folder-nav"></nav>
+        </div>
+
+        <!-- 빠른 사전 섹션 (데이터가 있을 때만 표시) -->
+        <div class="sb-group hidden" id="quickRefGroup">
+          <div class="sb-group-label" id="quickRefLabel">T-CODES</div>
+          <div id="tcodeList" class="tcode-list"></div>
+        </div>
+      </div>
+
+      <!-- 하단 고정 유저 프로필 카드 (Quest-On 하단 프로필 스타일) -->
+      <div class="sidebar-bottom-profile" id="sidebarProfileSlot"></div>
+    </aside>
+
+    <!-- 2. 우측 메인 워크스페이스 영역 -->
+    <div class="workspace-area" id="workspaceArea">
+      <!-- 상단 유틸리티 헤더 -->
+      <header class="workspace-topbar">
+        <div class="ws-topbar-left">
+          <div class="search-box">
+            <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+              <circle cx="11" cy="11" r="7"></circle>
+              <line x1="20" y1="20" x2="16" y2="16"></line>
+            </svg>
+            <input
+              type="text"
+              id="searchInput"
+              class="search-input"
+              placeholder="검색"
+              autocomplete="off"
+            />
+            <div id="searchDropdown" class="search-dropdown hidden"></div>
+          </div>
+        </div>
+
+        <div class="ws-topbar-right">
+          <button id="quizModeBtn" class="toss-chip-btn hidden" title="빈칸 복습 모드">
+            <span>암기 모드</span>
+          </button>
+          <button id="themeToggleBtn" class="icon-btn" title="테마 전환" aria-label="테마 전환">
+            <span id="themeIcon">🌙</span>
+          </button>
+        </div>
+      </header>
+
+      <!-- 본문 + 우측 보조 패널 (데이터가 있을 때만 우측 패널 노출) -->
+      <div class="app-shell" id="appShell">
+        <main class="main-content">
+          <article class="toss-card article-card" id="articleContainer"></article>
+        </main>
+
+        <aside class="sidebar-right hidden" id="sidebarRight">
+          <div class="toss-card right-card hidden" id="tocCardWrap">
+            <div class="card-section-header">
+              <span class="section-label">목차</span>
+            </div>
+            <nav id="tocList" class="toc-list"></nav>
+          </div>
+
+          <div class="toss-card right-card hidden" id="metaCardWrap">
+            <div class="card-section-header">
+              <span class="section-label">요약</span>
+            </div>
+            <div id="summarySpecBox" class="summary-spec-box"></div>
+          </div>
+
+          <div class="toss-card right-card hidden" id="backlinkCardWrap">
+            <div class="card-section-header">
+              <span class="section-label">연결된 문서</span>
+            </div>
+            <div id="backlinkBox" class="backlink-box"></div>
+          </div>
+        </aside>
+      </div>
+    </div>
+  </div>
+
+  <!-- 링크 마우스 오버 시 뜨는 미니 프리뷰 툴팁 -->
+  <div id="hoverPreviewCard" class="hover-preview-card hidden" role="tooltip"></div>
+
+  <!-- 로그인 전 미니멀 심볼 + Auth 랜딩페이지 -->
+  <div id="authGateOverlay" class="auth-gate-overlay hidden"></div>
+
+  <!-- 로그인 직후 학습 트랙(ABAP vs UI5/Fiori) 대형 선택 화면 -->
+  <div id="trackSelectOverlay" class="track-select-overlay hidden"></div>
+
+  <!-- 관리자 전용 [우리 반 학생 승인 관리] 모달 -->
+  <div id="adminModal" class="admin-modal-backdrop hidden"></div>
+
+  <!-- 수정·업데이트 건의글 작성 모달 -->
+  <div id="boardWriteModal" class="admin-modal-backdrop hidden"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/data.js"></script>
+  <script src="js/visualizers.js"></script>
+  <script src="js/app.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/board.js"></script>
+</body>
+</html>
