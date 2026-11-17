@@ -1015,6 +1015,123 @@ body.quiz-mode .quiz-token.revealed {
   margin: 20px 0;
 }
 
+/* 블록 8: 포함·중첩 구조 다이어그램 블록 (nested 블록 — 마트료시카 박스) */
+.block-nested-wrap {
+  margin: 20px 0;
+}
+
+.nested-caption {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-muted);
+  margin-bottom: 10px;
+}
+
+.nested-box {
+  border-radius: 22px;
+  padding: 20px 22px;
+  transition: transform 0.18s var(--tds-spring), box-shadow 0.18s var(--tds-spring);
+}
+
+.nested-box.depth-0 {
+  background: var(--toss-blue-soft);
+  border: 2px dashed rgba(49, 130, 246, 0.45);
+}
+
+.nested-box.depth-1 {
+  background: var(--bg-card);
+  border: 1.5px solid var(--border-subtle);
+  box-shadow: var(--shadow-card);
+  margin-top: 14px;
+  border-radius: 18px;
+}
+
+.nested-box.depth-2 {
+  background: var(--bg-subtle);
+  border: 1px solid var(--border-hairline);
+  margin-top: 12px;
+  border-radius: 14px;
+  padding: 14px 16px;
+}
+
+.nested-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.nested-title-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.nested-badge {
+  font-size: 11px;
+  font-weight: 800;
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: var(--toss-blue);
+  color: #fff;
+}
+
+.nested-box.depth-1 .nested-badge {
+  background: var(--toss-green-soft);
+  color: var(--toss-green);
+}
+
+.nested-box.depth-2 .nested-badge {
+  background: var(--bg-chip);
+  color: var(--text-sub);
+}
+
+.nested-title {
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--text-strong);
+}
+
+.nested-desc {
+  font-size: 13.5px;
+  color: var(--text-sub);
+  margin-top: 4px;
+}
+
+.nested-items-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.nested-leaf-chip {
+  background: var(--bg-subtle);
+  border-radius: 12px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  transition: transform 0.14s var(--tds-spring), background 0.14s;
+}
+
+.nested-leaf-chip:hover {
+  transform: translateY(-2px);
+  background: var(--toss-blue-soft);
+}
+
+.nested-leaf-name {
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--text-strong);
+}
+
+.nested-leaf-sub {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
 /* 블록 7: 위키독스 스타일 '실습 따라하기 (practice)' 스텝 블록 */
 .block-practice {
   background: var(--bg-subtle);

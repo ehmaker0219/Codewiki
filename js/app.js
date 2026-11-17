@@ -264,6 +264,50 @@
       case "widget":
         return `<div class="block-widget-slot" data-widget-id="${block.widgetId}" id="widget-slot-${blockIdx}"></div>`;
 
+      case "nested": {
+        const renderLayer = (node, depth) => {
+          if (!node) return "";
+          return `
+            <div class="nested-box depth-${Math.min(depth, 2)}">
+              <div class="nested-header">
+                <div class="nested-title-group">
+                  ${node.badge ? `<span class="nested-badge">${parseInline(node.badge)}</span>` : ""}
+                  <span class="nested-title">${parseInline(node.title)}</span>
+                </div>
+                ${node.code ? `<span class="tcode-pill-badge">${node.code}</span>` : ""}
+              </div>
+              ${node.desc ? `<div class="nested-desc">${parseInline(node.desc)}</div>` : ""}
+              ${
+                node.items && node.items.length > 0
+                  ? `
+                <div class="nested-items-grid">
+                  ${node.items
+                    .map(
+                      it => `
+                    <div class="nested-leaf-chip">
+                      <span class="nested-leaf-name">${parseInline(it.name)}</span>
+                      ${it.sub ? `<span class="nested-leaf-sub">${parseInline(it.sub)}</span>` : ""}
+                    </div>
+                  `
+                    )
+                    .join("")}
+                </div>
+              `
+                  : ""
+              }
+              ${(node.children || []).map(child => renderLayer(child, depth + 1)).join("")}
+            </div>
+          `;
+        };
+
+        return `
+          <div class="block-nested-wrap">
+            ${block.caption ? `<div class="nested-caption">${parseInline(block.caption)}</div>` : ""}
+            ${renderLayer(block.root, 0)}
+          </div>
+        `;
+      }
+
       default:
         return "";
     }
