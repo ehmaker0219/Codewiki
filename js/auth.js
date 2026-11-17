@@ -1,10 +1,9 @@
 /**
  * ============================================================================
- * [우리 반 전용 인증 & 관리자 승인 시스템: js/auth.js]
+ * [코드위키 인증 & 랜딩 분기 시스템: js/auth.js]
  * ----------------------------------------------------------------------------
- * 1. SUPABASE_URL과 SUPABASE_ANON_KEY를 입력하면 실제 Supabase DB로 동작합니다.
- * 2. 비워두면 브라우저(LocalStorage) 기반 '프리뷰 데모 모드'로 즉시 작동하여,
- *    로그인 화면 · 승인 대기 화면 · 관리자 학생 승인 탭을 바로 테스트할 수 있습니다!
+ * - 로그인 전 랜딩페이지: 오직 '코드위키 심볼(ㅋㄷㅇㅋ)'과 'Auth(로그인/가입신청)'만 미니멀하게 표시
+ * - 로그인(승인) 후 랜딩페이지: 메인 위키 대시보드(상단바 + 좌측 챕터 + 본문 + 우측 목차) 표시
  * ============================================================================
  */
 (function () {
@@ -18,15 +17,15 @@
     supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
   }
 
-  // 데모 모드용 초기 샘플 학생 목록 (LocalStorage 저장)
-  const DEMO_USERS_KEY = "codewiki_demo_users_v1";
-  const DEMO_SESSION_KEY = "codewiki_demo_session_v1";
+  const DEMO_USERS_KEY = "codewiki_demo_users_v2";
+  const DEMO_SESSION_KEY = "codewiki_demo_session_v2";
 
   const defaultDemoUsers = [
     {
       id: "admin-1",
-      full_name: "관리자 (나)",
+      full_name: "관리자",
       email: "admin@codewiki.kr",
+      password: "admin",
       role: "admin",
       status: "approved",
       created_at: "2026-11-17 09:00"
@@ -35,6 +34,7 @@
       id: "stu-1",
       full_name: "김민수",
       email: "minsu@student.kr",
+      password: "1234",
       role: "student",
       status: "pending",
       created_at: "2026-11-17 09:15"
@@ -43,6 +43,7 @@
       id: "stu-2",
       full_name: "이지은",
       email: "jieun@student.kr",
+      password: "1234",
       role: "student",
       status: "pending",
       created_at: "2026-11-17 09:20"
@@ -51,6 +52,7 @@
       id: "stu-3",
       full_name: "박준형",
       email: "jun@student.kr",
+      password: "1234",
       role: "student",
       status: "approved",
       created_at: "2026-11-16 18:30"
@@ -74,21 +76,19 @@
     localStorage.setItem(DEMO_USERS_KEY, JSON.stringify(list));
   }
 
+  // 기본값을 비로그인(null)으로 두어, 첫 접속 시 무조건 심볼+Auth 랜딩페이지가 보이도록 설정
   function getCurrentDemoUser() {
+    const savedId = localStorage.getItem(DEMO_SESSION_KEY);
+    if (!savedId || savedId === "logged-out") return null;
     const users = getDemoUsers();
-    const savedId = localStorage.getItem(DEMO_SESSION_KEY) || "admin-1";
-    if (savedId === "logged-out") return null;
-    return users.find(u => u.id === savedId) || users[0];
+    return users.find(u => u.id === savedId) || null;
   }
 
   function setDemoSession(userId) {
-    localStorage.setItem(DEMO_SESSION_KEY, userId);
+    localStorage.setItem(DEMO_SESSION_KEY, userId || "logged-out");
     renderAuthState();
   }
 
-  // =========================================================================
-  // UI 렌더링: 상단바 프로필/관리자 버튼 + 게이트 화면(로그인/승인대기) + 관리자 모달
-  // =========================================================================
   const authGateOverlay = document.getElementById("authGateOverlay");
   const adminModal = document.getElementById("adminModal");
   const adminBtnWrap = document.getElementById("adminBtnWrap");
@@ -98,36 +98,38 @@
 
   async function renderAuthState() {
     if (!isSupabaseConfigured) {
-      // 데모 모드 동작
       const user = getCurrentDemoUser();
       const allUsers = getDemoUsers();
       const pendingCount = allUsers.filter(u => u.status === "pending").length;
 
-      renderTopbarAuthControls(user, pendingCount);
-
       if (!user) {
-        // 로그아웃 상태 -> 토스 스타일 로그인/가입 신청 게이트 표시
+        // 1. 비로그인 상태 -> 위키 숨기고 심볼+Auth 랜딩페이지만 표시
+        document.body.classList.remove("authenticated");
         authGateOverlay.classList.remove("hidden");
-        renderLoginSignupGate();
+        renderPreLoginLanding();
       } else if (user.status !== "approved" && user.role !== "admin") {
-        // 승인 대기(pending) 또는 거절(rejected) 상태 -> 대기 안내 게이트 표시
+        // 2. 승인 대기 상태 -> 위키 숨기고 승인 대기 화면 표시
+        document.body.classList.remove("authenticated");
         authGateOverlay.classList.remove("hidden");
         renderPendingGate(user);
       } else {
-        // 승인 완료(approved) 또는 관리자(admin) -> 위키 열람 허용!
+        // 3. 로그인 + 승인 완료 -> 로그인 후 위키 랜딩페이지 표시!
+        document.body.classList.add("authenticated");
         authGateOverlay.classList.add("hidden");
+        renderTopbarAuthControls(user, pendingCount);
+        window.scrollTo({ top: 0 });
       }
       return;
     }
 
-    // 실제 Supabase 연동 모드
+    // 실제 Supabase 연동 시
     const { data: sessionData } = await supabaseClient.auth.getSession();
     const sessionUser = sessionData?.session?.user;
 
     if (!sessionUser) {
-      renderTopbarAuthControls(null, 0);
+      document.body.classList.remove("authenticated");
       authGateOverlay.classList.remove("hidden");
-      renderLoginSignupGate();
+      renderPreLoginLanding();
       return;
     }
 
@@ -137,9 +139,12 @@
       .eq("id", sessionUser.id)
       .single();
 
-    if (!profile) {
+    if (!profile || (profile.status !== "approved" && profile.role !== "admin")) {
+      document.body.classList.remove("authenticated");
       authGateOverlay.classList.remove("hidden");
-      renderPendingGate({ full_name: sessionUser.email, email: sessionUser.email, status: "pending" });
+      renderPendingGate(
+        profile || { full_name: sessionUser.email, email: sessionUser.email, status: "pending" }
+      );
       return;
     }
 
@@ -152,24 +157,14 @@
       pendingCount = count || 0;
     }
 
+    document.body.classList.add("authenticated");
+    authGateOverlay.classList.add("hidden");
     renderTopbarAuthControls(profile, pendingCount);
-
-    if (profile.status !== "approved" && profile.role !== "admin") {
-      authGateOverlay.classList.remove("hidden");
-      renderPendingGate(profile);
-    } else {
-      authGateOverlay.classList.add("hidden");
-    }
   }
 
-  // 상단바 우측: 학생 승인 관리 버튼(관리자 전용) & 현재 로그인 상태 칩
+  // 로그인 후 상단바 우측 컨트롤 (관리자 승인 관리 버튼 + 로그아웃 버튼)
   function renderTopbarAuthControls(user, pendingCount) {
-    if (!adminBtnWrap) return;
-
-    if (!user) {
-      adminBtnWrap.innerHTML = "";
-      return;
-    }
+    if (!adminBtnWrap || !user) return;
 
     const isAdmin = user.role === "admin";
     adminBtnWrap.innerHTML = `
@@ -177,33 +172,26 @@
         isAdmin
           ? `
         <button id="openAdminModalBtn" class="toss-chip-btn active" title="우리 반 학생 가입 승인 및 관리">
-          <span>👥 학생 승인 관리</span>
-          ${
-            pendingCount > 0
-              ? `<span class="pending-badge">${pendingCount}</span>`
-              : ""
-          }
+          <span>학생 승인 관리</span>
+          ${pendingCount > 0 ? `<span class="pending-badge">${pendingCount}</span>` : ""}
         </button>
       `
           : ""
       }
-      <button id="userSwitchBtn" class="toss-chip-btn" title="클릭하여 화면 전환 또는 로그아웃">
-        <span>${isAdmin ? "👑" : "🎓"} ${user.full_name}</span>
+      <button id="logoutBtn" class="toss-chip-btn" title="로그아웃하고 초기 랜딩페이지로 돌아가기">
+        <span>${user.full_name} · 로그아웃</span>
       </button>
     `;
 
     const openAdminBtn = document.getElementById("openAdminModalBtn");
     if (openAdminBtn) {
-      openAdminBtn.addEventListener("click", () => {
-        openAdminApprovalModal();
-      });
+      openAdminBtn.addEventListener("click", openAdminApprovalModal);
     }
 
-    const userSwitchBtn = document.getElementById("userSwitchBtn");
-    if (userSwitchBtn) {
-      userSwitchBtn.addEventListener("click", () => {
+    const logoutBtn = document.getElementById("logoutBtn");
+    if (logoutBtn) {
+      logoutBtn.addEventListener("click", () => {
         if (!isSupabaseConfigured) {
-          // 데모 모드에서는 로그인/승인대기 화면을 바로 체험할 수 있도록 로그아웃 전환
           setDemoSession("logged-out");
         } else {
           supabaseClient.auth.signOut().then(() => renderAuthState());
@@ -212,68 +200,68 @@
     }
   }
 
-  // 게이트 1: 로그인 / 우리 반 가입 신청 카드 (토스 스타일)
-  function renderLoginSignupGate() {
+  // [로그인 전 랜딩페이지]: 심볼(ㅋㄷㅇㅋ) + Auth 폼만 미니멀하게 노출
+  function renderPreLoginLanding() {
     const isSignup = authFormMode === "signup";
+
     authGateOverlay.innerHTML = `
-      <div class="auth-card toss-card">
-        <div class="auth-logo-wrap">
-          <div class="brand-symbol" style="width:48px; height:48px; border-radius:14px;">
-            <svg width="30" height="30" viewBox="0 0 120 120" fill="currentColor">
+      <div class="prelogin-landing">
+        <div class="prelogin-symbol-area">
+          <div class="prelogin-symbol-box">
+            <svg width="64" height="64" viewBox="0 0 120 120" fill="currentColor">
               <path d="M12 12 H54 V54 H41 V40 H15 V28.5 H41 V23.5 H12 Z" />
               <path d="M66 12 H108 V25 H79 V41 H108 V54 H66 Z" />
               <path fill-rule="evenodd" clip-rule="evenodd" d="M33 66 A21 21 0 1 0 33 108 A21 21 0 1 0 33 66 Z M33 79 A8 8 0 1 1 33 95 A8 8 0 1 1 33 79 Z" />
               <path d="M66 66 H108 V108 H95 V94 H69 V82.5 H95 V77.5 H66 Z" />
             </svg>
           </div>
-          <h2 class="auth-title">코드위키</h2>
-          <p class="auth-desc">우리 반 전용 SAP 학습 아카이브입니다.<br/>관리자 승인 후 모든 개념 문서를 열람할 수 있어요.</p>
+          <h1 class="prelogin-brand-title">코드위키</h1>
         </div>
 
-        <div class="auth-tab-row">
-          <button class="auth-tab-btn ${!isSignup ? "active" : ""}" data-mode="login">로그인</button>
-          <button class="auth-tab-btn ${isSignup ? "active" : ""}" data-mode="signup">우리 반 가입 신청</button>
-        </div>
+        <div class="auth-card toss-card">
+          <div class="auth-tab-row">
+            <button type="button" class="auth-tab-btn ${!isSignup ? "active" : ""}" data-mode="login">로그인</button>
+            <button type="button" class="auth-tab-btn ${isSignup ? "active" : ""}" data-mode="signup">가입 신청</button>
+          </div>
 
-        ${authMessage ? `<div class="auth-alert">${authMessage}</div>` : ""}
+          ${authMessage ? `<div class="auth-alert">${authMessage}</div>` : ""}
 
-        <form id="authGateForm" class="auth-form">
-          ${
-            isSignup
-              ? `
+          <form id="authGateForm" class="auth-form">
+            ${
+              isSignup
+                ? `
+              <div class="auth-field">
+                <label>이름</label>
+                <input type="text" id="authFullName" placeholder="실명 입력" required />
+              </div>
+            `
+                : ""
+            }
             <div class="auth-field">
-              <label>이름 (실명)</label>
-              <input type="text" id="authFullName" placeholder="예: 홍길동 (관리자가 누군지 알아볼 수 있게!)" required />
+              <label>이메일</label>
+              <input type="email" id="authEmail" placeholder="이메일 입력" required />
+            </div>
+            <div class="auth-field">
+              <label>비밀번호</label>
+              <input type="password" id="authPassword" placeholder="비밀번호 입력" required />
+            </div>
+            <button type="submit" class="toss-primary-btn">
+              ${isSignup ? "승인 요청하기" : "로그인"}
+            </button>
+          </form>
+
+          ${
+            !isSupabaseConfigured
+              ? `
+            <div class="prelogin-quick-links">
+              <button type="button" class="quick-link-btn" data-demo-login="admin-1">관리자로 바로 입장 →</button>
+              <span class="quick-divider">·</span>
+              <button type="button" class="quick-link-btn" data-demo-login="stu-1">승인대기 화면 보기</button>
             </div>
           `
               : ""
           }
-          <div class="auth-field">
-            <label>이메일</label>
-            <input type="email" id="authEmail" placeholder="example@email.com" required />
-          </div>
-          <div class="auth-field">
-            <label>비밀번호</label>
-            <input type="password" id="authPassword" placeholder="비밀번호 6자리 이상" required />
-          </div>
-          <button type="submit" class="toss-primary-btn">
-            ${isSignup ? "가입 및 승인 신청하기" : "로그인하기"}
-          </button>
-        </form>
-
-        ${
-          !isSupabaseConfigured
-            ? `
-          <div class="demo-switcher-box">
-            <div class="demo-switcher-title">🧪 [미리보기 체험 모드] 클릭 한 번으로 화면 전환해보기</div>
-            <div class="demo-switcher-btns">
-              <button class="toss-chip-btn active" data-demo-login="admin-1">👑 내 계정(관리자)으로 입장</button>
-              <button class="toss-chip-btn" data-demo-login="stu-1">⏳ 승인 대기 학생(김민수) 화면 보기</button>
-            </div>
-          </div>
-        `
-            : ""
-        }
+        </div>
       </div>
     `;
 
@@ -281,7 +269,7 @@
       btn.addEventListener("click", () => {
         authFormMode = btn.getAttribute("data-mode");
         authMessage = "";
-        renderLoginSignupGate();
+        renderPreLoginLanding();
       });
     });
 
@@ -300,12 +288,11 @@
       const fullName = fullNameEl ? fullNameEl.value.trim() : "";
 
       if (!isSupabaseConfigured) {
-        // 데모 모드 가입/로그인 시뮬레이션
         const users = getDemoUsers();
         if (isSignup) {
           const newUser = {
             id: "stu-" + Date.now(),
-            full_name: fullName || "새 학생",
+            full_name: fullName || "학생",
             email,
             role: "student",
             status: "pending",
@@ -319,14 +306,14 @@
           if (found) {
             setDemoSession(found.id);
           } else {
-            authMessage = "등록되지 않은 이메일입니다. [우리 반 가입 신청] 탭에서 먼저 신청해 주세요!";
-            renderLoginSignupGate();
+            // 데모 편의상 아무 이메일이나 로그인 누르면 관리자 입장 또는 안내
+            authMessage = "등록되지 않은 이메일입니다. 가입 신청을 먼저 진행해 주세요.";
+            renderPreLoginLanding();
           }
         }
         return;
       }
 
-      // 실제 Supabase 가입/로그인
       if (isSignup) {
         const { error } = await supabaseClient.auth.signUp({
           email,
@@ -335,7 +322,7 @@
         });
         if (error) {
           authMessage = error.message;
-          renderLoginSignupGate();
+          renderPreLoginLanding();
         } else {
           renderAuthState();
         }
@@ -343,7 +330,7 @@
         const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
         if (error) {
           authMessage = "이메일 또는 비밀번호를 확인해 주세요.";
-          renderLoginSignupGate();
+          renderPreLoginLanding();
         } else {
           renderAuthState();
         }
@@ -351,43 +338,46 @@
     });
   }
 
-  // 게이트 2: 승인 대기 중 화면 (pending 상태 학생에게 보이는 토스 스타일 안내 카드)
+  // [승인 대기 화면]: 심볼 + 승인 대기 상태 안내
   function renderPendingGate(user) {
     const isRejected = user.status === "rejected";
     authGateOverlay.innerHTML = `
-      <div class="auth-card toss-card" style="text-align:center;">
-        <div style="font-size:44px; margin-bottom:12px;">${isRejected ? "🚫" : "⏳"}</div>
-        <h2 class="auth-title">${
-          isRejected ? "접근 승인이 반려되었습니다" : "관리자 승인 대기 중이에요"
-        }</h2>
-        <p class="auth-desc" style="margin-top:8px;">
-          <strong>${user.full_name}</strong> (${user.email})님의 가입 신청이 접수되었습니다.<br/>
-          우리 반 관리자가 확인 후 <strong>[승인]</strong> 버튼을 누르면 바로 코드위키의 모든 자료를 볼 수 있어요!
-        </p>
-
-        <div style="display:flex; gap:10px; justify-content:center; margin-top:24px;">
-          <button id="refreshApprovalBtn" class="toss-primary-btn" style="width:auto; padding:0 22px;">
-            승인 상태 새로고침
-          </button>
-          <button id="pendingLogoutBtn" class="toss-chip-btn" style="height:48px; padding:0 18px;">
-            로그아웃
-          </button>
+      <div class="prelogin-landing">
+        <div class="prelogin-symbol-area">
+          <div class="prelogin-symbol-box">
+            <svg width="56" height="56" viewBox="0 0 120 120" fill="currentColor">
+              <path d="M12 12 H54 V54 H41 V40 H15 V28.5 H41 V23.5 H12 Z" />
+              <path d="M66 12 H108 V25 H79 V41 H108 V54 H66 Z" />
+              <path fill-rule="evenodd" clip-rule="evenodd" d="M33 66 A21 21 0 1 0 33 108 A21 21 0 1 0 33 66 Z M33 79 A8 8 0 1 1 33 95 A8 8 0 1 1 33 79 Z" />
+              <path d="M66 66 H108 V108 H95 V94 H69 V82.5 H95 V77.5 H66 Z" />
+            </svg>
+          </div>
+          <h1 class="prelogin-brand-title">코드위키</h1>
         </div>
 
-        ${
-          !isSupabaseConfigured
-            ? `
-          <div class="demo-switcher-box" style="margin-top:24px; text-align:left;">
-            <div class="demo-switcher-title">🧪 [미리보기 체험 모드]</div>
-            <div class="demo-switcher-btns">
-              <button class="toss-chip-btn active" id="switchToAdminFromPending">
-                👑 관리자 계정으로 전환해서 '${user.full_name}' 승인해주러 가기 →
-              </button>
-            </div>
+        <div class="auth-card toss-card" style="text-align:center;">
+          <div style="display:inline-block; padding:5px 12px; border-radius:999px; font-size:12.5px; font-weight:700; background:${
+            isRejected ? "var(--toss-red-soft)" : "var(--toss-blue-soft)"
+          }; color:${isRejected ? "var(--toss-red)" : "var(--toss-blue)"}; margin-bottom:14px;">
+            ${isRejected ? "승인 반려됨" : "승인 대기 중"}
           </div>
-        `
-            : ""
-        }
+          <h2 style="font-size:20px; font-weight:800; color:var(--text-strong);">
+            ${isRejected ? "접근 승인이 반려되었습니다" : "관리자 승인을 기다리고 있어요"}
+          </h2>
+          <p class="auth-desc" style="margin-top:8px;">
+            <strong>${user.full_name}</strong> (${user.email})<br/>
+            관리자가 가입 요청을 승인하면 열람할 수 있습니다.
+          </p>
+
+          <div style="display:flex; flex-direction:column; gap:8px; margin-top:24px;">
+            <button id="refreshApprovalBtn" class="toss-primary-btn">
+              승인 상태 확인
+            </button>
+            <button id="pendingLogoutBtn" class="toss-chip-btn" style="width:100%; justify-content:center; height:46px;">
+              돌아가기
+            </button>
+          </div>
+        </div>
       </div>
     `;
 
@@ -402,17 +392,9 @@
         supabaseClient.auth.signOut().then(() => renderAuthState());
       }
     });
-
-    const switchAdminBtn = document.getElementById("switchToAdminFromPending");
-    if (switchAdminBtn) {
-      switchAdminBtn.addEventListener("click", () => {
-        setDemoSession("admin-1");
-        openAdminApprovalModal();
-      });
-    }
   }
 
-  // 모달: 관리자 전용 [우리 반 학생 승인 관리] 패널
+  // 관리자 전용 [학생 승인 관리] 모달
   async function openAdminApprovalModal() {
     adminModal.classList.remove("hidden");
     let users = [];
@@ -435,21 +417,20 @@
       <div class="admin-modal-card toss-card">
         <div class="admin-modal-header">
           <div>
-            <span class="toss-badge-blue">Admin Only</span>
-            <h3 class="admin-modal-title">우리 반 학생 승인 관리</h3>
+            <span class="toss-badge-blue">Admin</span>
+            <h3 class="admin-modal-title">학생 승인 관리</h3>
           </div>
           <button id="closeAdminModalBtn" class="icon-btn">✕</button>
         </div>
 
         <div class="admin-modal-body">
-          <!-- 1. 승인 대기 중 목록 -->
           <div class="admin-group-title">
-            <span>🟡 승인 대기 중인 친구들</span>
+            <span>승인 대기 중</span>
             <span class="count-pill">${pendingList.length}명</span>
           </div>
           ${
             pendingList.length === 0
-              ? `<div class="admin-empty-box">현재 승인 대기 중인 신청자가 없습니다.</div>`
+              ? `<div class="admin-empty-box">대기 중인 신청자가 없습니다.</div>`
               : `<div class="admin-user-list">
                   ${pendingList
                     .map(
@@ -457,10 +438,10 @@
                     <div class="admin-user-row">
                       <div>
                         <div class="admin-user-name">${u.full_name}</div>
-                        <div class="admin-user-email">${u.email} · 신청: ${u.created_at || ""}</div>
+                        <div class="admin-user-email">${u.email}</div>
                       </div>
                       <div class="admin-action-btns">
-                        <button class="approve-btn" data-uid="${u.id}" data-next="approved">승인하기</button>
+                        <button class="approve-btn" data-uid="${u.id}" data-next="approved">승인</button>
                         <button class="reject-btn" data-uid="${u.id}" data-next="rejected">거절</button>
                       </div>
                     </div>
@@ -470,25 +451,24 @@
                 </div>`
           }
 
-          <!-- 2. 승인 완료된 우리 반 목록 -->
-          <div class="admin-group-title" style="margin-top:26px;">
-            <span>🟢 승인 완료된 우리 반 멤버</span>
+          <div class="admin-group-title" style="margin-top:24px;">
+            <span>승인 완료 멤버</span>
             <span class="count-pill">${approvedList.length}명</span>
           </div>
           ${
             approvedList.length === 0
-              ? `<div class="admin-empty-box">아직 승인된 학생이 없습니다.</div>`
+              ? `<div class="admin-empty-box">승인된 멤버가 없습니다.</div>`
               : `<div class="admin-user-list">
                   ${approvedList
                     .map(
                       u => `
                     <div class="admin-user-row">
                       <div>
-                        <div class="admin-user-name">${u.full_name} <span class="approved-tag">열람 가능</span></div>
+                        <div class="admin-user-name">${u.full_name} <span class="approved-tag">승인됨</span></div>
                         <div class="admin-user-email">${u.email}</div>
                       </div>
                       <div class="admin-action-btns">
-                        <button class="revoke-btn" data-uid="${u.id}" data-next="pending">승인 취소</button>
+                        <button class="revoke-btn" data-uid="${u.id}" data-next="pending">취소</button>
                       </div>
                     </div>
                   `
@@ -496,10 +476,6 @@
                     .join("")}
                 </div>`
           }
-
-          <div class="admin-footer-tip">
-            💡 <strong>실제 배포 안내:</strong> 현재는 브라우저에서 즉시 테스트 가능한 프리뷰 모드입니다. 프로젝트 루트의 <code>supabase-setup.sql</code> 안내에 따라 무료 Supabase URL과 Key를 <code>js/auth.js</code>에 넣으시면 실제 DB로 즉시 전환됩니다!
-          </div>
         </div>
       </div>
     `;

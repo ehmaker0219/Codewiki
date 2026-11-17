@@ -1258,8 +1258,13 @@ body.quiz-mode .quiz-token.revealed {
 }
 
 /* ==========================================================================
-   Toss-Style Auth Gate (로그인 / 가입 신청 / 승인 대기 화면) & 관리자 승인 모달
+   Toss-Style Auth Gate (로그인 전 랜딩: 심볼 + Auth / 로그인 후: 메인 위키)
    ========================================================================== */
+body:not(.authenticated) .topbar,
+body:not(.authenticated) .app-shell {
+  display: none !important;
+}
+
 .pending-badge {
   background: var(--toss-red);
   color: #fff;
@@ -1270,44 +1275,89 @@ body.quiz-mode .quiz-token.revealed {
 }
 
 .auth-gate-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 600;
+  min-height: 100vh;
+  width: 100%;
   background: var(--bg-canvas);
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 24px;
-  overflow-y: auto;
+  padding: 32px 20px;
 }
 
-.auth-card {
+.prelogin-landing {
   width: 100%;
-  max-width: 440px;
-  padding: 40px 36px;
-}
-
-.auth-logo-wrap {
+  max-width: 400px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  text-align: center;
-  margin-bottom: 24px;
+  gap: 28px;
 }
 
-.auth-title {
+.prelogin-symbol-area {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+}
+
+.prelogin-symbol-box {
+  width: 84px;
+  height: 84px;
+  border-radius: 24px;
+  background: var(--bg-card);
+  color: var(--text-strong);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--shadow-card);
+}
+
+.prelogin-brand-title {
   font-size: 24px;
   font-weight: 800;
   color: var(--text-strong);
   letter-spacing: -0.03em;
-  margin-top: 12px;
+}
+
+.auth-card {
+  width: 100%;
+  padding: 32px 28px;
 }
 
 .auth-desc {
   font-size: 14px;
   color: var(--text-sub);
-  margin-top: 6px;
   line-height: 1.55;
+}
+
+.prelogin-quick-links {
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border-hairline);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.quick-link-btn {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 12.5px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: color 0.15s;
+}
+
+.quick-link-btn:hover {
+  color: var(--toss-blue);
+}
+
+.quick-divider {
+  color: var(--text-muted);
+  font-size: 12px;
 }
 
 .auth-tab-row {
