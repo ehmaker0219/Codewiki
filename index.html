@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="ko" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>코드위키 — 시각적으로 배우는 SAP 위키</title>
+  <link rel="icon" type="image/svg+xml" href="assets/logo-symbol.svg" />
+  <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <!-- 상단 토스 스타일 네비게이션 바 -->
+  <header class="topbar">
+    <div class="topbar-inner">
+      <div class="topbar-left">
+        <button id="sidebarToggle" class="icon-btn" title="메뉴 접기/펼치기" aria-label="사이드바 토글">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <line x1="4" y1="7" x2="20" y2="7"></line>
+            <line x1="4" y1="12" x2="20" y2="12"></line>
+            <line x1="4" y1="17" x2="14" y2="17"></line>
+          </svg>
+        </button>
+        <a href="#doc/welcome-guide" class="brand-logo">
+          <span class="brand-symbol" aria-label="코드위키 심볼">
+            <svg width="22" height="22" viewBox="0 0 120 120" fill="currentColor">
+              <!-- 좌상단: ㅋ (코) -->
+              <path d="M12 12 H54 V54 H41 V40 H15 V28.5 H41 V23.5 H12 Z" />
+              <!-- 우상단: ㄷ (드) -->
+              <path d="M66 12 H108 V25 H79 V41 H108 V54 H66 Z" />
+              <!-- 좌하단: ㅇ (위) -->
+              <path fill-rule="evenodd" clip-rule="evenodd" d="M33 66 A21 21 0 1 0 33 108 A21 21 0 1 0 33 66 Z M33 79 A8 8 0 1 1 33 95 A8 8 0 1 1 33 79 Z" />
+              <!-- 우하단: ㅋ (키) -->
+              <path d="M66 66 H108 V108 H95 V94 H69 V82.5 H95 V77.5 H66 Z" />
+            </svg>
+          </span>
+          <span class="brand-name">코드위키</span>
+          <span class="brand-tag">SAP Archive</span>
+        </a>
+      </div>
+
+      <!-- 중앙 검색창 -->
+      <div class="topbar-center">
+        <div class="search-box">
+          <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+            <circle cx="11" cy="11" r="7"></circle>
+            <line x1="20" y1="20" x2="16" y2="16"></line>
+          </svg>
+          <input
+            type="text"
+            id="searchInput"
+            class="search-input"
+            placeholder="배운 개념, T-Code, 키워드 검색 ( / 키)"
+            autocomplete="off"
+          />
+          <kbd class="search-kbd">/</kbd>
+          <div id="searchDropdown" class="search-dropdown hidden"></div>
+        </div>
+      </div>
+
+      <!-- 우측 학습 컨트롤 칩 -->
+      <div class="topbar-right">
+        <button id="quizModeBtn" class="toss-chip-btn" title="핵심 키워드를 가려서 스스로 테스트하는 복습 모드">
+          <span class="chip-dot"></span>
+          <span>암기 모드 OFF</span>
+        </button>
+        <button id="humorModeBtn" class="toss-chip-btn active" title="나무위키식 취소선 사족/메모 표시 토글">
+          <span>취소선 메모 ON</span>
+        </button>
+        <button id="themeToggleBtn" class="icon-btn" title="라이트/다크 모드 전환" aria-label="테마 전환">
+          <span id="themeIcon">🌙</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- 전체 3단 레이아웃 쉘 -->
+  <div class="app-shell" id="appShell">
+    <!-- 좌측 사이드바: 카테고리 트리 & T-Code 빠른 사전 -->
+    <aside class="sidebar-left" id="sidebarLeft">
+      <div class="toss-card sidebar-card">
+        <div class="card-section-header">
+          <span class="section-label">진도 및 카테고리</span>
+          <span id="totalDocCount" class="count-pill">0개 문서</span>
+        </div>
+        <nav id="categoryNav" class="category-nav"></nav>
+      </div>
+
+      <div class="toss-card sidebar-card">
+        <div class="card-section-header">
+          <span class="section-label">자주 쓰는 T-Code</span>
+        </div>
+        <div id="tcodeList" class="tcode-list"></div>
+      </div>
+    </aside>
+
+    <!-- 중앙 메인 영역: 나무위키식 둘러보기 틀 + 블록형 문서 캔버스 -->
+    <main class="main-content">
+      <!-- 나무위키 스타일 둘러보기 틀 (토스 카드 스타일로 재해석) -->
+      <section class="toss-card navbox-card" id="navboxCard">
+        <div class="navbox-header" id="navboxToggle">
+          <div class="navbox-title-wrap">
+            <span class="toss-badge-blue">둘러보기 틀</span>
+            <strong class="navbox-title">코드위키 전체 학습 개념 한눈에 보기</strong>
+          </div>
+          <button class="navbox-fold-btn" id="navboxFoldBtn">접기 ▲</button>
+        </div>
+        <div class="navbox-body" id="navboxBody">
+          <!-- JS에서 카테고리별 문서를 자동으로 표 형태로 그려줍니다 -->
+        </div>
+      </section>
+
+      <!-- 문서 본문 렌더링 영역 -->
+      <article class="toss-card article-card" id="articleContainer">
+        <!-- JS에서 선택된 문서의 블록들을 순서대로 렌더링합니다 -->
+      </article>
+    </main>
+
+    <!-- 우측 사이드바: 목차(TOC) + 핵심 요약 스펙 + 역링크 -->
+    <aside class="sidebar-right">
+      <div class="toss-card right-card">
+        <div class="card-section-header">
+          <span class="section-label">문서 목차</span>
+        </div>
+        <nav id="tocList" class="toc-list"></nav>
+      </div>
+
+      <div class="toss-card right-card" id="metaCardWrap">
+        <div class="card-section-header">
+          <span class="section-label">핵심 요약 카드</span>
+        </div>
+        <div id="summarySpecBox" class="summary-spec-box"></div>
+      </div>
+
+      <div class="toss-card right-card">
+        <div class="card-section-header">
+          <span class="section-label">연결된 문서 (역링크)</span>
+        </div>
+        <div id="backlinkBox" class="backlink-box"></div>
+      </div>
+    </aside>
+  </div>
+
+  <!-- 링크 마우스 오버 시 뜨는 미니 프리뷰 툴팁 -->
+  <div id="hoverPreviewCard" class="hover-preview-card hidden" role="tooltip"></div>
+
+  <script src="js/data.js"></script>
+  <script src="js/visualizers.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" fill="none">
+  <!-- 코드위키 (ㅋㄷ / ㅇㅋ) 기하학 초성 심볼 -->
+  <g fill="#191F28">
+    <!-- 좌상단: ㅋ (코) -->
+    <path d="M12 12 H54 V54 H41 V40 H15 V28.5 H41 V23.5 H12 Z" />
+    <!-- 우상단: ㄷ (드) -->
+    <path d="M66 12 H108 V25 H79 V41 H108 V54 H66 Z" />
+    <!-- 좌하단: ㅇ (위) -->
+    <path fill-rule="evenodd" clip-rule="evenodd" d="M33 66 A21 21 0 1 0 33 108 A21 21 0 1 0 33 66 Z M33 79 A8 8 0 1 1 33 95 A8 8 0 1 1 33 79 Z" />
+    <!-- 우하단: ㅋ (키) -->
+    <path d="M66 66 H108 V108 H95 V94 H69 V82.5 H95 V77.5 H66 Z" />
+  </g>
+</svg>

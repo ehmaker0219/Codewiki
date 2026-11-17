@@ -1,0 +1,1123 @@
+/* ==========================================================================
+   Toss Design System (TDS) Seed / Foundation Tokens & Semantic System
+   ========================================================================== */
+:root {
+  /* 1. Seed Primitive Palette: Cool Grey Scale (순수 블랙 대신 네이비 틴트가 섞인 쿨그레이) */
+  --tds-grey-50: #f9fafb;
+  --tds-grey-100: #f2f4f6;
+  --tds-grey-200: #e5e8eb;
+  --tds-grey-300: #d1d6db;
+  --tds-grey-400: #b0b8c1;
+  --tds-grey-500: #8b95a1;
+  --tds-grey-600: #6b7684;
+  --tds-grey-700: #4e5968;
+  --tds-grey-800: #333d4b;
+  --tds-grey-900: #191f28;
+
+  /* 2. Seed Primitive Palette: Toss Blue Scale */
+  --tds-blue-50: #e8f3ff;
+  --tds-blue-100: #c9e2ff;
+  --tds-blue-200: #90c2ff;
+  --tds-blue-300: #64a8ff;
+  --tds-blue-400: #4593fc;
+  --tds-blue-500: #3182f6;
+  --tds-blue-600: #2272eb;
+  --tds-blue-700: #1b64da;
+  --tds-blue-800: #1957c2;
+  --tds-blue-900: #194aa6;
+
+  /* 3. Seed Radius & Motion Tokens */
+  --tds-radius-xs: 8px;
+  --tds-radius-sm: 12px;
+  --tds-radius-md: 16px;
+  --tds-radius-lg: 20px;
+  --tds-radius-xl: 24px;
+  --tds-radius-full: 9999px;
+  --tds-spring: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+:root[data-theme="light"] {
+  --bg-canvas: var(--tds-grey-100);      /* #f2f4f6: 토스 기본 배경 */
+  --bg-card: #ffffff;                    /* 순백색 서피스 */
+  --bg-subtle: var(--tds-grey-50);       /* #f9fafb: 선(Line) 대신 면(Surface)으로 구분하는 내부 블록 */
+  --bg-chip: var(--tds-grey-100);        /* #f2f4f6 */
+  --bg-chip-hover: var(--tds-grey-200);  /* #e5e8eb */
+  --bg-header: rgba(255, 255, 255, 0.85);
+
+  --toss-blue: var(--tds-blue-500);
+  --toss-blue-hover: var(--tds-blue-700);
+  --toss-blue-soft: var(--tds-blue-50);
+
+  --toss-green: #00b493;
+  --toss-green-soft: #e5f8f4;
+  --toss-amber: #f59f00;
+  --toss-amber-soft: #fff4e0;
+  --toss-red: #f04452;
+  --toss-red-soft: #ffebee;
+
+  --text-strong: var(--tds-grey-900);    /* #191f28: 타이틀 및 핵심 강조 */
+  --text-body: var(--tds-grey-800);      /* #333d4b: 본문 기본 */
+  --text-sub: var(--tds-grey-700);       /* #4e5968: 보조 설명 */
+  --text-caption: var(--tds-grey-600);   /* #6b7684: 캡션/라벨 */
+  --text-muted: var(--tds-grey-500);     /* #8b95a1: 비활성/힌트 */
+
+  --border-hairline: var(--tds-grey-100);
+  --border-subtle: var(--tds-grey-200);
+  --shadow-card: 0 2px 16px rgba(25, 31, 40, 0.03);
+  --shadow-float: 0 16px 40px rgba(25, 31, 40, 0.12);
+  --code-bg: var(--tds-grey-900);
+  --code-text: var(--tds-grey-100);
+}
+
+:root[data-theme="dark"] {
+  --bg-canvas: #101013;
+  --bg-card: #17171c;
+  --bg-subtle: #202027;
+  --bg-chip: #26262f;
+  --bg-chip-hover: #32323e;
+  --bg-header: rgba(23, 23, 28, 0.85);
+
+  --toss-blue: var(--tds-blue-400);
+  --toss-blue-hover: var(--tds-blue-300);
+  --toss-blue-soft: rgba(49, 130, 246, 0.16);
+
+  --toss-green: #15c4a3;
+  --toss-green-soft: rgba(21, 196, 163, 0.15);
+  --toss-amber: #ffb020;
+  --toss-amber-soft: rgba(255, 176, 32, 0.15);
+  --toss-red: #f04452;
+  --toss-red-soft: rgba(240, 68, 82, 0.15);
+
+  --text-strong: var(--tds-grey-50);
+  --text-body: var(--tds-grey-300);
+  --text-sub: var(--tds-grey-400);
+  --text-caption: var(--tds-grey-500);
+  --text-muted: var(--tds-grey-600);
+
+  --border-hairline: #24242c;
+  --border-subtle: #2e2e38;
+  --shadow-card: 0 4px 20px rgba(0, 0, 0, 0.25);
+  --shadow-float: 0 18px 44px rgba(0, 0, 0, 0.55);
+  --code-bg: #0c0c0e;
+  --code-text: var(--tds-grey-200);
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: "Pretendard", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  background-color: var(--bg-canvas);
+  color: var(--text-body);
+  line-height: 1.65;
+  letter-spacing: -0.015em;
+  -webkit-font-smoothing: antialiased;
+  transition: background-color 0.2s var(--tds-spring), color 0.2s var(--tds-spring);
+}
+
+code, pre, .mono {
+  font-family: "JetBrains Mono", Consolas, monospace;
+  letter-spacing: 0;
+}
+
+/* ==========================================================================
+   Topbar (Toss GNB)
+   ========================================================================== */
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  height: 64px;
+  background: var(--bg-header);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border-hairline);
+}
+
+.topbar-inner {
+  max-width: 1480px;
+  height: 100%;
+  margin: 0 auto;
+  padding: 0 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.topbar-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.brand-logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+  color: var(--text-strong);
+  transition: opacity 0.15s;
+}
+
+.brand-logo:active {
+  transform: scale(0.98);
+}
+
+.brand-symbol {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  background: var(--bg-chip);
+  color: var(--text-strong);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s, color 0.15s;
+}
+
+.brand-logo:hover .brand-symbol {
+  background: var(--toss-blue-soft);
+  color: var(--toss-blue);
+}
+
+.brand-name {
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+}
+
+.brand-tag {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--toss-blue);
+  background: var(--toss-blue-soft);
+  padding: 4px 10px;
+  border-radius: var(--tds-radius-full);
+}
+
+.topbar-center {
+  flex: 1;
+  max-width: 460px;
+}
+
+.search-box {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.search-icon {
+  position: absolute;
+  left: 14px;
+  color: var(--text-muted);
+  pointer-events: none;
+}
+
+.search-input {
+  width: 100%;
+  height: 42px;
+  background: var(--bg-chip);
+  border: 1.5px solid transparent;
+  border-radius: var(--tds-radius-sm);
+  padding: 0 38px 0 40px;
+  font-size: 14.5px;
+  font-weight: 500;
+  color: var(--text-strong);
+  font-family: inherit;
+  transition: all 0.18s var(--tds-spring);
+}
+
+.search-input::placeholder {
+  color: var(--text-muted);
+}
+
+.search-input:focus {
+  outline: none;
+  background: var(--bg-card);
+  border-color: var(--toss-blue);
+  box-shadow: 0 0 0 4px var(--toss-blue-soft);
+}
+
+.search-kbd {
+  position: absolute;
+  right: 12px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-muted);
+  background: var(--bg-card);
+  border-radius: 6px;
+  padding: 2px 7px;
+}
+
+.search-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  right: 0;
+  background: var(--bg-card);
+  border-radius: var(--tds-radius-lg);
+  box-shadow: var(--shadow-float);
+  padding: 8px;
+  max-height: 360px;
+  overflow-y: auto;
+  z-index: 200;
+}
+
+.search-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 14px;
+  border-radius: var(--tds-radius-sm);
+  cursor: pointer;
+  transition: background 0.12s;
+}
+
+.search-item:hover {
+  background: var(--bg-subtle);
+}
+
+.search-item-title {
+  font-size: 14.5px;
+  font-weight: 700;
+  color: var(--text-strong);
+}
+
+.search-item-sub {
+  font-size: 12.5px;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+.topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.icon-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--tds-radius-sm);
+  border: none;
+  background: var(--bg-chip);
+  color: var(--text-sub);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.15s, transform 0.12s var(--tds-spring);
+}
+
+.icon-btn:hover {
+  background: var(--bg-chip-hover);
+  color: var(--text-strong);
+}
+
+.icon-btn:active {
+  transform: scale(0.94);
+}
+
+.toss-chip-btn {
+  height: 40px;
+  padding: 0 15px;
+  border-radius: var(--tds-radius-sm);
+  border: none;
+  background: var(--bg-chip);
+  color: var(--text-sub);
+  font-size: 13.5px;
+  font-weight: 700;
+  font-family: inherit;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, transform 0.12s var(--tds-spring);
+}
+
+.toss-chip-btn:hover {
+  background: var(--bg-chip-hover);
+}
+
+.toss-chip-btn:active {
+  transform: scale(0.96);
+}
+
+.toss-chip-btn.active {
+  background: var(--toss-blue-soft);
+  color: var(--toss-blue);
+}
+
+.chip-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--text-muted);
+}
+
+.toss-chip-btn.active .chip-dot {
+  background: var(--toss-blue);
+}
+
+/* ==========================================================================
+   3-Column Shell Layout & Borderless Toss Surface Cards
+   (테두리 선을 없애고 배경 명도 차이와 부드러운 라디우스로 계층 분리)
+   ========================================================================== */
+.app-shell {
+  max-width: 1480px;
+  margin: 0 auto;
+  padding: 24px;
+  display: grid;
+  grid-template-columns: 260px minmax(0, 1fr) 270px;
+  gap: 20px;
+  align-items: start;
+}
+
+.app-shell.sidebar-collapsed {
+  grid-template-columns: minmax(0, 1fr) 270px;
+}
+
+.app-shell.sidebar-collapsed .sidebar-left {
+  display: none;
+}
+
+.toss-card {
+  background: var(--bg-card);
+  border-radius: var(--tds-radius-xl);
+  box-shadow: var(--shadow-card);
+  border: none;
+}
+
+/* ==========================================================================
+   Left Sidebar
+   ========================================================================== */
+.sidebar-left {
+  position: sticky;
+  top: 88px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.sidebar-card {
+  padding: 22px 20px;
+}
+
+.card-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+  padding: 0 4px;
+}
+
+.section-label {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-muted);
+}
+
+.count-pill {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--toss-blue);
+  background: var(--toss-blue-soft);
+  padding: 3px 9px;
+  border-radius: var(--tds-radius-full);
+}
+
+.cat-group {
+  margin-bottom: 18px;
+}
+
+.cat-group:last-child {
+  margin-bottom: 0;
+}
+
+.cat-group-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-muted);
+  padding: 4px 10px;
+  margin-bottom: 4px;
+}
+
+.nav-doc-link {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  border-radius: var(--tds-radius-sm);
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-sub);
+  transition: background 0.14s, color 0.14s, transform 0.1s var(--tds-spring);
+}
+
+.nav-doc-link:hover {
+  background: var(--bg-subtle);
+  color: var(--text-strong);
+}
+
+.nav-doc-link:active {
+  transform: scale(0.98);
+}
+
+.nav-doc-link.active {
+  background: var(--toss-blue-soft);
+  color: var(--toss-blue);
+  font-weight: 700;
+}
+
+.tcode-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.tcode-chip {
+  background: var(--bg-subtle);
+  border: none;
+  border-radius: var(--tds-radius-sm);
+  padding: 7px 11px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--text-sub);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.14s var(--tds-spring);
+}
+
+.tcode-chip:hover {
+  background: var(--toss-blue-soft);
+  color: var(--toss-blue);
+}
+
+.tcode-chip:active {
+  transform: scale(0.96);
+}
+
+.tcode-chip code {
+  color: var(--toss-blue);
+  font-weight: 700;
+}
+
+/* ==========================================================================
+   Namuwiki Navbox (토스 스타일 둘러보기 틀)
+   ========================================================================== */
+.navbox-card {
+  margin-bottom: 20px;
+  overflow: hidden;
+}
+
+.navbox-header {
+  padding: 18px 28px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.15s;
+}
+
+.navbox-header:hover {
+  background: var(--bg-subtle);
+}
+
+.navbox-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.toss-badge-blue {
+  background: var(--toss-blue);
+  color: #fff;
+  font-size: 11.5px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: var(--tds-radius-xs);
+}
+
+.navbox-title {
+  font-size: 15.5px;
+  font-weight: 700;
+  color: var(--text-strong);
+}
+
+.navbox-fold-btn {
+  background: var(--bg-chip);
+  border: none;
+  color: var(--text-sub);
+  font-size: 12.5px;
+  font-weight: 700;
+  padding: 6px 12px;
+  border-radius: var(--tds-radius-xs);
+  cursor: pointer;
+}
+
+.navbox-body {
+  padding: 6px 28px 20px;
+}
+
+.navbox-grid-row {
+  display: grid;
+  grid-template-columns: 155px 1fr;
+  padding: 12px 14px;
+  margin-bottom: 6px;
+  background: var(--bg-subtle);
+  border-radius: var(--tds-radius-sm);
+  font-size: 13.5px;
+  align-items: center;
+}
+
+.navbox-grid-row:last-child {
+  margin-bottom: 0;
+}
+
+.navbox-cat-name {
+  font-weight: 700;
+  color: var(--text-sub);
+}
+
+.navbox-links-wrap {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+}
+
+/* ==========================================================================
+   Main Article Card & Content Blocks (TDS Typography T1 ~ T7 적용)
+   ========================================================================== */
+.article-card {
+  padding: 40px 44px;
+}
+
+.article-top-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.category-crumb {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--toss-blue);
+  background: var(--toss-blue-soft);
+  padding: 5px 13px;
+  border-radius: var(--tds-radius-full);
+}
+
+.tcode-badge-row {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.tcode-pill-badge {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-sub);
+  background: var(--bg-chip);
+  padding: 5px 11px;
+  border-radius: var(--tds-radius-xs);
+}
+
+/* TDS Typography T1: 30~32px / 1.35 / Bold */
+.article-main-title {
+  font-size: 32px;
+  font-weight: 800;
+  color: var(--text-strong);
+  letter-spacing: -0.03em;
+  line-height: 1.32;
+}
+
+/* TDS Typography T5: 15~16px */
+.article-subtitle {
+  font-size: 15.5px;
+  font-weight: 500;
+  color: var(--text-muted);
+  margin-top: 8px;
+  margin-bottom: 28px;
+}
+
+/* 한 줄 핵심 요약 배너 (테두리 없이 파스텔 면으로 구분) */
+.summary-hero-box {
+  background: var(--toss-blue-soft);
+  border-radius: var(--tds-radius-lg);
+  padding: 20px 24px;
+  margin-bottom: 36px;
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+}
+
+.summary-hero-icon {
+  font-size: 20px;
+  line-height: 1.4;
+}
+
+.summary-hero-text {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-strong);
+  line-height: 1.6;
+}
+
+/* 섹션 헤더 (TDS T3: 22px) */
+.doc-section {
+  margin-bottom: 42px;
+}
+
+.doc-section:last-child {
+  margin-bottom: 0;
+}
+
+.doc-sec-title {
+  font-size: 21px;
+  font-weight: 800;
+  color: var(--text-strong);
+  letter-spacing: -0.025em;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.doc-sec-num {
+  color: var(--toss-blue);
+  font-weight: 800;
+}
+
+/* 문단 & 인라인 문법 */
+.block-p {
+  font-size: 16px;
+  color: var(--text-body);
+  margin-bottom: 14px;
+  line-height: 1.75;
+}
+
+.block-p code {
+  font-size: 13.5px;
+  background: var(--bg-chip);
+  color: var(--toss-blue);
+  padding: 3px 7px;
+  border-radius: 6px;
+  font-weight: 600;
+}
+
+.wiki-link {
+  color: var(--toss-blue);
+  text-decoration: none;
+  font-weight: 700;
+  padding: 1px 4px;
+  border-radius: 6px;
+  transition: background 0.14s, color 0.14s;
+}
+
+.wiki-link:hover {
+  background: var(--toss-blue-soft);
+  color: var(--toss-blue-hover);
+}
+
+/* 나무위키식 취소선 메모 */
+.wiki-del {
+  color: var(--text-muted);
+  text-decoration: line-through;
+  font-size: 0.93em;
+  margin: 0 2px;
+}
+
+body.hide-humor .wiki-del {
+  display: none;
+}
+
+/* 암기/복습 모드 빈칸 키워드 {{정답}} */
+.quiz-token {
+  font-weight: 700;
+  color: var(--toss-blue);
+  background: var(--toss-blue-soft);
+  padding: 2px 8px;
+  border-radius: 7px;
+  transition: all 0.16s var(--tds-spring);
+}
+
+body.quiz-mode .quiz-token {
+  color: transparent;
+  background: var(--tds-grey-300);
+  cursor: pointer;
+  user-select: none;
+}
+
+body.quiz-mode .quiz-token.revealed {
+  color: var(--toss-blue);
+  background: var(--toss-blue-soft);
+}
+
+/* 블록 1: 콜아웃 (테두리 없이 파스텔 서피스로 구분) */
+.block-callout {
+  border-radius: var(--tds-radius-lg);
+  padding: 18px 22px;
+  margin: 18px 0;
+}
+
+.block-callout.type-tip {
+  background: var(--toss-green-soft);
+}
+.block-callout.type-warn {
+  background: var(--toss-red-soft);
+}
+.block-callout.type-point {
+  background: var(--toss-amber-soft);
+}
+
+.callout-title {
+  font-size: 14.5px;
+  font-weight: 800;
+  margin-bottom: 6px;
+  color: var(--text-strong);
+}
+
+.callout-body {
+  font-size: 14.5px;
+  color: var(--text-body);
+  white-space: pre-line;
+  line-height: 1.65;
+}
+
+/* 블록 2: 시각적 프로세스 흐름도 (Borderless Surface Flow) */
+.block-flow {
+  background: var(--bg-subtle);
+  border-radius: var(--tds-radius-lg);
+  padding: 22px;
+  margin: 18px 0;
+}
+
+.flow-caption {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-muted);
+  margin-bottom: 14px;
+}
+
+.flow-steps-row {
+  display: flex;
+  align-items: stretch;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.flow-step-card {
+  flex: 1;
+  min-width: 150px;
+  background: var(--bg-card);
+  border-radius: var(--tds-radius-md);
+  padding: 16px 18px;
+  box-shadow: var(--shadow-card);
+  transition: transform 0.18s var(--tds-spring);
+}
+
+.flow-step-card:hover {
+  transform: translateY(-3px);
+}
+
+.flow-step-badge {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--toss-blue);
+  background: var(--toss-blue-soft);
+  padding: 3px 8px;
+  border-radius: 6px;
+  margin-bottom: 8px;
+}
+
+.flow-step-title {
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--text-strong);
+  margin-bottom: 4px;
+}
+
+.flow-step-desc {
+  font-size: 13px;
+  color: var(--text-sub);
+  line-height: 1.55;
+}
+
+.flow-arrow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  font-weight: 800;
+  font-size: 18px;
+}
+
+/* 블록 3: 비교 카드 (Borderless grey50 서피스) */
+.block-compare-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 14px;
+  margin: 18px 0;
+}
+
+.compare-card {
+  background: var(--bg-subtle);
+  border-radius: var(--tds-radius-lg);
+  padding: 22px 24px;
+}
+
+.compare-card-tag {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--toss-blue);
+  margin-bottom: 4px;
+}
+
+.compare-card-title {
+  font-size: 17px;
+  font-weight: 800;
+  color: var(--text-strong);
+  margin-bottom: 12px;
+}
+
+.compare-point-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 14px;
+  color: var(--text-body);
+}
+
+.compare-point-list li::before {
+  content: "• ";
+  color: var(--toss-blue);
+  font-weight: 800;
+}
+
+/* 블록 4: 깔끔한 정리 표 */
+.block-table-wrap {
+  overflow-x: auto;
+  margin: 18px 0;
+  background: var(--bg-subtle);
+  border-radius: var(--tds-radius-lg);
+  padding: 6px;
+}
+
+.toss-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.toss-table th,
+.toss-table td {
+  padding: 13px 16px;
+  text-align: left;
+  border-bottom: 1px solid var(--border-hairline);
+}
+
+.toss-table th {
+  font-weight: 700;
+  color: var(--text-muted);
+  font-size: 12.5px;
+}
+
+.toss-table tr:last-child td {
+  border-bottom: none;
+}
+
+/* 블록 5: 코드 블록 */
+.block-code-wrap {
+  background: var(--code-bg);
+  color: var(--code-text);
+  border-radius: var(--tds-radius-lg);
+  overflow: hidden;
+  margin: 18px 0;
+}
+
+.code-top-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 11px 18px;
+  background: rgba(255, 255, 255, 0.05);
+  font-size: 12px;
+  color: var(--tds-grey-400);
+}
+
+.copy-code-btn {
+  background: rgba(255, 255, 255, 0.1);
+  border: none;
+  color: #fff;
+  padding: 4px 11px;
+  border-radius: 6px;
+  font-size: 11.5px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.block-code-wrap pre {
+  padding: 18px;
+  font-size: 13.5px;
+  overflow-x: auto;
+  line-height: 1.65;
+}
+
+/* 블록 6: 인터랙티브 위젯 슬롯 */
+.block-widget-slot {
+  background: var(--bg-subtle);
+  border-radius: var(--tds-radius-lg);
+  padding: 22px;
+  margin: 20px 0;
+}
+
+/* ==========================================================================
+   Right Sidebar (목차, 요약 스펙, 역링크)
+   ========================================================================== */
+.sidebar-right {
+  position: sticky;
+  top: 88px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.right-card {
+  padding: 22px 20px;
+}
+
+.toc-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.toc-link {
+  display: block;
+  padding: 8px 11px;
+  border-radius: var(--tds-radius-sm);
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--text-sub);
+  text-decoration: none;
+  transition: all 0.12s;
+}
+
+.toc-link:hover {
+  background: var(--bg-subtle);
+  color: var(--toss-blue);
+}
+
+.spec-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 9px 4px;
+  border-bottom: 1px solid var(--border-hairline);
+  font-size: 13.5px;
+  gap: 10px;
+}
+
+.spec-row:last-child {
+  border-bottom: none;
+}
+
+.spec-key {
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+.spec-val {
+  color: var(--text-strong);
+  font-weight: 700;
+  text-align: right;
+}
+
+.backlink-box {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.backlink-pill {
+  background: var(--bg-subtle);
+  padding: 7px 12px;
+  border-radius: var(--tds-radius-sm);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--toss-blue);
+  text-decoration: none;
+  transition: all 0.12s;
+}
+
+.backlink-pill:hover {
+  background: var(--toss-blue-soft);
+}
+
+/* ==========================================================================
+   Hover Preview Tooltip (토스 플로팅 카드)
+   ========================================================================== */
+.hover-preview-card {
+  position: fixed;
+  z-index: 500;
+  width: 310px;
+  background: var(--bg-card);
+  border-radius: var(--tds-radius-lg);
+  padding: 18px 20px;
+  box-shadow: var(--shadow-float);
+  pointer-events: none;
+}
+
+.preview-cat-badge {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--toss-blue);
+  background: var(--toss-blue-soft);
+  padding: 3px 9px;
+  border-radius: 6px;
+  margin-bottom: 8px;
+}
+
+.preview-doc-title {
+  font-size: 15.5px;
+  font-weight: 800;
+  color: var(--text-strong);
+  margin-bottom: 6px;
+}
+
+.preview-doc-summary {
+  font-size: 13.5px;
+  color: var(--text-sub);
+  line-height: 1.55;
+}
+
+.hidden {
+  display: none !important;
+}
+
+@media (max-width: 1140px) {
+  .app-shell {
+    grid-template-columns: 1fr;
+  }
+  .sidebar-left,
+  .sidebar-right {
+    position: static;
+  }
+  .article-card {
+    padding: 28px 22px;
+  }
+}
