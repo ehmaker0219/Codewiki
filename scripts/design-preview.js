@@ -13,5 +13,6 @@
     {id:2, author_id:'design-sample',author_name:'샘플 사용자',author_class:'미리보기',author_mbti:'',category:'수정 요청',title:'수정 완료 예시',content:'완료 상태와 답변을 확인하는 샘플입니다.',status:'done',admin_note:'샘플 답변입니다.',created_at:'2026-11-17 17:00'}
   ]));
   document.getElementById('sidebarProfileSlot').textContent='DESIGN V2 · 샘플 데이터';
+  document.body.classList.add('authenticated');
   document.title='코드위키 · 디자인 V2 미리보기';
 })();
