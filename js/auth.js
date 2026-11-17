@@ -91,7 +91,8 @@
 
   const authGateOverlay = document.getElementById("authGateOverlay");
   const adminModal = document.getElementById("adminModal");
-  const adminBtnWrap = document.getElementById("adminBtnWrap");
+  const adminSidebarSlot = document.getElementById("adminSidebarSlot");
+  const sidebarProfileSlot = document.getElementById("sidebarProfileSlot");
 
   let authFormMode = "login"; // 'login' | 'signup'
   let authMessage = "";
@@ -176,35 +177,55 @@
     if (window.CodeWikiBoard) window.CodeWikiBoard.refreshBadge();
   }
 
-  // 로그인 후 상단바 우측 컨트롤 (관리자 승인 관리 버튼 + 로그아웃 버튼)
+  // 좌측 고정 사이드바 내 [학생 승인 관리 메뉴] + [하단 고정 유저 프로필 카드] 렌더링
   function renderTopbarAuthControls(user, pendingCount) {
-    if (!adminBtnWrap || !user) return;
-
+    if (!user) return;
     const isAdmin = user.role === "admin";
-    adminBtnWrap.innerHTML = `
-      ${
-        isAdmin
-          ? `
-        <button id="openAdminModalBtn" class="toss-chip-btn active" title="우리 반 학생 가입 승인 및 관리">
+    const initialChar = (user.full_name || "코").trim().charAt(0);
+
+    // 1) MAIN 섹션 내 관리자 메뉴
+    if (adminSidebarSlot) {
+      adminSidebarSlot.innerHTML = isAdmin
+        ? `
+        <button type="button" id="openAdminModalBtn" class="sb-menu-item">
+          <svg class="sb-icon" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+            <circle cx="9" cy="7" r="4"></circle>
+            <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+            <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+          </svg>
           <span>학생 승인 관리</span>
-          ${pendingCount > 0 ? `<span class="pending-badge">${pendingCount}</span>` : ""}
+          ${pendingCount > 0 ? `<span class="pending-badge" style="margin-left:auto;">${pendingCount}</span>` : ""}
         </button>
       `
-          : ""
-      }
-      <button id="logoutBtn" class="toss-chip-btn" title="로그아웃하고 초기 랜딩페이지로 돌아가기">
-        <span>${user.full_name} · 로그아웃</span>
-      </button>
-    `;
+        : "";
 
-    const openAdminBtn = document.getElementById("openAdminModalBtn");
-    if (openAdminBtn) {
-      openAdminBtn.addEventListener("click", openAdminApprovalModal);
+      document.getElementById("openAdminModalBtn")?.addEventListener("click", openAdminApprovalModal);
     }
 
-    const logoutBtn = document.getElementById("logoutBtn");
-    if (logoutBtn) {
-      logoutBtn.addEventListener("click", () => {
+    // 2) 좌측 사이드바 최하단 유저 프로필 카드 (Quest-On 하단 프로필 디자인)
+    if (sidebarProfileSlot) {
+      sidebarProfileSlot.innerHTML = `
+        <div class="sb-profile-card">
+          <div class="sb-avatar">${initialChar}</div>
+          <div class="sb-profile-info">
+            <div class="sb-profile-name">
+              <span>${user.full_name}</span>
+              ${isAdmin ? `<span class="verified-dot" title="관리자">✓</span>` : ""}
+            </div>
+            <div class="sb-profile-role">${isAdmin ? "관리자" : "우리 반 멤버"}</div>
+          </div>
+          <button type="button" id="logoutBtn" class="sb-logout-btn" title="로그아웃">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+              <polyline points="16 17 21 12 16 7"></polyline>
+              <line x1="21" y1="12" x2="9" y2="12"></line>
+            </svg>
+          </button>
+        </div>
+      `;
+
+      document.getElementById("logoutBtn")?.addEventListener("click", () => {
         if (!isSupabaseConfigured) {
           setDemoSession("logged-out");
         } else {

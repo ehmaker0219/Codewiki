@@ -104,6 +104,7 @@
 
     // 좌측 메뉴 활성 표시 잠시 해제
     document.querySelectorAll(".nav-doc-link.active").forEach(el => el.classList.remove("active"));
+    document.getElementById("sbHomeItem")?.classList.remove("active");
 
     const posts = await fetchPosts();
     const currentUser = window.CodeWikiAuth?.getCurrentUser();

@@ -9,6 +9,7 @@
 (function () {
   let currentDocId = "welcome-guide";
   const READ_DOCS_KEY = "codewiki_read_docs_v1";
+  const expandedCategories = new Set(["ch00", "ch01", "ch02"]);
 
   const categoryNav = document.getElementById("categoryNav");
   const totalDocCount = document.getElementById("totalDocCount");
@@ -19,6 +20,7 @@
   const summarySpecBox = document.getElementById("summarySpecBox");
   const backlinkBox = document.getElementById("backlinkBox");
   const hoverPreviewCard = document.getElementById("hoverPreviewCard");
+  const sbHomeItem = document.getElementById("sbHomeItem");
 
   function getReadDocs() {
     try {
@@ -71,39 +73,81 @@
     });
   }
 
-  // 좌측 위키독스 스타일 챕터 사이드바 & 상단 둘러보기 틀(Navbox) 렌더링
+  // 좌측 고정 사이드바(Quest-On 스타일 폴더 트리) & 상단 둘러보기 틀 렌더링
   function renderNavigation() {
     const allDocs = Object.values(window.WIKI_DOCS);
     const readSet = new Set(getReadDocs());
     totalDocCount.textContent = `${readSet.size}/${allDocs.length} 완료`;
 
-    // 1) 좌측 사이드바 (위키독스 책 목차 트리 스타일)
+    if (sbHomeItem) {
+      sbHomeItem.classList.toggle("active", currentDocId === "welcome-guide");
+    }
+
+    // 현재 보고 있는 문서의 부모 폴더는 자동 펼침
+    const curDoc = window.WIKI_DOCS[currentDocId];
+    if (curDoc?.categoryId) {
+      expandedCategories.add(curDoc.categoryId);
+    }
+
+    // 1) 좌측 사이드바 폴더 리스트 (Quest-On FOLDERS 감성)
     categoryNav.innerHTML = (window.WIKI_CATEGORIES || [])
       .map(cat => {
         const docsInCat = allDocs.filter(d => d.categoryId === cat.id);
+        const isOpen = expandedCategories.has(cat.id);
+        const hasActiveChild = docsInCat.some(d => d.id === currentDocId);
+
         return `
-          <div class="cat-group">
-            <div class="cat-group-title">
-              <span>${cat.name}</span>
-              ${docsInCat.length === 0 ? `<span class="empty-ch-tag">예정</span>` : ""}
-            </div>
-            ${docsInCat
-              .map(
-                d => `
-              <a href="#doc/${d.id}" class="nav-doc-link ${d.id === currentDocId ? "active" : ""}" data-doc="${d.id}">
-                <div style="display:flex; align-items:center; gap:7px; min-width:0;">
-                  ${d.stepNum ? `<span class="step-num-badge">${d.stepNum}</span>` : ""}
-                  <span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${d.title}</span>
-                </div>
-                ${readSet.has(d.id) ? `<span class="read-check-mark" title="학습 완료">✓</span>` : ""}
-              </a>
+          <div class="sb-folder-group ${isOpen ? "open" : ""}">
+            <button type="button" class="sb-folder-row ${hasActiveChild ? "has-active" : ""}" data-toggle-cat="${cat.id}">
+              <svg class="sb-folder-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+              </svg>
+              <span class="sb-folder-name">${cat.name}</span>
+              ${
+                docsInCat.length === 0
+                  ? `<span class="empty-ch-tag">예정</span>`
+                  : `<svg class="sb-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                      <polyline points="9 18 15 12 9 6"></polyline>
+                     </svg>`
+              }
+            </button>
+            ${
+              isOpen && docsInCat.length > 0
+                ? `
+              <div class="sb-folder-children">
+                ${docsInCat
+                  .map(
+                    d => `
+                  <a href="#doc/${d.id}" class="nav-doc-link ${d.id === currentDocId ? "active" : ""}" data-doc="${d.id}">
+                    <span class="step-num-badge">${d.stepNum || "문서"}</span>
+                    <span class="nav-doc-title-text">${d.title}</span>
+                    ${readSet.has(d.id) ? `<span class="read-check-mark" title="학습 완료">✓</span>` : ""}
+                  </a>
+                `
+                  )
+                  .join("")}
+              </div>
             `
-              )
-              .join("")}
+                : ""
+            }
           </div>
         `;
       })
       .join("");
+
+    // 폴더 클릭 시 펼치기/접기 토글
+    categoryNav.querySelectorAll("[data-toggle-cat]").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const catId = btn.getAttribute("data-toggle-cat");
+        if (expandedCategories.has(catId)) {
+          expandedCategories.delete(catId);
+        } else {
+          expandedCategories.add(catId);
+        }
+        renderNavigation();
+        bindWikiLinks();
+      });
+    });
 
     // 2) 상단 나무위키식 둘러보기 틀
     navboxBody.innerHTML = (window.WIKI_CATEGORIES || [])
@@ -620,8 +664,18 @@
   }
 
   function initControls() {
-    document.getElementById("sidebarToggle").addEventListener("click", () => {
-      document.getElementById("appShell").classList.toggle("sidebar-collapsed");
+    const appLayout = document.getElementById("appLayout");
+    const collapseBtn = document.getElementById("sidebarCollapseBtn");
+    const expandBtn = document.getElementById("sidebarExpandBtn");
+
+    collapseBtn?.addEventListener("click", () => {
+      appLayout?.classList.add("sidebar-collapsed");
+      expandBtn?.classList.remove("hidden");
+    });
+
+    expandBtn?.addEventListener("click", () => {
+      appLayout?.classList.remove("sidebar-collapsed");
+      expandBtn?.classList.add("hidden");
     });
 
     const navboxBodyEl = document.getElementById("navboxBody");
