@@ -444,6 +444,36 @@ code, pre, .mono {
   color: var(--text-muted);
   padding: 4px 10px;
   margin-bottom: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.empty-ch-tag {
+  font-size: 10.5px;
+  font-weight: 700;
+  color: var(--text-muted);
+  background: var(--bg-subtle);
+  padding: 2px 6px;
+  border-radius: 6px;
+}
+
+.step-num-badge {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--toss-blue);
+  background: var(--toss-blue-soft);
+  padding: 2px 6px;
+  border-radius: 6px;
+  flex-shrink: 0;
+}
+
+.read-check-mark {
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--toss-green);
+  flex-shrink: 0;
 }
 
 .nav-doc-link {
@@ -983,6 +1013,124 @@ body.quiz-mode .quiz-token.revealed {
   border-radius: var(--tds-radius-lg);
   padding: 22px;
   margin: 20px 0;
+}
+
+/* 블록 7: 위키독스 스타일 '실습 따라하기 (practice)' 스텝 블록 */
+.block-practice {
+  background: var(--bg-subtle);
+  border-radius: var(--tds-radius-lg);
+  padding: 22px 24px;
+  margin: 18px 0;
+}
+
+.practice-header {
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--text-strong);
+  margin-bottom: 16px;
+}
+
+.practice-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.practice-step-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  background: var(--bg-card);
+  border-radius: var(--tds-radius-md);
+  padding: 15px 18px;
+  box-shadow: var(--shadow-card);
+}
+
+.practice-step-num {
+  width: 26px;
+  height: 26px;
+  border-radius: 8px;
+  background: var(--toss-blue);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 800;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.practice-step-body {
+  flex: 1;
+}
+
+.practice-step-action {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-strong);
+}
+
+.practice-step-detail {
+  font-size: 13.5px;
+  color: var(--text-sub);
+  margin-top: 4px;
+}
+
+/* 위키독스 스타일 하단 [이전 페이지 / 다음 페이지] 네비게이션 */
+.wikidocs-pager-wrap {
+  margin-top: 48px;
+  padding-top: 28px;
+  border-top: 1px solid var(--border-hairline);
+}
+
+.read-complete-bar {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 14px;
+}
+
+.pager-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+.pager-card {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  background: var(--bg-subtle);
+  border-radius: var(--tds-radius-lg);
+  padding: 18px 22px;
+  text-decoration: none;
+  transition: background 0.15s, transform 0.15s var(--tds-spring);
+}
+
+.pager-card:hover:not(.disabled-pager) {
+  background: var(--toss-blue-soft);
+  transform: translateY(-2px);
+}
+
+.pager-card.next-pager {
+  text-align: right;
+}
+
+.pager-card.disabled-pager {
+  opacity: 0.45;
+  justify-content: center;
+}
+
+.pager-dir {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--toss-blue);
+}
+
+.pager-title {
+  font-size: 15.5px;
+  font-weight: 800;
+  color: var(--text-strong);
 }
 
 /* ==========================================================================

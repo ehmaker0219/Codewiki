@@ -1,0 +1,5 @@
+# 민감 정보 및 비밀번호 메모 파일 절대 업로드 금지
+*password*.txt
+*secret*.txt
+.env
+.env.*

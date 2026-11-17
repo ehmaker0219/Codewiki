@@ -2,12 +2,13 @@
  * ============================================================================
  * [코어 렌더링 엔진: js/app.js]
  * ----------------------------------------------------------------------------
- * js/data.js의 데이터를 읽어 좌측 메뉴, 상단 둘러보기 틀, 본문 블록, 목차,
- * 역링크, 검색창을 자동으로 그려주는 껍데기(프레임워크) 엔진입니다.
+ * 위키독스(WikiDocs) 스타일의 순차 커리큘럼 플로우(좌측 챕터 트리 + 하단 이전/다음
+ * 네비게이션 + 학습 완료 체크)와 나무위키식 상호 링크/역링크를 렌더링합니다.
  * ============================================================================
  */
 (function () {
   let currentDocId = "welcome-guide";
+  const READ_DOCS_KEY = "codewiki_read_docs_v1";
 
   const categoryNav = document.getElementById("categoryNav");
   const totalDocCount = document.getElementById("totalDocCount");
@@ -19,7 +20,25 @@
   const backlinkBox = document.getElementById("backlinkBox");
   const hoverPreviewCard = document.getElementById("hoverPreviewCard");
 
-  // 카테고리 이름 찾기 헬퍼
+  function getReadDocs() {
+    try {
+      return JSON.parse(localStorage.getItem(READ_DOCS_KEY) || "[]");
+    } catch (e) {
+      return [];
+    }
+  }
+
+  function toggleReadDoc(docId) {
+    const list = new Set(getReadDocs());
+    if (list.has(docId)) {
+      list.delete(docId);
+    } else {
+      list.add(docId);
+    }
+    localStorage.setItem(READ_DOCS_KEY, JSON.stringify([...list]));
+    renderDocument(currentDocId);
+  }
+
   function getCategoryName(categoryId) {
     const found = (window.WIKI_CATEGORIES || []).find(c => c.id === categoryId);
     return found ? found.name : categoryId;
@@ -52,24 +71,31 @@
     });
   }
 
-  // 좌측 카테고리 사이드바 & 상단 둘러보기 틀(Navbox) 자동 생성
+  // 좌측 위키독스 스타일 챕터 사이드바 & 상단 둘러보기 틀(Navbox) 렌더링
   function renderNavigation() {
     const allDocs = Object.values(window.WIKI_DOCS);
-    totalDocCount.textContent = `${allDocs.length}개 문서`;
+    const readSet = new Set(getReadDocs());
+    totalDocCount.textContent = `${readSet.size}/${allDocs.length} 완료`;
 
-    // 1) 좌측 사이드바
+    // 1) 좌측 사이드바 (위키독스 책 목차 트리 스타일)
     categoryNav.innerHTML = (window.WIKI_CATEGORIES || [])
       .map(cat => {
         const docsInCat = allDocs.filter(d => d.categoryId === cat.id);
-        if (docsInCat.length === 0) return "";
         return `
           <div class="cat-group">
-            <div class="cat-group-title">${cat.name}</div>
+            <div class="cat-group-title">
+              <span>${cat.name}</span>
+              ${docsInCat.length === 0 ? `<span class="empty-ch-tag">예정</span>` : ""}
+            </div>
             ${docsInCat
               .map(
                 d => `
               <a href="#doc/${d.id}" class="nav-doc-link ${d.id === currentDocId ? "active" : ""}" data-doc="${d.id}">
-                <span>${d.title}</span>
+                <div style="display:flex; align-items:center; gap:7px; min-width:0;">
+                  ${d.stepNum ? `<span class="step-num-badge">${d.stepNum}</span>` : ""}
+                  <span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${d.title}</span>
+                </div>
+                ${readSet.has(d.id) ? `<span class="read-check-mark" title="학습 완료">✓</span>` : ""}
               </a>
             `
               )
@@ -91,7 +117,9 @@
               ${docsInCat
                 .map(
                   d => `
-                <a href="#doc/${d.id}" class="wiki-link" data-doc="${d.id}">${d.title}</a>
+                <a href="#doc/${d.id}" class="wiki-link" data-doc="${d.id}">
+                  ${d.stepNum ? `<small style="opacity:0.75;">[${d.stepNum}]</small> ` : ""}${d.title}
+                </a>
               `
                 )
                 .join("")}
@@ -120,13 +148,35 @@
     });
   }
 
-  // 개별 블록(Block) 렌더러 (7종 블록 지원)
+  // 개별 블록(Block) 렌더러 (8종 블록 지원: practice 따라하기 블록 포함)
   function renderBlock(block, blockIdx) {
     switch (block.type) {
       case "text":
         return (block.paragraphs || [])
           .map(p => `<p class="block-p">${parseInline(p)}</p>`)
           .join("");
+
+      case "practice":
+        return `
+          <div class="block-practice">
+            ${block.title ? `<div class="practice-header">🖥️ ${parseInline(block.title)}</div>` : ""}
+            <div class="practice-steps">
+              ${(block.steps || [])
+                .map(
+                  st => `
+                <div class="practice-step-row">
+                  <div class="practice-step-num">${st.step}</div>
+                  <div class="practice-step-body">
+                    <div class="practice-step-action">${parseInline(st.action)}</div>
+                    ${st.detail ? `<div class="practice-step-detail">${parseInline(st.detail)}</div>` : ""}
+                  </div>
+                </div>
+              `
+                )
+                .join("")}
+            </div>
+          </div>
+        `;
 
       case "flow":
         return `
@@ -219,18 +269,27 @@
     }
   }
 
-  // 메인 문서 렌더링
+  // 메인 문서 렌더링 (하단 위키독스식 이전/다음 챕터 이동 바 포함)
   function renderDocument(docId) {
-    const doc = window.WIKI_DOCS[docId] || Object.values(window.WIKI_DOCS)[0];
+    const docList = Object.values(window.WIKI_DOCS);
+    const currentIndex = docList.findIndex(d => d.id === docId);
+    const doc = currentIndex >= 0 ? docList[currentIndex] : docList[0];
     if (!doc) return;
     currentDocId = doc.id;
+
+    const prevDoc = currentIndex > 0 ? docList[currentIndex - 1] : null;
+    const nextDoc = currentIndex >= 0 && currentIndex < docList.length - 1 ? docList[currentIndex + 1] : null;
+    const isRead = getReadDocs().includes(doc.id);
 
     const catName = getCategoryName(doc.categoryId);
 
     let widgetCounter = 0;
     articleContainer.innerHTML = `
       <div class="article-top-meta">
-        <span class="category-crumb">${catName}</span>
+        <div style="display:flex; align-items:center; gap:8px;">
+          <span class="category-crumb">${catName}</span>
+          ${doc.stepNum ? `<span class="tcode-pill-badge">Chapter ${doc.stepNum}</span>` : ""}
+        </div>
         <div class="tcode-badge-row">
           ${(doc.tcodes || []).map(tc => `<span class="tcode-pill-badge">T-Code · ${tc}</span>`).join("")}
         </div>
@@ -270,7 +329,44 @@
           )
           .join("")}
       </div>
+
+      <!-- 위키독스 스타일 하단 학습 완료 체크 & [이전 챕터 / 다음 챕터] 네비게이션 -->
+      <div class="wikidocs-pager-wrap">
+        <div class="read-complete-bar">
+          <button id="toggleReadBtn" class="toss-chip-btn ${isRead ? "active" : ""}">
+            <span>${isRead ? "✓ 이 챕터 학습 완료됨" : "○ 이 챕터 학습 완료 체크하기"}</span>
+          </button>
+        </div>
+        <div class="pager-grid">
+          ${
+            prevDoc
+              ? `
+            <a href="#doc/${prevDoc.id}" class="pager-card prev-pager" data-doc="${prevDoc.id}">
+              <span class="pager-dir">← 이전 페이지 (${prevDoc.stepNum || "Prev"})</span>
+              <strong class="pager-title">${prevDoc.title}</strong>
+            </a>
+          `
+              : `<div class="pager-card disabled-pager"><span class="pager-dir">첫 번째 페이지입니다</span></div>`
+          }
+          ${
+            nextDoc
+              ? `
+            <a href="#doc/${nextDoc.id}" class="pager-card next-pager" data-doc="${nextDoc.id}">
+              <span class="pager-dir">다음 페이지 (${nextDoc.stepNum || "Next"}) →</span>
+              <strong class="pager-title">${nextDoc.title}</strong>
+            </a>
+          `
+              : `<div class="pager-card disabled-pager" style="text-align:right;"><span class="pager-dir">마지막 페이지입니다</span></div>`
+          }
+        </div>
+      </div>
     `;
+
+    // 학습 완료 토글 버튼
+    const toggleReadBtn = document.getElementById("toggleReadBtn");
+    if (toggleReadBtn) {
+      toggleReadBtn.addEventListener("click", () => toggleReadDoc(doc.id));
+    }
 
     // 인터랙티브 위젯 슬롯 마운트
     articleContainer.querySelectorAll("[data-widget-id]").forEach(slot => {
@@ -360,7 +456,6 @@
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
-  // 모든 .wiki-link 및 좌측 메뉴 링크에 클릭 & 마우스오버 프리뷰 바인딩
   function bindWikiLinks() {
     document.querySelectorAll("[data-doc]").forEach(el => {
       el.onclick = e => {
@@ -400,13 +495,12 @@
     hoverPreviewCard.style.top = `${y}px`;
   }
 
-  // 검색바 초기화
   function initSearch() {
     const searchInput = document.getElementById("searchInput");
     const searchDropdown = document.getElementById("searchDropdown");
 
     window.addEventListener("keydown", e => {
-      if (e.key === "/" && document.activeElement !== searchInput) {
+      if (e.key === "/" && document.activeElement !== searchInput && !["INPUT", "TEXTAREA"].includes(document.activeElement.tagName)) {
         e.preventDefault();
         searchInput.focus();
       } else if (e.key === "Escape") {
@@ -437,7 +531,7 @@
             d => `
           <div class="search-item" data-doc="${d.id}">
             <div>
-              <div class="search-item-title">${d.title}</div>
+              <div class="search-item-title">${d.stepNum ? `[${d.stepNum}] ` : ""}${d.title}</div>
               <div class="search-item-sub">${d.subtitle || getCategoryName(d.categoryId)}</div>
             </div>
             <span class="tcode-pill-badge">${(d.tcodes || [])[0] || "문서"}</span>
@@ -465,14 +559,11 @@
     });
   }
 
-  // 상단 버튼 및 토글 컨트롤 초기화
   function initControls() {
-    // 좌측 사이드바 접기/펼치기
     document.getElementById("sidebarToggle").addEventListener("click", () => {
       document.getElementById("appShell").classList.toggle("sidebar-collapsed");
     });
 
-    // 상단 둘러보기 틀 접기/펼치기
     const navboxBodyEl = document.getElementById("navboxBody");
     const navboxFoldBtn = document.getElementById("navboxFoldBtn");
     document.getElementById("navboxToggle").addEventListener("click", () => {
@@ -480,7 +571,6 @@
       navboxFoldBtn.textContent = hidden ? "펼치기 ▼" : "접기 ▲";
     });
 
-    // 암기 모드 (빈칸 가리기) 토글
     const quizModeBtn = document.getElementById("quizModeBtn");
     quizModeBtn.addEventListener("click", () => {
       const isQuiz = document.body.classList.toggle("quiz-mode");
@@ -491,7 +581,6 @@
       }
     });
 
-    // 취소선 메모 토글
     const humorModeBtn = document.getElementById("humorModeBtn");
     humorModeBtn.addEventListener("click", () => {
       const hideHumor = document.body.classList.toggle("hide-humor");
@@ -499,7 +588,6 @@
       humorModeBtn.querySelector("span").textContent = hideHumor ? "취소선 메모 OFF" : "취소선 메모 ON";
     });
 
-    // 라이트/다크 테마 토글
     const themeToggleBtn = document.getElementById("themeToggleBtn");
     const themeIcon = document.getElementById("themeIcon");
     themeToggleBtn.addEventListener("click", () => {

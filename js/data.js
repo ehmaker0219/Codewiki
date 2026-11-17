@@ -2,56 +2,46 @@
  * ============================================================================
  * [유지보수 전용 데이터 파일: js/data.js]
  * ----------------------------------------------------------------------------
- * 앞으로 배우시는 내용을 말씀해주시면, UI 코드(HTML/CSS/앱 엔진)는 건드리지 않고
- * 오직 이 파일의 배열/객체에 블록만 하나씩 추가·수정하여 위키를 확장합니다.
- *
- * [지원하는 인라인 문법 (문장 안에서 자유롭게 사용)]
- *  - [[문서ID|표시이름]] : 다른 개념 문서로 이동하는 하이퍼링크 + 마우스오버 프리뷰 + 자동 역링크
- *  - {{핵심키워드}}       : 상단 '암기 모드 ON' 클릭 시 빈칸으로 가려지는 복습용 키워드
- *  - ~~취소선 메모~~      : 상단 '취소선 메모 ON/OFF'로 켰다 끌 수 있는 나무위키식 비유/사족
- *  - **굵은글씨** / `코드` : 강조 및 인라인 코드 배지
- *
- * [지원하는 시각적 블록(blocks) 타입 6종]
- *  1. { type: "text", paragraphs: ["문단1", "문단2"] }
- *  2. { type: "flow", caption: "흐름도 제목", steps: [{ badge, title, desc }] }
- *  3. { type: "compare", items: [{ tag, title, points: [] }] }
- *  4. { type: "callout", style: "tip" | "point" | "warn", title: "제목", body: "내용" }
- *  5. { type: "table", headers: ["열1", "열2"], rows: [["값1", "값2"]] }
- *  6. { type: "code", label: "ABAP", code: "SELECT * ..." }
- *  7. { type: "widget", widgetId: "memory-sim" | "layer-explorer" }
+ * 위키독스 《SAP ERP 따라하기 (ABAP · FI · CO · MM · SD · PP)》 스타일의
+ * 순차적 커리큘럼 트리 + 나무위키식 상호 하이퍼링크 + 토스 디자인 블록 구조입니다.
  * ============================================================================
  */
 
-// 1. 좌측 메뉴 및 둘러보기 틀에 표시될 카테고리 목록 (언제든 추가/순서 변경 가능)
+// 1. 위키독스 스타일 대단원(Chapter) 구성
 window.WIKI_CATEGORIES = [
-  { id: "guide", name: "0. 위키 사용법 & 템플릿" },
-  { id: "arch", name: "1. SAP 기초 & 아키텍처" },
-  { id: "ddic", name: "2. Data Dictionary (SE11)" },
-  { id: "abap-core", name: "3. ABAP 문법 & 메모리" },
-  { id: "sql-rap", name: "4. SQL · 화면 · 최신 기술" }
+  { id: "ch00", code: "00", name: "00. 프롤로그 & 코드위키 가이드" },
+  { id: "ch01", code: "01", name: "01. SAP ERP 개요 & 시작하기" },
+  { id: "ch02", code: "02", name: "02. ABAP 기초 및 개발 실습" },
+  { id: "ch03", code: "03", name: "03. FI (재무회계) 따라하기" },
+  { id: "ch04", code: "04", name: "04. CO (관리회계) 따라하기" },
+  { id: "ch05", code: "05", name: "05. MM (자재관리) 따라하기" },
+  { id: "ch06", code: "06", name: "06. SD (영업유통) 따라하기" },
+  { id: "ch07", code: "07", name: "07. PP (생산관리) 따라하기" },
+  { id: "ch08", code: "08", name: "08. 모듈 통합 프로세스 (E2E)" }
 ];
 
-// 2. 자주 쓰는 T-Code 사전 (배우실 때마다 여기에 한 줄씩 추가)
+// 2. 자주 쓰는 T-Code 빠른 사전 (배우실 때마다 한 줄씩 추가)
 window.WIKI_TCODES = [
-  { code: "SE11", label: "ABAP Dictionary", docId: "sample-se11" },
-  { code: "SE38", label: "ABAP Editor", docId: "welcome-guide" },
-  { code: "SE80", label: "Object Navigator", docId: "sample-architecture" }
+  { code: "SE11", label: "ABAP Dictionary", docId: "ch02-ddic" },
+  { code: "SE38", label: "ABAP Editor", docId: "ch02-abap-intro" },
+  { code: "SE80", label: "Object Navigator", docId: "ch01-erp-overview" }
 ];
 
-// 3. 위키 문서 저장소 (배우신 내용을 저에게 말씀해주시면 여기에 차곡차곡 쌓입니다)
+// 3. 위키 문서 저장소 (위키독스처럼 순서대로 이전/다음 페이지가 자동 연결됩니다)
 window.WIKI_DOCS = {
   "welcome-guide": {
     id: "welcome-guide",
+    stepNum: "00-1",
     title: "코드위키 (CODE WIKI) 프레임워크 가이드",
-    subtitle: "배우는 내용을 말만 하면 아래 블록들로 자동 조립되는 모듈형 SAP 학습 위키",
-    categoryId: "guide",
+    subtitle: "위키독스식 순차 학습 플로우 + 나무위키식 개념 연결 + 토스 스타일 UI",
+    categoryId: "ch00",
     tcodes: ["SE38", "SE11"],
-    summary: "오늘 배운 개념을 편하게 말씀만 해주세요! 줄글, 흐름도, 비교 카드, 빈칸 암기 키워드로 깔끔하게 정리해 넣을 수 있는 코드위키 기본 뼈대입니다.",
+    summary: "위키독스처럼 좌측 목차와 하단 [이전/다음] 버튼으로 순서대로 따라가며 공부하고, 모르는 용어는 나무위키처럼 링크에 마우스를 올려 즉시 확인하는 우리 반 전용 위키입니다.",
     specs: {
       "사이트명": "코드위키 (ㅋㄷㅇㅋ)",
-      "디자인 테마": "Toss Seed Design (라이트/다크)",
-      "유지보수 방식": "100% 데이터 분리형 (js/data.js)",
-      "특수 기능": "링크 프리뷰 · 역링크 · 빈칸 암기 모드"
+      "학습 플로우": "위키독스형 순차 커리큘럼 + 따라하기 스텝",
+      "개념 연결": "나무위키형 양방향 링크 & 역링크",
+      "접근 권한": "우리 반 승인제 (Admin Approval)"
     },
     sections: [
       {
@@ -64,72 +54,69 @@ window.WIKI_DOCS = {
         ]
       },
       {
-        title: "인라인 문법 3가지 (링크 · 빈칸 암기 · 취소선 사족)",
+        title: "위키독스 스타일 '실습 따라하기 (practice)' 블록 예시",
         blocks: [
           {
             type: "text",
             paragraphs: [
-              "1) **개념 간 하이퍼링크**: 문장 중간에 [[sample-architecture|SAP 기본 구조 (예시 문서)]]나 [[sample-se11|SE11 데이터 사전 (예시 문서)]]처럼 연결해 두면, 마우스를 올렸을 때 **토스 스타일 미니 요약 카드**가 뜨고 클릭 시 바로 이동합니다. 또한 연결 당한 문서 우측 하단에는 자동으로 **역링크**가 생성됩니다.",
-              "2) **빈칸 암기 토큰**: 중요한 시험 키워드나 개념어를 {{Internal Table}} 또는 {{MANDT}}처럼 감싸두면, 우측 상단의 **[암기 모드 OFF]** 버튼을 눌렀을 때 가림막 처리되어 클릭하며 스스로 테스트할 수 있습니다.",
-              "3) **나무위키식 취소선 메모**: 공부하다가 느낀 나만의 비유나 드립은 ~~이렇게 취소선으로 적어두고 상단 버튼으로 언제든 숨길 수 있습니다.~~"
-            ]
-          }
-        ]
-      },
-      {
-        title: "시각화 블록 ①: 단계별 흐름도 (Flow Block)",
-        blocks: [
-          {
-            type: "text",
-            paragraphs: [
-              "프로세스 순서나 계층 간 이동을 배우셨을 때는 복잡한 그림을 그릴 필요 없이 텍스트만 주시면 아래처럼 **단계별 카드 흐름도**로 자동 변환됩니다."
+              "수업에서 강사님과 함께 따라 해본 실습 순서(T-Code 입력 → 조건 세팅 → 실행)를 말씀해주시면 아래처럼 **Step-by-Step 따라하기 블록**으로 깔끔하게 정리해 드립니다."
             ]
           },
           {
-            type: "flow",
-            caption: "예시: 앞으로 우리가 문서를 업데이트하는 흐름",
+            type: "practice",
+            title: "실습 따라하기 예시: SE11에서 테이블 구조 조회하기",
             steps: [
               {
-                badge: "STEP 1",
-                title: "수업에서 개념 학습",
-                desc: "새로 배운 개념이나 헷갈리는 부분을 채팅으로 편하게 전달"
+                step: "1",
+                action: "Command Field에 `SE11`을 입력하고 Enter를 누릅니다.",
+                detail: "ABAP Dictionary 초기 화면으로 이동합니다."
               },
               {
-                badge: "STEP 2",
-                title: "맞춤 블록 조립",
-                desc: "흐름도·비교표·인터랙티브 위젯 중 가장 잘 어울리는 블록으로 구성"
+                step: "2",
+                action: "**Database table** 라디오버튼을 선택하고 입력창에 `SFLIGHT`를 입력합니다.",
+                detail: "항공편 운항 일정 표준 테이블입니다. [[ch02-ddic|2-2. Data Dictionary (SE11)]] 문서에서 자세히 다룹니다."
               },
               {
-                badge: "STEP 3",
-                title: "하이퍼링크 & 복습",
-                desc: "기존 문서와 양방향 링크로 연결하고 암기 모드로 복습"
+                step: "3",
+                action: "하단 **[Display (조회)]** 버튼(`F7`)을 클릭하여 필드와 Key 구조를 확인합니다.",
+                detail: "첫 번째 필드가 {{MANDT}} (Client 키)인지 확인해 보세요!"
               }
             ]
           }
         ]
       },
       {
-        title: "시각화 블록 ②: 2단 비교 카드 & 콜아웃 박스",
+        title: "시각적 개념 블록 (흐름도 · 비교 카드 · 콜아웃 · 표)",
         blocks: [
+          {
+            type: "flow",
+            caption: "모듈 통합 E2E 프로세스 흐름도 블록 예시",
+            steps: [
+              { badge: "SD (영업)", title: "판매 오더 수주", desc: "고객 주문 접수 및 가용성 점검" },
+              { badge: "MM / PP", title: "자재 조달 & 생산", desc: "MRP 실행 후 구매발주(PO) 및 생산오더" },
+              { badge: "SD / MM", title: "출하 및 출고", desc: "고객에게 제품 배송 및 재고 차감" },
+              { badge: "FI / CO", title: "회계 전표 & 원가", desc: "매출채권(AR) 및 매출원가 자동 기표" }
+            ]
+          },
           {
             type: "compare",
             items: [
               {
                 tag: "비교 카드 A",
-                title: "헷갈리는 개념 A (예: Internal Table)",
+                title: "FI (Financial Accounting, 재무회계)",
                 points: [
-                  "두 개념의 차이점을 나란히 비교할 때 쓰는 블록입니다.",
-                  "핵심 특징을 글머리 기호로 한눈에 대조할 수 있습니다.",
-                  "{{다중 행(Multi-row)}} 데이터를 메모리에 담는 그릇"
+                  "**외부 이해관계자**(주주, 세무서, 은행) 보고 목적",
+                  "법적 기준(K-IFRS)을 준수하는 재무상태표·손익계산서 작성",
+                  "핵심 서브모듈: {{G/L}}(총계정원장), {{AP}}(매입채무), {{AR}}(매출채권), {{AA}}(자산회계)"
                 ]
               },
               {
                 tag: "비교 카드 B",
-                title: "헷갈리는 개념 B (예: Work Area)",
+                title: "CO (Controlling, 관리회계)",
                 points: [
-                  "복잡한 줄글 대신 카드로 쪼개어 시각적 피로도를 낮춥니다.",
-                  "모바일이나 좁은 화면에서는 자동으로 위아래로 정렬됩니다.",
-                  "{{단 한 줄(Single-row)}} 데이터만 담는 작업용 접시"
+                  "**내부 경영진**의 의사결정 및 원가 절감·수익성 관리 목적",
+                  "부서별 비용 통제 및 제품별 실제 제조원가 정밀 산출",
+                  "핵심 서브모듈: {{CCA}}(코스트센터), {{PC}}(제품원가), {{PA}}(수익성분석)"
                 ]
               }
             ]
@@ -137,49 +124,25 @@ window.WIKI_DOCS = {
           {
             type: "callout",
             style: "tip",
-            title: "💡 꿀팁 / 핵심 포인트 콜아웃 블록 (tip · point · warn 3가지 색상 지원)",
-            body: "강사님이 강조하신 시험 포인트나 실무 주의사항은 이렇게 눈에 띄는 파스텔 콜아웃 박스로 분리해 드립니다."
-          }
-        ]
-      },
-      {
-        title: "시각화 블록 ③: 표(Table) · 코드(Code) · 인터랙티브 위젯",
-        blocks: [
-          {
-            type: "table",
-            headers: ["블록 이름", "언제 쓰나요?", "유지보수 난이도"],
-            rows: [
-              ["flow (흐름도)", "실행 순서, 계층 구조, 데이터 이동 경로 설명 시", "매우 쉬움 (배열 추가)"],
-              ["compare (비교)", "A vs B 개념 대조, 구문법 vs 신문법 비교 시", "매우 쉬움"],
-              ["widget (위젯)", "직접 클릭하며 값이 바뀌는 시뮬레이터가 필요할 때", "맞춤 제작 지원"]
-            ]
-          },
-          {
-            type: "code",
-            label: "ABAP 코드 블록 예시 (우측 상단 복사 버튼 자동 포함)",
-            code: `SELECT * FROM sflight
-  INTO TABLE @DATA(lt_flight)
-  UP TO 5 ROWS.`
-          },
-          {
-            type: "widget",
-            widgetId: "interactive-demo"
+            title: "💡 앞으로 업데이트하는 방법",
+            body: "오늘 수업에서 배운 진도나 노트를 채팅으로 편하게 던져주시면, 해당 챕터(01~08) 아래에 새 문서를 추가하고 기존 문서들과 하이퍼링크로 촘촘하게 연결해 드립니다!"
           }
         ]
       }
     ]
   },
 
-  "sample-architecture": {
-    id: "sample-architecture",
-    title: "[빈 슬롯 예시] SAP 기본 아키텍처",
-    subtitle: "배운 내용을 말씀해주시면 이곳에 채워집니다",
-    categoryId: "arch",
+  "ch01-erp-overview": {
+    id: "ch01-erp-overview",
+    stepNum: "01-1",
+    title: "SAP ERP 시스템 개요 및 화면 구성",
+    subtitle: "01. SAP ERP 개요 & 시작하기 — 첫 번째 노트 슬롯",
+    categoryId: "ch01",
     tcodes: ["SE80"],
-    summary: "이 문서는 카테고리 연결과 [[welcome-guide|가이드 문서]] 간의 하이퍼링크·역링크 동작을 확인하기 위한 샘플 슬롯입니다.",
+    summary: "SAP ERP의 전반적인 개념과 SAP Logon / GUI 화면 구성을 정리할 문서 슬롯입니다. (내용을 말씀해주시면 채워집니다!)",
     specs: {
-      "상태": "내용 입력 대기 중",
-      "카테고리": "1. SAP 기초 & 아키텍처"
+      "챕터": "01. SAP ERP 개요",
+      "상태": "학습 내용 입력 대기 중"
     },
     sections: [
       {
@@ -188,7 +151,7 @@ window.WIKI_DOCS = {
           {
             type: "text",
             paragraphs: [
-              "수업에서 아키텍처나 시스템 구조를 배우신 뒤 말씀해주시면, 이 자리에 깔끔한 시각적 블록들이 채워집니다. [[sample-se11|SE11 데이터 사전]] 문서와도 자유롭게 연결할 수 있습니다."
+              "이 문서는 **01. SAP ERP 개요 & 시작하기** 챕터의 첫 번째 페이지입니다. 수업에서 배우신 내용을 말씀해주시면 [[welcome-guide|코드위키 가이드]]의 시각적 블록들로 정리됩니다."
             ]
           }
         ]
@@ -196,16 +159,17 @@ window.WIKI_DOCS = {
     ]
   },
 
-  "sample-se11": {
-    id: "sample-se11",
-    title: "[빈 슬롯 예시] Data Dictionary (SE11)",
-    subtitle: "배운 내용을 말씀해주시면 이곳에 채워집니다",
-    categoryId: "ddic",
-    tcodes: ["SE11"],
-    summary: "SE11 관련 개념(Domain, Data Element, Table 등)을 배우시는 대로 하나씩 채워 넣을 공간입니다.",
+  "ch02-abap-intro": {
+    id: "ch02-abap-intro",
+    stepNum: "02-1",
+    title: "ABAP 개요 및 개발 환경 이해",
+    subtitle: "02. ABAP 기초 및 개발 실습 — 첫 번째 노트 슬롯",
+    categoryId: "ch02",
+    tcodes: ["SE38", "SE80"],
+    summary: "ABAP 언어의 특징과 개발 환경(SE38, SE80, ADT)을 정리할 문서 슬롯입니다.",
     specs: {
-      "상태": "내용 입력 대기 중",
-      "대표 T-Code": "SE11"
+      "챕터": "02. ABAP 기초 및 개발",
+      "관련 T-Code": "SE38, SE80"
     },
     sections: [
       {
@@ -214,7 +178,34 @@ window.WIKI_DOCS = {
           {
             type: "text",
             paragraphs: [
-              "[[welcome-guide|위키 가이드]]에서 보신 비교 카드나 계층 조립 위젯을 활용해 세련되게 정리해 드릴 예정입니다."
+              "다음 페이지인 [[ch02-ddic|02-2. Data Dictionary (SE11)]]와 하단 **[다음 챕터]** 버튼으로 자연스럽게 연결됩니다."
+            ]
+          }
+        ]
+      }
+    ]
+  },
+
+  "ch02-ddic": {
+    id: "ch02-ddic",
+    stepNum: "02-2",
+    title: "Data Dictionary (SE11) 및 테이블 관리",
+    subtitle: "02. ABAP 기초 및 개발 실습 — 두 번째 노트 슬롯",
+    categoryId: "ch02",
+    tcodes: ["SE11"],
+    summary: "SE11 데이터 사전(Domain, Data Element, Table) 실습 내용을 채워 넣을 문서 슬롯입니다.",
+    specs: {
+      "챕터": "02. ABAP 기초 및 개발",
+      "관련 T-Code": "SE11"
+    },
+    sections: [
+      {
+        title: "내용 추가 대기 중",
+        blocks: [
+          {
+            type: "text",
+            paragraphs: [
+              "배우신 내용을 말씀해주시면 이곳에 정리됩니다. 이전 문서인 [[ch02-abap-intro|02-1. ABAP 개요]]로 돌아가거나 다음 챕터로 이동할 수 있습니다."
             ]
           }
         ]
