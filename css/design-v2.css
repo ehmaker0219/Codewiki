@@ -132,3 +132,13 @@ body { font-family:Tahoma,'Pretendard',Arial,sans-serif; }
   .workspace-area { height:auto; margin:0; padding:0; }
   .app-shell,.app-shell.single-col,.main-content { height:auto; overflow:visible; padding:0; border:0; }
 }
+
+/* Track switch belongs to the global command bar. */
+.ws-topbar-right { margin-left:auto; flex-shrink:0; }
+.ws-topbar-right .brand-track-toggle { margin:0; width:260px; height:25px; }
+@media(max-width:600px) {
+  .ws-topbar-right .brand-track-toggle { width:166px; }
+  .ws-topbar-right .brand-track-btn { font-size:9px; padding:3px 4px; }
+  .workspace-topbar { gap:8px; }
+  .ws-topbar-left { min-width:0; }
+}

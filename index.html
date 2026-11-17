@@ -9,11 +9,11 @@
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/style.css?v=9d45cfc713b2" />
   <link rel="stylesheet" href="css/theme.css?v=e737a67e44a2" />
-  <link rel="stylesheet" href="css/design-v2.css?v=sap-3" />
+  <link rel="stylesheet" href="css/design-v2.css?v=sap-4" />
 </head>
 <body>
   <div class="sap-window-title">CodeWiki: Display Knowledge Repository <span>DESIGN V2 · CLASSIC GUI</span></div>
-  <nav class="sap-command-bar" aria-label="문서 도구"><strong>ABAP Workbench — 코드위키</strong><a href="#doc/welcome-abap">홈</a><a href="#doc/learning-roadmap">목차</a><a href="#doc/sap-tcode-reference">T-Code</a><a href="#doc/sap-gui-shortcuts">단축키</a></nav>
+  <nav class="sap-command-bar" aria-label="문서 도구"><strong>ABAP Workbench — 코드위키</strong></nav>
   <div class="sap-tool-row" role="navigation" aria-label="작업 도구"><a href="#doc/welcome-abap" title="홈"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 4 6 12l8 8M6 12h16"/></svg>홈</a><a href="#doc/learning-roadmap"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h16v16H4zM7 8h10M7 12h10M7 16h7"/></svg>전체 목차</a><span class="sap-tool-separator"></span><a href="#doc/sap-tcode-reference">T-Code</a><a href="#doc/sap-gui-shortcuts">단축키</a><a href="#doc/abap-useful-syntax">문법 사전</a><span class="sap-tool-separator"></span><button type="button" id="sapPrintBtn">인쇄</button></div>
   <footer class="sap-statusbar"><span>✓ 문서를 선택하세요</span><span>ABAP</span><span>코드위키 · 디자인 미리보기</span></footer>
   <!-- 로그인 후 전체 레이아웃: 좌측 고정 일체형 사이드바 + 우측 워크스페이스 -->
@@ -41,10 +41,7 @@
           <span class="brand-name">Repository Browser</span>
         </a>
 
-        <div class="brand-track-toggle" id="brandTrackToggle" role="group" aria-label="학습 트랙 전환">
-          <button type="button" class="brand-track-btn active" data-track-switch="abap">ABAP</button>
-          <button type="button" class="brand-track-btn" data-track-switch="ui5" disabled title="업데이트 준비 중">UI5/Fiori · 준비 중</button>
-        </div>
+
       </div>
 
       <!-- 중앙 스크롤 메뉴 영역 -->
@@ -114,6 +111,10 @@
         </div>
 
         <div class="ws-topbar-right">
+        <div class="brand-track-toggle" id="brandTrackToggle" role="group" aria-label="학습 트랙 전환">
+          <button type="button" class="brand-track-btn active" data-track-switch="abap">ABAP</button>
+          <button type="button" class="brand-track-btn" data-track-switch="ui5" disabled title="업데이트 준비 중">UI5/Fiori · 준비 중</button>
+        </div>
           <button id="quizModeBtn" class="toss-chip-btn hidden" title="빈칸 복습 모드">
             <span>암기 모드</span>
           </button>
