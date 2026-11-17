@@ -1,582 +1,307 @@
 /**
  * ============================================================================
- * [유지보수 전용 데이터 파일: js/data.js]
- * ----------------------------------------------------------------------------
- * ★ 나무위키식 유기적 자동 링크(Auto-Link) 지원!
- * 각 문서에 `aliases: ["키워드1", "키워드2"]`만 등록해 두면, 다른 모든 문서의 설명글에서
- * 해당 단어가 등장할 때마다 자동으로 하이퍼링크 + 마우스오버 요약 프리뷰 + 역링크가 연결됩니다!
- * (예: 문장에 그냥 "Function module은 se37을 통해 만든다"라고만 적어도
- *  'Function module' -> function-module 문서, 'se37' -> tcode-se37 문서로 자동 연결!)
+ * [데이터 저장소 틀: js/data.js]
  * ============================================================================
  */
 
-// 1. 좌측 사이드바 폴더 구성 (커리큘럼 챕터 + 개념/T-Code 도감)
 window.WIKI_CATEGORIES = [
-  { id: "ch00", name: "00. 프롤로그 & 가이드" },
-  { id: "ch01", name: "01. SAP ERP 개요 & 시작하기" },
-  { id: "ch02", name: "02. ABAP 기초 및 개발 실습" },
-  { id: "ch03", name: "03. FI (재무회계) 따라하기" },
-  { id: "ch04", name: "04. CO (관리회계) 따라하기" },
-  { id: "ch05", name: "05. MM (자재관리) 따라하기" },
-  { id: "ch06", name: "06. SD (영업유통) 따라하기" },
-  { id: "ch07", name: "07. PP (생산관리) 따라하기" },
-  { id: "ch08", name: "08. 모듈 통합 프로세스 (E2E)" },
-  { id: "dict-concept", name: "📌 핵심 개념 위키 사전" },
-  { id: "dict-tcode", name: "⌨️ T-Code 전용 문서" }
+  { id: "abap-curriculum", track: "abap", name: "커리큘럼" },
+  { id: "abap-concept", track: "abap", name: "개념 사전" },
+  { id: "abap-tcode", track: "abap", name: "T-Code" },
+  { id: "abap-shortcuts", track: "abap", name: "단축키 모음" },
+
+  { id: "ui5-curriculum", track: "ui5", name: "커리큘럼" },
+  { id: "ui5-concept", track: "ui5", name: "개념 사전" },
+  { id: "ui5-control", track: "ui5", name: "컨트롤 · API" }
 ];
 
-// 2. 좌측 T-CODES 빠른 바로가기 (각 T-Code 전용 문서로 직행!)
-window.WIKI_TCODES = [
-  { code: "SE09", label: "이관 관리 (CTS)", docId: "tcode-se09" },
-  { code: "SE11", label: "Data Dictionary", docId: "tcode-se11" },
-  { code: "SE37", label: "Function Builder", docId: "tcode-se37" },
-  { code: "SE38", label: "ABAP Editor", docId: "tcode-se38" },
-  { code: "SE80", label: "Object Navigator", docId: "tcode-se80" }
-];
+window.WIKI_TCODES = [];
 
-// 3. 전체 위키 문서 저장소 (커리큘럼 문서 + 개별 개념 문서 + T-Code 문서가 그물망처럼 연결됨)
 window.WIKI_DOCS = {
-  // ==========================================================================
-  // [00 ~ 02] 커리큘럼 챕터 문서
-  // ==========================================================================
-  "welcome-guide": {
-    id: "welcome-guide",
-    stepNum: "00-1",
-    title: "코드위키 프레임워크 홈",
-    subtitle: "나무위키식 유기적 키워드 연결 + 위키독스식 커리큘럼 플로우",
-    categoryId: "ch00",
-    aliases: ["코드위키"],
-    tcodes: ["SE80", "SE38", "SE37", "SE11", "SE09"],
-    summary: "문장 속에 등장하는 개념어와 T-Code들이 각자의 전용 문서로 촘촘하게 자동 연결됩니다. 아래 예시 문장의 파란 키워드에 마우스를 올리거나 클릭해 꼬리에 꼬리를 무는 위키 탐색을 체험해 보세요!",
-    specs: {
-      "자동 링크 엔진": "문서별 aliases 키워드 자동 감지",
-      "개념 파도타기": "설명 속 단어 클릭 → 해당 개념/T-Code 문서 이동",
-      "역링크 집계": "우측 카드에 이 문서를 언급한 모든 문서 표시"
-    },
+  "abap-useful-syntax": {
+    id: "abap-useful-syntax", track: "abap", stepNum: "",
+    title: "유용한 함수 · 문법 모음",
+    subtitle: "문자열·계산·조건식·반복문에서 자주 쓰는 표현",
+    categoryId: "abap-concept",
+    aliases: ["strlen", "charlen", "abs", "ipow", "CONCATENATE", "CONTINUE", "IS NOT INITIAL"],
+    tcodes: [], specs: {},
+    summary: "수업 필기를 바탕으로 자주 쓰는 함수와 문법을 짧은 예제로 정리했습니다. 함수, 연산자, 실행문을 구분해서 익혀 보세요.",
+    sections: [
+      { title: "문자열 길이 · strlen과 charlen", blocks: [
+        { type: "table", headers: ["함수", "의미", "참고"], rows: [
+          ["strlen( text )", "문자열 전체 길이", "고정 길이 문자 필드의 뒤쪽 공백은 제외하고, string의 뒤쪽 공백은 포함"],
+          ["charlen( text )", "첫 번째 문자의 길이", "전체 문자열 길이가 아님. 문자 표현과 코드 페이지에 따라 달라짐"]
+        ] },
+        { type: "code", label: "길이 비교", code: "DATA lv_text TYPE string VALUE `ABAP`.\nDATA(lv_length) = strlen( lv_text ).  \" 4\nDATA(lv_first) = charlen( lv_text ).  \" 1" }
+      ] },
+      { title: "문자열 연결 · &&와 CONCATENATE", blocks: [
+        { type: "text", paragraphs: ["&&는 문자열을 이어 붙이는 연산자입니다. 구분자가 필요하면 공백 등을 직접 넣습니다. CONCATENATE는 여러 값을 INTO 뒤의 변수에 합치며, SEPARATED BY로 구분자를 지정할 수 있습니다."] },
+        { type: "code", label: "연결과 구분자", code: "DATA lv_result TYPE string.\nlv_result = `Hello` && ` ` && `ABAP`.\n\" 결과: Hello ABAP\n\nCONCATENATE 'SAP' 'ABAP' INTO lv_result SEPARATED BY space.\n\" 결과: SAP ABAP\n\nCONCATENATE '2026' '11' '17' INTO lv_result SEPARATED BY '-'.\n\" 결과: 2026-11-17" }
+      ] },
+      { title: "일부 문자 추출 · offset(length)", blocks: [
+        { type: "text", paragraphs: ["변수+위치(길이) 형식으로 일부 문자를 읽습니다. 시작 위치는 0부터 세며, +0은 생략할 수 있습니다. 지정한 범위가 대상 길이를 벗어나지 않도록 확인하세요."] },
+        { type: "code", label: "시스템 날짜에서 연·월·일 추출", code: "DATA lv_year TYPE c LENGTH 4.\nDATA lv_month TYPE c LENGTH 2.\nDATA lv_day TYPE c LENGTH 2.\n\nlv_year = sy-datum+0(4).  \" 연도: 처음부터 4자리\nlv_year = sy-datum(4).    \" +0 생략 가능\nlv_month = sy-datum+4(2). \" 월\nlv_day = sy-datum+6(2).   \" 일\n\" sy-datum은 YYYYMMDD 형식의 시스템 날짜" }
+      ] },
+      { title: "숫자 계산 · abs와 ipow", blocks: [
+        { type: "table", headers: ["함수", "기능", "예"], rows: [
+          ["abs( n )", "절대값", "abs( -7 ) → 7"],
+          ["ipow( base = n exp = m )", "정수 지수 m으로 n의 거듭제곱 계산", "ipow( base = 2 exp = 3 ) → 8"]
+        ] },
+        { type: "code", label: "계산 결과 저장", code: "DATA(lv_absolute) = abs( -7 ).\nDATA(lv_power) = ipow( base = 2 exp = 3 )." }
+      ] },
+      { title: "조건식 · 초기값·범위·같지 않음", blocks: [
+        { type: "table", headers: ["표현", "의미", "주의"], rows: [
+          ["value IS NOT INITIAL", "자료형의 초기값이 아닌지 검사", "SQL의 IS NOT NULL과 다름"],
+          ["value BETWEEN a AND b", "a 이상 b 이하", "양쪽 경계값 모두 포함"],
+          ["a NE b 또는 a <> b", "두 값이 같지 않음", "NE와 <>는 같은 비교 의미"]
+        ] },
+        { type: "text", paragraphs: ["INITIAL은 자료형마다 다릅니다. 정수는 0, 고정 길이 문자형은 공백, string은 빈 문자열이 초기값입니다. 따라서 숫자 0은 NULL이 아니어도 IS INITIAL 조건을 만족합니다."] },
+        { type: "code", label: "초기값과 범위 검사", code: "DATA lv_count TYPE i.\nIF lv_count IS INITIAL.\n  WRITE / '초기값 0입니다'.\nENDIF.\n\nlv_count = 5.\nIF lv_count IS NOT INITIAL AND lv_count BETWEEN 1 AND 10.\n  WRITE / '1부터 10 사이입니다'.\nENDIF.\n\nIF lv_count NE 3.  \" lv_count <> 3과 동일\n  WRITE / '3이 아닙니다'.\nENDIF." }
+      ] },
+      { title: "문자 포함 검사 · CA", blocks: [
+        { type: "text", paragraphs: ["CA는 Contains Any입니다. text CA 'abc'는 a, b, c 중 하나라도 들어 있으면 참입니다. 'abc'라는 문자열 전체가 연속으로 포함됐는지를 검사하는 표현은 아닙니다. CA는 대소문자를 구분합니다."] },
+        { type: "code", label: "문자 집합과 부분 문자열 구분", code: "DATA lv_text TYPE string VALUE `cat`.\nIF lv_text CA 'abc'.\n  WRITE / 'a, b, c 중 하나 이상 포함'.\nENDIF.\n\nIF lv_text CS 'abc'.\n  WRITE / 'abc라는 연속 문자열 포함'.\nENDIF.\n\" cat: CA 조건은 참, CS 조건은 거짓" }
+      ] },
+      { title: "반복문 · CONTINUE", blocks: [
+        { type: "text", paragraphs: ["CONTINUE는 현재 반복 회차의 남은 문장을 건너뛰고 다음 회차로 진행합니다. 반복문 자체를 종료하지 않습니다. LOOP에서는 다음 행으로, DO나 WHILE에서는 다음 반복으로 넘어갑니다. 반복문을 끝내려면 EXIT를 사용합니다."] },
+        { type: "code", label: "3을 건너뛰고 출력", code: "DO 5 TIMES.\n  IF sy-index = 3.\n    CONTINUE.\n  ENDIF.\n  WRITE / sy-index.\nENDDO.\n\" 출력: 1, 2, 4, 5" }
+      ] },
+      { title: "메시지 · MESSAGE TYPE 'E'", blocks: [
+        { type: "code", label: "오류 메시지", code: "MESSAGE '입력 내용을 확인해 주세요.' TYPE 'E'." },
+        { type: "text", paragraphs: ["'E'는 오류(Error) 메시지 유형이며, 문자열 값은 대문자로 지정합니다. E 메시지 이후의 처리 흐름은 선택 화면·Dynpro·백그라운드 등 실행 문맥에 따라 달라집니다.", "ABAP에서 줄 중간 주석은 큰따옴표(\")로 시작합니다. 별표(*) 주석은 행의 첫 번째 칸에서 시작하므로, MESSAGE 문 뒤에 *를 붙여 주석을 적지 않습니다."] }
+      ] },
+      { title: "참고 자료", blocks: [
+        { type: "text", paragraphs: [
+          "<a href=\"https://learning.sap.com/courses/deepening-your-abap-programming-knowledge/processing-strings-using-functions-and-regular-expressions_abe828f3-4e84-45ce-9c39-0cf9eb2a9f2f\" target=\"_blank\" rel=\"noopener noreferrer\">SAP 공식 학습 자료 · 문자열 함수</a>",
+          "<a href=\"https://help.sap.com/docs/abap-cloud/abap-keyword/cstring-func-charlen-dbmaxlen-numofchar-strlen\" target=\"_blank\" rel=\"noopener noreferrer\">ABAP Keyword Documentation · 길이 함수</a>",
+          "<a href=\"https://help.sap.com/docs/ABAP_Cloud/abap-cloud-docs_abap-keyword-documentation_abap-for-cloud-development/ABENLOGEXP_INITIAL.html\" target=\"_blank\" rel=\"noopener noreferrer\">ABAP Keyword Documentation · IS INITIAL</a>",
+          "<a href=\"https://help.sap.com/docs/abap-cloud/abap-keywords/continue\" target=\"_blank\" rel=\"noopener noreferrer\">ABAP Keyword Documentation · CONTINUE</a>"
+        ] }
+      ] }
+    ]
+  },
+  "sap-gui-shortcuts": {
+    id: "sap-gui-shortcuts",
+    track: "abap",
+    stepNum: "",
+    title: "SAP GUI · ABAP 단축키",
+    subtitle: "명령 필드부터 개발 편집기까지 자주 사용하는 기능",
+    categoryId: "abap-shortcuts",
+    aliases: ["단축키", "Command Field", "Pretty Printer"],
+    tcodes: [],
+    summary: "명령 필드는 화면과 세션을 이동할 때, 편집기 단축키는 저장·문법 검사·활성화·실행할 때 사용합니다.",
+    specs: {},
     sections: [
       {
-        title: "나무위키식 유기적 연결 예시 (직접 클릭해 보세요!)",
+        title: "명령 필드 · Command Field",
         blocks: [
-          {
-            type: "callout",
-            style: "tip",
-            title: "🔗 문장 속 키워드가 어떻게 살아 움직이나요?",
-            body: "예를 들어 아래 문장은 특별한 링크 기호 없이 평문으로 적었지만, 등록된 키워드들이 자동으로 각자의 문서로 연결되었습니다:\n\n“재사용 가능한 함수인 Function Module은 SE37을 통해 생성하며, 여러 함수를 묶는 Function Group 및 상위 폴더인 Package 안에 저장된다. 이후 SE09에서 Change Request를 Release하여 운영 서버로 이관한다.”"
-          },
-          {
-            type: "text",
-            paragraphs: [
-              "위 문장에서 **Function Module**, **SE37**, **Function Group**, **Package**, **SE09**, **Change Request** 중 아무 단어나 클릭해 보세요! 각각의 전용 문서로 즉시 이동하며, 이동한 문서의 설명 속에서도 또 다른 키워드(예: SE80, SE38, SE11, MANDT)가 계속해서 이어집니다."
-            ]
-          }
+          { type: "text", paragraphs: ["SAP GUI 상단 명령 필드에 입력한 뒤 Enter를 누릅니다. /n은 현재 세션에서 이동하고, /o는 다른 세션을 여는 명령입니다. 새 창은 external session(외부 세션)이라고 부릅니다."] },
+          { type: "table", headers: ["명령어", "기능", "사용 예·참고"], rows: [
+            ["/n", "현재 트랜잭션을 종료하고 SAP Easy Access로 이동", "/nSE38은 현재 창에서 SE38 시작"],
+            ["/o", "현재 시스템의 세션 목록 표시", "목록에서 새 세션 생성 가능"],
+            ["/o + T-Code", "새 세션에서 해당 트랜잭션 시작", "/oSE38은 새 창에서 ABAP Editor 열기"],
+            ["/i", "현재 세션 닫기", "현재 창만 종료"],
+            ["/nend", "확인 창을 거친 뒤 로그오프", "현재 로그온의 모든 세션 종료"],
+            ["/nex", "확인 창 없이 즉시 로그오프", "저장하지 않은 작업이 사라질 수 있으므로 주의"]
+          ] },
+          { type: "text", paragraphs: ["세션 수는 서버 설정과 버전에 따라 달라집니다. 수업 필기 기준으로 기본 6개, 설정에 따라 최대 16개이며 실제 사용 가능한 수는 실습 시스템 설정을 확인하세요.", "명령어 동작 참고: <a href=\"https://learning.sap.com/courses/technical-implementation-and-operation-i-of-sap-s-4hana-and-sap-business-suite/describing-sap-gui-functions-help-and-personalization\" target=\"_blank\" rel=\"noopener noreferrer\">SAP 공식 학습 자료</a>"] }
         ]
       },
       {
-        title: "코드위키 (ㅋㄷ / ㅇㅋ) 브랜드 심볼 시안",
+        title: "화면 이동과 도움말",
         blocks: [
-          {
-            type: "widget",
-            widgetId: "logo-showcase"
-          }
+          { type: "table", headers: ["단축키", "기능", "사용 위치"], rows: [
+            ["Ctrl + N", "새 SAP GUI 세션 열기", "SAP GUI 창 기준"],
+            ["Alt + F4", "현재 창 닫기", "현재 활성화된 창 기준"],
+            ["F3", "뒤로 가기", "SAP GUI 화면"],
+            ["F1", "선택한 항목의 자세한 도움말", "필드 또는 ABAP 키워드에 커서를 놓고 실행"],
+            ["F4", "입력 도움말 · 가능한 값 표시", "Search Help가 제공되는 입력 필드"],
+            ["Shift + F12", "전체화면 전환", "수업에서 사용하는 ABAP Editor 기준"]
+          ] }
         ]
       },
       {
-        title: "지원하는 시각적 학습 블록 미리보기",
+        title: "ABAP Editor · 개발 단축키",
         blocks: [
-          {
-            type: "practice",
-            title: "실습 따라하기 블록 예시: SE11에서 테이블 조회하기",
-            steps: [
-              {
-                step: "1",
-                action: "Command Field에 SE11을 입력하고 Enter를 누릅니다.",
-                detail: "ABAP Dictionary 초기 화면으로 이동합니다."
-              },
-              {
-                step: "2",
-                action: "Database table 항목에 `SFLIGHT`를 입력하고 조회(`F7`)합니다.",
-                detail: "첫 번째 Key 필드가 {{MANDT}}인지 확인합니다."
-              }
-            ]
-          },
-          {
-            type: "flow",
-            caption: "모듈 통합 E2E 프로세스 흐름도 예시",
-            steps: [
-              { badge: "SD", title: "영업 주문", desc: "고객 수주 및 가용성 확인" },
-              { badge: "MM / PP", title: "조달 & 생산", desc: "구매발주(PO) 및 생산오더" },
-              { badge: "FI / CO", title: "회계 & 원가", desc: "전표 자동 기표 및 원가 정산" }
-            ]
-          }
+          { type: "table", headers: ["단축키", "기능", "설명"], rows: [
+            ["Ctrl + S", "저장", "현재 소스 저장"],
+            ["Ctrl + F2", "문법 검사", "활성화 전에 구문 오류 확인"],
+            ["Ctrl + F3", "활성화 · Activate", "변경한 소스를 활성 버전으로 반영"],
+            ["F8", "실행", "프로그램 시작·실행"],
+            ["Shift + F1", "Pretty Printer", "들여쓰기와 코드 형식 정리"],
+            ["Ctrl + ,", "주석 처리", "선택한 코드 줄을 주석으로 전환"],
+            ["Ctrl + .", "주석 해제", "선택한 코드 줄의 주석 해제"],
+            ["F5", "Text Elements", "텍스트 요소 화면으로 이동 · 해당 편집기 화면 기준"]
+          ] },
+          { type: "text", paragraphs: ["중복된 항목은 한 번씩 정리했습니다. 위 표는 수업에서 사용하는 SAP GUI 기반 ABAP Editor 기준입니다. 편집기 종류·키보드 설정·현재 화면에 따라 키 배정이 다를 수 있으므로 메뉴에 표시된 단축키를 우선 확인하세요. 예를 들어 디버거에서는 F5가 다른 기능으로 동작합니다."] }
+        ]
+      },
+      {
+        title: "자주 쓰는 개발 순서",
+        blocks: [
+          { type: "text", paragraphs: ["코드 작성 → Shift + F1(정렬) → Ctrl + S(저장) → Ctrl + F2(문법 검사) → Ctrl + F3(활성화) → F8(실행)", "문법 오류가 있으면 먼저 수정하고 다시 검사합니다. 저장과 활성화는 서로 다른 단계이므로, 변경한 내용을 실행하기 전에 활성화 여부를 확인하세요."] }
         ]
       }
     ]
   },
-
-  "ch01-erp-overview": {
-    id: "ch01-erp-overview",
-    stepNum: "01-1",
-    title: "SAP ERP 시스템 개요 및 화면 구성",
-    subtitle: "01. SAP ERP 개요 & 시작하기",
-    categoryId: "ch01",
-    aliases: ["SAP ERP", "SAP GUI"],
-    tcodes: ["SE80"],
-    summary: "SAP ERP의 기본 클라이언트(MANDT) 구조와 SAP GUI에서 T-Code(예: SE80, SE38, SE11)로 화면을 이동하는 원리를 정리하는 챕터입니다.",
-    specs: {
-      "챕터": "01. SAP ERP 개요",
-      "핵심 연관 키워드": "MANDT, SE80"
-    },
+  "welcome-abap": {
+    id: "welcome-abap", track: "abap", isHome: true, stepNum: "",
+    title: "코드위키: 대문", subtitle: "ABAP · SAP 개발 지식 모음",
+    categoryId: "", aliases: [], tcodes: [], specs: {},
+    summary: "ABAP 수업 노트와 개발 중 자주 찾는 내용을 모으는 위키입니다. 아래 목차에서 필요한 문서를 찾아보세요.",
     sections: [
-      {
-        title: "개요 (내용 업데이트 대기 중)",
-        blocks: [
-          {
-            type: "text",
-            paragraphs: [
-              "수업에서 배운 내용을 말씀해주시면 이곳에 채워집니다. 로그인할 때 입력하는 3자리 방 번호인 MANDT 개념이나 통합 개발 환경인 SE80 문서와도 유기적으로 연결됩니다."
-            ]
-          }
-        ]
-      }
+      { title: "학습 목차", blocks: [
+        { type: "text", paragraphs: ["[[learning-roadmap|전체 학습 목차]]에서 ABAP 기초부터 SAP 모듈까지 살펴볼 수 있습니다. 일부 문서는 목차를 먼저 구성했으며 본문은 순차적으로 보강합니다."] },
+        { type: "table", headers: ["분야", "문서"], rows: [
+          ["시작하기", "[[erp-setup|실습 준비]] · [[abap-basics|ABAP 기초]]"],
+          ["ABAP 개발", "[[abap-dictionary|데이터 사전]] · [[abap-modularization|프로그램 모듈화]] · [[abap-data-report|데이터 처리와 리포트]]"],
+          ["SAP 모듈", "[[erp-fi|FI]] · [[erp-co|CO]] · [[erp-mm|MM]] · [[erp-sd|SD]] · [[erp-pp|PP]]"],
+          ["참고 자료", "[[erp-resources|부록과 참고 자료]]"]
+        ] }
+      ] },
+      { title: "자주 찾는 문서", blocks: [
+        { type: "table", headers: ["문서", "내용"], rows: [
+          ["[[sap-tcode-reference|T-Code 모음]]", "개발 도구 · 시스템 조회 · 전송 관리"],
+          ["[[sap-gui-shortcuts|단축키 모음]]", "명령 필드 · 화면 이동 · ABAP 편집기"],
+          ["[[abap-useful-syntax|유용한 함수 · 문법 모음]]", "문자열 · 계산 · 조건식 · 반복문"]
+        ] }
+      ] }
     ]
   },
 
-  "ch02-abap-intro": {
-    id: "ch02-abap-intro",
-    stepNum: "02-1",
-    title: "ABAP 개요 및 개발 환경 이해",
-    subtitle: "02. ABAP 기초 및 개발 실습",
-    categoryId: "ch02",
-    aliases: ["ABAP"],
-    tcodes: ["SE38", "SE80", "SE37"],
-    summary: "ABAP 리포트는 SE38에서, Function Module은 SE37에서, 전체 Package 및 통합 오브젝트 관리는 SE80에서 수행합니다.",
-    specs: {
-      "챕터": "02. ABAP 기초 및 개발",
-      "주요 개발 T-Code": "SE38, SE80, SE37, SE11"
-    },
-    sections: [
-      {
-        title: "주요 개발 도구 연결 구조",
-        blocks: [
-          {
-            type: "text",
-            paragraphs: [
-              "ABAP 개발자는 작업 대상에 따라 전용 T-Code를 오가며 개발하거나, 모든 도구가 하나로 합쳐진 SE80(Object Navigator) 안에서 트리 형태로 작업합니다.",
-              "• 일반 실행 프로그램(Report) 작성 시 → SE38 사용",
-              "• 데이터베이스 테이블 및 구조 정의 시 → SE11 사용",
-              "• 공통 재사용 함수인 Function Module 작성 시 → SE37 사용",
-              "• 만든 결과물을 폴더(Package)에 담고 Change Request로 이관 관리 시 → SE09 사용"
-            ]
-          }
-        ]
-      }
-    ]
-  },
-
-  "ch02-ddic": {
-    id: "ch02-ddic",
-    stepNum: "02-2",
-    title: "Data Dictionary 및 테이블 관리",
-    subtitle: "02. ABAP 기초 및 개발 실습",
-    categoryId: "ch02",
-    aliases: ["Data Dictionary", "ABAP Dictionary", "DDIC"],
-    tcodes: ["SE11"],
-    summary: "SE11을 통해 전사 표준 데이터 타입(Domain, Data Element)과 물리 테이블을 중앙에서 관리하는 데이터 사전입니다.",
-    specs: {
-      "챕터": "02. ABAP 기초 및 개발",
-      "전용 T-Code": "SE11"
-    },
-    sections: [
-      {
-        title: "내용 추가 대기 중",
-        blocks: [
-          {
-            type: "text",
-            paragraphs: [
-              "테이블의 첫 번째 키 필드로 들어가는 MANDT와 SE11에서 만든 오브젝트들을 Package 및 Change Request에 담아 이관하는 흐름이 서로 연결됩니다."
-            ]
-          }
-        ]
-      }
-    ]
-  },
-
-  "ch02-cts-package": {
-    id: "ch02-cts-package",
-    stepNum: "02-3",
-    title: "Change Request · Package · Program 포함 구조",
-    subtitle: "왜 저장할 때 Package와 Change Request 팝업이 차례대로 뜰까?",
-    categoryId: "ch02",
-    aliases: ["CTS", "이관 구조"],
-    tcodes: ["SE09", "SE80", "SE38"],
-    summary: "SE38에서 만든 프로그램이나 SE37에서 만든 Function Module은 모두 {{Package}}(폴더) 안에 소속되고, 그 변경 기록은 {{Change Request}}(택배 상자)에 담겨 SE09를 통해 운영 서버로 이관됩니다.",
-    specs: {
-      "운송 컨테이너": "Change Request (SE09)",
-      "보관 폴더": "Package (SE80)",
-      "연습용 로컬 폴더": "$TMP"
-    },
-    sections: [
-      {
-        title: "한눈에 만져보는 포함 관계 시뮬레이터",
-        blocks: [
-          {
-            type: "text",
-            paragraphs: [
-              "아래 상자를 클릭해 보며 Change Request 상자 안에 Package 폴더가 담기고, 그 안에 SE38 프로그램이나 SE11 테이블이 들어가는 포함 관계를 확인해 보세요!"
-            ]
-          },
-          {
-            type: "widget",
-            widgetId: "cts-package-viz"
-          }
-        ]
-      }
-    ]
-  },
-
-  // ==========================================================================
-  // [📌 핵심 개념 위키 사전] — 문장 속 키워드 클릭 시 연결되는 개별 개념 문서들
-  // ==========================================================================
-  "function-module": {
-    id: "function-module",
-    stepNum: "개념",
-    title: "Function Module (펑션 모듈)",
-    subtitle: "여러 프로그램에서 공통으로 호출해 재사용하는 SAP 표준/커스텀 함수 부품",
-    categoryId: "dict-concept",
-    aliases: ["Function Module", "Function module", "펑션 모듈", "함수 모듈"],
-    tcodes: ["SE37", "SE80"],
-    summary: "Function Module은 SE37(Function Builder)을 통해 생성·테스트하는 독립된 함수 모듈로, 반드시 상위 묶음인 {{Function Group}} 안에 소속됩니다.",
-    specs: {
-      "생성/조회 T-Code": "SE37 (또는 SE80)",
-      "상위 컨테이너": "Function Group → Package",
-      "호출 명령어": "CALL FUNCTION '함수명'"
-    },
-    sections: [
-      {
-        title: "개요 및 유기적 구조",
-        blocks: [
-          {
-            type: "text",
-            paragraphs: [
-              "자주 쓰이는 계산 로직이나 전표 생성 로직을 매번 SE38 리포트마다 복붙하지 않고, 하나의 공용 함수 부품으로 만들어 두는 오브젝트입니다.",
-              "Function Module은 단독으로 떠돌아다닐 수 없고 반드시 **Function Group**이라는 바구니 안에 담겨야 하며, 그 Function Group은 다시 **Package** 폴더 안에 소속되어 **Change Request**(SE09)를 통해 운영 서버로 이관됩니다."
-            ]
-          },
-          {
-            type: "nested",
-            caption: "Function Module의 소속 계층 한눈에 보기",
-            root: {
-              badge: "Change Request (SE09)",
-              title: "DEVK900123 — 이관 택배 상자",
-              children: [
-                {
-                  badge: "Package (폴더)",
-                  title: "ZEDU_01 — 개발 패키지 폴더",
-                  children: [
-                    {
-                      badge: "Function Group (함수 바구니)",
-                      title: "ZFG_CALC — 관련 함수들과 전역 메모리를 공유하는 그룹",
-                      items: [
-                        { name: "⚡ Z_CALC_TAX", sub: "세액 계산 Function Module (SE37)" },
-                        { name: "⚡ Z_CHECK_AUTH", sub: "권한 검증 Function Module (SE37)" }
-                      ]
-                    }
-                  ]
-                }
-              ]
-            }
-          }
-        ]
-      }
-    ]
-  },
-
-  "function-group": {
-    id: "function-group",
-    stepNum: "개념",
-    title: "Function Group (펑션 그룹)",
-    subtitle: "성격이 비슷한 Function Module들을 하나로 묶어 메모리를 공유하는 컨테이너",
-    categoryId: "dict-concept",
-    aliases: ["Function Group", "Function group", "펑션 그룹"],
-    tcodes: ["SE80", "SE37"],
-    summary: "Function Module을 SE37에서 만들기 전에 반드시 먼저 생성해야 하는 '함수 전용 바구니'입니다. SE80에서 생성·관리하는 것이 가장 직관적입니다.",
-    specs: {
-      "관리 T-Code": "SE80, SE37",
-      "포함 대상": "여러 개의 Function Module",
-      "상위 소속": "Package"
-    },
-    sections: [
-      {
-        title: "왜 Function Group이 따로 있나요?",
-        blocks: [
-          {
-            type: "text",
-            paragraphs: [
-              "같은 Function Group 안에 들어있는 Function Module들은 전역 변수(`TOP Include`)를 서로 공유합니다. 따라서 하나의 Function Module이 호출되어 메모리에 올라오면 같은 Function Group 식구들도 함께 로드됩니다.",
-              "생성된 Function Group은 일반 프로그램과 마찬가지로 Package에 할당되며 수정 시 Change Request에 기록됩니다."
-            ]
-          }
-        ]
-      }
-    ]
-  },
-
-  "package": {
-    id: "package",
-    stepNum: "개념",
-    title: "Package (패키지 / 개발 클래스)",
-    subtitle: "관련된 모든 개발 오브젝트(Program, Table, Function Group 등)를 묶어 관리하는 폴더",
-    categoryId: "dict-concept",
-    aliases: ["Package", "패키지", "$TMP"],
-    tcodes: ["SE80", "SE21", "SE09"],
-    summary: "SE38 프로그램, SE11 테이블, SE37의 Function Module 등 모든 개발 결과물을 업무/모듈 단위로 묶어 보관하는 폴더입니다.",
-    specs: {
-      "관리 T-Code": "SE80 / SE21",
-      "정식 패키지": "Z* 또는 Y* (Change Request 필수)",
-      "로컬 연습 패키지": "$TMP (이관 불가)"
-    },
-    sections: [
-      {
-        title: "개요",
-        blocks: [
-          {
-            type: "text",
-            paragraphs: [
-              "SAP에서 새로운 오브젝트를 저장할 때 가장 먼저 물어보는 소속 폴더입니다. 정식 Package에 저장하면 SE09의 Change Request 번호를 요구하며, 연습용인 `$TMP`(Local Object)로 지정하면 개발 서버에만 남고 이관되지 않습니다.",
-              "전체적인 포함 그림은 [[ch02-cts-package|02-3. Change Request · Package · Program 포함 구조]] 시뮬레이터에서 한눈에 볼 수 있습니다."
-            ]
-          }
-        ]
-      }
-    ]
-  },
-
-  "change-request": {
-    id: "change-request",
-    stepNum: "개념",
-    title: "Change Request (변경 요청 / Transport Request)",
-    subtitle: "개발 서버(DEV)의 작업 내역을 포장해 품질(QAS)·운영(PRD) 서버로 실어 나르는 운송 상자",
-    categoryId: "dict-concept",
-    aliases: ["Change Request", "Change request", "Transport Request", "체인지 리퀘스트"],
-    tcodes: ["SE09"],
-    summary: "Package 안에 있는 프로그램이나 테이블을 생성·수정할 때 발급받는 운송장 번호(예: `DEVK900123`)이며, SE09에서 Release하여 다른 서버로 이관합니다.",
-    specs: {
-      "관리 T-Code": "SE09 (Transport Organizer)",
-      "주요 구분": "Workbench (개발물) / Customizing (설정)",
-      "시각화 문서": "02-3 시뮬레이터 참조"
-    },
-    sections: [
-      {
-        title: "개요",
-        blocks: [
-          {
-            type: "text",
-            paragraphs: [
-              "운영 중인 ERP를 안전하게 지키기 위해 모든 개발은 개발 서버(DEV)에서만 수행하고, 그 변경 목록을 Change Request 상자에 차곡차곡 기록합니다. 작업이 완료되면 SE09에서 상자를 봉인(Release)하여 테스트 서버와 운영 서버로 반영합니다."
-            ]
-          }
-        ]
-      }
-    ]
-  },
-
-  "mandt": {
-    id: "mandt",
-    stepNum: "개념",
-    title: "MANDT (Client 번호 필드)",
-    subtitle: "하나의 SAP 서버 안에서 회사별 데이터를 철저히 격리하는 3자리 방 번호",
-    categoryId: "dict-concept",
-    aliases: ["MANDT", "Client"],
-    tcodes: ["SE11"],
-    summary: "SE11에서 비즈니스 테이블을 만들 때 맨 첫 번째 Primary Key로 들어가는 3자리 클라이언트 코드 필드입니다.",
-    specs: {
-      "데이터 타입": "CLNT (길이 3)",
-      "시스템 변수": "sy-mandt",
-      "관련 T-Code": "SE11"
-    },
-    sections: [
-      {
-        title: "개요",
-        blocks: [
-          {
-            type: "text",
-            paragraphs: [
-              "SAP 로그인 화면에서 가장 먼저 입력하는 Client 번호(예: 100, 800)가 테이블 컬럼으로 들어갈 때 `MANDT`라는 이름을 씁니다. SE38에서 Open SQL(`SELECT`)을 실행하면 SAP가 자동으로 현재 접속한 `MANDT` 값만 조회하도록 필터링해 줍니다."
-            ]
-          }
-        ]
-      }
-    ]
-  },
-
-  // ==========================================================================
-  // [⌨️ T-Code 전용 문서] — 문장 속 'SE37', 'SE11' 등 클릭 시 바로 열리는 문서들!
-  // ==========================================================================
-  "tcode-se37": {
-    id: "tcode-se37",
-    stepNum: "T-Code",
-    title: "SE37 (Function Builder)",
-    subtitle: "Function Module을 생성 · 수정 · 단독 실행(F8 테스트)하는 전용 트랜잭션",
-    categoryId: "dict-tcode",
-    aliases: ["SE37", "se37"],
-    tcodes: ["SE37", "SE80"],
-    summary: "Function Module을 만들고 Import/Export 파라미터를 정의하며, 프로그램 연결 전 `F8` 키로 입력값을 직접 넣어 결과를 즉시 테스트해 볼 수 있는 T-Code입니다.",
-    specs: {
-      "T-Code": "SE37",
-      "정식 명칭": "Function Builder",
-      "다루는 대상": "Function Module, Function Group",
-      "통합 대체 화면": "SE80 (Object Navigator)"
-    },
-    sections: [
-      {
-        title: "SE37의 핵심 탭 구성",
-        blocks: [
-          {
-            type: "table",
-            headers: ["탭 이름", "역할 요약"],
-            rows: [
-              ["Attributes", "소속된 Function Group 확인 및 일반 함수 / 원격 호출(RFC) 여부 설정"],
-              ["Import / Export", "함수로 들어오는 입력값(Import)과 계산 후 돌려주는 출력값(Export) 정의"],
-              ["Changing / Tables", "입출력을 겸하는 변수 및 다중 행 테이블 파라미터 전달"],
-              ["Exceptions", "0으로 나누기나 데이터 없음 등 에러 상황 코드 정의"],
-              ["Source code", "실제 ABAP 로직 작성 공간"]
-            ]
-          },
-          {
-            type: "practice",
-            title: "SE37에서 Function Module 단독 테스트하는 법",
-            steps: [
-              {
-                step: "1",
-                action: "Command Field에 `SE37`을 입력하고 조회할 Function Module 이름을 적습니다.",
-                detail: "생성하거나 수정할 때는 소속될 Function Group과 Package 및 Change Request가 필요합니다."
-              },
-              {
-                step: "2",
-                action: "상단 스패너 모양 아이콘 또는 단축키 `F8`(Test/Execute)을 누릅니다.",
-                detail: "별도의 SE38 프로그램을 짜지 않아도 Import 값을 직접 입력해 Export 결과를 바로 검증할 수 있습니다!"
-              }
-            ]
-          }
-        ]
-      }
-    ]
-  },
-
-  "tcode-se38": {
-    id: "tcode-se38",
-    stepNum: "T-Code",
-    title: "SE38 (ABAP Editor)",
-    subtitle: "ABAP 리포트(Executable Program) 소스코드를 작성하고 실행하는 가장 기본 개발 화면",
-    categoryId: "dict-tcode",
-    aliases: ["SE38", "se38"],
-    tcodes: ["SE38", "SE80"],
-    summary: "프로그램(`Z*`)을 생성하고 ABAP 코드를 작성·활성화(`Ctrl+F3`)·실행(`F8`)하는 에디터 화면입니다.",
-    specs: {
-      "T-Code": "SE38",
-      "정식 명칭": "ABAP Editor",
-      "연관 도구": "SE80, SE11, SE37, SE09"
-    },
-    sections: [
-      {
-        title: "개요",
-        blocks: [
-          {
-            type: "text",
-            paragraphs: [
-              "ABAP 입문자가 가장 먼저 만나는 코드 에디터입니다. SE38에서 새 프로그램을 만들고 저장하면 소속 폴더인 Package 지정 창이 뜨고, 정식 패키지일 경우 Change Request(SE09) 번호를 선택하게 됩니다.",
-              "코드 안에서 **[Pattern]** 버튼을 누르면 SE37에서 만들어 둔 Function Module 호출 구문(`CALL FUNCTION`)을 자동으로 찍어주는 편리한 기능도 제공합니다!"
-            ]
-          }
-        ]
-      }
-    ]
-  },
-
-  "tcode-se11": {
-    id: "tcode-se11",
-    stepNum: "T-Code",
-    title: "SE11 (ABAP Dictionary)",
-    subtitle: "DB 테이블, 뷰, 데이터 엘리먼트, 도메인, 서치헬프 등을 정의하는 데이터 사전 트랜잭션",
-    categoryId: "dict-tcode",
-    aliases: ["SE11", "se11"],
-    tcodes: ["SE11"],
-    summary: "SAP의 모든 테이블과 표준 데이터 타입을 생성·조회하는 T-Code입니다.",
-    specs: {
-      "T-Code": "SE11",
-      "정식 명칭": "ABAP Dictionary",
-      "연관 챕터": "02-2. Data Dictionary"
-    },
-    sections: [
-      {
-        title: "개요",
-        blocks: [
-          {
-            type: "text",
-            paragraphs: [
-              "SE11에서 생성한 테이블과 데이터 타입은 SE38 리포트 프로그램이나 SE37의 Function Module 파라미터 타입 선언에서 공통으로 가져다 씁니다. 생성 시 마찬가지로 Package와 Change Request(SE09)에 귀속됩니다."
-            ]
-          }
-        ]
-      }
-    ]
-  },
-
-  "tcode-se80": {
-    id: "tcode-se80",
-    stepNum: "T-Code",
-    title: "SE80 (Object Navigator)",
-    subtitle: "Package, 프로그램, Function Group, 화면(Screen), 클래스를 왼쪽 트리 하나로 통합 관리하는 올인원 개발 환경",
-    categoryId: "dict-tcode",
-    aliases: ["SE80", "se80"],
-    tcodes: ["SE80", "SE38", "SE37", "SE11"],
-    summary: "SE38, SE37, SE11 기능을 따로 띄우지 않고 한 화면의 좌측 트리에서 Package 단위로 한눈에 개발할 수 있는 통합 워크벤치입니다.",
-    specs: {
-      "T-Code": "SE80",
-      "정식 명칭": "Object Navigator",
-      "최대 장점": "Package 및 Function Group 트리 구조 한눈에 파악"
-    },
-    sections: [
-      {
-        title: "개요",
-        blocks: [
-          {
-            type: "text",
-            paragraphs: [
-              "실무에서는 SE38처럼 단일 프로그램만 볼 때보다, 하나의 Package 안에 어떤 프로그램과 Function Group, Function Module, 화면(Module Pool), T-Code들이 들어있는지 트리 형태로 한꺼번에 보며 개발하기 위해 SE80을 가장 많이 사용합니다."
-            ]
-          }
-        ]
-      }
-    ]
-  },
-
-  "tcode-se09": {
-    id: "tcode-se09",
-    stepNum: "T-Code",
-    title: "SE09 (Transport Organizer)",
-    subtitle: "내가 작업한 Change Request와 Task 목록을 확인하고 운영 서버 이관을 위해 Release(밀봉)하는 화면",
-    categoryId: "dict-tcode",
-    aliases: ["SE09", "se09", "SE10"],
-    tcodes: ["SE09"],
-    summary: "SE38, SE11, SE37, SE80에서 수정하며 담긴 Change Request 목록을 조회·관리하고 Release(출고)하는 T-Code입니다.",
-    specs: {
-      "T-Code": "SE09 (또는 SE10)",
-      "정식 명칭": "Transport Organizer",
-      "다루는 대상": "Change Request, Task"
-    },
-    sections: [
-      {
-        title: "개요",
-        blocks: [
-          {
-            type: "text",
-            paragraphs: [
-              "내 아이디로 생성된 Change Request 안에 어떤 Package의 어떤 오브젝트들이 담겨 있는지 트리로 확인하고, 개발 완료 후 트럭 아이콘(**Release**)을 눌러 품질/운영 서버로 보낼 준비를 마치는 곳입니다."
-            ]
-          }
-        ]
-      }
-    ]
+  "welcome-ui5": {
+    id: "welcome-ui5",
+    track: "ui5",
+    isHome: true,
+    stepNum: "",
+    title: "UI5 / Fiori",
+    subtitle: "",
+    categoryId: "",
+    aliases: [],
+    tcodes: [],
+    summary: "",
+    specs: {},
+    sections: []
   }
 };
+
+
+/** 학습 목차 뼈대. 본문은 수업 내용에 맞춰 순차적으로 보강합니다. */
+(function () {
+  const chapters = [
+    ["erp-setup", "실습 준비", ["SAP 실습 환경 설치", "접속과 화면 탐색"]],
+    ["abap-basics", "ABAP 기초", ["ABAP과 개발 환경", "자료형·변수·상수", "연산과 조건 표현", "문자열 다루기", "날짜·시간과 출력 형식", "예외 처리"]],
+    ["abap-dictionary", "데이터 사전", ["ABAP Dictionary 개요", "데이터 요소", "데이터베이스 테이블", "구조와 뷰"]],
+    ["abap-modularization", "프로그램 모듈화", ["서브루틴 · FORM / PERFORM", "Function Module", "Include 프로그램"]],
+    ["abap-data-report", "데이터 처리와 리포트", ["Open SQL", "내부 테이블", "리포트 프로그램", "ALV 화면 구성"]],
+    ["erp-fi", "FI · 재무회계", ["FI 개요와 조직 설정", "계정과목 체계와 총계정원장", "회계 기간·환율·재무제표", "전표 유형·번호·입력 제어", "전표 입력과 역분개", "매출채권과 고객 관리", "매입채무와 공급업체 관리", "외화 거래"]],
+    ["erp-co", "CO · 관리회계", ["원가요소와 코스트센터", "배부·정산과 활동유형", "표준원가와 실제원가"]],
+    ["erp-mm", "MM · 자재관리", ["구매 기준정보와 공급원", "구매오더", "입고와 입고 취소", "재고 관리와 평가", "관련 트랜잭션 코드"]],
+    ["erp-sd", "SD · 판매관리", ["SD 개요와 영업 기준정보", "판매오더", "가격 결정", "관련 테이블과 트랜잭션"]],
+    ["erp-pp", "PP · 생산관리", ["BOM·작업장·라우팅", "장기계획 · LTP", "생산오더", "자재원장과 재고 조회", "관련 테이블"]],
+    ["erp-resources", "부록과 참고 자료", ["테이블 관계 정리", "학습 자료와 참고문헌"]]
+  ];
+  const reference = '<a href="https://wikidocs.net/226022" target="_blank" rel="noopener noreferrer">참고 목차 · SAP ERP 따라하기 (위키독스)</a>';
+  window.WIKI_DOCS["learning-roadmap"] = {
+    id: "learning-roadmap", track: "abap", stepNum: "00",
+    title: "전체 학습 목차", subtitle: "실습 준비부터 ABAP 개발과 ERP 업무 모듈까지",
+    categoryId: "abap-curriculum", aliases: ["학습 로드맵"], tcodes: [], specs: {},
+    summary: "학습 순서와 주제만 먼저 구성했습니다. 각 페이지의 설명과 실습 예제는 이후 보강합니다.",
+    sections: [
+      { title: "학습 순서", blocks: [{ type: "table", headers: ["순서", "학습 분야", "상태"], rows:
+        chapters.map(([id, title], i) => [String(i + 1).padStart(2, "0"), `[[${id}|${title}]]`, "목차 준비 · 본문 예정"])
+      }] },
+      { title: "지금 볼 수 있는 자료", blocks: [{ type: "text", paragraphs: [
+        "[[sap-gui-shortcuts|SAP GUI · ABAP 단축키]]", "[[abap-useful-syntax|유용한 함수 · 문법 모음]]"
+      ] }] },
+      { title: "참고", blocks: [{ type: "text", paragraphs: [reference, "참고 자료의 큰 흐름을 바탕으로 코드위키의 학습 단위에 맞게 재구성했습니다."] }] }
+    ]
+  };
+  chapters.forEach(([id, title, topics], i) => {
+    window.WIKI_DOCS[id] = {
+      id, track: "abap", stepNum: String(i + 1).padStart(2, "0"), title,
+      subtitle: "학습 목차 · 본문 준비 중", categoryId: "abap-curriculum",
+      aliases: [], tcodes: [], specs: {},
+      summary: "아래 주제 순서대로 설명과 실습 예제를 채울 예정입니다. [[learning-roadmap|전체 학습 목차]]에서 다른 분야도 확인할 수 있습니다.",
+      sections: topics.map(topic => ({ title: topic, blocks: [] }))
+    };
+  });
+})();
+
+
+/** 수업에서 자주 쓰는 SAP GUI 트랜잭션 코드. */
+(function () {
+  const groups = [
+    ["시스템 상태와 오류 확인", [
+      ["SM50", "Work Process Overview", "현재 애플리케이션 서버의 워크 프로세스 상태와 실행 작업 확인"],
+      ["SM04", "User Overview", "현재 애플리케이션 서버의 로그인 사용자와 세션 확인"],
+      ["ST22", "ABAP Dump Analysis", "런타임 오류의 덤프·발생 위치·원인 확인"]
+    ]],
+    ["데이터와 개발 객체 탐색", [
+      ["SE16", "Data Browser", "테이블 이름과 조회 조건을 입력하여 저장된 데이터 조회"],
+      ["SE84", "Repository Information System", "프로그램 등 저장소의 개발 객체를 조건별로 검색"],
+      ["SE80", "Object Navigator", "패키지·프로그램·함수 그룹·클래스 등 개발 객체를 통합 탐색"],
+      ["SE11", "ABAP Dictionary", "테이블·구조·데이터 요소 등 데이터 사전 객체 정의와 유지보수"]
+    ]],
+    ["프로그램과 화면 개발", [
+      ["SE38", "ABAP Editor", "ABAP 프로그램 생성·소스 편집·검사·활성화·실행"],
+      ["SE37", "Function Builder", "함수 모듈 생성·유지보수·테스트"],
+      ["SE24", "Class Builder", "전역 클래스와 인터페이스 등 객체지향 개발 객체 관리"],
+      ["SE41", "Menu Painter", "메뉴·툴바·기능 키를 구성하는 GUI 상태와 제목 관리"],
+      ["SE51", "Screen Painter", "Dynpro 화면의 레이아웃과 흐름 로직 편집"]
+    ]],
+    ["변경 요청과 실행 코드 관리", [
+      ["SE09", "Transport Organizer", "변경 요청과 태스크 생성·조회·관리"],
+      ["SE93", "Transaction Maintenance", "트랜잭션 코드 생성·변경 및 실행 대상 연결"]
+    ]]
+  ];
+  const entries = groups.flatMap(([, rows]) => rows);
+  window.WIKI_DOCS["sap-tcode-reference"] = {
+    id: "sap-tcode-reference", track: "abap", stepNum: "",
+    title: "자주 쓰는 T-Code 모음", subtitle: "개발 도구·데이터 조회·시스템 점검 빠른 찾기",
+    categoryId: "abap-tcode", aliases: ["트랜잭션 코드", ...entries.map(([code]) => code)],
+    tcodes: entries.map(([code]) => code), specs: {},
+    summary: "SAP GUI 명령 필드에 T-Code를 입력하면 해당 도구로 이동합니다. 현재 창에서 이동할 때는 /nSE38, 새 창에서 열 때는 /oSE38처럼 사용합니다.",
+    sections: [
+      ...groups.map(([title, rows]) => ({ title, blocks: [{ type: "table", headers: ["T-Code", "도구 이름", "주요 용도"], rows }] })),
+      { title: "헷갈리기 쉬운 구분", blocks: [{ type: "text", paragraphs: [
+        "SE16의 Initial Screen은 데이터 브라우저의 첫 화면을 뜻합니다. SAP Easy Access로 돌아가는 명령은 /n이며, SE16 자체는 테이블 데이터 조회 도구입니다.",
+        "SE11은 데이터 구조를 정의하고, SE16은 저장된 데이터를 조회합니다. SE84는 객체 검색, SE80은 객체를 탐색하며 개발하는 통합 작업 공간에 가깝습니다.",
+        "SM50·SM04는 현재 애플리케이션 서버 기준입니다. 화면에 보이는 목록을 시스템 전체의 프로세스·사용자 목록으로 혼동하지 마세요.",
+        "[[sap-gui-shortcuts|SAP GUI · ABAP 단축키]]에서 명령 필드 사용법도 함께 확인할 수 있습니다."
+      ] }] },
+      { title: "공식 참고 자료", blocks: [{ type: "text", paragraphs: [
+        '<a href="https://help.sap.com/docs/SUPPORT_CONTENT/abapfaq/3353523950.html" target="_blank" rel="noopener noreferrer">SAP Help · 개발 관련 트랜잭션 코드</a>',
+        '<a href="https://help.sap.com/docs/SUPPORT_CONTENT/basis/3354611686.html" target="_blank" rel="noopener noreferrer">SAP Help · 시스템 관리 트랜잭션 코드</a>'
+      ] }] }
+    ]
+  };
+  window.WIKI_TCODES.push(...entries.map(([code, label]) => ({ code, label, track: "abap", docId: "sap-tcode-reference" })));
+})();
+
+/** Topic names and editorial cross-references shared by the wiki renderer. */
+(function () {
+  const connections = {
+    "erp-setup": [["SAP GUI", "Easy Access", "실습 환경"], ["sap-gui-shortcuts", "sap-tcode-reference", "abap-basics"]],
+    "abap-basics": [["자료형", "변수", "상수", "조건식", "문자열"], ["abap-useful-syntax", "sap-gui-shortcuts", "abap-dictionary"]],
+    "abap-dictionary": [["ABAP Dictionary", "데이터 요소", "데이터베이스 테이블", "데이터 사전"], ["sap-tcode-reference", "abap-data-report"]],
+    "abap-modularization": [["Function Module", "함수 모듈", "서브루틴", "FORM", "PERFORM", "Include 프로그램"], ["sap-tcode-reference", "abap-basics"]],
+    "abap-data-report": [["Open SQL", "내부 테이블", "리포트 프로그램", "ALV"], ["abap-dictionary", "abap-useful-syntax", "abap-modularization"]],
+    "erp-fi": [["FI", "재무회계", "총계정원장"], ["erp-co", "erp-mm", "erp-sd"]],
+    "erp-co": [["CO", "관리회계", "코스트센터"], ["erp-fi", "erp-pp"]],
+    "erp-mm": [["MM", "자재관리", "구매오더"], ["erp-fi", "erp-pp", "erp-sd"]],
+    "erp-sd": [["SD", "판매관리", "판매오더"], ["erp-mm", "erp-fi"]],
+    "erp-pp": [["PP", "생산관리", "생산오더", "BOM"], ["erp-mm", "erp-co"]],
+    "erp-resources": [[], ["learning-roadmap", "sap-tcode-reference", "sap-gui-shortcuts", "abap-useful-syntax"]],
+    "abap-useful-syntax": [[], ["abap-basics", "abap-data-report", "sap-gui-shortcuts"]],
+    "sap-gui-shortcuts": [["명령 필드", "Pretty Printer", "Activate"], ["sap-tcode-reference", "erp-setup", "abap-useful-syntax"]],
+    "sap-tcode-reference": [["T-Code", "ABAP Editor", "Function Builder"], ["abap-dictionary", "abap-modularization", "sap-gui-shortcuts"]]
+  };
+  for (const [id, [aliases, related]] of Object.entries(connections)) {
+    const doc = window.WIKI_DOCS[id];
+    doc.aliases = [...new Set([...(doc.aliases || []), ...aliases])];
+    doc.sections.push({ title: "관련 문서", blocks: [{ type: "text", paragraphs: [
+      related.map(target => `[[${target}|${window.WIKI_DOCS[target].title}]]`).join(" · ")
+    ] }] });
+  }
+})();
