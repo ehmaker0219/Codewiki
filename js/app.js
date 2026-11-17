@@ -665,17 +665,11 @@
 
   function initControls() {
     const appLayout = document.getElementById("appLayout");
-    const collapseBtn = document.getElementById("sidebarCollapseBtn");
-    const expandBtn = document.getElementById("sidebarExpandBtn");
+    const toggleBtn = document.getElementById("sidebarToggleBtn");
 
-    collapseBtn?.addEventListener("click", () => {
-      appLayout?.classList.add("sidebar-collapsed");
-      expandBtn?.classList.remove("hidden");
-    });
-
-    expandBtn?.addEventListener("click", () => {
-      appLayout?.classList.remove("sidebar-collapsed");
-      expandBtn?.classList.add("hidden");
+    toggleBtn?.addEventListener("click", () => {
+      const isCollapsed = appLayout?.classList.toggle("sidebar-collapsed");
+      toggleBtn.title = isCollapsed ? "사이드바 펼치기" : "사이드바 접기";
     });
 
     const navboxBodyEl = document.getElementById("navboxBody");

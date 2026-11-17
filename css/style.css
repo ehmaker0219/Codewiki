@@ -186,26 +186,40 @@ code, pre, .mono {
 }
 
 .edge-collapse-btn {
-  position: absolute;
-  right: -13px;
-  top: 21px;
-  width: 26px;
-  height: 26px;
+  position: fixed;
+  left: 251px;
+  top: 20px;
+  z-index: 165;
+  width: 28px;
+  height: 28px;
   border-radius: 50%;
   background: var(--bg-card);
   border: 1px solid var(--border-subtle);
-  color: var(--text-muted);
+  color: var(--text-sub);
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
-  transition: color 0.15s, border-color 0.15s, transform 0.12s;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  transition: left 0.24s var(--tds-spring), color 0.15s, border-color 0.15s, background 0.15s;
 }
 
 .edge-collapse-btn:hover {
-  color: var(--text-strong);
-  border-color: var(--text-muted);
+  color: var(--toss-blue);
+  border-color: var(--toss-blue);
+  background: var(--toss-blue-soft);
+}
+
+.toggle-arrow-svg {
+  transition: transform 0.24s var(--tds-spring);
+}
+
+.app-layout.sidebar-collapsed .edge-collapse-btn {
+  left: 16px;
+}
+
+.app-layout.sidebar-collapsed .toggle-arrow-svg {
+  transform: rotate(180deg);
 }
 
 /* 사이드바 중앙 스크롤 메뉴 */
@@ -563,6 +577,11 @@ code, pre, .mono {
   align-items: center;
   justify-content: space-between;
   gap: 16px;
+  transition: padding-left 0.24s var(--tds-spring);
+}
+
+.app-layout.sidebar-collapsed .workspace-topbar {
+  padding-left: 58px;
 }
 
 .ws-topbar-left {
