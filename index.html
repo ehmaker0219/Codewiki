@@ -9,9 +9,12 @@
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/style.css?v=9d45cfc713b2" />
   <link rel="stylesheet" href="css/theme.css?v=e737a67e44a2" />
-  <link rel="stylesheet" href="css/design-v2.css?v=1" />
+  <link rel="stylesheet" href="css/design-v2.css?v=sap-1" />
 </head>
 <body>
+  <div class="sap-window-title">CodeWiki: Display Knowledge Repository <span>DESIGN V2 · CLASSIC GUI</span></div>
+  <nav class="sap-command-bar" aria-label="문서 도구"><strong>ABAP Workbench — 코드위키</strong><a href="#doc/welcome-abap">홈</a><a href="#doc/learning-roadmap">목차</a><a href="#doc/sap-tcode-reference">T-Code</a><a href="#doc/sap-gui-shortcuts">단축키</a></nav>
+  <footer class="sap-statusbar"><span>✓ 문서를 선택하세요</span><span>ABAP</span><span>코드위키 · 디자인 미리보기</span></footer>
   <!-- 로그인 후 전체 레이아웃: 좌측 고정 일체형 사이드바 + 우측 워크스페이스 -->
   <div class="app-layout" id="appLayout">
     <!-- 접기(<) / 펼치기(>) 통합 원형 화살표 버튼 -->
@@ -34,7 +37,7 @@
               <path d="M66 66 H108 V108 H95 V94 H69 V82.5 H95 V77.5 H66 Z" />
             </svg>
           </span>
-          <span class="brand-name">코드위키</span>
+          <span class="brand-name">Repository Browser</span>
         </a>
 
         <div class="brand-track-toggle" id="brandTrackToggle" role="group" aria-label="학습 트랙 전환">
