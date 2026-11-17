@@ -8,10 +8,35 @@
  */
 (function () {
   const TRACK_SESSION_KEY = "codewiki_selected_track_v1";
-  let currentTrack = sessionStorage.getItem(TRACK_SESSION_KEY) === "ui5" ? "ui5" : "abap";
+  if (sessionStorage.getItem(TRACK_SESSION_KEY) === "ui5") {
+    sessionStorage.setItem(TRACK_SESSION_KEY, "abap");
+  }
+  let currentTrack = "abap";
   let currentDocId = currentTrack === "ui5" ? "welcome-ui5" : "welcome-abap";
   const READ_DOCS_KEY = "codewiki_read_docs_v2";
   const expandedCategories = new Set();
+  // 문서 데이터는 data.js와 ui5-data.js에서 앱 시작 전에 로드됩니다.
+  const documents = Object.values(window.WIKI_DOCS || {});
+  const aliases = [];
+  const exactAliases = new Map();
+  const backlinkText = new Map();
+  const backlinks = new Map();
+  for (const doc of documents) {
+    backlinkText.set(doc.id, JSON.stringify(doc.sections || []) + " " + (doc.summary || ""));
+    for (const alias of doc.aliases || []) {
+      const clean = alias.trim();
+      if (!clean) continue;
+      aliases.push({ alias: clean, docId: doc.id, regex: buildAliasRegex(clean) });
+      const key = clean.toLowerCase();
+      if (!exactAliases.has(key)) exactAliases.set(key, doc.id);
+    }
+  }
+  aliases.sort((a, b) => b.alias.length - a.alias.length);
+  const searchIndex = documents.filter(doc => doc.track !== "ui5").map(doc => ({
+    doc,
+    fields: [doc.title, doc.subtitle, doc.summary, ...(doc.tcodes || [])]
+      .filter(Boolean).map(value => value.toLowerCase())
+  }));
 
   const categoryNav = document.getElementById("categoryNav");
   const quickRefGroup = document.getElementById("quickRefGroup");
@@ -58,7 +83,8 @@
 
   function getReadDocs() {
     try {
-      return JSON.parse(localStorage.getItem(READ_DOCS_KEY) || "[]");
+      const stored = JSON.parse(localStorage.getItem(READ_DOCS_KEY) || "[]");
+      return Array.isArray(stored) ? stored : [];
     } catch (e) {
       return [];
     }
@@ -91,29 +117,8 @@
     return new RegExp(`${leftBound}${escaped}${rightBound}`, "gi");
   }
 
-  // 전체 문서의 aliases 키워드를 긴 단어 우선 순으로 정렬하여 반환
-  function getSortedAliases() {
-    const list = [];
-    Object.values(window.WIKI_DOCS || {}).forEach(doc => {
-      (doc.aliases || []).forEach(alias => {
-        const clean = alias.trim();
-        if (clean) {
-          list.push({ alias: clean, docId: doc.id, regex: buildAliasRegex(clean) });
-        }
-      });
-    });
-    list.sort((a, b) => b.alias.length - a.alias.length);
-    return list;
-  }
-
   function findDocIdByExactAlias(word) {
-    const lower = word.trim().toLowerCase();
-    for (const doc of Object.values(window.WIKI_DOCS || {})) {
-      if ((doc.aliases || []).some(a => a.trim().toLowerCase() === lower)) {
-        return doc.id;
-      }
-    }
-    return null;
+    return exactAliases.get(word.trim().toLowerCase()) || null;
   }
 
   // 인라인 문법 파서 + 나무위키식 자동 키워드 하이퍼링크 엔진
@@ -158,8 +163,7 @@
     });
 
     // 4) 평문 속 등록 키워드(aliases) 자동 감지 → 하이퍼링크 연결 (현재 보고 있는 자기 자신 문서는 제외)
-    const aliasEntries = getSortedAliases();
-    for (const entry of aliasEntries) {
+    for (const entry of aliases) {
       if (entry.docId === currentDocId) continue;
       out = out.replace(entry.regex, matchedText =>
         stash(`<a href="#doc/${entry.docId}" class="wiki-link" data-doc="${entry.docId}">${matchedText}</a>`)
@@ -183,19 +187,23 @@
 
   // 특정 문서를 참조하는 역링크(Backlinks) 자동 검색 (수동 [[링크]] + 자동 aliases 언급 모두 포함!)
   function computeBacklinks(targetId) {
+    if (backlinks.has(targetId)) return backlinks.get(targetId);
     const targetDoc = window.WIKI_DOCS[targetId];
     if (!targetDoc) return [];
 
     const escapedId = escapeRegExp(targetId);
     const explicitPattern = new RegExp(`\\[\\[${escapedId}(?:\\|[^\\]]+)?\\]\\]`, "i");
-    const aliasRegexes = (targetDoc.aliases || []).map(a => buildAliasRegex(a.trim()));
+    const aliasRegexes = (targetDoc.aliases || []).map(a => a.trim()).filter(Boolean)
+      .map(alias => new RegExp(buildAliasRegex(alias).source, "i"));
 
-    return Object.values(window.WIKI_DOCS).filter(doc => {
+    const matches = documents.filter(doc => {
       if (doc.id === targetId) return false;
-      const raw = JSON.stringify(doc.sections || []) + " " + (doc.summary || "");
+      const raw = backlinkText.get(doc.id);
       if (explicitPattern.test(raw)) return true;
       return aliasRegexes.some(rx => rx.test(raw));
     });
+    backlinks.set(targetId, matches);
+    return matches;
   }
 
   // 좌측 고정 사이드바 렌더링 (불필요한 빈 요소 자동 숨김)
@@ -413,7 +421,7 @@
               <span>${block.label || "ABAP Code"}</span>
               <button class="copy-code-btn" data-code="${encodeURIComponent(block.code || "")}">복사</button>
             </div>
-            <pre><code>${(block.code || "").replace(/</g, "&lt;").replace(/>/g, "&gt;")}</code></pre>
+            <pre><code>${(block.code || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")}</code></pre>
           </div>
         `;
 
@@ -471,6 +479,10 @@
 
   // 메인 문서 렌더링 (하단 위키독스식 이전/다음 챕터 이동 바 포함)
   function renderDocument(docId) {
+    if (window.WIKI_DOCS[docId]?.track === "ui5") {
+      docId = "welcome-abap";
+      history.replaceState(null, "", "#doc/welcome-abap");
+    }
     const allDocsObj = window.WIKI_DOCS || {};
     const targetDoc = allDocsObj[docId] || allDocsObj[getHomeDocId(currentTrack)] || Object.values(allDocsObj)[0];
     if (!targetDoc) return;
@@ -735,6 +747,7 @@
   }
 
   function selectTrack(track) {
+    if (track === "ui5") return;
     const nextTrack = track === "ui5" ? "ui5" : "abap";
     currentTrack = nextTrack;
     sessionStorage.setItem(TRACK_SESSION_KEY, nextTrack);
@@ -822,13 +835,8 @@
         return;
       }
 
-      const matches = Object.values(window.WIKI_DOCS).filter(
-        d =>
-          d.title.toLowerCase().includes(q) ||
-          (d.subtitle && d.subtitle.toLowerCase().includes(q)) ||
-          (d.summary && d.summary.toLowerCase().includes(q)) ||
-          (d.tcodes && d.tcodes.some(tc => tc.toLowerCase().includes(q)))
-      );
+      const matches = searchIndex.filter(entry => entry.fields.some(field => field.includes(q)))
+        .map(entry => entry.doc);
 
       if (matches.length === 0) {
         searchDropdown.innerHTML = `<div class="search-item"><span class="search-item-sub">일치하는 문서가 없습니다.</span></div>`;

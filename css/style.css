@@ -211,6 +211,13 @@ code, pre, .mono {
   transition: all 0.18s var(--tds-spring);
 }
 
+.brand-track-btn:disabled,
+.track-big-card:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
 .brand-track-btn:hover {
   color: var(--text-strong);
 }

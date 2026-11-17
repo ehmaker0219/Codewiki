@@ -136,8 +136,8 @@
                         <span class="cat-type-pill">${post.category}</span>
                         ${
                           post.target_doc_id
-                            ? `<a href="#doc/${post.target_doc_id}" class="doc-ref-pill" data-jump-doc="${post.target_doc_id}">
-                                📄 ${post.target_doc_title || post.target_doc_id}
+                            ? `<a href="#doc/${escapeHtml(post.target_doc_id)}" class="doc-ref-pill" data-jump-doc="${escapeHtml(post.target_doc_id)}">
+                                📄 ${escapeHtml(post.target_doc_title || post.target_doc_id)}
                                </a>`
                             : `<span class="doc-ref-pill">📄 전체 / 새 주제</span>`
                         }

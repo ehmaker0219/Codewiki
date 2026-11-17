@@ -22,18 +22,8 @@
   const DEMO_SESSION_KEY = "codewiki_custom_session_v1";
   const SUPA_TOKEN_KEY = "codewiki_supa_token_v1";
 
-  const defaultDemoUsers = [
-    {
-      id: "admin-1",
-      username: "admin",
-      password: "admin1234",
-      full_name: "관리자",
-      class_name: "운영진",
-      role: "admin",
-      status: "approved",
-      created_at: "2026-11-17 09:00"
-    }
-  ];
+  // Demo mode never provisions a privileged account with a shared password.
+  const defaultDemoUsers = [];
 
   function getDemoUsers() {
     try {
@@ -74,6 +64,39 @@
       localStorage.setItem(SUPA_TOKEN_KEY, token);
     } else {
       localStorage.removeItem(SUPA_TOKEN_KEY);
+    }
+  }
+
+  let logoutPending = false;
+  async function logout() {
+    if (logoutPending) return;
+    if (!isSupabaseConfigured) {
+      setDemoSession("logged-out");
+      return;
+    }
+    logoutPending = true;
+    try {
+      const token = getSupaToken();
+      if (token) {
+        const { error } = await supabaseClient.rpc("cw_logout", { p_token: token });
+        if (error) throw error;
+      }
+      if (getSupaToken() !== token) {
+        await renderAuthState();
+        if (getSupaToken()) window.alert("다른 탭에서 로그인 상태가 변경되었습니다. 로그아웃을 다시 눌러 주세요.");
+        return;
+      }
+      setSupaToken("");
+      activeUserCache = null;
+      window.CodeWikiApp?.resetTrackChoice();
+      adminModal?.classList.add("hidden");
+      document.getElementById("boardWriteModal")?.classList.add("hidden");
+      await renderAuthState();
+    } catch (error) {
+      // Retain the token so revocation can be retried; do not claim logout succeeded.
+      window.alert("서버에서 로그아웃하지 못했습니다. 연결을 확인하고 다시 시도해 주세요.");
+    } finally {
+      logoutPending = false;
     }
   }
 
@@ -139,7 +162,7 @@
             <div class="track-card-title">ABAP</div>
           </button>
 
-          <button type="button" class="track-big-card track-ui5" data-pick-track="ui5" style="min-height:210px; align-items:center; justify-content:center; text-align:center;">
+          <button type="button" class="track-big-card track-ui5" data-pick-track="ui5" disabled title="업데이트 준비 중" style="min-height:210px; align-items:center; justify-content:center; text-align:center;">
             <div class="track-card-icon-wrap" style="margin:0 auto 18px;">
               <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                 <rect x="3" y="3" width="18" height="18" rx="3"></rect>
@@ -147,7 +170,7 @@
                 <line x1="9" y1="21" x2="9" y2="9"></line>
               </svg>
             </div>
-            <div class="track-card-title">UI5 / Fiori</div>
+            <div class="track-card-title">UI5 / Fiori · 준비 중</div>
           </button>
         </div>
       </div>
@@ -199,6 +222,9 @@
     }
 
     const { data: profile, error } = await supabaseClient.rpc("cw_me", { p_token: token });
+
+    // Ignore a response from a session that was logged out or replaced while awaiting RPC.
+    if (getSupaToken() !== token) return;
 
     if (error || !profile) {
       setSupaToken("");
@@ -271,15 +297,7 @@
         </div>
       `;
 
-      document.getElementById("logoutBtn")?.addEventListener("click", () => {
-        window.CodeWikiApp?.resetTrackChoice();
-        if (!isSupabaseConfigured) {
-          setDemoSession("logged-out");
-        } else {
-          setSupaToken("");
-          renderAuthState();
-        }
-      });
+      document.getElementById("logoutBtn")?.addEventListener("click", logout);
     }
   }
 
@@ -690,14 +708,7 @@
       renderAuthState();
     });
 
-    document.getElementById("pendingLogoutBtn").addEventListener("click", () => {
-      if (!isSupabaseConfigured) {
-        setDemoSession("logged-out");
-      } else {
-        setSupaToken("");
-        renderAuthState();
-      }
-    });
+    document.getElementById("pendingLogoutBtn").addEventListener("click", logout);
   }
 
   // 관리자 전용 [학생 승인 관리] 모달 (반별 필터 + 개별 승인/거절 지원)
