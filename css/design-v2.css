@@ -24,7 +24,7 @@ body { background:#e8eff3; font-family:Arial,'Pretendard',sans-serif; font-size:
 .sidebar-bottom-profile { padding:6px 8px; font-size:10px; letter-spacing:0; background:#d5e2ec; border-top:1px solid #a8bac7; }
 .workspace-area { margin-left:302px; padding-top:128px; }
 .workspace-topbar { position:fixed; top:34px; left:0; right:0; height:42px; padding:0 16px 0 46px; gap:12px; background:linear-gradient(#fff,#edf2f7); border-bottom:1px solid #a5b9c8; }
-.workspace-topbar::before { content:'✓'; position:absolute; left:18px; color:#40892d; font-size:20px; font-weight:bold; }
+.workspace-topbar::before { content:none; }
 .ws-topbar-left { max-width:420px; }
 .search-input { height:27px; border:1px solid #899eac; border-radius:0; box-shadow:inset 1px 1px 2px #657d8d25; background:#fff; font-size:12px; color:#172d3d; }
 .icon-btn, .toss-chip-btn, .board-action-btn { border-radius:2px; border:1px solid #a4b6c4; background:linear-gradient(#fff,#d9e5ef); box-shadow:inset 1px 1px #fff; color:#173f5e; }
@@ -98,8 +98,8 @@ body { font-family:Tahoma,'Pretendard',Arial,sans-serif; }
 .sap-tool-row a:hover, .sap-tool-row button:hover { border-color:#b5a066; background:linear-gradient(#fff9dd,#ffdf7e); }
 .sap-tool-row svg { width:16px; height:16px; stroke:#1277a9; fill:none; stroke-width:1.7; margin-right:5px; }
 .sap-tool-separator { height:20px; border-left:1px solid #a4b9c9; border-right:1px solid #f4f8fb; margin:0 5px; }
-.edge-collapse-btn { top:38px; left:auto; right:60px; border:1px solid #a6bac9; height:24px; background:linear-gradient(#fff,#d6e3ed); }
-.app-layout.sidebar-collapsed .edge-collapse-btn { left:auto; right:60px; }
+.edge-collapse-btn { top:38px; left:16px; right:auto; border:1px solid #a6bac9; height:24px; background:linear-gradient(#fff,#d6e3ed); }
+.app-layout.sidebar-collapsed .edge-collapse-btn { left:16px; right:auto; }
 .brand-logo { height:24px; background:#ffdc6b; border:1px solid #a8955f; box-shadow:inset 1px 1px #fff2b6; padding:2px 5px; }
 .brand-name { font-size:13px; font-family:Tahoma,sans-serif; }
 .brand-track-toggle { margin:6px 7px; height:25px; box-shadow:inset 1px 1px #b2bac1; }
