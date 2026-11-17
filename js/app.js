@@ -666,6 +666,24 @@
   function initControls() {
     const appLayout = document.getElementById("appLayout");
     const toggleBtn = document.getElementById("sidebarToggleBtn");
+    const brandHomeLink = document.getElementById("brandHomeLink");
+
+    brandHomeLink?.addEventListener("click", e => {
+      e.preventDefault();
+      navigateTo("welcome-guide");
+    });
+
+    window.addEventListener("hashchange", () => {
+      const h = window.location.hash;
+      if (h.startsWith("#doc/")) {
+        const target = h.replace("#doc/", "");
+        if (window.WIKI_DOCS[target] && target !== currentDocId) {
+          if (window.CodeWikiBoard) window.CodeWikiBoard.closeIfActive();
+          renderDocument(target);
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        }
+      }
+    });
 
     toggleBtn?.addEventListener("click", () => {
       const isCollapsed = appLayout?.classList.toggle("sidebar-collapsed");
