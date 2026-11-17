@@ -45,4 +45,4 @@ ABAP 예제는 SAP 시스템에서 별도로 실행·검증해야 합니다. SQL
 
 ## 소스와 배포
 
-`main`은 작업 소스이며 현재 GitHub Pages는 별도 `gh-pages` 브랜치를 사용합니다. main에 소스를 올리는 작업과 배포 사이트 갱신은 별개입니다.
+`main`은 작업 소스이자 GitHub Pages 배포 브랜치입니다. main에 푸시하면 Pages 빌드 후 공개 사이트에 자동 반영됩니다. 새 디자인은 `codex/design-v2`에서 개발하며 main에 통합하기 전에는 공개 사이트가 변경되지 않습니다. 1일차 소스와 배포는 `day1-savepoint`, `day1-deploy` 태그에 보존되어 있습니다.
