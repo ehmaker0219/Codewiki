@@ -58,8 +58,9 @@
         </div>
       </div>
 
-      <!-- 우측 학습 컨트롤 칩 -->
+      <!-- 우측 학습 컨트롤 칩 & 관리자 승인 탭 -->
       <div class="topbar-right">
+        <div id="adminBtnWrap" style="display:flex; align-items:center; gap:8px;"></div>
         <button id="quizModeBtn" class="toss-chip-btn" title="핵심 키워드를 가려서 스스로 테스트하는 복습 모드">
           <span class="chip-dot"></span>
           <span>암기 모드 OFF</span>
@@ -144,8 +145,16 @@
   <!-- 링크 마우스 오버 시 뜨는 미니 프리뷰 툴팁 -->
   <div id="hoverPreviewCard" class="hover-preview-card hidden" role="tooltip"></div>
 
+  <!-- 우리 반 전용 로그인 / 가입 신청 / 승인 대기 게이트 화면 -->
+  <div id="authGateOverlay" class="auth-gate-overlay hidden"></div>
+
+  <!-- 관리자 전용 [우리 반 학생 승인 관리] 모달 -->
+  <div id="adminModal" class="admin-modal-backdrop hidden"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="js/data.js"></script>
   <script src="js/visualizers.js"></script>
   <script src="js/app.js"></script>
+  <script src="js/auth.js"></script>
 </body>
 </html>

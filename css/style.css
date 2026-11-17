@@ -1109,6 +1109,315 @@ body.quiz-mode .quiz-token.revealed {
   display: none !important;
 }
 
+/* ==========================================================================
+   Toss-Style Auth Gate (로그인 / 가입 신청 / 승인 대기 화면) & 관리자 승인 모달
+   ========================================================================== */
+.pending-badge {
+  background: var(--toss-red);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 800;
+  padding: 1px 7px;
+  border-radius: var(--tds-radius-full);
+}
+
+.auth-gate-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 600;
+  background: var(--bg-canvas);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  overflow-y: auto;
+}
+
+.auth-card {
+  width: 100%;
+  max-width: 440px;
+  padding: 40px 36px;
+}
+
+.auth-logo-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+.auth-title {
+  font-size: 24px;
+  font-weight: 800;
+  color: var(--text-strong);
+  letter-spacing: -0.03em;
+  margin-top: 12px;
+}
+
+.auth-desc {
+  font-size: 14px;
+  color: var(--text-sub);
+  margin-top: 6px;
+  line-height: 1.55;
+}
+
+.auth-tab-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  background: var(--bg-chip);
+  padding: 4px;
+  border-radius: var(--tds-radius-sm);
+  margin-bottom: 20px;
+}
+
+.auth-tab-btn {
+  height: 38px;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 14px;
+  font-weight: 700;
+  font-family: inherit;
+  border-radius: 9px;
+  cursor: pointer;
+  transition: all 0.16s var(--tds-spring);
+}
+
+.auth-tab-btn.active {
+  background: var(--bg-card);
+  color: var(--text-strong);
+  box-shadow: var(--shadow-card);
+}
+
+.auth-alert {
+  background: var(--toss-red-soft);
+  color: var(--toss-red);
+  font-size: 13px;
+  font-weight: 700;
+  padding: 12px 14px;
+  border-radius: var(--tds-radius-sm);
+  margin-bottom: 16px;
+}
+
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.auth-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.auth-field label {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-sub);
+  padding-left: 2px;
+}
+
+.auth-field input {
+  height: 48px;
+  background: var(--bg-subtle);
+  border: 1.5px solid transparent;
+  border-radius: var(--tds-radius-sm);
+  padding: 0 16px;
+  font-size: 15px;
+  color: var(--text-strong);
+  font-family: inherit;
+  transition: all 0.16s var(--tds-spring);
+}
+
+.auth-field input:focus {
+  outline: none;
+  background: var(--bg-card);
+  border-color: var(--toss-blue);
+  box-shadow: 0 0 0 4px var(--toss-blue-soft);
+}
+
+.toss-primary-btn {
+  height: 50px;
+  width: 100%;
+  border: none;
+  border-radius: var(--tds-radius-sm);
+  background: var(--toss-blue);
+  color: #fff;
+  font-size: 15.5px;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  margin-top: 6px;
+  transition: background 0.15s, transform 0.12s var(--tds-spring);
+}
+
+.toss-primary-btn:hover {
+  background: var(--toss-blue-hover);
+}
+
+.toss-primary-btn:active {
+  transform: scale(0.98);
+}
+
+.demo-switcher-box {
+  margin-top: 24px;
+  padding: 14px 16px;
+  background: var(--bg-subtle);
+  border-radius: var(--tds-radius-md);
+}
+
+.demo-switcher-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-muted);
+  margin-bottom: 10px;
+}
+
+.demo-switcher-btns {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* 관리자 학생 승인 관리 모달 */
+.admin-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 650;
+  background: rgba(25, 31, 40, 0.48);
+  backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.admin-modal-card {
+  width: 100%;
+  max-width: 600px;
+  max-height: 88vh;
+  overflow-y: auto;
+  padding: 30px 32px;
+}
+
+.admin-modal-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 24px;
+}
+
+.admin-modal-title {
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--text-strong);
+  margin-top: 6px;
+}
+
+.admin-group-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--text-strong);
+  margin-bottom: 12px;
+}
+
+.admin-empty-box {
+  background: var(--bg-subtle);
+  border-radius: var(--tds-radius-md);
+  padding: 18px;
+  text-align: center;
+  font-size: 13.5px;
+  color: var(--text-muted);
+}
+
+.admin-user-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.admin-user-row {
+  background: var(--bg-subtle);
+  border-radius: var(--tds-radius-md);
+  padding: 14px 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.admin-user-name {
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--text-strong);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.approved-tag {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--toss-green);
+  background: var(--toss-green-soft);
+  padding: 2px 8px;
+  border-radius: var(--tds-radius-full);
+}
+
+.admin-user-email {
+  font-size: 12.5px;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+.admin-action-btns {
+  display: flex;
+  gap: 8px;
+}
+
+.approve-btn {
+  background: var(--toss-blue);
+  color: #fff;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.1s;
+}
+
+.approve-btn:active {
+  transform: scale(0.95);
+}
+
+.reject-btn,
+.revoke-btn {
+  background: var(--bg-chip-hover);
+  color: var(--text-sub);
+  border: none;
+  padding: 8px 12px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.admin-footer-tip {
+  margin-top: 24px;
+  padding: 14px 16px;
+  background: var(--toss-blue-soft);
+  border-radius: var(--tds-radius-md);
+  font-size: 12.5px;
+  color: var(--text-body);
+  line-height: 1.55;
+}
+
 @media (max-width: 1140px) {
   .app-shell {
     grid-template-columns: 1fr;
