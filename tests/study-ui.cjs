@@ -11,7 +11,7 @@ function get(id){if(!elements.has(id))elements.set(id,{innerHTML:'',textContent:
   },focus(){},setAttribute(){}});return elements.get(id);}
 const context={window:{location:{hash:'#study'},addEventListener(){},alert:m=>alerts.push(m),confirm:()=>true},
   document:{getElementById:get,querySelectorAll:()=>[]},localStorage:{getItem:k=>memory.get(k),setItem:(k,v)=>memory.set(k,v),removeItem:k=>memory.delete(k)},
-  crypto:{randomUUID},setTimeout:()=>1,clearTimeout(){},history:{replaceState(){}},console};
+  crypto:{randomUUID},AbortController,setTimeout:()=>1,clearTimeout(){},history:{replaceState(){}},console};
 const client={rpc:async(name,args)=>{
  calls.push(name);
  if(name==='cw_list_study_notes'){
@@ -47,6 +47,8 @@ const flush=()=>new Promise(resolve=>setImmediate(resolve));
  fixtures.forEach(note=>saved.set(note.id,note));
  api.setUser({id:'admin',role:'admin',full_name:'Test Admin'});await flush();
  assert.equal(get('studyTitle').value,'261112THU','initial note follows modification time, not the title date');
+ assert.match(get('studySaveSummary').textContent,/마지막 저장 .*12:00/,'confirmed timestamp is also in the sticky toolbar');
+ assert.equal(get('studySave').textContent,'저장됨');
  const renderedTitles=()=>get('studyList').querySelectorAll('[data-note]').map(button=>saved.get(button.dataset.note).title);
  assert.deepEqual(renderedTitles(),['20261120FRI','2026-11-19 목요일','261118 수요일','261117TUE','261112THU','개념','복습']);
  await get('note-'+fixtures[1].id).events.click();await flush();

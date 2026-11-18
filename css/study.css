@@ -35,6 +35,7 @@
 .study-editor-meta>span {font-size:11px;color:var(--text-muted);line-height:1.6;}
 .study-editor-meta>div {display:flex;gap:6px;flex-shrink:0;}
 .study-editor-tools {position:sticky;top:56px;z-index:80;background:var(--bg-card,#fff);box-shadow:0 3px 6px rgba(20,45,78,.05);}
+.study-save-summary {padding:6px 14px;color:var(--text-sub);font-size:11px;line-height:1.5;border-top:1px solid var(--border-hairline);}
 .study-toolbar {display:flex;align-items:center;gap:3px;flex-wrap:wrap;padding:9px 12px;border-block:1px solid var(--border-hairline);background:var(--bg-subtle,#f7f9fc);}
 .study-toolbar button,.study-note-footer button {border:0;background:transparent;color:var(--text-sub);font-size:12px;padding:7px 9px;border-radius:4px;}
 .study-toolbar button:hover,.study-toolbar button[aria-pressed=true] {color:var(--text-strong);background:var(--toss-blue-soft,#e9f0fb);}

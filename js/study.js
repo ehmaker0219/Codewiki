@@ -98,6 +98,7 @@
       <div id="studyEditor" hidden><label class="sr-only" for="studyTitle">노트 제목</label><input id="studyTitle" class="study-title" maxlength="120" placeholder="노트 제목">
       <div class="study-editor-meta"><span id="studyStatus" role="status" aria-live="polite"></span><div><button type="button" id="studyDownload" class="toss-chip-btn">내려받기</button><button type="button" id="studySave" class="toss-primary-btn">저장</button></div></div>
       <div class="study-editor-tools">
+      <div class="study-save-summary" id="studySaveSummary"></div>
       <div class="study-toolbar study-word-tools" role="toolbar" aria-label="필기 서식 도구">
         <div class="study-tool-group"><button type="button" data-history="undo" aria-label="실행 취소" title="실행 취소">${line('M9 4 3 10l6 6M3 10h11a6 6 0 0 1 0 12')}</button><button type="button" data-history="redo" aria-label="다시 실행" title="다시 실행">${line('m15 4 6 6-6 6m6-6H10a6 6 0 0 0 0 12')}</button></div>
         <div class="study-tool-group"><label class="sr-only" for="studyParagraphStyle">문단 스타일</label><select id="studyParagraphStyle" title="문단 스타일 (제목 1~3: Ctrl+Alt+1~3)"><option value="paragraph">일반 텍스트</option>${[1,2,3,4,5,6].map(n=>`<option value="h${n}">제목 ${n}</option>`).join('')}<option value="code" disabled>코드 블록</option></select></div>
@@ -194,7 +195,9 @@
     if(!store||!byId('studyStatus'))return;
     const savedAt=store.current?.updated_at;
     byId('studyStatus').textContent=[store.status,savedAt?'마지막 저장 '+date(savedAt):''].filter(Boolean).join(' · ');
+    byId('studySaveSummary').textContent=[store.status,savedAt?'마지막 저장 '+date(savedAt):'아직 서버에 저장되지 않았습니다.'].filter(Boolean).join(' · ');
     byId('studySave').disabled=store.busy;
+    byId('studySave').textContent=store.busy?'저장 중…':store.dirty?'저장':'저장됨';
     if(store.current&&!store.dirty&&store.current.revision){
       const note={...store.current,body:undefined},index=notes.findIndex(n=>n.id===note.id);
       const previous=notes[index];
