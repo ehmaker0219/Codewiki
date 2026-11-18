@@ -12,6 +12,7 @@
   let month = months.includes(today().slice(0,7)) ? today().slice(0,7) : today()<data.start ? months[0] : months[months.length-1];
   let selected = today().startsWith(month) ? today() : month+'-01';
   let filter='all', view='calendar';
+  let overviewOpen=true;
   let selectedBirthday='';
   let container;
   const birthdayKey = person => JSON.stringify([person.full_name,person.month,person.day]);
@@ -69,7 +70,6 @@
         ${phase?`<dt>교육 단계</dt><dd>${esc(phase.name)}</dd>`:''}<dt>교육 주차</dt><dd>${entry.week}주차</dd></dl>
         ${entry.isBreak?'<p>BREAK · 수업 없는 날</p>':''}${entry.holiday?`<p>${esc(entry.holiday)} · 원본 휴강 일정</p>`:''}
         ${entry.milestones.length?`<div class="schedule-detail-milestones">${entry.milestones.map(m=>`<p>${esc(m)}</p>`).join('')}</div>`:''}
-        ${phase&&entry.kind!=='holiday'?`<div class="schedule-phase-note"><strong>${esc(phase.name)} 주요 학습 내용</strong><p>${esc(phase.description)}</p></div>`:''}
         ${hasLesson?`<a class="schedule-note-link" href="#doc/lesson-${selected}" data-schedule-doc="lesson-${selected}">이날 수업 필기 보기 →</a>`:''}
         `}
       ${birthdaysFor(selected).length?`<div class="schedule-birthday-detail"><h3>우리 반 생일</h3>${birthdaysFor(selected).map(b=>`<p>🎂 ${esc(b.full_name)} · ${Number(selected.slice(5,7))}월 ${Number(selected.slice(8))}일</p>`).join('')}</div>`:''}
@@ -88,6 +88,8 @@
   }
   function render() {
     const entries=monthEntries(), index=months.indexOf(month);
+    const birthdayStatus=window.CodeWikiBirthdays?.getStatus();
+    const birthdayMessage=birthdayStatus==='error'?'반 생일을 불러오지 못했습니다. <button type="button" id="retryBirthdays" class="toss-chip-btn">다시 시도</button>':birthdayStatus==='loading'?'반 생일을 불러오는 중…':'';
     const listDates=monthCells(month).filter(key=>key && (matches(byDate.get(key)) || birthdaysFor(key).length));
     const active=entries.filter(e=>e.kind!=='holiday').length, off=entries.filter(e=>e.kind==='holiday').length;
     container.innerHTML=`<header class="schedule-header"><div><p class="schedule-eyebrow">SAP CODE 아카데미 2기</p><h1 class="article-main-title">교육 일정</h1><p>${data.start.replaceAll('-','.')} – ${data.end.replaceAll('-','.')} <span>월–금 ${data.hours}</span></p></div><div class="schedule-header-actions"><span class="schedule-revision">${data.revision.replaceAll('-','.')} 기준</span><div class="schedule-view-controls" role="group" aria-label="일정 보기 방식"><button type="button" data-schedule-view="calendar" aria-pressed="${view==='calendar'}">달력</button><button type="button" data-schedule-view="list" aria-pressed="${view==='list'}">목록</button></div></div></header>
@@ -99,9 +101,10 @@
           `<div class="schedule-list">${listDates.length?listDates.map(key=>{const e=byDate.get(key);return `<button type="button" class="schedule-list-item ${selected===key?'selected':''}" data-calendar-day="${key}" aria-pressed="${selected===key}"><span>${fullDate(key)}</span><span>${matches(e)?`<span class="schedule-event kind-${e.kind}">${esc(e.title)}</span>`:''}${birthdayBadges(key)}</span><span>${matches(e)?esc(e.milestones.join(' · ')):''}</span></button>`}).join(''):'<p class="schedule-empty">이번 달에는 선택한 분류의 일정이 없습니다.</p>'}</div>`}
         ${view==='calendar'&&!listDates.length?'<p class="schedule-empty">이번 달에는 선택한 분류의 일정이 없습니다.</p>':''}
       </div>${detail()}</div>
-      <details class="schedule-overview"><summary>전체 과정과 주요 일정</summary><div class="schedule-phase-grid">${data.phases.map(p=>`<section><h3>${esc(p.name)}</h3><p class="schedule-phase-period">${esc(p.period)}</p><p>${esc(p.description)}</p></section>`).join('')}</div><h2>주요 일정</h2><div class="schedule-key-dates">${data.milestones.map(m=>`<button type="button" data-schedule-jump="${m.date}"><time>${m.date.replaceAll('-','.')}</time><span>${esc(m.title)}</span></button>`).join('')}</div></details>
-      <p class="schedule-birthday-status">${window.CodeWikiBirthdays?.getStatus()==='error'?'반 생일을 불러오지 못했습니다. <button type="button" id="retryBirthdays" class="toss-chip-btn">다시 시도</button>':window.CodeWikiBirthdays?.getStatus()==='loading'?'반 생일을 불러오는 중…':'생일은 공개를 선택한 같은 반 회원만 표시됩니다.'}</p>
+      <details class="schedule-overview"${overviewOpen?' open':''}><summary>전체 과정과 주요 일정</summary><div class="schedule-phase-grid">${data.phases.map(p=>`<section><h3>${esc(p.name)}</h3><p class="schedule-phase-period">${esc(p.period)}</p><p>${esc(p.description)}</p></section>`).join('')}</div><h2>주요 일정</h2><div class="schedule-key-dates">${data.milestones.map(m=>`<button type="button" data-schedule-jump="${m.date}"><time>${m.date.replaceAll('-','.')}</time><span>${esc(m.title)}</span></button>`).join('')}</div></details>
+      ${birthdayMessage?`<p class="schedule-birthday-status">${birthdayMessage}</p>`:''}
       <footer class="schedule-footer"><p>${esc(data.note)}</p></footer>`;
+    container.querySelector('.schedule-overview').addEventListener('toggle',e=>{if(e.target.isConnected)overviewOpen=e.target.open;});
     container.querySelector('#retryBirthdays')?.addEventListener('click',()=>window.CodeWikiBirthdays?.refresh());
     container.querySelectorAll('[data-birthday-member]').forEach(b=>b.addEventListener('click',()=>{
       const person=birthdayMembers()[Number(b.dataset.birthdayMember)];

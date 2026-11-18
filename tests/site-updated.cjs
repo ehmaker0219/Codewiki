@@ -1,0 +1,11 @@
+const assert = require('node:assert/strict');
+const {stampUpdatedTime} = require('../scripts/update-assets.cjs');
+const html = '<main>Version one</main><footer><time id="siteUpdatedAt"></time></footer>';
+const first = stampUpdatedTime(html,new Date('2026-11-18T03:00:00Z'));
+assert.match(first,/2026\.11\.18 12:00 \(KST\)/);
+assert.match(first,/datetime="2026-11-18T03:00:00.000Z"/);
+assert.equal(stampUpdatedTime(first,new Date('2026-11-19T03:00:00Z')),first,'unchanged files retain their actual update time');
+const next = stampUpdatedTime(first.replace('Version one','Version two'),new Date('2026-11-18T16:30:00Z'));
+assert.match(next,/2026\.11\.19 01:30 \(KST\)/);
+assert.notEqual(first.match(/data-version="([^"]+)"/)[1],next.match(/data-version="([^"]+)"/)[1]);
+console.log('PASS: Korea-time update label, stable unchanged builds, changed content and midnight rollover');
