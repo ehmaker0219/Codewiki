@@ -17,7 +17,15 @@ assert.ok(!daily('16').sections.some(s=>/함수 그룹|BAPI|클래스/.test(s.ti
 assert.ok(daily('17').sections.some(s=>s.title==='함수 그룹과 함수 모듈'));
 assert.ok(daily('17').sections.some(s=>s.title==='예외와 반환 코드'));
 assert.deepEqual(Array.from(docs['abap-bapi'].lessonDates),['2026-11-17']);
-assert.deepEqual(Array.from(docs['abap-objects'].lessonDates),['2026-11-17']);
+assert.deepEqual(Array.from(docs['abap-objects'].lessonDates),['2026-11-17','2026-11-18']);
+assert.deepEqual(Array.from(docs['abap-types'].lessonDates),['2026-11-12','2026-11-18']);
+assert.deepEqual(Array.from(docs['abap-data-report'].lessonDates),['2026-11-18']);
+assert.equal(daily('18').sourceFile,'261118 수요일 (2).md');
+assert.equal(daily('18').sections.length,9);
+assert.ok(!daily('17').sections.some(s=>s.title==='로컬 클래스의 정의와 구현'));
+assert.ok(!JSON.stringify(daily('18')).includes('codewiki-rich-v1'));
+assert.ok(tools.search(index,'MOVE-CORRESPONDING').some(r=>r.doc.id==='abap-types'));
+assert.ok(tools.search(index,'OCCURS').some(r=>r.doc.id==='abap-data-report'));
 const groups=tools.relatedGroups(docs['abap-modularization'],[daily('13'),docs['abap-objects']],Object.values(docs));
 assert.ok(groups.concepts.every(d=>!d.isDailyLesson));
 assert.deepEqual(Array.from(groups.dates.map(d=>d.id)),['lesson-2026-11-16','lesson-2026-11-17']);

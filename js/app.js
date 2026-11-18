@@ -275,7 +275,8 @@
         renderNavigation();
       };
     });
-    categoryNav.innerHTML = navigationView === 'date' ? renderDateNavigation(allDocs, readSet) : trackCategories
+    categoryNav.innerHTML = (navigationView === 'date' ? renderDateNavigation(allDocs, readSet) : '') + trackCategories
+      .filter(cat => navigationView !== 'date' || cat.id !== `${currentTrack}-curriculum`)
       .map(cat => {
         const docsInCat = allDocs.filter(d => d.categoryId === cat.id);
         if (cat.id === "abap-curriculum") {

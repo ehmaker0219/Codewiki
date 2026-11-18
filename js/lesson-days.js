@@ -1,4 +1,4 @@
-/** Date pages are curated from the five original notes, not whole topic copies. */
+/** Date pages are curated from original notes, not whole topic copies. */
 (() => {
   const docs = window.WIKI_DOCS;
   const text = (...paragraphs) => ({type: 'text', paragraphs});
@@ -60,13 +60,24 @@
     ]},
     {date: '2026-11-17', source: '261117TUE.txt', sections: [
       from('abap-modularization', '함수 그룹과 함수 모듈'),
-      section('abap-modularization', '함수 모듈 테스트 입력', text('함수 그룹의 전역 데이터와 상수는 TOP Include에서 관리합니다. 함수 모듈과 관련 Include의 활성화 상태를 확인하세요.', 'SE37 테스트에서 문자 입력의 대소문자를 보존해야 한다면 해당 테스트 화면의 대소문자 구분 설정을 확인합니다.')),
+      section('abap-modularization', '함수 모듈 테스트 입력', text('함수 그룹의 글로벌 데이터와 상수는 TOP Include에서 관리합니다. 함수 모듈과 관련 Include의 활성화 상태를 확인하세요.', 'SE37 테스트에서 문자 입력의 대소문자를 보존해야 한다면 해당 테스트 화면의 대소문자 구분 설정을 확인합니다.')),
       from('abap-bapi', 'BAPI와 RFC의 관계'), from('abap-bapi', '입출력과 오류 처리'),
       section('abap-bapi', 'BAPI 탐색', text('BAPI Explorer에서 업무 객체별 메서드를 확인합니다. GetList, GetDetail, Create, Change, Delete 등은 기능 이름의 예이며 실제 제공 여부는 객체마다 다릅니다.')),
-      from('abap-objects', '전역 클래스와 지역 클래스'), from('abap-objects', '정적 호출과 인스턴스 호출'),
-      section('abap-objects', '전역 클래스 생성과 접근 범위', text('SE24에서 클래스를 생성하고 메서드 이름과 매개변수를 정의합니다. PRIVATE 메서드는 클래스 외부에서 직접 호출할 수 없으므로 외부에 공개할 동작은 접근 범위를 확인합니다.')),
+      from('abap-objects', '글로벌 클래스와 로컬 클래스'), from('abap-objects', '정적 호출과 인스턴스 호출'),
+      section('abap-objects', '글로벌 클래스 생성과 접근 범위', text('SE24에서 클래스를 생성하고 메서드 이름과 매개변수를 정의합니다. PRIVATE 메서드는 클래스 외부에서 직접 호출할 수 없으므로 외부에 공개할 동작은 접근 범위를 확인합니다.')),
       from('abap-debug-messages', '예외와 반환 코드'),
       from('abap-program-types', '프로그램과 저장소 객체'), from('abap-program-types', 'Include와 모듈화')
+    ]},
+    {date: '2026-11-18', source: '261118 수요일 (2).md', sections: [
+      from('abap-objects', '로컬 클래스의 정의와 구현'),
+      from('abap-types', '구조체 선언과 컴포넌트'),
+      from('abap-types', '구조체 간 MOVE-CORRESPONDING'),
+      from('abap-data-report', '내부 테이블의 종류와 접근'),
+      from('abap-data-report', '내부 테이블 타입과 변수 선언'),
+      from('abap-data-report', '행 추가·조회·수정·삭제'),
+      from('abap-data-report', '내부 테이블 정렬'),
+      from('abap-data-report', 'CLEAR·REFRESH·FREE'),
+      from('abap-data-report', 'Header Line과 OCCURS — 기존 코드 읽기')
     ]}
   ];
   // Dates are rebuilt from explicit source associations, including split topics.
@@ -78,7 +89,6 @@
     for (const topic of new Set(day.sections.map(s => s.sourceDocId))) docs[topic].lessonDates.push(day.date);
     docs[id] = {id, title, track:'abap', isDailyLesson:true, aliases:[], tcodes:[], specs:{},
       sourceFile:day.source, sourceTopics:[...new Set(day.sections.map(s => s.sourceDocId))],
-      subtitle:`수업일별 필기 · ${day.source}`,
       summary:'해당 날짜의 원본 필기 범위로 정리했습니다. 설명과 학습용 예제는 이해를 돕기 위해 보완했습니다.', sections:day.sections};
     return {date:day.date, title, docId:id, track:'abap'};
   });

@@ -246,7 +246,7 @@ window.WIKI_DOCS = {
     ["프로그램과 화면 개발", [
       ["SE38", "ABAP Editor", "ABAP 프로그램 생성·소스 편집·검사·활성화·실행"],
       ["SE37", "Function Builder", "함수 모듈 생성·유지보수·테스트"],
-      ["SE24", "Class Builder", "전역 클래스와 인터페이스 등 객체지향 개발 객체 관리"],
+      ["SE24", "Class Builder", "글로벌 클래스와 인터페이스 등 객체지향 개발 객체 관리"],
       ["SE41", "Menu Painter", "메뉴·툴바·기능 키를 구성하는 GUI 상태와 제목 관리"],
       ["SE51", "Screen Painter", "Dynpro 화면의 레이아웃과 흐름 로직 편집"]
     ]],

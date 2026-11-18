@@ -1,6 +1,13 @@
 /** Expected results are explanatory; none of these examples has been run in SAP here. */
 (() => {
   const notes = {
+    '로컬 클래스의 정적 메서드': {input:'iv_number = 5', expected:'10이 출력됩니다.'},
+    '구조 타입과 구조 변수': {input:'id = 1, name = 홍길동', expected:'1 홍길동 / 홍길동이 출력됩니다.'},
+    '같은 이름의 필드만 복사': {input:'원본 name = 홍길동, 대상 score = 80', expected:'홍길동 80이 출력됩니다. score는 원본에 같은 이름의 필드가 없어 유지됩니다.'},
+    '행 타입과 세 가지 테이블 선언': {input:'별도 입력 없음', expected:'빈 내부 테이블 3개와 초기값의 작업 영역이 선언됩니다. 출력문은 없습니다.'},
+    '내부 테이블 조작 전체 예제': {input:'id 1: 홍길동 70점 / id 2: 김학생 90점', expected:'1 홍길동 80만 출력됩니다. id 1의 점수를 수정하고 id 2를 삭제한 결과입니다.'},
+    '점수 내림차순·이름 오름차순': {input:'gt_students에 점수와 이름이 있는 여러 행', expected:'점수 내림차순, 동점이면 이름 오름차순으로 행 순서가 바뀝니다. 출력문은 없습니다.', requirements:'내부 테이블 조작 전체 예제의 gt_students 선언과 데이터 추가 뒤에 넣고 디버거에서 확인하세요.'},
+    'Header Line과 테이블 본문 구분': {input:'Header Line 값 10을 한 행 추가', expected:'1, 0이 순서대로 출력됩니다. 첫 CLEAR는 Header Line만, 두 번째 CLEAR는 본문을 비웁니다.', requirements:'Header Line을 허용하는 클래식 실행 가능 리포트에서 기존 문법 학습용으로만 사용하세요. 클래스 내부나 ABAP Cloud용 예제가 아닙니다.'},
     'TYPE · LIKE · VALUE · CLEAR': {input:'별도 입력 없음', expected:'0, 17, 20이 각각 한 줄씩 출력됩니다.'},
     '선택 화면에서 숫자 입력받기': {input:'p_count = 3', expected:'입력: 3 / 두 배: 6', requirements:'인라인 DATA 선언을 지원하는 Standard ABAP 환경에서 실행하세요.'},
     '문자와 숫자의 초기값': {input:'코드의 초기값 그대로', expected:'정수 초기값은 0 / 0000이 출력됩니다. lv_text는 공백 5자리로 초기화됩니다.'},
@@ -9,7 +16,7 @@
     '직접 문구': {input:'별도 입력 없음', expected:'입력값을 확인하세요라는 정보 메시지가 표시됩니다.'},
     '메시지 클래스 예시 — ZCW와 001을 먼저 생성': {input:'로그온 사용자 이름(sy-uname)', expected:'안녕하세요 & 문구의 & 자리에 로그온 사용자 이름이 들어갑니다.', requirements:'SE91에서 메시지 클래스 ZCW와 001번 문구 «안녕하세요 &»를 먼저 생성·활성화하세요.'},
     '입력은 복사하고 결과는 반영': {input:'PERFORM의 입력값 3', expected:'6이 출력됩니다.'},
-    '지역 클래스의 인스턴스 메서드': {input:'별도 입력 없음', expected:'Hello ABAP이 출력됩니다.'},
+    '로컬 클래스의 인스턴스 메서드': {input:'별도 입력 없음', expected:'Hello ABAP이 출력됩니다.'},
     '길이 비교': {input:'lv_text = ABAP', expected:'lv_length = 4, lv_first = 1. WRITE가 없으므로 디버거에서 확인하세요.', requirements:'인라인 DATA 선언과 사용한 함수를 지원하는 ABAP 환경이 필요합니다.'},
     '연결과 구분자': {input:'코드에 지정된 문자열', expected:'lv_result가 차례로 Hello ABAP → SAP ABAP → 2026-11-17이 됩니다. 각 대입 직후 디버거에서 확인하세요.'},
     '시스템 날짜에서 연·월·일 추출': {input:'예: 시스템 날짜가 20261117인 날', expected:'lv_year = 2026, lv_month = 11, lv_day = 17. 실제 값은 실행한 시스템 날짜에 따릅니다.'},

@@ -136,6 +136,7 @@
     window.CodeWikiBirthdays?.setUser(user);
     window.CodeWikiStudy?.setUser(user);
     window.CodeWikiPractice?.setUser(user);
+    window.CodeWikiObjectGame?.setUser(user);
     adminApproval?.setUser(user);
   }
   syncUserFeatures(null);
