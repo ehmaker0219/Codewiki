@@ -11,7 +11,7 @@
     ...links.map(([label, url]) => `<a href="${url}" target="_blank" rel="noopener noreferrer">${label}</a>`)
   ));
   function put(id, title, summary, aliases, sections, dates, links) {
-    docs[id] = { id, title, summary, aliases, sections: [...sections, source(dates, links)], track: 'abap', categoryId: 'abap-curriculum', subtitle: '수업 필기 정리 · 개념과 예제', stepNum: '', tcodes: [], specs: {} };
+    docs[id] = { id, title, summary, aliases, lessonDates: dates.split(' · ').map(date => '2026-' + date.replace('/', '-')), sections: [...sections, source(dates, links)], track: 'abap', categoryId: 'abap-curriculum', subtitle: '수업 필기 정리 · 개념과 예제', stepNum: '', tcodes: [], specs: {} };
   }
   put('sap-architecture', 'SAP 시스템 구조', '사용자 요청이 처리되는 흐름과 서버 구성 요소의 역할을 구분합니다.', ['Dispatcher', 'Work Process', '워크 프로세스', 'Message Server', 'Gateway', 'ICM', 'SAP GUI'], [
     section('요청 처리 흐름', text('SAP GUI → Dispatcher → 사용 가능한 Work Process → 필요한 경우 데이터베이스 접근 → 결과 반환 순서로 이해할 수 있습니다. 모든 요청이 데이터베이스 작업을 수행하는 것은 아닙니다.', 'Dispatcher는 요청을 받아 작업을 배분합니다. 큐를 단순한 처리 순서 예제로 이해하되, 실제 스케줄링 전체를 항상 FIFO라고 단정하지 않습니다.')),
@@ -94,7 +94,7 @@ ENDDO.`), text('출력은 1, 3, 5입니다. CONTINUE는 현재 반복의 남은 
     ]), text('팝업·상태바 표시와 이후 제어 흐름은 메시지 유형뿐 아니라 선택 화면, 화면 PAI, 배치 등 실행 맥락에 따라 달라집니다. E/W를 “항상 하단 바에만 표시”라고 외우지 않습니다.')),
     section('직접 문구와 메시지 클래스', code('직접 문구', `MESSAGE '입력값을 확인하세요' TYPE 'I'.`), code('메시지 클래스 예시 — ZCW와 001을 먼저 생성', `MESSAGE i001(zcw) WITH sy-uname.`), text('메시지 클래스는 000~999 번호로 문구를 관리하고 번역할 수 있습니다. 문구의 & 자리표시자에 WITH의 값을 전달하며 최대 네 개의 값을 사용할 수 있습니다.')),
     section('예외와 반환 코드', text('클래식 예외는 호출 시 EXCEPTIONS에 번호를 매핑하고 sy-subrc로 처리하는 방식을 볼 수 있습니다. 클래스 기반 예외는 TRY … CATCH … ENDTRY로 처리합니다.', '같은 인터페이스의 예외 선언 방식은 해당 문법의 제약을 따릅니다. 프로그램 전체에서 두 방식이 절대 공존할 수 없다는 뜻은 아닙니다.'))
-  ], '11/13 · 11/16');
+  ], '11/12 · 11/13 · 11/16 · 11/17');
 
   put('abap-modularization', '프로그램 모듈화', '서브루틴, 함수 모듈, 메서드를 구분하고 매개변수 전달 방향을 읽습니다.', ['프로그램 모듈화', '서브루틴', 'FORM', 'PERFORM', 'Function Module', '함수 모듈'], [
     section('모듈화 방식', table(['단위', '호출', '주요 용도'], [
@@ -114,12 +114,12 @@ ENDFORM.`)),
     section('호출자와 함수의 방향', table(['함수 인터페이스', '호출 문장', '방향'], [
       ['IMPORTING', 'EXPORTING', '호출자가 함수에 입력 전달'], ['EXPORTING', 'IMPORTING', '함수 결과를 호출자가 수신'], ['CHANGING', 'CHANGING', '값을 전달하고 변경 결과 수신']
     ]), text('호출 예제를 입력할 때는 해당 함수의 실제 매개변수 이름과 타입을 SE37에서 확인하세요.'))
-  ], '11/16', [['SAP Help · 서브루틴 매개변수', 'https://help.sap.com/saphelp_ewm900/helpdata/en/9f/db984635c111d1829f0000e829fbfe/content.htm']]);
+  ], '11/16 · 11/17', [['SAP Help · 서브루틴 매개변수', 'https://help.sap.com/saphelp_ewm900/helpdata/en/9f/db984635c111d1829f0000e829fbfe/content.htm']]);
 
   put('abap-bapi', 'BAPI와 RFC', '원격 호출 기술인 RFC와 업무 API인 BAPI를 구분합니다.', ['BAPI', 'RFC', 'RETURN'], [
     section('BAPI와 RFC의 관계', text('RFC는 시스템 간 함수 호출 기술입니다. BAPI는 표준화된 업무 객체 인터페이스이며 전통적인 BAPI 구현에는 원격 호출 가능 함수 모듈이 사용됩니다. 모든 RFC 함수가 BAPI인 것은 아닙니다.', 'GetList, GetDetail, Create, Change 등은 업무 동작의 예입니다. 실제 제공 메서드와 이름은 업무 객체별로 확인합니다.')),
     section('입출력과 오류 처리', text('BAPI는 화면 팝업 대신 RETURN 구조 또는 테이블로 성공·오류 메시지를 전달하도록 설계합니다. 호출자는 RETURN의 TYPE과 메시지 내용을 확인해야 합니다.', '원격 함수의 인터페이스는 RFC 지원 타입과 값 전달 제약을 따릅니다. 일반 로컬 함수의 모든 설정에 그대로 적용할 규칙으로 이해하지 마세요.', '변경 BAPI의 커밋·롤백 책임은 개별 BAPI 문서를 확인해야 합니다. 호출 성공 여부만 보고 저장 완료라고 판단하지 않습니다.'))
-  ], '11/16', [['SAP Help · BAPI 반환 메시지', 'https://help.sap.com/saphelp_snc70/helpdata/en/a5/3ec9f74ac011d1894e0000e829fbbd/content.htm']]);
+  ], '11/17', [['SAP Help · BAPI 반환 메시지', 'https://help.sap.com/saphelp_snc70/helpdata/en/a5/3ec9f74ac011d1894e0000e829fbbd/content.htm']]);
 
   put('abap-objects', '클래스와 메서드', '클래스 자체의 정적 메서드와 객체의 인스턴스 메서드를 구분합니다.', ['Global class', 'Local class', '정적 메서드', '인스턴스 메서드', '참조 변수'], [
     section('전역 클래스와 지역 클래스', text('전역 클래스는 저장소 객체로 관리하며 SE24에서 확인할 수 있습니다. 지역 클래스는 프로그램 안에 정의합니다. 클래스는 속성과 메서드를 함께 묶는 단위입니다.')),
@@ -139,11 +139,11 @@ START-OF-SELECTION.
   DATA lo_greeter TYPE REF TO lcl_greeter.
   CREATE OBJECT lo_greeter.
   lo_greeter->greet( ).`))
-  ], '11/16 · 11/17');
+  ], '11/17');
 
   put('abap-program-types', '프로그램 종류와 Include', '실행 가능한 리포트와 다른 프로그램에 포함되는 소스 단위를 구분합니다.', ['Include 프로그램', '리포트 프로그램', 'Module Pool'], [
     section('프로그램과 저장소 객체', table(['종류', '역할'], [
-      ['실행 가능 프로그램 / Report', '선택 화면과 이벤트를 사용해 실행·출력'], ['Module Pool', '클래식 Dynpro 화면과 대화형 흐름 처리'], ['Function Pool', '함수 그룹의 런타임 프로그램'], ['Class Pool', '전역 클래스의 런타임 프로그램'], ['Include', '다른 프로그램에 포함되는 소스. 독립 실행 대상이 아님']
+      ['실행 가능 프로그램 / Report', '선택 화면과 이벤트를 사용해 실행·출력'], ['Module Pool', '클래식 Dynpro 화면과 대화형 흐름 처리'], ['Function Pool', '함수 그룹의 런타임 프로그램'], ['Class Pool', '전역 클래스의 런타임 프로그램'], ['Interface Pool', '전역 인터페이스의 런타임 프로그램'], ['Include', '다른 프로그램에 포함되는 소스. 독립 실행 대상이 아님']
     ]), text('“Screen”은 화면 객체를, “OOP”는 객체지향 프로그래밍 방식을 가리킵니다. 이를 그대로 공식 프로그램 유형 이름과 일대일 대응시키지 않습니다.')),
     section('Include와 모듈화', text('Include는 소스를 나누는 수단입니다. Include 자체가 별도 매개변수나 호출 경계를 만드는 함수는 아닙니다. 동작 단위의 재사용은 서브루틴·함수 모듈·메서드와 구분해서 설계합니다.'))
   ], '11/17');

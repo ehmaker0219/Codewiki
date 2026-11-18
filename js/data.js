@@ -6,9 +6,9 @@
 
 window.WIKI_CATEGORIES = [
   { id: "abap-curriculum", track: "abap", name: "커리큘럼" },
-  { id: "abap-concept", track: "abap", name: "개념 사전" },
+  { id: "abap-concept", track: "abap", name: "Syntax" },
   { id: "abap-tcode", track: "abap", name: "T-Code" },
-  { id: "abap-shortcuts", track: "abap", name: "단축키 모음" },
+  { id: "abap-shortcuts", track: "abap", name: "단축키" },
 
   { id: "ui5-curriculum", track: "ui5", name: "커리큘럼" },
   { id: "ui5-concept", track: "ui5", name: "개념 사전" },

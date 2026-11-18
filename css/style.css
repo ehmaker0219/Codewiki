@@ -478,37 +478,9 @@ code, pre, .mono {
   font-weight: 700;
 }
 
-.tcode-list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  padding: 2px 8px;
-}
 
-.tcode-chip {
-  background: var(--bg-subtle);
-  border: none;
-  border-radius: 8px;
-  padding: 5px 9px;
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--text-sub);
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  transition: all 0.14s var(--tds-spring);
-}
 
-.tcode-chip:hover {
-  background: var(--toss-blue-soft);
-  color: var(--toss-blue);
-}
 
-.tcode-chip code {
-  color: var(--toss-blue);
-  font-weight: 700;
-}
 
 /* 사이드바 최하단 고정 유저 프로필 카드 (Quest-On 하단 프로필 스타일) */
 .sidebar-bottom-profile {
@@ -1516,48 +1488,12 @@ body.quiz-mode .quiz-token.revealed {
   margin-bottom: 14px;
 }
 
-.pager-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 14px;
-}
 
-.pager-card {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  background: var(--bg-subtle);
-  border-radius: var(--tds-radius-lg);
-  padding: 18px 22px;
-  text-decoration: none;
-  transition: background 0.15s, transform 0.15s var(--tds-spring);
-}
 
-.pager-card:hover:not(.disabled-pager) {
-  background: var(--toss-blue-soft);
-  transform: translateY(-2px);
-}
 
-.pager-card.next-pager {
-  text-align: right;
-}
 
-.pager-card.disabled-pager {
-  opacity: 0.45;
-  justify-content: center;
-}
 
-.pager-dir {
-  font-size: 11px;
-  font-weight: 700;
-  color: var(--toss-blue);
-}
 
-.pager-title {
-  font-size: 13.5px;
-  font-weight: 800;
-  color: var(--text-strong);
-}
 
 /* ==========================================================================
    Right Sidebar (목차, 요약 스펙, 역링크)

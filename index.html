@@ -7,8 +7,11 @@
   <link rel="icon" type="image/svg+xml" href="assets/logo-symbol.svg?v=32baec3f0703" />
   <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/style.css?v=9d45cfc713b2" />
-  <link rel="stylesheet" href="css/theme.css?v=35ee6bab174b" />
+  <link rel="stylesheet" href="css/style.css?v=68b1e9c24dff" />
+  <link rel="stylesheet" href="css/theme.css?v=857e3fd848d0" />
+  <link rel="stylesheet" href="css/profile.css?v=c8934ffc3694" />
+  <link rel="stylesheet" href="css/birthdays.css?v=f858766dad1c" />
+  <link rel="stylesheet" href="css/schedule.css?v=8cb9134f6a4a" />
 </head>
 <body>
   <!-- 로그인 후 전체 레이아웃: 좌측 고정 일체형 사이드바 + 우측 워크스페이스 -->
@@ -54,6 +57,10 @@
             </svg>
             <span>홈</span>
           </a>
+          <a href="#doc/education-schedule" class="sb-menu-item" id="sbScheduleItem" data-doc="education-schedule">
+            <svg class="sb-icon" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 11h18M7 15h3M14 15h3"/></svg>
+            <span>교육 일정</span>
+          </a>
           <button type="button" id="openBoardBtn" class="sb-menu-item">
             <svg class="sb-icon" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
@@ -61,19 +68,28 @@
             <span>건의 게시판</span>
             <span id="boardOpenCountBadge" class="pending-badge hidden" style="margin-left:auto;">0</span>
           </button>
+          <button type="button" id="openPracticeBtn" class="sb-menu-item"><span aria-hidden="true">✎</span><span>연습문제</span></button>
           <div id="adminSidebarSlot"></div>
         </div>
 
         <!-- 카테고리 폴더 섹션 -->
         <div class="sb-group">
           <div class="sb-group-label">목차</div>
+          <div class="nav-view-switch" role="group" aria-label="목차 보기 방식">
+            <button type="button" data-nav-view="topic" aria-pressed="true">주제별</button>
+            <button type="button" data-nav-view="date" aria-pressed="false">수업일별</button>
+          </div>
           <nav id="categoryNav" class="category-folder-nav"></nav>
-          <a class="sb-menu-item" href="https://boom-money-cd7.notion.site/2938e14be0e981c6aa88ebe37edb90e8" target="_blank" rel="noopener noreferrer" aria-label="밥 (새 탭에서 열기)">
-            <svg class="sb-icon" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-              <path d="M14 3h7v7M10 14 21 3M21 14v5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5"></path>
-            </svg>
-            <span>밥</span>
-          </a>
+          <details class="meal-folder" open>
+            <summary class="sb-folder-row">
+              <svg class="sb-folder-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+              <span class="sb-folder-name">밥</span><span class="meal-chevron" aria-hidden="true">›</span>
+            </summary>
+            <div class="meal-links">
+              <a class="nav-doc-link" href="https://boom-money-cd7.notion.site/2938e14be0e981c6aa88ebe37edb90e8" target="_blank" rel="noopener noreferrer" aria-label="밥 노션 (새 탭에서 열기)">밥 노션 ↗</a>
+              <a class="nav-doc-link" href="https://blog.naver.com/PostList.naver?blogId=kjm5400&amp;categoryNo=7" target="_blank" rel="noopener noreferrer" aria-label="구내식당 (새 탭에서 열기)">구내식당 ↗</a>
+            </div>
+          </details>
         </div>
 
 
@@ -161,13 +177,30 @@
   <!-- 수정·업데이트 건의글 작성 모달 -->
   <div id="boardWriteModal" class="admin-modal-backdrop hidden"></div>
 
+  <dialog id="practiceDialog" aria-labelledby="practiceTitle">
+    <div class="practice-dialog-header"><h2 id="practiceTitle">연습문제</h2><button type="button" id="closePracticeBtn" class="icon-btn" aria-label="연습문제 닫기">✕</button></div>    <label for="practiceCategory">공부할 주제</label>
+    <select id="practiceCategory"><option value="">주제를 선택하세요</option></select>
+    <section id="practiceQuestion" aria-live="polite">공부하고 싶은 주제를 선택해 주세요.</section>
+    <div class="practice-actions"><button type="button" id="copyPracticeBtn" class="toss-chip-btn" disabled>문제 복사</button><span id="practiceCopyStatus" role="status"></span><button type="button" id="nextPracticeBtn" class="toss-chip-btn" disabled>다른 문제</button></div>
+  </dialog>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="js/data.js?v=4b0b6051fe45"></script>
+  <script src="js/data.js?v=1679ae6dfea0"></script>
   <script src="js/ui5-data.js?v=fa64b5a1a556"></script>
-  <script src="js/class-notes.js?v=c680e9186aa5"></script>
+  <script src="js/class-notes.js?v=b3ae56e34f2a"></script>
+  <script src="js/lesson-days.js?v=b4ff5128610c"></script>
+  <script src="js/example-notes.js?v=d72012ea98a3"></script>
+  <script src="js/learning-tools.js?v=7c06a8493ef2"></script>
+  <script src="js/profile.js?v=5baa8be1d44e"></script>
+  <script src="js/birthdays.js?v=2cf683cb4adc"></script>
+  <script src="js/progress.js?v=5daa2cd3faf4"></script>
   <script src="js/visualizers.js?v=dbbc291349e3"></script>
-  <script src="js/app.js?v=c367885ca9b4"></script>
-  <script src="js/auth.js?v=bd9758bd3001"></script>
-  <script src="js/board.js?v=d0422981dddd"></script>
+  <script src="js/schedule-data.js?v=7a907468c4cd"></script>
+  <script src="js/schedule.js?v=aa07f7d57cb6"></script>
+  <script src="js/app.js?v=54ee81297dfb"></script>
+  <script src="js/admin.js?v=cf1b144c30bc"></script>
+  <script src="js/auth.js?v=120ec776a2c2"></script>
+  <script src="js/board.js?v=56c0b1970f74"></script>
+  <script src="js/practice.js?v=1494ca65c459"></script>
+  <script src="js/practice-ui.js?v=8e0e08e9cc6e"></script>
 </body>
 </html>

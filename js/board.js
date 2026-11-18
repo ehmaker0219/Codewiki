@@ -5,7 +5,7 @@
  * - 로그인한 우리 반 학생들이 공부하다가 추가/수정할 내용을 남기는 게시판입니다.
  * - 관리자(본인)는 건의글을 확인하고 [AI 요청용 복사]로 손쉽게 업데이트한 뒤,
  *   [반영 완료] 상태로 변경하거나 한 줄 답변을 남길 수 있습니다.
- * - 현재는 LocalStorage 기반으로 즉시 작동하며, 추후 Supabase 연동 시 자동 전환됩니다.
+ * - Supabase RPC로 저장하며, 연결을 설정하지 않은 데모에서만 LocalStorage를 사용합니다.
  * ============================================================================
  */
 (function () {
@@ -30,20 +30,28 @@
     localStorage.setItem(DEMO_POSTS_KEY, JSON.stringify(posts));
   }
 
+  let pendingRead = null;
   async function fetchPosts() {
     const isSupa = window.CodeWikiAuth?.isSupabaseConfigured();
     const client = window.CodeWikiAuth?.getSupabaseClient();
     const token = window.CodeWikiAuth?.getSessionToken();
-    if (!isSupa || !client) {
-      return getLocalPosts();
-    }
+    if (!isSupa) return getLocalPosts();
+    if (!client) throw new Error("서버 연결을 확인해 주세요.");
     if (!token) return [];
-    const { data } = await client.rpc("cw_list_posts", { p_token: token });
-    return data || [];
+    if (pendingRead?.token === token) return pendingRead.promise;
+    const request = {token};
+    request.promise = Promise.resolve().then(() => client.rpc("cw_list_posts", {p_token:token}))
+      .then(({data, error}) => { if (error) throw error; return data || []; })
+      .finally(() => { if (pendingRead === request) pendingRead = null; });
+    pendingRead = request;
+    return request.promise;
   }
 
   let currentFilter = "all"; // 'all' | 'open' | 'done'
   let isBoardViewActive = false;
+  let viewVersion = 0;
+  let badgeVersion = 0;
+  let modalVersion = 0;
 
   const articleContainer = document.getElementById("articleContainer");
   const navboxCard = document.getElementById("navboxCard");
@@ -54,7 +62,14 @@
 
   // 상단 게시판 미반영 건수 배지 업데이트
   async function refreshBadge() {
-    const posts = await fetchPosts();
+    const version = ++badgeVersion, token = window.CodeWikiAuth?.getSessionToken();
+    try {
+      const posts = await fetchPosts();
+      if (version === badgeVersion && token === window.CodeWikiAuth?.getSessionToken()) updateBadge(posts);
+    } catch { /* Keep the last known count; the board provides a visible retry. */ }
+  }
+
+  function updateBadge(posts) {
     const openCount = posts.filter(p => p.status === "open").length;
     if (boardOpenCountBadge) {
       if (openCount > 0) {
@@ -68,6 +83,10 @@
 
   // 게시판 뷰 열기 (중앙 메인 영역을 건의 게시판으로 전환)
   async function openBoardView() {
+    const version = ++viewVersion, token = window.CodeWikiAuth?.getSessionToken();
+    const isCurrent = () => version === viewVersion && isBoardViewActive && token === window.CodeWikiAuth?.getSessionToken();
+    articleContainer.classList.remove('calendar-article');
+    document.getElementById('sbScheduleItem')?.classList.remove('active');
     isBoardViewActive = true;
     if (openBoardBtn) openBoardBtn.classList.add("active");
     if (navboxCard) navboxCard.classList.add("hidden");
@@ -78,7 +97,18 @@
     document.querySelectorAll(".nav-doc-link.active").forEach(el => el.classList.remove("active"));
     document.getElementById("sbHomeItem")?.classList.remove("active");
 
-    const posts = await fetchPosts();
+    let posts;
+    try { posts = await fetchPosts(); }
+    catch {
+      if (!isCurrent()) return;
+      articleContainer.innerHTML = '<div class="board-header-wrap"><h1 class="article-main-title">건의 게시판</h1></div><p role="alert">게시글을 불러오지 못했습니다.</p><button id="retryBoardBtn" class="toss-chip-btn">다시 시도</button><button id="backToWikiBtn" class="toss-chip-btn">위키 문서로 돌아가기</button>';
+      document.getElementById('retryBoardBtn').addEventListener('click',openBoardView);
+      document.getElementById('backToWikiBtn').addEventListener('click',()=>closeBoardViewAndReturn());
+      return;
+    }
+    if (!isCurrent()) return;
+    ++badgeVersion;
+    updateBadge(posts);
     const currentUser = window.CodeWikiAuth?.getCurrentUser();
     const isAdmin = currentUser?.role === "admin";
 
@@ -133,7 +163,7 @@
                         <span class="status-pill ${isDone ? "done" : "open"}">
                           ${isDone ? "✓ 반영 완료" : "● 확인 대기 중"}
                         </span>
-                        <span class="cat-type-pill">${post.category}</span>
+                        <span class="cat-type-pill">${escapeHtml(post.category)}</span>
                         ${
                           post.target_doc_id
                             ? `<a href="#doc/${escapeHtml(post.target_doc_id)}" class="doc-ref-pill" data-jump-doc="${escapeHtml(post.target_doc_id)}">
@@ -143,7 +173,7 @@
                         }
                       </div>
                       <div class="board-post-meta">
-                        ${post.author_class ? `<span style="opacity:0.8;">[${escapeHtml(post.author_class)}]</span> ` : ""}${post.author_mbti ? `<span class="toss-badge-blue" style="font-size:10.5px; padding:1px 6px; margin-right:4px;">${escapeHtml(post.author_mbti)}</span>` : ""}<strong>${escapeHtml(post.author_name)}</strong> · ${String(post.created_at).slice(0, 16)}
+                        ${post.author_class ? `<span style="opacity:0.8;">[${escapeHtml(post.author_class)}]</span> ` : ""}${post.author_mbti ? `<span class="toss-badge-blue" style="font-size:10.5px; padding:1px 6px; margin-right:4px;">${escapeHtml(post.author_mbti)}</span>` : ""}<strong>${escapeHtml(post.author_name)}</strong> · ${escapeHtml(String(post.created_at).slice(0, 16))}
                       </div>
                     </div>
 
@@ -247,21 +277,10 @@
         if (!target) return;
         const nextStatus = target.status === "done" ? "open" : "done";
 
-        const isSupa = window.CodeWikiAuth?.isSupabaseConfigured();
-        const client = window.CodeWikiAuth?.getSupabaseClient();
-        if (!isSupa || !client) {
-          const updated = getLocalPosts().map(p => (p.id === pid ? { ...p, status: nextStatus } : p));
-          saveLocalPosts(updated);
-        } else {
-          await client.rpc("cw_update_post", {
-            p_token: window.CodeWikiAuth?.getSessionToken(),
-            p_post_id: pid,
-            p_status: nextStatus,
-            p_admin_note: target.admin_note || ""
-          });
-        }
-        await refreshBadge();
-        openBoardView();
+        await runPostAction(btn, () => changePost('cw_update_post', {
+          p_post_id:pid, p_status:nextStatus, p_admin_note:target.admin_note || ''
+        }, rows => rows.map(p => p.id === pid ? {...p,status:nextStatus} : p)));
+
       });
     });
 
@@ -279,24 +298,39 @@
     articleContainer.querySelectorAll(".delete-post-btn").forEach(btn => {
       btn.addEventListener("click", async () => {
         const pid = Number(btn.getAttribute("data-post-id"));
-        const isSupa = window.CodeWikiAuth?.isSupabaseConfigured();
-        const client = window.CodeWikiAuth?.getSupabaseClient();
-        if (!isSupa || !client) {
-          const updated = getLocalPosts().filter(p => p.id !== pid);
-          saveLocalPosts(updated);
-        } else {
-          await client.rpc("cw_delete_post", {
-            p_token: window.CodeWikiAuth?.getSessionToken(),
-            p_post_id: pid
-          });
-        }
-        await refreshBadge();
-        openBoardView();
+        await runPostAction(btn, () => changePost('cw_delete_post', {p_post_id:pid}, rows => rows.filter(p => p.id !== pid)));
+
       });
     });
   }
 
+  async function changePost(name, args, localChange) {
+    if (!window.CodeWikiAuth?.isSupabaseConfigured()) { saveLocalPosts(localChange(getLocalPosts())); return; }
+    const client = window.CodeWikiAuth.getSupabaseClient();
+    if (!client) throw new Error('서버 연결을 확인해 주세요.');
+    const {error} = await client.rpc(name, {p_token:window.CodeWikiAuth.getSessionToken(), ...args});
+    if (error) throw error;
+  }
+
+  async function refreshAfterChange(version, token, showBoard = false) {
+    // Never reuse a read started before a successful write.
+    pendingRead = null;
+    if (token !== window.CodeWikiAuth?.getSessionToken()) return;
+    if (version === viewVersion && (isBoardViewActive || showBoard)) await openBoardView();
+    else await refreshBadge();
+  }
+
+  async function runPostAction(button, operation) {
+    if (button.disabled) return;
+    const version = viewVersion, token = window.CodeWikiAuth?.getSessionToken();
+    button.disabled = true;
+    try { await operation(); await refreshAfterChange(version,token); }
+    catch { if (token === window.CodeWikiAuth?.getSessionToken()) window.alert('변경 내용을 저장하지 못했습니다. 다시 시도해 주세요.'); }
+    finally { button.disabled = false; }
+  }
+
   function openReplyModal(target, trigger) {
+    const modalRequest = ++modalVersion;
     writeModal.classList.remove("hidden");
     writeModal.innerHTML = `
       <div class="admin-modal-card toss-card" role="dialog" aria-modal="true" aria-labelledby="replyTitle" style="max-width:540px;">
@@ -324,6 +358,7 @@
     input.focus();
     const dismiss = () => {
       if (saving) return;
+      ++modalVersion;
       writeModal.classList.add("hidden");
       trigger?.focus();
     };
@@ -335,6 +370,7 @@
       saving = true;
       save.disabled = close.disabled = true;
       save.textContent = "저장 중…";
+      const version = viewVersion, token = window.CodeWikiAuth?.getSessionToken();
       const errorBox = document.getElementById("replyError");
       errorBox.textContent = "";
       try {
@@ -352,9 +388,9 @@
         } else {
           saveLocalPosts(getLocalPosts().map(p => p.id === target.id ? { ...p, admin_note: note, status } : p));
         }
+        if (token !== window.CodeWikiAuth?.getSessionToken() || modalRequest !== modalVersion) return;
         writeModal.classList.add("hidden");
-        await refreshBadge();
-        await openBoardView();
+        await refreshAfterChange(version,token);
       } catch (error) {
         errorBox.textContent = `답변을 저장하지 못했습니다. ${error.message || "잠시 후 다시 시도해 주세요."}`;
       } finally {
@@ -366,6 +402,7 @@
   }
 
   function closeBoardViewAndReturn(targetDocId) {
+    ++viewVersion;
     isBoardViewActive = false;
     if (openBoardBtn) openBoardBtn.classList.remove("active");
     document.querySelector(".app-shell")?.classList.remove("board-mode-shell");
@@ -377,6 +414,7 @@
 
   // 건의글 작성 모달 열기 (특정 문서 하단에서 누르면 preselectedDocId가 자동 선택됨!)
   function openWriteModal(preselectedDocId) {
+    const modalRequest = ++modalVersion;
     const docs = Object.values(window.WIKI_DOCS || {});
     const currentUser = window.CodeWikiAuth?.getCurrentUser();
     const authorName = currentUser?.full_name || "익명 학생";
@@ -434,66 +472,79 @@
             <textarea id="postContent" class="toss-textarea" rows="4" placeholder="수업에서 배운 내용이나 고쳐야 할 부분을 편하게 적어주세요." required></textarea>
           </div>
 
-          <button type="submit" class="toss-primary-btn">건의글 등록하기</button>
+          <p id="postError" role="alert"></p><button id="submitPostBtn" type="submit" class="toss-primary-btn">건의글 등록하기</button>
         </form>
       </div>
     `;
 
     document.getElementById("closeWriteModalBtn").addEventListener("click", () => {
+      ++modalVersion;
       writeModal.classList.add("hidden");
     });
 
+    let saving = false;
     document.getElementById("boardWriteForm").addEventListener("submit", async e => {
       e.preventDefault();
-      const category = document.getElementById("postCategory").value;
-      const targetDocId = document.getElementById("postTargetDoc").value;
-      const targetDocObj = window.WIKI_DOCS?.[targetDocId];
-      const targetDocTitle = targetDocObj
-        ? `${targetDocObj.stepNum ? `[${targetDocObj.stepNum}] ` : ""}${targetDocObj.title}`
-        : "";
-      const title = document.getElementById("postTitle").value.trim();
-      const content = document.getElementById("postContent").value.trim();
+      if (saving) return;
+      saving = true;
+      const submit = document.getElementById('submitPostBtn'), errorBox = document.getElementById('postError');
+      const version = viewVersion, token = window.CodeWikiAuth?.getSessionToken();
+      submit.disabled = true; errorBox.textContent = '';
+      try {
+        const category = document.getElementById("postCategory").value;
+        const targetDocId = document.getElementById("postTargetDoc").value;
+        const targetDocObj = window.WIKI_DOCS?.[targetDocId];
+        const targetDocTitle = targetDocObj
+          ? `${targetDocObj.stepNum ? `[${targetDocObj.stepNum}] ` : ""}${targetDocObj.title}`
+          : "";
+        const title = document.getElementById("postTitle").value.trim();
+        const content = document.getElementById("postContent").value.trim();
 
-      const isSupa = window.CodeWikiAuth?.isSupabaseConfigured();
-      const client = window.CodeWikiAuth?.getSupabaseClient();
+        const isSupa = window.CodeWikiAuth?.isSupabaseConfigured();
+        const client = window.CodeWikiAuth?.getSupabaseClient();
 
-      if (!isSupa || !client) {
-        const list = getLocalPosts();
-        const now = new Date();
-        const timeStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(
-          now.getDate()
-        ).padStart(2, "0")} ${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
+        if (isSupa && !client) throw new Error("서버 연결을 확인해 주세요.");
+        if (!isSupa) {
+          const list = getLocalPosts();
+          const now = new Date();
+          const timeStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(
+            now.getDate()
+          ).padStart(2, "0")} ${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
 
-        list.unshift({
-          id: Date.now(),
-          author_id: currentUser?.id || "guest",
-          author_name: authorName,
-          author_class: currentUser?.class_name || "",
-          author_mbti: currentUser?.mbti || "",
-          category,
-          target_doc_id: targetDocId,
-          target_doc_title: targetDocTitle,
-          title,
-          content,
-          status: "open",
-          admin_note: "",
-          created_at: timeStr
-        });
-        saveLocalPosts(list);
-      } else {
-        await client.rpc("cw_create_post", {
-          p_token: window.CodeWikiAuth?.getSessionToken(),
-          p_category: category,
-          p_target_doc_id: targetDocId || null,
-          p_target_doc_title: targetDocTitle || null,
-          p_title: title,
-          p_content: content
-        });
-      }
+          list.unshift({
+            id: Date.now(),
+            author_id: currentUser?.id || "guest",
+            author_name: authorName,
+            author_class: currentUser?.class_name || "",
+            author_mbti: currentUser?.mbti || "",
+            category,
+            target_doc_id: targetDocId,
+            target_doc_title: targetDocTitle,
+            title,
+            content,
+            status: "open",
+            admin_note: "",
+            created_at: timeStr
+          });
+          saveLocalPosts(list);
+        } else {
+          const {error} = await client.rpc("cw_create_post", {
+            p_token: window.CodeWikiAuth?.getSessionToken(),
+            p_category: category,
+            p_target_doc_id: targetDocId || null,
+            p_target_doc_title: targetDocTitle || null,
+            p_title: title,
+            p_content: content
+          });
+          if (error) throw error;
+        }
 
-      writeModal.classList.add("hidden");
-      await refreshBadge();
-      openBoardView();
+        if (token !== window.CodeWikiAuth?.getSessionToken() || modalRequest !== modalVersion) return;
+        writeModal.classList.add("hidden");
+        await refreshAfterChange(version,token,true);
+      } catch {
+        errorBox.textContent = '등록하지 못했습니다. 작성 내용은 유지됩니다. 다시 시도해 주세요.';
+      } finally { saving = false; submit.disabled = false; }
     });
   }
 
@@ -506,7 +557,7 @@
   }
 
   writeModal?.addEventListener("click", e => {
-    if (e.target === writeModal) writeModal.classList.add("hidden");
+    if (e.target === writeModal) { ++modalVersion; writeModal.classList.add("hidden"); }
   });
 
   openBoardBtn?.addEventListener("click", () => {
@@ -521,6 +572,7 @@
     openBoardView,
     openWriteModal,
     closeIfActive() {
+      ++viewVersion;
       if (isBoardViewActive) {
         isBoardViewActive = false;
         if (openBoardBtn) openBoardBtn.classList.remove("active");

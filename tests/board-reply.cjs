@@ -8,7 +8,7 @@ function setup(error) {
   const node = id => nodes[id] ||= {value:'',checked:false,disabled:false,textContent:'',events:{},focus(){},addEventListener(event,fn){this.events[event]=fn;}};
   const calls=[];
   const modal={classList:{add(){modal.hidden=true;},remove(){modal.hidden=false;}}};
-  const context=vm.createContext({document:{getElementById:node},writeModal:modal,escapeHtml:s=>s,window:{CodeWikiAuth:{isSupabaseConfigured:()=>true,getSessionToken:()=> 'test-token',getSupabaseClient:()=>({rpc:async(name,args)=>{calls.push({name,args});return {error};}})}},refreshBadge:async()=>{},openBoardView:async()=>{}});
+  const context=vm.createContext({document:{getElementById:node},writeModal:modal,escapeHtml:s=>s,window:{CodeWikiAuth:{isSupabaseConfigured:()=>true,getSessionToken:()=> 'test-token',getSupabaseClient:()=>({rpc:async(name,args)=>{calls.push({name,args});return {error};}})}},viewVersion:0,modalVersion:0,refreshAfterChange:async()=>{}});
   vm.runInContext(fn,context);
   context.openReplyModal({id:7,title:'test',status:'open',admin_note:'existing'});
   return {node,calls,modal};

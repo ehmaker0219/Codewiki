@@ -1,0 +1,118 @@
+/* Admin approval UI. Authentication owns the session and injects data access. */
+(() => {
+  function create({modal, getToken, getUser, client, isRemote, getDemoUsers, saveDemoUsers, onChange}) {
+    const escape = window.CodeWikiLearning.escape;
+    const groups = [
+      {status:'pending', title:'승인 대기 중', empty:'대기 중인 신청자가 없습니다.', actions:[['approved','승인','approve'],['rejected','거절','reject']]},
+      {status:'approved', title:'승인 완료 멤버', empty:'승인된 멤버가 없습니다.', actions:[['pending','승인 취소','revoke']]},
+      {status:'rejected', title:'반려됨', actions:[['approved','다시 승인','approve']]}
+    ];
+    let users = [], filter = 'ALL', generation = 0, sessionKey = '', busy = false, errorMessage = '';
+    const className = user => user.class_name || '기본반';
+    const current = (version, token, id) => generation === version && getToken() === token && getUser()?.id === id && getUser()?.role === 'admin';
+
+    function close() {
+      generation++;
+      users = [];
+      busy = false;
+      errorMessage = '';
+      modal.classList.add('hidden');
+      modal.innerHTML = '';
+    }
+
+    function setUser(user) {
+      const key = user?.role === 'admin' ? JSON.stringify([user.id, getToken()]) : '';
+      if (key !== sessionKey || !key) { sessionKey = key; filter = 'ALL'; close(); }
+    }
+
+    function renderRow(user, group) {
+      const date = user.birthday_error ? '조회 실패' : escape(user.birth_date || '미등록');
+      return `<div class="admin-user-row">
+        <div>
+          <div class="admin-user-name">
+            <span class="cat-type-pill" style="margin-right:4px;">${escape(className(user))}</span>
+            ${user.mbti && group.status !== 'rejected' ? `<span class="toss-badge-blue" style="font-size:11px;padding:2px 6px;margin-right:4px;">${escape(user.mbti)}</span>` : ''}
+            ${escape(user.full_name)} ${group.status === 'approved' ? '<span class="approved-tag">승인됨</span>' : ''}
+          </div>
+          <div class="admin-user-email">@${escape(user.username)}${group.status === 'pending' ? ' · '+escape(user.created_at || '') : ''}</div>
+          <div class="admin-user-email">생년월일: ${date} · 관리자 전용</div>
+        </div>
+        <div class="admin-action-btns">${group.actions.map(([next,label,style]) =>
+          `<button class="${style}-btn" data-uid="${escape(user.id)}" data-next="${next}" ${busy ? 'disabled' : ''}>${label}</button>`).join('')}</div>
+      </div>`;
+    }
+
+    function render() {
+      const counts = new Map();
+      for (const user of users) counts.set(className(user), (counts.get(className(user)) || 0) + 1);
+      const classes = [...counts.keys()].sort((a,b) => a.localeCompare(b,'ko',{numeric:true}));
+      if (filter !== 'ALL' && !counts.has(filter)) filter = 'ALL';
+      const visible = filter === 'ALL' ? users : users.filter(user => className(user) === filter);
+      modal.innerHTML = `<div class="admin-modal-card toss-card" role="dialog" aria-modal="true" aria-labelledby="adminApprovalTitle" style="max-width:560px;">
+        <div class="admin-modal-header"><div><span class="toss-badge-blue">Admin</span><h3 id="adminApprovalTitle" class="admin-modal-title">학생 승인 관리</h3></div>
+          <button id="closeAdminModalBtn" class="icon-btn" aria-label="닫기">✕</button></div>
+        ${classes.length ? `<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px;">${[['ALL','전체',users.length],...classes.map(name=>[name,name,counts.get(name)])].map(([id,label,count]) =>
+          `<button type="button" class="toss-chip-btn ${filter === id ? 'active' : ''}" data-class-filter="${escape(id)}" style="height:30px;font-size:12px;">${escape(label)} (${count})</button>`).join('')}</div>` : ''}
+        ${errorMessage ? `<p role="alert">${escape(errorMessage)} <button class="toss-chip-btn" data-admin-retry>다시 시도</button></p>` : ''}
+        <div class="admin-modal-body">${groups.map((group,index) => {
+          const members = visible.filter(user => user.status === group.status);
+          if (!members.length && !group.empty) return '';
+          return `<div class="admin-group-title" ${index ? 'style="margin-top:24px;"' : ''}><span>${group.title}</span><span class="count-pill">${members.length}명</span></div>`+
+            (members.length ? `<div class="admin-user-list">${members.map(user=>renderRow(user,group)).join('')}</div>` : `<div class="admin-empty-box">${busy ? '불러오는 중…' : group.empty}</div>`);
+        }).join('')}</div></div>`;
+    }
+
+    async function open() {
+      if (getUser()?.role !== 'admin') return;
+      const version = ++generation, token = getToken(), id = getUser().id;
+      users = []; busy = true; errorMessage = '';
+      modal.classList.remove('hidden'); render();
+      try {
+        if (!isRemote) users = getDemoUsers().filter(user=>user.role !== 'admin');
+        else {
+          // Independent reads run together; birthday failure doesn't hide approval requests.
+          const [list, birthdays] = await Promise.all([
+            client.rpc('cw_admin_list_users',{p_token:token}),
+            Promise.resolve().then(()=>client.rpc('cw_admin_birthdays',{p_token:token})).catch(error=>({error}))
+          ]);
+          if (!current(version,token,id)) return;
+          if (list.error) throw list.error;
+          const dates = new Map((birthdays.data || []).map(row=>[row.user_id,row.birth_date]));
+          users = (list.data || []).map(user=>({...user,birth_date:dates.get(user.id),birthday_error:Boolean(birthdays.error)}));
+        }
+      } catch { if (current(version,token,id)) errorMessage = '회원 목록을 불러오지 못했습니다.'; }
+      if (current(version,token,id)) { busy = false; render(); }
+    }
+
+    async function updateStatus(button) {
+      if (busy || getUser()?.role !== 'admin') return;
+      const version = generation, token = getToken(), id = getUser().id;
+      const target = button.getAttribute('data-uid'), next = button.getAttribute('data-next');
+      busy = true; errorMessage = ''; render();
+      try {
+        if (isRemote) {
+          const result = await client.rpc('cw_admin_set_status',{p_token:token,p_target_id:target,p_next_status:next});
+          if (result.error) throw result.error;
+        } else saveDemoUsers(getDemoUsers().map(user=>String(user.id) === target ? {...user,status:next} : user));
+        if (!current(version,token,id)) return;
+        await open();
+        if (getToken() === token && getUser()?.id === id) await onChange();
+      } catch {
+        if (current(version,token,id)) { busy = false; errorMessage = '승인 상태를 변경하지 못했습니다. 다시 시도해 주세요.'; render(); }
+      }
+    }
+
+    // One listener survives rerenders; filtering uses the fetched snapshot, not another RPC.
+    modal.addEventListener('click', event => {
+      if (event.target === modal || event.target.closest('#closeAdminModalBtn')) { close(); return; }
+      const classButton = event.target.closest('[data-class-filter]');
+      if (classButton) { filter = classButton.getAttribute('data-class-filter'); render(); return; }
+      if (event.target.closest('[data-admin-retry]')) { if (!busy) void open(); return; }
+      const action = event.target.closest('[data-uid]');
+      if (action) void updateStatus(action);
+    });
+    modal.addEventListener('keydown', event => { if (event.key === 'Escape') close(); });
+    return {open, close, setUser};
+  }
+  window.CodeWikiAdmin = {create};
+})();

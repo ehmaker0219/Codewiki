@@ -1,0 +1,13 @@
+const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict');
+const source=fs.readFileSync('js/app.js','utf8');
+const context=vm.createContext({});
+vm.runInContext(source.slice(source.indexOf('  function renderEditorCode'),source.indexOf('  // 개별 블록(Block) 렌더러')),context);
+const html=context.renderEditorCode('DATA lv TYPE string VALUE \'<tag>\'. " comment\n* full comment');
+assert.match(html,/sap-code-keyword">DATA/);
+assert.match(html,/sap-code-string">'&lt;tag&gt;'/);
+assert.match(html,/sap-code-comment">" comment/);
+assert.match(html,/sap-code-comment">\* full comment/);
+assert.ok(!html.includes('<tag>'));
+assert.equal((html.match(/sap-code-number/g)||[]).length,2);
+assert.ok(!context.renderEditorCode('DATA',false).includes('sap-code-keyword'));
+console.log('PASS: keywords, strings, comments, HTML escaping, line numbers and plain-text mode');

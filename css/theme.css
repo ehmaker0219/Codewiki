@@ -131,10 +131,33 @@ body {
   box-shadow: 0 30px 90px -35px #1f325240, inset 0 1px #ffffff30;
 }
 .cw-auth-logo { filter: drop-shadow(0 8px 12px #0c3d9320); }
-.cw-minimal-input { border-width: 1px; border-radius: 12px; }
+.cw-minimal-input { border-width: 1px; border-radius: 8px; }
+.cw-auth-form { gap:12px; }
+.cw-auth-form .cw-minimal-input { height:44px; font-size:13px; padding:0 12px; }
+.cw-auth-form .cw-minimal-input.has-eye { padding-right:44px; }
+.cw-auth-form .cw-picker-box { border-width:1px; border-radius:8px; padding:12px; gap:10px; }
+.cw-auth-form .cw-picker-header { font-weight:600; }
+.cw-auth-form .cw-auth-submit { height:44px; border-radius:8px; font-size:13px; font-weight:600; margin-top:4px; }
+.cw-auth-date-row { display:flex; align-items:center; gap:12px; min-height:44px; padding:0 12px; border:1px solid var(--border-subtle); border-radius:8px; background:var(--bg-card); }
+.cw-auth-date-row label { flex-shrink:0; font-size:12px; color:var(--text-sub); font-weight:500; }
+.cw-auth-form .cw-auth-date-row .cw-minimal-input { flex:1; width:0; min-width:0; height:42px; padding:0; border:0; border-radius:0; background:transparent; box-shadow:none; }
+.cw-auth-date-row:focus-within { border-color:var(--toss-blue); box-shadow:0 0 0 4px var(--toss-blue-soft); }
+.cw-auth-form .cw-minimal-input::placeholder { color:var(--text-sub); opacity:1; }
+#authBirthDate.is-empty:not(:focus) { color:transparent; }
+#authBirthDate.is-empty:not(:focus)::-webkit-datetime-edit { color:transparent; }
 .track-select-heading { font-size: 20px; line-height: 1.45; letter-spacing: -0.025em; font-weight: 650; }
 .track-card-title { font-size: 20px; line-height: 1.4; letter-spacing: -0.02em; font-weight: 650; }
 .cw-auth-heading { font-size: 18px; line-height: 1.5; letter-spacing: -0.025em; font-weight: 650; }
+.cw-auth-minimal { font-family:inherit; }
+.cw-auth-minimal :is(input,select,button,label,.cw-picker-header,.toss-badge-blue,.cw-auth-notice,.auth-alert) {
+  font-family:inherit;
+  font-size:13px;
+  font-weight:500;
+  line-height:1.5;
+  letter-spacing:0;
+}
+.cw-auth-minimal .cw-auth-submit { font-weight:600; }
+.cw-auth-minimal input::placeholder { font-family:inherit; font-size:inherit; font-weight:inherit; }
 .prelogin-brand-title { font-size: 18px; font-weight: 650; letter-spacing: -0.025em; }
 .admin-modal-title { font-size: 16px; line-height: 1.5; font-weight: 650; letter-spacing: -0.02em; }
 .board-post-title { font-size: 14px; line-height: 1.5; font-weight: 600; letter-spacing: -0.015em; }
@@ -199,12 +222,9 @@ body { background-image: none; }
 .toss-table { border-collapse: collapse; font-size: 13px; }
 .toss-table th, .toss-table td { border: 1px solid var(--border-subtle); padding: 9px 12px; }
 .toss-table tr:last-child td { border-bottom: 1px solid var(--border-subtle); }
-.block-table-wrap, .block-code-wrap, .block-callout, .right-card, .pager-card { border-radius: 0; box-shadow: none; }
+.block-table-wrap, .block-code-wrap, .block-callout, .right-card { border-radius: 0; box-shadow: none; }
 .block-code-wrap { margin: 14px 0; }
 .sidebar-right .right-card { border: 1px solid var(--border-subtle); }
-.pager-grid { gap: 12px; }
-.pager-card { padding: 12px; border: 1px solid var(--border-subtle); }
-.pager-title { font-size: 13px; }
 .wiki-link:hover { text-decoration: underline; }
 @media (max-width: 1140px) {
   .app-shell { grid-template-columns: minmax(0, 1fr); }
@@ -241,3 +261,66 @@ body { background-image: none; }
 .pending-doc-notice strong { color:var(--toss-blue); }
 .pending-doc-notice p { margin:5px 0 0; color:var(--text-sub); }
 .pending-section-note { font-size:12px; color:var(--text-muted); margin:8px 0 20px; }
+
+.nav-view-switch { display:flex; gap:3px; padding:3px; margin:2px 4px 12px; border:1px solid var(--border-subtle); border-radius:5px; background:var(--bg-subtle); }
+.nav-view-switch button { flex:1; border:0; border-radius:3px; padding:6px 4px; background:transparent; color:var(--text-sub); font:inherit; font-size:11px; cursor:pointer; }
+.nav-view-switch button[aria-pressed="true"] { background:var(--toss-blue-soft); color:var(--toss-blue); font-weight:650; }
+.nav-empty { font-size:12px; padding:10px; color:var(--text-muted); }
+
+/* SAP GUI-inspired example editor, independent of the surrounding page theme. */
+.block-code-wrap { border:1px solid #9aafbf; border-radius:0; box-shadow:inset 1px 1px #fff; }
+.code-top-bar { background:linear-gradient(#e0ebf3,#c3d5e3); color:#183c55; border-bottom:1px solid #a0b7c8; padding:6px 10px; font-size:11px; }
+.block-code-wrap pre { background:#fff; color:#141414; padding:8px 0; margin:0; overflow:auto; }
+.block-code-wrap pre code { display:block; min-width:max-content; font:13px/1.65 'Courier New',Consolas,monospace; background:transparent; color:inherit; }
+.sap-code-line { display:inline-flex; min-width:100%; }
+.sap-code-number { width:44px; flex:0 0 44px; text-align:right; padding:0 8px 0 4px; margin-right:12px; color:#48909c; background:#f2f0e3; border-right:1px dotted #94a5af; user-select:none; }
+.sap-code-source { padding-right:16px; white-space:pre; }
+.sap-code-line:hover { background:#d9e6f3; }
+.sap-code-keyword { color:#0000ff; }
+.sap-code-string { color:#168900; }
+.sap-code-comment { color:#858585; font-style:italic; }
+.block-code-wrap .copy-code-btn { border:1px solid #9eb1c0; border-radius:2px; background:linear-gradient(#fff,#e0e9f0); color:#21465e; font-size:11px; }
+
+.meal-folder summary { list-style:none; cursor:pointer; }
+.meal-folder summary::-webkit-details-marker { display:none; }
+.meal-chevron { margin-left:auto; transition:transform .15s; }
+.meal-folder[open] .meal-chevron { transform:rotate(90deg); }
+.meal-links { margin:3px 0 8px 20px; padding-left:8px; border-left:1px solid var(--border-subtle); }
+
+#practiceDialog { margin:auto; width:min(600px,calc(100% - 32px)); max-height:calc(100dvh - 40px); overflow:auto; padding:24px; border:1px solid var(--border-subtle); border-radius:10px; background:var(--bg-card); color:var(--text-body); }
+#practiceDialog::backdrop { background:#14243880; }
+.practice-dialog-header { display:flex; align-items:center; justify-content:space-between; gap:12px; }
+.practice-dialog-header h2 { font-size:18px; color:var(--text-strong); }
+#practiceDialog label { display:block; font-size:12px; margin-bottom:6px; }
+#practiceCategory { width:100%; padding:9px; border:1px solid var(--border-subtle); border-radius:4px; background:var(--bg-card); color:var(--text-body); font:inherit; font-size:13px; }
+#practiceQuestion { background:var(--bg-subtle); padding:18px; margin:16px 0; border-left:3px solid var(--toss-blue); font-size:13px; line-height:1.8; }
+#practiceQuestion h3 { font-size:16px; margin:6px 0 12px; color:var(--text-strong); }
+#practiceQuestion ul { padding-left:20px; margin:12px 0; }
+.practice-question-meta { color:var(--text-sub); font-size:11px; }
+#nextPracticeBtn:disabled { opacity:.45; cursor:not-allowed; }
+
+/* Search, learning notes and account progress */
+.search-dropdown .search-item { width:100%; border:0; border-bottom:1px solid var(--border-subtle); background:var(--bg-card); color:var(--text-body); text-align:left; font:inherit; cursor:pointer; }
+.search-item-title,.search-item-sub { display:block; }
+.search-item-sub { white-space:normal; line-height:1.5; overflow-wrap:anywhere; }
+.search-item mark { background:#fff1a6; color:#173c65; }
+.search-item:focus-visible { outline:2px solid var(--toss-blue); outline-offset:-2px; }
+.related-group + .related-group { margin-top:18px; padding-top:12px; border-top:1px solid var(--border-subtle); }
+.related-group h3 { margin:0 0 8px; font-size:12px; color:var(--text-sub); }
+.related-group summary { cursor:pointer; font-size:12px; margin:8px 0; color:var(--toss-blue); }
+.code-example-meta { display:flex; flex-wrap:wrap; justify-content:space-between; gap:6px; padding:6px 10px; font-size:11px; background:#eaf1f7; color:#325570; border-bottom:1px solid #ccd8e3; }
+.code-example-guide { padding:9px 12px; font-size:12px; line-height:1.7; background:var(--bg-card); color:var(--text-body); border-top:1px solid var(--border-subtle); }
+.code-example-guide summary { cursor:pointer; color:var(--toss-blue); }
+.code-example-guide p { margin:8px 0; }
+.code-example-guide dt { font-weight:600; margin-top:8px; }
+.code-example-guide dd { margin-left:0; }
+.read-sync-status { font-size:11px; color:var(--text-sub); margin-left:auto; }
+#retryReadSync[hidden] { display:none; }
+.practice-dialog-header { margin-bottom:16px; }
+.practice-actions { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+#nextPracticeBtn { margin-left:auto; }
+#practiceCopyStatus { font-size:12px; color:var(--text-sub); }
+#copyPracticeBtn:disabled { opacity:.45; cursor:not-allowed; }
+
+.related-group { width:100%; min-width:0; }
+.related-group .backlink-pill { display:block; width:fit-content; max-width:100%; margin:6px 0; overflow-wrap:anywhere; }

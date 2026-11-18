@@ -2,8 +2,7 @@
  * ============================================================================
  * [코어 렌더링 엔진: js/app.js]
  * ----------------------------------------------------------------------------
- * 위키독스(WikiDocs) 스타일의 순차 커리큘럼 플로우(좌측 챕터 트리 + 하단 이전/다음
- * 네비게이션 + 학습 완료 체크)와 나무위키식 상호 링크/역링크를 렌더링합니다.
+ * 주제별·수업일별 목차, 계정별 학습 완료, 본문 검색과 상호 링크를 렌더링합니다.
  * ============================================================================
  */
 (function () {
@@ -13,13 +12,15 @@
   }
   let currentTrack = "abap";
   let currentDocId = currentTrack === "ui5" ? "welcome-ui5" : "welcome-abap";
-  const READ_DOCS_KEY = "codewiki_read_docs_v2";
+  let navigationView = 'topic';
+  try { navigationView = localStorage.getItem('codewiki_nav_view') === 'date' ? 'date' : 'topic'; } catch {}
   const expandedCategories = new Set();
   // 문서 데이터는 data.js와 ui5-data.js에서 앱 시작 전에 로드됩니다.
   const documents = Object.values(window.WIKI_DOCS || {});
   const aliases = [];
   const exactAliases = new Map();
   const backlinks = new Map();
+  let backlinksIndexed = false;
   for (const doc of documents) {
     if (doc.track === "ui5") continue;
     for (const alias of new Set([doc.title, ...(doc.aliases || [])])) {
@@ -31,16 +32,9 @@
     }
   }
   aliases.sort((a, b) => b.alias.length - a.alias.length);
-  const searchIndex = documents.filter(doc => doc.track !== "ui5").map(doc => ({
-    doc,
-    fields: [doc.title, doc.subtitle, doc.summary, ...(doc.tcodes || [])]
-      .filter(Boolean).map(value => value.toLowerCase())
-  }));
+  const searchIndex = window.CodeWikiLearning.indexDocuments(documents);
 
   const categoryNav = document.getElementById("categoryNav");
-  const quickRefGroup = document.getElementById("quickRefGroup");
-  const quickRefLabel = document.getElementById("quickRefLabel");
-  const tcodeList = document.getElementById("tcodeList");
   const appShell = document.getElementById("appShell");
   const sidebarRight = document.getElementById("sidebarRight");
   const tocCardWrap = document.getElementById("tocCardWrap");
@@ -55,6 +49,7 @@
   const brandTrackToggle = document.getElementById("brandTrackToggle");
 
   function isDocumentPending(doc) {
+    if (doc.isCalendar) return false;
     return !(doc.sections || []).some(section =>
       !["관련 문서", "참고", "참고 자료", "필기와 참고 자료"].includes(section.title) &&
       (section.blocks || []).length > 0
@@ -66,15 +61,9 @@
   }
 
   function syncTrackChrome() {
-    const isUi5 = currentTrack === "ui5";
-
     brandTrackToggle?.querySelectorAll("[data-track-switch]").forEach(btn => {
       btn.classList.toggle("active", btn.getAttribute("data-track-switch") === currentTrack);
     });
-
-    if (quickRefLabel) {
-      quickRefLabel.textContent = isUi5 ? "REFERENCE" : "T-CODES";
-    }
 
     const homeId = getHomeDocId(currentTrack);
     if (sbHomeItem) {
@@ -88,23 +77,31 @@
   }
 
   function getReadDocs() {
-    try {
-      const stored = JSON.parse(localStorage.getItem(READ_DOCS_KEY) || "[]");
-      return Array.isArray(stored) ? stored : [];
-    } catch (e) {
-      return [];
-    }
+    return window.CodeWikiProgress?.getReadDocs() || [];
   }
 
   function toggleReadDoc(docId) {
-    const list = new Set(getReadDocs());
-    if (list.has(docId)) {
-      list.delete(docId);
-    } else {
-      list.add(docId);
-    }
-    localStorage.setItem(READ_DOCS_KEY, JSON.stringify([...list]));
-    renderDocument(currentDocId);
+    window.CodeWikiProgress?.toggle(docId);
+  }
+
+  function refreshProgress() {
+    const readSet = new Set(getReadDocs());
+    const read = readSet.has(currentDocId);
+    const button = document.getElementById('toggleReadBtn');
+    if (button) { button.classList.toggle('active', read); button.textContent = read ? '✓ 완료됨' : '학습 완료'; }
+    const status = document.getElementById('readSyncStatus');
+    if (status) status.textContent = window.CodeWikiProgress?.getStatus() || '';
+    const retry = document.getElementById('retryReadSync');
+    if (retry) retry.hidden = !window.CodeWikiProgress?.needsRetry();
+    // Update only completion marks: preserve focus, open folders and scroll position.
+    categoryNav.querySelectorAll('[data-doc]').forEach(link => {
+      const mark = link.querySelector('.read-check-mark');
+      if (readSet.has(link.getAttribute('data-doc'))) {
+        if (!mark) link.insertAdjacentHTML('beforeend', '<span class="read-check-mark" title="완료">✓</span>');
+      } else {
+        mark?.remove();
+      }
+    });
   }
 
   function getCategoryName(categoryId) {
@@ -197,7 +194,7 @@
 
   // 특정 문서를 참조하는 역링크(Backlinks) 자동 검색 (수동 [[링크]] + 자동 aliases 언급 모두 포함!)
   function computeBacklinks(targetId) {
-    if (backlinks.has(targetId)) return backlinks.get(targetId);
+    if (backlinksIndexed) return backlinks.get(targetId) || [];
     const targetDoc = window.WIKI_DOCS[targetId];
     if (!targetDoc) return [];
 
@@ -220,18 +217,34 @@
       (doc.sections || []).forEach(section => (section.blocks || []).forEach(walk));
       return values.filter(Boolean);
     };
-    const matches = documents.filter(doc => {
-      if (doc.id === targetId || doc.track === "ui5") return false;
-      return inlineValues(doc).some(value =>
-        parseInline(value, doc.id).includes(`data-doc="${targetId}"`)
-      );
-    });
-    backlinks.set(targetId, matches);
-    return matches;
+    // Documents are immutable after startup. Parse each source once and invert its links.
+    for (const doc of documents) {
+      if (doc.track === "ui5") continue;
+      const targets = new Set();
+      for (const value of inlineValues(doc)) {
+        for (const match of parseInline(value, doc.id).matchAll(/data-doc="([^"]+)"/g)) {
+          if (match[1] !== doc.id && window.WIKI_DOCS[match[1]]) targets.add(match[1]);
+        }
+      }
+      for (const id of targets) {
+        if (!backlinks.has(id)) backlinks.set(id, []);
+        backlinks.get(id).push(doc);
+      }
+    }
+    backlinksIndexed = true;
+    return backlinks.get(targetId) || [];
+  }
+
+  function renderDateNavigation(allDocs, readSet) {
+    return (window.WIKI_LESSON_DAYS || []).filter(day => day.track === currentTrack).map(day =>
+      '<a href="#doc/' + day.docId + '" class="nav-doc-link ' + (day.docId === currentDocId ? 'active' : '') + '" data-doc="' + day.docId + '"><span>' + day.title + '</span>' +
+      (readSet.has(day.docId) ? '<span class="read-check-mark" title="완료">✓</span>' : '') + '</a>'
+    ).join('');
   }
 
   // 좌측 고정 사이드바 렌더링 (불필요한 빈 요소 자동 숨김)
   function renderNavigation() {
+    document.getElementById('sbScheduleItem')?.classList.toggle('active', currentDocId === 'education-schedule');
     syncTrackChrome();
 
     const allDocs = Object.values(window.WIKI_DOCS).filter(
@@ -253,7 +266,16 @@
       c => (c.track || "abap") === currentTrack
     );
 
-    categoryNav.innerHTML = trackCategories
+    document.querySelectorAll('[data-nav-view]').forEach(button => {
+      const selected = button.dataset.navView === navigationView;
+      button.setAttribute('aria-pressed', String(selected));
+      button.onclick = () => {
+        navigationView = button.dataset.navView;
+        try { localStorage.setItem('codewiki_nav_view', navigationView); } catch {}
+        renderNavigation();
+      };
+    });
+    categoryNav.innerHTML = navigationView === 'date' ? renderDateNavigation(allDocs, readSet) : trackCategories
       .map(cat => {
         const docsInCat = allDocs.filter(d => d.categoryId === cat.id);
         if (cat.id === "abap-curriculum") {
@@ -315,33 +337,25 @@
           expandedCategories.add(catId);
         }
         renderNavigation();
-        bindWikiLinks();
       });
     });
 
-    // 좌측 빠른 사전: 등록된 데이터가 있을 때만 노출
-    const tcodes = (window.WIKI_TCODES || []).filter(t => (t.track || "abap") === currentTrack);
-    if (quickRefGroup) {
-      quickRefGroup.classList.toggle("hidden", tcodes.length === 0);
-    }
-    if (tcodes.length > 0 && tcodeList) {
-      tcodeList.innerHTML = tcodes
-        .map(
-          t => `
-          <div class="tcode-chip" data-doc="${t.docId}" title="${t.label}">
-            <code>${t.code}</code>
-            <span>${t.label}</span>
-          </div>
-        `
-        )
-        .join("");
+  }
 
-      tcodeList.querySelectorAll(".tcode-chip").forEach(chip => {
-        chip.addEventListener("click", () => {
-          navigateTo(chip.getAttribute("data-doc"));
+  function renderEditorCode(raw, abap = true) {
+    const escape = value => value.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    const keywords = new Set(('REPORT DATA TYPES TYPE LIKE VALUE CONSTANTS CLEAR WRITE PARAMETERS START-OF-SELECTION AT SELECTION-SCREEN IF ELSE ELSEIF ENDIF DO TIMES ENDDO WHILE ENDWHILE LOOP AT ENDLOOP EXIT CONTINUE MOD DIV IS NOT INITIAL AND OR BETWEEN CA CS NE EQ CONCATENATE INTO SEPARATED BY FORM ENDFORM PERFORM USING CHANGING SELECT FROM WHERE ENDSELECT CALL FUNCTION METHOD CLASS DEFINITION IMPLEMENTATION PUBLIC PRIVATE PROTECTED SECTION METHODS CLASS-METHODS ENDMETHOD ENDCLASS CREATE OBJECT REF TO IMPORTING EXPORTING RETURNING EXCEPTIONS TRY CATCH ENDTRY MESSAGE WITH LENGTH DECIMALS DEFAULT MOVE TRANSLATE CONDENSE ULINE').split(' '));
+    return String(raw).split('\n').map((line,i) => {
+      let body = escape(line);
+      if (abap) {
+        if (line.startsWith('*')) body = '<span class="sap-code-comment">' + escape(line) + '</span>';
+        else body = line.replace(/'(?:''|[^'])*'|`[^`]*`|\|[^|]*\||".*$|[a-zA-Z_][a-zA-Z0-9_-]*|[^a-zA-Z_'`|"&<>]+|[&<>]/g, token => {
+          const kind = token.startsWith('"') ? 'comment' : ["'", '`', '|'].includes(token[0]) ? 'string' : keywords.has(token.toUpperCase()) ? 'keyword' : '';
+          return kind ? '<span class="sap-code-' + kind + '">' + escape(token) + '</span>' : escape(token);
         });
-      });
-    }
+      }
+      return '<span class="sap-code-line"><span class="sap-code-number" aria-hidden="true">' + (i+1) + '</span><span class="sap-code-source">' + body + '</span></span>';
+    }).join('\n');
   }
 
   // 개별 블록(Block) 렌더러 (8종 블록 지원: practice 따라하기 블록 포함)
@@ -453,7 +467,11 @@
               <span>${block.label || "ABAP Code"}</span>
               <button class="copy-code-btn" data-code="${encodeURIComponent(block.code || "")}">복사</button>
             </div>
-            <pre><code>${(block.code || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")}</code></pre>
+            ${block.example ? '<div class="code-example-meta"><span>' + window.CodeWikiLearning.escape(block.example.kind) + '</span><span>' + window.CodeWikiLearning.escape(block.example.verification) + '</span></div>' : ''}
+            <pre><code>${renderEditorCode(block.code || '', currentTrack === 'abap')}</code></pre>
+            ${block.example ? '<details class="code-example-guide"><summary>실행 방법 · 예상 결과</summary><p>' + window.CodeWikiLearning.escape(block.example.placement) + '</p>' +
+              (block.example.requirements ? '<p>' + window.CodeWikiLearning.escape(block.example.requirements) + '</p>' : '') +
+              '<dl><dt>입력 예시</dt><dd>' + window.CodeWikiLearning.escape(block.example.input || '코드에 지정된 값') + '</dd><dt>예상 결과</dt><dd>' + window.CodeWikiLearning.escape(block.example.expected || '변수의 변화를 디버거에서 확인하세요.') + '</dd></dl></details>' : ''}
           </div>
         `;
 
@@ -537,8 +555,18 @@
     const doc = currentIndex >= 0 ? docList[currentIndex] : targetDoc;
     currentDocId = doc.id;
 
-    const prevDoc = currentIndex > 0 ? docList[currentIndex - 1] : null;
-    const nextDoc = currentIndex >= 0 && currentIndex < docList.length - 1 ? docList[currentIndex + 1] : null;
+    articleContainer.classList.toggle('calendar-article', Boolean(doc.isCalendar));
+    if (doc.isCalendar) {
+      // Keep the shared TOC alive when moving from an article to the calendar.
+      if (tocCardWrap) sidebarRight?.prepend(tocCardWrap);
+      sidebarRight?.classList.add('hidden');
+      appShell?.classList.add('single-col');
+      document.getElementById('quizModeBtn')?.classList.add('hidden');
+      window.CodeWikiSchedule.render(articleContainer);
+      renderNavigation();
+      return;
+    }
+
     const isRead = getReadDocs().includes(doc.id);
 
     const trackLabel = currentTrack === "ui5" ? "UI5 / Fiori" : "ABAP";
@@ -547,7 +575,7 @@
     let widgetCounter = 0;
     const sections = doc.sections || [];
     const hasMetaTop = Boolean(doc.categoryId || doc.stepNum || (doc.tcodes && doc.tcodes.length > 0));
-    const showFooter = !doc.isHome || prevDoc || nextDoc;
+    const showFooter = !doc.isHome;
 
     // Preserve the shared TOC node before replacing the current document.
     if (tocCardWrap) sidebarRight?.prepend(tocCardWrap);
@@ -632,6 +660,7 @@
               <button id="suggestDocEditBtn" class="toss-chip-btn">
                 <span>수정 건의</span>
               </button>
+<span id="readSyncStatus" role="status" class="read-sync-status"></span><button id="retryReadSync" class="toss-chip-btn" hidden>동기화 재시도</button>
               <button id="toggleReadBtn" class="toss-chip-btn ${isRead ? "active" : ""}">
                 <span>${isRead ? "✓ 완료됨" : "학습 완료"}</span>
               </button>
@@ -639,34 +668,7 @@
           `
               : ""
           }
-          ${
-            prevDoc || nextDoc
-              ? `
-            <div class="pager-grid">
-              ${
-                prevDoc
-                  ? `
-                <a href="#doc/${prevDoc.id}" class="pager-card prev-pager" data-doc="${prevDoc.id}">
-                  <span class="pager-dir">← 이전</span>
-                  <strong class="pager-title">${prevDoc.title}</strong>
-                </a>
-              `
-                  : `<div></div>`
-              }
-              ${
-                nextDoc
-                  ? `
-                <a href="#doc/${nextDoc.id}" class="pager-card next-pager" data-doc="${nextDoc.id}">
-                  <span class="pager-dir">다음 →</span>
-                  <strong class="pager-title">${nextDoc.title}</strong>
-                </a>
-              `
-                  : `<div></div>`
-              }
-            </div>
-          `
-              : ""
-          }
+
         </div>
       `
           : ""
@@ -677,6 +679,9 @@
     if (toggleReadBtn) {
       toggleReadBtn.addEventListener("click", () => toggleReadDoc(doc.id));
     }
+
+    document.getElementById('retryReadSync')?.addEventListener('click', () => window.CodeWikiProgress?.sync());
+    refreshProgress();
 
     const suggestDocEditBtn = document.getElementById("suggestDocEditBtn");
     if (suggestDocEditBtn) {
@@ -720,7 +725,8 @@
     const specEntries = Object.entries(doc.specs || {});
     const hasSpecs = specEntries.length > 0;
     const backlinks = computeBacklinks(doc.id);
-    const hasBacklinks = backlinks.length > 0;
+    const groups = window.CodeWikiLearning.relatedGroups(doc, backlinks, documents);
+    const hasBacklinks = groups.concepts.length + groups.dates.length > 0;
 
     tocCardWrap?.classList.toggle("hidden", !hasToc);
     metaCardWrap?.classList.toggle("hidden", !hasSpecs);
@@ -765,19 +771,14 @@
     }
 
     if (hasBacklinks) {
-      backlinkBox.innerHTML = backlinks
-        .map(
-          b => `
-          <a href="#doc/${b.id}" class="backlink-pill wiki-link" data-doc="${b.id}">
-            ↰ ${b.title}
-          </a>
-        `
-        )
-        .join("");
+      const esc = window.CodeWikiLearning.escape;
+      const link = b => '<a href="#doc/' + esc(b.id) + '" class="backlink-pill wiki-link" data-doc="' + esc(b.id) + '">' + esc(b.title) + '</a>';
+      const group = (title, items) => !items.length ? '' : '<div class="related-group"><h3>' + title + '</h3>' + items.slice(0,5).map(link).join('') +
+        (items.length > 5 ? '<details><summary>더 보기 (' + (items.length-5) + ')</summary>' + items.slice(5).map(link).join('') + '</details>' : '') + '</div>';
+      backlinkBox.innerHTML = group('관련 개념', groups.concepts) + group('이 내용을 배운 날짜', groups.dates);
     }
 
     renderNavigation();
-    bindWikiLinks();
   }
 
   function navigateTo(docId) {
@@ -809,42 +810,36 @@
     selectTrack
   };
 
-  function bindWikiLinks() {
-    document.querySelectorAll("[data-missing-doc]").forEach(el => {
-      el.onclick = e => {
-        e.preventDefault();
-        if (window.CodeWikiBoard) {
-          window.CodeWikiBoard.openWriteModal("");
-        }
-      };
+  function initWikiLinks() {
+    // Delegate once so newly rendered document/sidebar links need no rebinding.
+    document.addEventListener('click', e => {
+      if (e.defaultPrevented || e.ctrlKey || e.metaKey || e.shiftKey || e.altKey) return;
+      const link = e.target.closest?.('[data-doc], [data-missing-doc]');
+      if (!link) return;
+      e.preventDefault();
+      hoverPreviewCard.classList.add('hidden');
+      if (link.hasAttribute('data-missing-doc')) window.CodeWikiBoard?.openWriteModal('');
+      else navigateTo(link.getAttribute('data-doc'));
     });
-
-    document.querySelectorAll("[data-doc]").forEach(el => {
-      el.onclick = e => {
-        e.preventDefault();
-        const targetId = el.getAttribute("data-doc");
-        hoverPreviewCard.classList.add("hidden");
-        navigateTo(targetId);
-      };
-
-      if (el.classList.contains("wiki-link")) {
-        el.onmouseenter = e => {
-          const targetId = el.getAttribute("data-doc");
-          const targetDoc = window.WIKI_DOCS[targetId];
-          if (!targetDoc) return;
-
-          hoverPreviewCard.innerHTML = `
-            <span class="preview-cat-badge">${getCategoryName(targetDoc.categoryId)}</span>
-            <div class="preview-doc-title">${targetDoc.title}</div>
-            <div class="preview-doc-summary">${(targetDoc.summary || "").replace(/~~.+?~~/g, "").replace(/\{\{(.+?)\}\}/g, "$1")}</div>
-          `;
-          hoverPreviewCard.classList.remove("hidden");
-          movePreviewCard(e);
-        };
-
-        el.onmousemove = movePreviewCard;
-        el.onmouseleave = () => hoverPreviewCard.classList.add("hidden");
-      }
+    document.addEventListener('mouseover', e => {
+      const link = e.target.closest?.('.wiki-link[data-doc]');
+      if (!link || link.contains(e.relatedTarget)) return;
+      const targetDoc = window.WIKI_DOCS[link.getAttribute('data-doc')];
+      if (!targetDoc) return;
+      hoverPreviewCard.innerHTML = `
+        <span class="preview-cat-badge">${getCategoryName(targetDoc.categoryId)}</span>
+        <div class="preview-doc-title">${targetDoc.title}</div>
+        <div class="preview-doc-summary">${(targetDoc.summary || '').replace(/~~.+?~~/g, '').replace(/\{\{(.+?)\}\}/g, '$1')}</div>
+      `;
+      hoverPreviewCard.classList.remove('hidden');
+      movePreviewCard(e);
+    });
+    document.addEventListener('mousemove', e => {
+      if (e.target.closest?.('.wiki-link[data-doc]')) movePreviewCard(e);
+    });
+    document.addEventListener('mouseout', e => {
+      const link = e.target.closest?.('.wiki-link[data-doc]');
+      if (link && !link.contains(e.relatedTarget)) hoverPreviewCard.classList.add('hidden');
     });
   }
 
@@ -870,6 +865,14 @@
       }
     });
 
+    document.querySelector('.search-box').addEventListener('keydown', e => {
+      const items = [...searchDropdown.querySelectorAll('[data-search-doc]')];
+      if (searchDropdown.classList.contains('hidden') || !items.length) return;
+      const at = items.indexOf(document.activeElement);
+      if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+        e.preventDefault(); items[(at + (e.key === 'ArrowDown' ? 1 : -1) + items.length) % items.length].focus();
+      } else if (e.key === 'Enter' && document.activeElement === searchInput) { e.preventDefault(); items[0].click(); }
+    });
     searchInput.addEventListener("input", () => {
       const q = searchInput.value.trim().toLowerCase();
       if (!q) {
@@ -877,34 +880,18 @@
         return;
       }
 
-      const matches = searchIndex.filter(entry => entry.fields.some(field => field.includes(q)))
-        .map(entry => entry.doc);
-
-      if (matches.length === 0) {
-        searchDropdown.innerHTML = `<div class="search-item"><span class="search-item-sub">일치하는 문서가 없습니다.</span></div>`;
+      const results = window.CodeWikiLearning.search(searchIndex, q);
+      if (!results.length) {
+        searchDropdown.innerHTML = '<div class="search-item">일치하는 문서가 없습니다.</div>';
       } else {
-        searchDropdown.innerHTML = matches
-          .map(
-            d => `
-          <div class="search-item" data-doc="${d.id}">
-            <div>
-              <div class="search-item-title">${d.stepNum ? `[${d.stepNum}] ` : ""}${d.title}</div>
-              <div class="search-item-sub">${d.subtitle || getCategoryName(d.categoryId)}</div>
-            </div>
-            <span class="tcode-pill-badge">${(d.tcodes || [])[0] || "문서"}</span>
-          </div>
-        `
-          )
-          .join("");
-
-        searchDropdown.querySelectorAll(".search-item[data-doc]").forEach(item => {
-          item.addEventListener("click", () => {
-            const target = item.getAttribute("data-doc");
-            searchDropdown.classList.add("hidden");
-            searchInput.value = "";
-            navigateTo(target);
-          });
-        });
+        const {escape:esc, highlight} = window.CodeWikiLearning;
+        searchDropdown.innerHTML = results.map(({doc:d, snippet}) =>
+          '<button type="button" class="search-item" data-search-doc="' + esc(d.id) + '"><span><span class="search-item-title">' + highlight(d.title,q) +
+          '</span><span class="search-item-sub">' + highlight(snippet,q) + '</span></span><span class="tcode-pill-badge">' + (d.isDailyLesson ? '수업일' : '주제') + '</span></button>'
+        ).join('');
+        searchDropdown.querySelectorAll('[data-search-doc]').forEach(item => item.addEventListener('click', () => {
+          searchDropdown.classList.add('hidden'); searchInput.value = ''; navigateTo(item.dataset.searchDoc);
+        }));
       }
       searchDropdown.classList.remove("hidden");
     });
@@ -974,6 +961,8 @@
   }
 
   function init() {
+    window.addEventListener('cw-progress-change', refreshProgress);
+    initWikiLinks();
     initSearch();
     initControls();
 
