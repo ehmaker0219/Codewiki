@@ -62,7 +62,7 @@ begin
     update public.cw_study_notes set title=trim(p_title),body=p_body,revision=revision+1,updated_at=clock_timestamp()
       where id=p_id and owner_id=uid and revision=p_revision returning * into saved;
   end if;
-  if saved.id is null then raise exception '다른 창에서 수정되거나 삭제된 노트입니다.' using errcode='40001'; end if;
+  if saved.id is null then raise exception '다른 창에서 수정되거나 삭제된 노트입니다.' using errcode='PT409'; end if;
   return to_jsonb(saved);
 end;
 $fn$;
@@ -73,7 +73,7 @@ as $fn$
 declare uid uuid:=public.cw_study_owner(p_token);
 begin
   delete from public.cw_study_notes where id=p_id and owner_id=uid and revision=p_revision;
-  if not found then raise exception '다른 창에서 수정되거나 삭제된 노트입니다.' using errcode='40001'; end if;
+  if not found then raise exception '다른 창에서 수정되거나 삭제된 노트입니다.' using errcode='PT409'; end if;
 end;
 $fn$;
 revoke all on function public.cw_list_study_notes(uuid),public.cw_get_study_note(uuid,uuid),
