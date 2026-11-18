@@ -25,7 +25,7 @@ create table if not exists public.cw_users (
 
 alter table public.cw_users add column if not exists mbti text not null default '';
 alter table public.cw_users add column if not exists class_name text not null default '기본반';
--- NULL expires legacy sessions immediately; new sessions expire after 12 hours.
+-- NULL expires legacy sessions immediately; members get 24 hours, admins 12 hours.
 alter table public.cw_users add column if not exists session_expires_at timestamptz;
 alter table public.cw_users alter column session_token drop default;
 
@@ -90,7 +90,7 @@ begin
     'student',
     'pending',
     gen_random_uuid(),
-    now() + interval '12 hours'
+    now() + interval '24 hours'
   )
   returning * into v_user;
 
@@ -130,7 +130,7 @@ begin
   end if;
 
   update public.cw_users
-  set session_token = v_new_token, session_expires_at = now() + interval '12 hours'
+  set session_token = v_new_token, session_expires_at = now() + case when v_user.role = 'admin' then interval '12 hours' else interval '24 hours' end
   where id = v_user.id;
 
   return jsonb_build_object(

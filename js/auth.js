@@ -245,12 +245,33 @@
       return;
     }
 
-    const { data: profile, error } = await supabaseClient.rpc("cw_me", { p_token: token });
+    let profile, error;
+    try {
+      ({ data: profile, error } = await supabaseClient.rpc("cw_me", { p_token: token }));
+    } catch (cause) {
+      error = cause;
+    }
 
     // Ignore a response from a session that was logged out or replaced while awaiting RPC.
     if (getSupaToken() !== token || version !== authStateVersion) return;
 
-    if (error || !profile) {
+    if (error) {
+      // A failed request does not prove that the saved session has expired.
+      activeUserCache = null;
+      syncUserFeatures(null);
+      document.body.classList.remove("authenticated", "track-selecting");
+      trackSelectOverlay?.classList.add("hidden");
+      authGateOverlay.classList.remove("hidden");
+      authGateOverlay.innerHTML = `<div class="auth-container"><div class="auth-card">
+        <h2 class="auth-status-title">로그인 상태를 확인하지 못했습니다</h2>
+        <p class="auth-desc">연결을 확인한 뒤 다시 시도해 주세요.</p>
+        <button type="button" id="retrySessionBtn" class="toss-primary-btn">다시 시도</button>
+      </div></div>`;
+      document.getElementById("retrySessionBtn").addEventListener("click", () => void renderAuthState());
+      return;
+    }
+
+    if (!profile) {
       setSupaToken("");
       activeUserCache = null;
       syncUserFeatures(null);
