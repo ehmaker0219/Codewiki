@@ -1,18 +1,6 @@
 const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict');
 const context={window:{}};
-for(const file of ['study-markdown','study-store'])vm.runInNewContext(fs.readFileSync('js/'+file+'.js','utf8'),context);
-const md=context.window.CodeWikiStudyMarkdown;
-assert.match(md.render('## 제목\n\n**굵게** ==강조== *기울임*'),/<h2>제목<\/h2>.*<strong>굵게<\/strong>.*<mark>강조<\/mark>.*<em>기울임<\/em>/);
-const malicious='<img src=x onerror=alert(1)> <script>alert(1)</script>';
-for(const text of [malicious,'**'+malicious+'**','=='+malicious+'==','```html\n'+malicious+'\n```','`'+malicious+'`']) {
-  assert.ok(!md.render(text).includes('<img'));assert.ok(!md.render(text).includes('<script>'));
-}
-assert.match(md.render('```abap\n**code**\n```'),/<pre><code>\*\*code\*\*<\/code><\/pre>/);
-assert.match(md.render('- one\n- two\n\n1. first\n2. second'),/<ul><li>one<\/li><li>two<\/li><\/ul><ol>/);
-assert.equal(md.format('abc def',4,7,'heading').text,'## abc def');
-assert.equal(md.format('abc\ndef',4,7,'list').text,'abc\n- def');
-assert.equal(md.format('hello',0,5,'highlight').text,'==hello==');
-assert.equal(md.format('hello',0,5,'bold').text,'**hello**');
+vm.runInNewContext(fs.readFileSync('js/study-store.js','utf8'),context);
 
 const create=context.window.CodeWikiStudyStore.create;
 const memory=new Map(),storage={getItem:k=>memory.get(k),setItem:(k,v)=>memory.set(k,v),removeItem:k=>memory.delete(k)};
@@ -41,5 +29,5 @@ const tick=()=>new Promise(resolve=>setImmediate(resolve));
  assert.equal(old.current.revision,0,'late save cannot revive disposed session');
  const noCache=create({rpc:async()=>({data:{title:'Saved',revision:1}}),storage:{getItem(){return null;},setItem(){throw Error();},removeItem(){throw Error();}},owner:'private',token:'x'});
  noCache.select(note);noCache.edit('Saved','text');assert.match(noCache.status,/임시 저장/);assert.equal(await noCache.save(),true,'server saves work when browser cache is unavailable');
- console.log('PASS: safe Markdown, formatting, serialized autosave, in-flight edits, failed saves, conflicts, private draft restore, stale sessions');
+ console.log('PASS: serialized autosave, in-flight edits, failed saves, conflicts, private draft restore, stale sessions');
 })().catch(error=>{console.error(error);process.exitCode=1;});

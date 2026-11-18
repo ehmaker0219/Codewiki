@@ -20,11 +20,19 @@ for(const name of ['data','ui5-data','class-notes','practice','practice-ui']) vm
    }
   }
  }
+ assert.equal(nodes.openPracticeBtn.hidden,true);
+ ctx.window.CodeWikiPractice.setUser({role:'student'});
+ nodes.openPracticeBtn.events.click();assert.ok(!nodes.practiceDialog.open,'student cannot open practice');
+ ctx.window.CodeWikiPractice.setUser({role:'admin'});assert.equal(nodes.openPracticeBtn.hidden,false);
  nodes.openPracticeBtn.events.click();assert.equal(nodes.practiceDialog.open,true);
  nodes.practiceCategory.value='forms';nodes.practiceCategory.events.change();
  const first=nodes.practiceQuestion.children[1].textContent;
  await nodes.copyPracticeBtn.events.click();assert.ok(copied.includes(first));assert.match(copied,/FORMS-\d\d/);
  nodes.nextPracticeBtn.events.click();assert.notEqual(nodes.practiceQuestion.children[1].textContent,first);
  nodes.practiceCategory.value='';nodes.practiceCategory.events.change();assert.equal(nodes.nextPracticeBtn.disabled,true);assert.equal(nodes.copyPracticeBtn.disabled,true);
- console.log('PASS: 60 stable IDs, 10 unique prompts per round, round boundary, category selection and question copy');
+ ctx.window.CodeWikiPractice.setUser(null);
+ assert.equal(nodes.openPracticeBtn.hidden,true);assert.equal(nodes.practiceDialog.open,false);
+ assert.equal(nodes.practiceCategory.value,'');assert.equal(nodes.copyPracticeBtn.disabled,true);
+ nodes.openPracticeBtn.events.click();assert.equal(nodes.practiceDialog.open,false);
+ console.log('PASS: 60 stable IDs, unique rounds, admin-only practice, question copy and logout cleanup');
 })().catch(e=>{console.error(e);process.exitCode=1});

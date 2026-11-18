@@ -310,6 +310,7 @@ code, pre, .mono {
   color: var(--toss-blue);
 }
 
+.sb-menu-item[hidden] { display:none; }
 .sb-menu-item {
   width: 100%;
   border: none;

@@ -17,7 +17,6 @@
       return {question, seen:questions.length-remaining.length, total:questions.length, round};
     }};
   }
-  window.CodeWikiPractice = {createDeck};
   const trigger=document.getElementById('openPracticeBtn');
   const dialog=document.getElementById('practiceDialog');
   const select=document.getElementById('practiceCategory');
@@ -26,12 +25,24 @@
   const copy=document.getElementById('copyPracticeBtn');
   const status=document.getElementById('practiceCopyStatus');
   const decks=new Map();
-  let current=null;
+  let current=null,isAdmin=false;
+  function setUser(user) {
+    isAdmin=user?.role==='admin';
+    trigger.hidden=!isAdmin;
+    if(!isAdmin){
+      if(dialog.open)dialog.close();
+      current=null;select.value='';output.replaceChildren();status.textContent='';
+      next.disabled=true;copy.disabled=true;
+    }
+  }
+  window.CodeWikiPractice={createDeck,setUser};
+  setUser(window.CodeWikiAuth?.getCurrentUser()||null);
   window.WIKI_PRACTICE.forEach(category=>{
     const option=document.createElement('option'); option.value=category.id; option.textContent=category.title; select.append(option);
     decks.set(category.id,createDeck(category.questions));
   });
   function showQuestion() {
+    if(!isAdmin)return;
     const category=window.WIKI_PRACTICE.find(c=>c.id===select.value);
     status.textContent='';
     if (!category) {
@@ -48,7 +59,7 @@
     output.append(count,title,body,list);next.disabled=false;copy.disabled=false;
   }
   copy.addEventListener('click',async()=>{
-    if(!current) return;
+    if(!isAdmin||!current) return;
     const selected=current;
     const {category,question}=selected;
     const text=`[${question.id.toUpperCase()}] ${category.title}\n${question.title}\n\n${question.body}\n\n${question.conditions.map(c=>'- '+c).join('\n')}`;
@@ -57,7 +68,7 @@
   });
   select.addEventListener('change',showQuestion);
   next.addEventListener('click',showQuestion);
-  trigger.addEventListener('click',()=>{dialog.showModal();select.focus();});
+  trigger.addEventListener('click',()=>{if(!isAdmin)return;dialog.showModal();select.focus();});
   document.getElementById('closePracticeBtn').addEventListener('click',()=>dialog.close());
-  dialog.addEventListener('close',()=>trigger.focus());
+  dialog.addEventListener('close',()=>{if(isAdmin)trigger.focus();});
 })();

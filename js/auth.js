@@ -131,6 +131,7 @@
     window.CodeWikiProgress?.setUser(user);
     window.CodeWikiBirthdays?.setUser(user);
     window.CodeWikiStudy?.setUser(user);
+    window.CodeWikiPractice?.setUser(user);
     adminApproval?.setUser(user);
   }
   syncUserFeatures(null);
@@ -305,7 +306,7 @@
     if (adminSidebarSlot) {
       adminSidebarSlot.innerHTML = isAdmin
         ? `
-        <a href="#study" id="openStudyBtn" class="sb-menu-item${window.location.hash === '#study' ? ' active' : ''}"><span aria-hidden="true">✎</span><span>내 공부방</span></a>
+        <a href="#study" id="openStudyBtn" class="sb-menu-item${window.location.hash === '#study' ? ' active' : ''}"><svg class="sb-icon" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="4" width="15" height="17" rx="2"></rect><path d="M9 2v4M16 2v4M3 9h4M3 14h4M3 19h4M10 10h6M10 14h6M10 18h4"></path></svg><span>내 공부방</span></a>
         <button type="button" id="openAdminModalBtn" class="sb-menu-item">
           <svg class="sb-icon" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
