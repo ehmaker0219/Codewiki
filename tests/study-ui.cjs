@@ -1,6 +1,6 @@
 const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict'),{randomUUID}=require('node:crypto');
 const elements=new Map(),saved=new Map(),memory=new Map(),calls=[],alerts=[];
-let failSaveTitle='',deferList=false,finishList;
+let failSaveTitle='',deferList=false,finishList,timerSchedules=0;
 function get(id){if(!elements.has(id))elements.set(id,{innerHTML:'',textContent:'',value:'',hidden:false,events:{},dataset:{},
   classList:{toggle(){},remove(){},add(){}},addEventListener(name,handler){this.events[name]=handler;},
   querySelector(selector){return get(selector.replace(/^#/,''));},querySelectorAll(selector){
@@ -11,7 +11,7 @@ function get(id){if(!elements.has(id))elements.set(id,{innerHTML:'',textContent:
   },focus(){},setAttribute(){}});return elements.get(id);}
 const context={window:{location:{hash:'#study'},addEventListener(){},alert:m=>alerts.push(m),confirm:()=>true},
   document:{getElementById:get,querySelectorAll:()=>[]},localStorage:{getItem:k=>memory.get(k),setItem:(k,v)=>memory.set(k,v),removeItem:k=>memory.delete(k)},
-  crypto:{randomUUID},AbortController,setTimeout:()=>1,clearTimeout(){},history:{replaceState(){}},console};
+  crypto:{randomUUID},AbortController,setTimeout:()=>++timerSchedules,clearTimeout(){},history:{replaceState(){}},console};
 const client={rpc:async(name,args)=>{
  calls.push(name);
  if(name==='cw_list_study_notes'){
@@ -20,7 +20,7 @@ const client={rpc:async(name,args)=>{
    return {data};
  }
  if(name==='cw_get_study_note')return {data:saved.get(args.p_id)};
- if(name==='cw_save_study_note'){if(args.p_title===failSaveTitle)return {error:{message:'offline'}};const note={id:args.p_id,title:args.p_title,body:args.p_body,revision:args.p_revision+1,updated_at:new Date().toISOString()};saved.set(note.id,note);return {data:note};}
+ if(name==='cw_save_study_note'){if(args.p_title===failSaveTitle)return {error:{message:'offline'}};if((saved.get(args.p_id)?.revision||0)!==args.p_revision)return {error:{code:'PT409'}};const note={id:args.p_id,title:args.p_title,body:args.p_body,revision:args.p_revision+1,updated_at:new Date().toISOString()};saved.set(note.id,note);return {data:note};}
  if(name==='cw_delete_study_note'){saved.delete(args.p_id);return {data:null};}
  throw Error('unexpected RPC');
 }};
@@ -47,17 +47,31 @@ const flush=()=>new Promise(resolve=>setImmediate(resolve));
  fixtures.forEach(note=>saved.set(note.id,note));
  api.setUser({id:'admin',role:'admin',full_name:'Test Admin'});await flush();
  assert.equal(get('studyTitle').value,'261112THU','initial note follows modification time, not the title date');
- assert.match(get('studySaveSummary').textContent,/마지막 저장 .*12:00/,'confirmed timestamp is also in the sticky toolbar');
+ assert.match(get('studyStatus').textContent,/마지막 저장 .*12:00/,'confirmed timestamp is in the sticky toolbar');
+ assert.equal((get('studyWorkspace').innerHTML.match(/id="studyStatus"/g)||[]).length,1);
+ assert.ok(!get('studyWorkspace').innerHTML.includes('studySaveSummary'),'save status is not duplicated');
  assert.equal(get('studySave').textContent,'저장됨');
  const renderedTitles=()=>get('studyList').querySelectorAll('[data-note]').map(button=>saved.get(button.dataset.note).title);
  assert.deepEqual(renderedTitles(),['20261120FRI','2026-11-19 목요일','261118 수요일','261117TUE','261112THU','개념','복습']);
  await get('note-'+fixtures[1].id).events.click();await flush();
  assert.equal(get('studyTitle').value,'261118 수요일');
  assert.equal(renderedTitles()[2],'261118 수요일','selection does not change title ordering');
+ const beforeTyping=calls.length,beforeTimers=timerSchedules;
  editorCallbacks.onChange('restored draft');
+ await flush();assert.equal(calls.length,beforeTyping,'typing persists locally without a network request');
+ assert.equal(timerSchedules,beforeTimers,'typing does not queue an autosave timer');
  api.setUser(null);api.setUser({id:'admin',role:'admin',full_name:'Test Admin'});await flush();
  assert.equal(get('studyTitle').value,'261118 수요일','restored draft takes priority over recent server note');
  assert.equal(editorBody,'restored draft');
+ saved.set(fixtures[1].id,{...fixtures[1],body:'Changed on server',revision:3});
+ await get('studySave').events.click();await flush();
+ assert.equal(get('studySave').textContent,'현재 글로 저장');
+ assert.match(get('studyStatus').textContent,/서버에 다른 버전/);
+ assert.equal(editorBody,'restored draft');
+ await get('studySave').events.click();await flush();
+ assert.equal(saved.get(fixtures[1].id).body,'restored draft','explicit conflict resolution saves current text');
+ assert.equal(get('studySave').textContent,'저장됨');
+ assert.match(get('studyStatus').textContent,/저장됨 · 마지막 저장/);
  api.setUser(null);saved.clear();memory.clear();
  api.setUser({id:'admin',role:'admin',full_name:'Test Admin'});await flush();assert.equal(get('studyWorkspace').hidden,false);
  const importFile=async file=>{await get('studyFile').events.change({target:{files:[file],value:'file'}});await flush();};

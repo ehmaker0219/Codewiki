@@ -2,7 +2,7 @@
   const host=document.getElementById('studyWorkspace');
   const shell=document.getElementById('appShell');
   const esc=window.CodeWikiLearning.escape;
-  let session=null,store=null,notes=[],timer=null,editor=null,loading=false,loadVersion=0,transition=false;
+  let session=null,store=null,notes=[],editor=null,loading=false,loadVersion=0,transition=false;
   let editorLoad=null,mounted=false;
   let listChanges=null,listMarkup=null;
   const visible=()=>Boolean(session)&&window.location.hash==='#study';
@@ -32,7 +32,7 @@
       if(mounted)byId('studyHeading').textContent=session.name+'님의 공부방';
       return;
     }
-    clearTimeout(timer);store?.dispose();store=null;session=null;notes=[];loadVersion++;transition=false;
+    store?.dispose();store=null;session=null;notes=[];loadVersion++;transition=false;
     loading=false;listChanges=null;listMarkup=null;
     editor?.destroy();editor=null;mounted=false;host.innerHTML='';
     if(user?.role==='admin'&&token) {
@@ -47,7 +47,6 @@
     host.hidden=!open;shell.classList.toggle('study-hidden',open);
     document.getElementById('openStudyBtn')?.classList.toggle('active',open);
     if(open){window.CodeWikiBoard?.closeIfActive();document.getElementById('sbHomeItem')?.classList.remove('active');document.getElementById('sbScheduleItem')?.classList.remove('active');document.querySelectorAll('.nav-doc-link.active').forEach(el=>el.classList.remove('active'));if(!window.CodeWikiStudyEditor){loadEditor();return;}if(!mounted)mount();void list();}
-    else if(store?.dirty)void store.save();
   }
   function loadEditor() {
     if(editorLoad)return;
@@ -96,9 +95,8 @@
       <p id="studyListStatus" role="status"></p><button type="button" id="studyRetryList" class="toss-chip-btn" hidden>목록 다시 불러오기</button><div id="studyList" class="study-list"></div></aside>
       <section class="study-notebook"><div id="studyEmpty" class="study-empty"><span aria-hidden="true">✎</span><h2>첫 페이지를 펼쳐 보세요</h2><p>새 노트를 만들거나 메모장 파일을 가져오세요.</p></div>
       <div id="studyEditor" hidden><label class="sr-only" for="studyTitle">노트 제목</label><input id="studyTitle" class="study-title" maxlength="120" placeholder="노트 제목">
-      <div class="study-editor-meta"><span id="studyStatus" role="status" aria-live="polite"></span><div><button type="button" id="studyDownload" class="toss-chip-btn">내려받기</button><button type="button" id="studySave" class="toss-primary-btn">저장</button></div></div>
       <div class="study-editor-tools">
-      <div class="study-save-summary" id="studySaveSummary"></div>
+      <div class="study-editor-meta"><span id="studyStatus" role="status" aria-live="polite"></span><div><button type="button" id="studyDownload" class="toss-chip-btn">내려받기</button><button type="button" id="studySave" class="toss-primary-btn">저장</button></div></div>
       <div class="study-toolbar study-word-tools" role="toolbar" aria-label="필기 서식 도구">
         <div class="study-tool-group"><button type="button" data-history="undo" aria-label="실행 취소" title="실행 취소">${line('M9 4 3 10l6 6M3 10h11a6 6 0 0 1 0 12')}</button><button type="button" data-history="redo" aria-label="다시 실행" title="다시 실행">${line('m15 4 6 6-6 6m6-6H10a6 6 0 0 0 0 12')}</button></div>
         <div class="study-tool-group"><label class="sr-only" for="studyParagraphStyle">문단 스타일</label><select id="studyParagraphStyle" title="문단 스타일 (제목 1~3: Ctrl+Alt+1~3)"><option value="paragraph">일반 텍스트</option>${[1,2,3,4,5,6].map(n=>`<option value="h${n}">제목 ${n}</option>`).join('')}<option value="code" disabled>코드 블록</option></select></div>
@@ -138,7 +136,7 @@
         }
       });
     });
-    byId('studySave').addEventListener('click',()=>void store.save());
+    byId('studySave').addEventListener('click',()=>void store.save({resolveConflict:store.conflicted}));
     byId('studyDownload').addEventListener('click',download);
     byId('studyReload').addEventListener('click',()=>void reload());
     byId('studyDelete').addEventListener('click',()=>void remove());
@@ -171,7 +169,6 @@
   function changed(body=store?.current?.body||'') {
     if(!store?.current)return;
     store.edit(byId('studyTitle').value,body);
-    clearTimeout(timer);timer=setTimeout(()=>void store?.save(),1200);
   }
   function updateToolbar() {
     if(!editor)return;
@@ -195,9 +192,8 @@
     if(!store||!byId('studyStatus'))return;
     const savedAt=store.current?.updated_at;
     byId('studyStatus').textContent=[store.status,savedAt?'마지막 저장 '+date(savedAt):''].filter(Boolean).join(' · ');
-    byId('studySaveSummary').textContent=[store.status,savedAt?'마지막 저장 '+date(savedAt):'아직 서버에 저장되지 않았습니다.'].filter(Boolean).join(' · ');
     byId('studySave').disabled=store.busy;
-    byId('studySave').textContent=store.busy?'저장 중…':store.dirty?'저장':'저장됨';
+    byId('studySave').textContent=store.busy?'저장 중…':store.conflicted?'현재 글로 저장':store.dirty?'저장':'저장됨';
     if(store.current&&!store.dirty&&store.current.revision){
       const note={...store.current,body:undefined},index=notes.findIndex(n=>n.id===note.id);
       const previous=notes[index];
@@ -247,21 +243,21 @@
   }
   async function select(id) {
     if(transition||store?.current?.id===id)return;lock(true);const s=store;
-    try {if(!await s.save()||store!==s)return;const n=await s.call('cw_get_study_note',{p_id:id});if(store!==s)return;if(!n)throw new Error();if(s.dirty){window.alert('현재 노트를 편집 중입니다. 저장 후 다시 선택해 주세요.');return;}s.select(n);fill();}
+    try {if(s.dirty){window.alert('현재 글을 저장한 뒤 다른 노트를 선택해 주세요.');return;}const n=await s.call('cw_get_study_note',{p_id:id});if(store!==s)return;if(!n)throw new Error();if(s.dirty){window.alert('현재 노트를 편집 중입니다. 저장 후 다시 선택해 주세요.');return;}s.select(n);fill();}
     catch {if(store===s)window.alert('노트를 불러오지 못했습니다. 다시 시도해 주세요.');}
     finally {if(store===s)lock(false);}
   }
   async function createNote(title='',body='') {
     if(transition||!store)return;lock(true);const s=store;
-    try {if(!await s.save()||store!==s)return;s.select({id:crypto.randomUUID(),title:title.slice(0,120),body,revision:0});s.edit(title.slice(0,120),body);fill();byId('studyTitle').focus();if(body)await s.save();}
+    try {if(s.dirty){window.alert('현재 글을 저장한 뒤 새 노트를 만들어 주세요.');return;}s.select({id:crypto.randomUUID(),title:title.slice(0,120),body,revision:0});s.edit(title.slice(0,120),body);fill();byId('studyTitle').focus();if(body)await s.save();}
     finally {if(store===s){lock(false);byId('studyTitle').focus();}}
   }
   async function importFiles(files) {
     if(!files.length||transition||!store)return;
     const s=store,skipped=[];let completed=0,stopped=false;
-    lock(true);clearTimeout(timer);
+    lock(true);
     try {
-      if(!await s.save()||store!==s){stopped=true;return;}
+      if(s.dirty){window.alert('현재 글을 저장한 뒤 파일을 가져와 주세요.');stopped=true;return;}
       for(let i=0;i<files.length;i++){
         const file=files[i];
         byId('studyImportStatus').textContent=`가져오는 중 ${i+1}/${files.length} · ${file.name}`;
@@ -294,7 +290,7 @@
   async function reload() {
     const s=store,n=s?.current;if(!n||transition||s.busy)return;
     if(s.dirty&&!window.confirm('미저장 내용을 서버 글로 바꿀까요? 필요한 내용은 먼저 내려받아 주세요.'))return;
-    lock(true);clearTimeout(timer);
+    lock(true);
     const originalTitle=n.title,originalBody=n.body;
     try {const fresh=await s.call('cw_get_study_note',{p_id:n.id});if(store!==s)return;if(!fresh){window.alert('서버에 없는 노트입니다. 현재 글은 유지합니다.');return;}if(s.current.title!==originalTitle||s.current.body!==originalBody){window.alert('불러오는 동안 작성한 내용이 있어 현재 글을 유지합니다.');return;}s.select(fresh);fill();}
     catch {if(store===s)window.alert('서버 글을 불러오지 못했습니다.');}
@@ -303,7 +299,7 @@
   async function remove() {
     const s=store,n=s?.current;if(!n||transition||s.busy)return;
     if(!window.confirm('이 노트를 삭제할까요? 삭제한 노트는 복구할 수 없습니다.'))return;
-    lock(true);clearTimeout(timer);
+    lock(true);
     try {if(n.revision)await s.call('cw_delete_study_note',{p_id:n.id,p_revision:n.revision});if(store!==s)return;s.select(null);notes=notes.filter(item=>item.id!==n.id);listChanges?.set(n.id,null);fill();}
     catch {if(store===s)window.alert('삭제하지 못했습니다. 서버 글을 다시 확인해 주세요.');}
     finally {if(store===s)lock(false);}
@@ -315,5 +311,4 @@
     host.querySelectorAll('.study-table-menu[open],.study-color-menu[open]').forEach(menu=>{if(!menu.contains(e.target))menu.open=false;});
   });
   window.addEventListener('beforeunload',e=>{if(store?.dirty){e.preventDefault();e.returnValue='';}});
-  window.addEventListener('online',()=>{if(store?.dirty)void store.save();});
 })();
