@@ -12,6 +12,7 @@
   <link rel="stylesheet" href="css/profile.css?v=c8934ffc3694" />
   <link rel="stylesheet" href="css/birthdays.css?v=f858766dad1c" />
   <link rel="stylesheet" href="css/schedule.css?v=7357dc7efd11" />
+  <link rel="stylesheet" href="css/study.css?v=18ebb8df7dcd" />
 </head>
 <body>
   <!-- 로그인 후 전체 레이아웃: 좌측 고정 일체형 사이드바 + 우측 워크스페이스 -->
@@ -131,6 +132,7 @@
       </header>
 
       <!-- 본문 + 우측 보조 패널 (데이터가 있을 때만 우측 패널 노출) -->
+      <section id="studyWorkspace" class="study-workspace" aria-label="개인 공부방" hidden></section>
       <div class="app-shell" id="appShell">
         <main class="main-content">
           <article class="toss-card article-card" id="articleContainer"></article>
@@ -159,7 +161,7 @@
           </div>
         </aside>
       </div>
-      <footer class="site-footer">최근 업데이트 <time id="siteUpdatedAt" datetime="2026-11-18T04:25:39.930Z" data-version="83302006d27af1cc">2026.11.18 13:25 (KST)</time></footer>
+      <footer class="site-footer">최근 업데이트 <time id="siteUpdatedAt" datetime="2026-11-18T04:58:35.039Z" data-version="de8abb8dea10479d">2026.11.18 13:58 (KST)</time></footer>
     </div>
   </div>
 
@@ -199,8 +201,11 @@
   <script src="js/schedule.js?v=c034a3ef8fe8"></script>
   <script src="js/app.js?v=54ee81297dfb"></script>
   <script src="js/admin.js?v=cf1b144c30bc"></script>
-  <script src="js/auth.js?v=2333cddf8fe3"></script>
-  <script src="js/board.js?v=56c0b1970f74"></script>
+  <script src="js/study-markdown.js?v=78e6d092ed46"></script>
+  <script src="js/study-store.js?v=82031693f3be"></script>
+  <script src="js/study.js?v=eae04655f75a"></script>
+  <script src="js/auth.js?v=163c0f31fde3"></script>
+  <script src="js/board.js?v=07470c7a2510"></script>
   <script src="js/practice.js?v=1494ca65c459"></script>
   <script src="js/practice-ui.js?v=8e0e08e9cc6e"></script>
 </body>

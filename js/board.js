@@ -83,6 +83,7 @@
 
   // 게시판 뷰 열기 (중앙 메인 영역을 건의 게시판으로 전환)
   async function openBoardView() {
+    window.CodeWikiStudy?.leave();
     const version = ++viewVersion, token = window.CodeWikiAuth?.getSessionToken();
     const isCurrent = () => version === viewVersion && isBoardViewActive && token === window.CodeWikiAuth?.getSessionToken();
     articleContainer.classList.remove('calendar-article');
