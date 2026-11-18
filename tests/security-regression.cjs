@@ -71,7 +71,7 @@ async function logoutTest() {
   let resolveProfile;
   const saved = new Map([['codewiki_supa_token_v1','old-token']]);
   const context = {window:{supabase:{createClient:()=>({rpc:()=>new Promise(resolve=>{resolveProfile=resolve;})})}},
-    localStorage:{getItem:k=>saved.get(k)}, document:{getElementById:element}, console};
+    localStorage:{getItem:k=>saved.get(k)}, document:{getElementById:element}, AbortController,setTimeout,clearTimeout,console};
   vm.runInNewContext(auth.replace(/  renderAuthState\(\);\s*\}\)\(\);\s*$/, '  window.testRefresh = renderAuthState;\n})();'),context);
   const refresh = context.window.testRefresh();
   saved.delete('codewiki_supa_token_v1');

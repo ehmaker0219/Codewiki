@@ -15,7 +15,11 @@
   let supabaseClient = null;
 
   if (isSupabaseConfigured && window.supabase) {
-    supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    // CodeWiki authenticates through its own expiring RPC token, not Supabase
+    // Auth sessions. Avoid unrelated Auth storage/refresh locks on every RPC.
+    supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+      accessToken: async () => null
+    });
   }
 
   const DEMO_USERS_KEY = "codewiki_custom_users_v1";
@@ -248,12 +252,30 @@
       return;
     }
 
-    let profile, error;
+    if (!activeUserCache) {
+      authGateOverlay.classList.remove('hidden');
+      authGateOverlay.innerHTML = `<div class="auth-container"><div class="auth-card" role="status">
+        <h2 class="auth-status-title">로그인 확인 중</h2>
+        <p class="auth-desc">저장된 로그인 정보를 확인하고 있습니다.</p>
+      </div></div>`;
+    }
+    let profile, error, sessionTimer;
+    const sessionAbort = new AbortController();
     try {
-      ({ data: profile, error } = await supabaseClient.rpc("cw_me", { p_token: token }));
+      const timeout = new Promise((_,reject) => {
+        sessionTimer = setTimeout(() => {
+          reject(Object.assign(new Error('session-timeout'), {code:'TIMEOUT'}));
+          sessionAbort.abort();
+        },15000);
+      });
+      const request = supabaseClient.rpc("cw_me", { p_token: token });
+      ({ data: profile, error } = await Promise.race([
+        typeof request?.abortSignal === 'function' ? request.abortSignal(sessionAbort.signal) : request,
+        timeout
+      ]));
     } catch (cause) {
       error = cause;
-    }
+    } finally { clearTimeout(sessionTimer); }
 
     // Ignore a response from a session that was logged out or replaced while awaiting RPC.
     if (getSupaToken() !== token || version !== authStateVersion) return;
