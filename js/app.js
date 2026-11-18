@@ -527,7 +527,7 @@
     }
   }
 
-  // 메인 문서 렌더링 (하단 위키독스식 이전/다음 챕터 이동 바 포함)
+  // 메인 문서 렌더링
   function renderDocument(docId) {
     if (docId === "erp-setup") {
       docId = "sap-architecture";
@@ -548,11 +548,7 @@
       }
     }
 
-    const docList = Object.values(allDocsObj).filter(
-      d => (d.track || "abap") === currentTrack
-    );
-    const currentIndex = docList.findIndex(d => d.id === targetDoc.id);
-    const doc = currentIndex >= 0 ? docList[currentIndex] : targetDoc;
+    const doc = targetDoc;
     currentDocId = doc.id;
 
     articleContainer.classList.toggle('calendar-article', Boolean(doc.isCalendar));
@@ -857,7 +853,7 @@
     const searchDropdown = document.getElementById("searchDropdown");
 
     window.addEventListener("keydown", e => {
-      if (e.key === "/" && document.activeElement !== searchInput && !["INPUT", "TEXTAREA"].includes(document.activeElement.tagName)) {
+      if (e.key === "/" && document.activeElement !== searchInput && !document.activeElement.isContentEditable && !["INPUT", "TEXTAREA"].includes(document.activeElement.tagName)) {
         e.preventDefault();
         searchInput.focus();
       } else if (e.key === "Escape") {

@@ -1,6 +1,6 @@
 const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict'),{randomUUID}=require('node:crypto');
 const elements=new Map(),saved=new Map(),memory=new Map(),calls=[],alerts=[];
-let failSaveTitle='';
+let failSaveTitle='',deferList=false,finishList;
 function get(id){if(!elements.has(id))elements.set(id,{innerHTML:'',textContent:'',value:'',hidden:false,events:{},dataset:{},
   classList:{toggle(){},remove(){},add(){}},addEventListener(name,handler){this.events[name]=handler;},
   querySelector(selector){return get(selector.replace(/^#/,''));},querySelectorAll(selector){
@@ -14,7 +14,11 @@ const context={window:{location:{hash:'#study'},addEventListener(){},alert:m=>al
   crypto:{randomUUID},setTimeout:()=>1,clearTimeout(){},history:{replaceState(){}},console};
 const client={rpc:async(name,args)=>{
  calls.push(name);
- if(name==='cw_list_study_notes')return {data:[...saved.values()]};
+ if(name==='cw_list_study_notes'){
+   const data=[...saved.values()];
+   if(deferList)return new Promise(resolve=>{finishList=()=>resolve({data});});
+   return {data};
+ }
  if(name==='cw_get_study_note')return {data:saved.get(args.p_id)};
  if(name==='cw_save_study_note'){if(args.p_title===failSaveTitle)return {error:{message:'offline'}};const note={id:args.p_id,title:args.p_title,body:args.p_body,revision:args.p_revision+1,updated_at:new Date().toISOString()};saved.set(note.id,note);return {data:note};}
  if(name==='cw_delete_study_note'){saved.delete(args.p_id);return {data:null};}
@@ -79,6 +83,24 @@ const flush=()=>new Promise(resolve=>setImmediate(resolve));
  await get('studySave').events.click();await flush();
  assert.deepEqual(order(),initialOrder,'saving an existing note preserves its position');
  assert.ok(get('studyList').innerHTML.includes('첫째 수정'),'row title still refreshes');
+ // A slow list snapshot must not undo a save, resurrect a deletion or hide an import.
+ deferList=true;
+ const reads=calls.filter(name=>name==='cw_list_study_notes').length;
+ get('studyRetryList').events.click();get('studyRetryList').events.click();
+ assert.equal(calls.filter(name=>name==='cw_list_study_notes').length,reads+1,'coalesce overlapping list requests');
+ get('studyTitle').value='첫째 최신';get('studyTitle').events.input();
+ await get('studySave').events.click();await flush();
+ const secondId=[...saved.keys()].find(id=>id!==firstId);
+ await get('note-'+secondId).events.click();await flush();
+ await get('studyDelete').events.click();await flush();
+ await importFile({name:'늦은 목록보다 새 메모.md',size:10,text:async()=> 'new note'});
+ deferList=false;finishList();await flush();
+ assert.deepEqual(new Set(order()),new Set(saved.keys()),'late list keeps additions and deletions');
+ assert.ok(get('studyList').innerHTML.includes('첫째 최신'),'late list keeps updated titles');
+ const beforeProfile=editorBody;
+ api.setUser({id:'admin',role:'admin',full_name:'Updated Admin'});
+ assert.equal(get('studyHeading').textContent,'Updated Admin님의 공부방');
+ assert.equal(editorBody,beforeProfile,'profile refresh preserves current editor');
  const importMany=files=>get('studyFile').events.change({target:{files,value:'files'}});
  assert.match(get('studyWorkspace').innerHTML,/id="studyFile"[^>]*multiple/);
  const beforeBatch=saved.size;
@@ -109,5 +131,5 @@ const flush=()=>new Promise(resolve=>setImmediate(resolve));
  finishRead('old session');await late;
  assert.equal(saved.size,beforeBatch+5,'logout cancels remaining imports');
  assert.ok(destroyed>=2,'editor content and history cleared on delete/logout');
- console.log('PASS: study UI, stable note order, batch import, partial failure/draft retry and logout cancellation');
+ console.log('PASS: study UI, stable note order, late list merges, coalesced reads, profile refresh, batch import and logout cancellation');
 })().catch(error=>{console.error(error);process.exitCode=1;});

@@ -18,7 +18,7 @@
         if(d&&/^[a-f0-9-]{36}$/i.test(d.id)&&typeof d.title==='string'&&d.title.length<=120&&typeof d.body==='string'&&d.body.length<=200000&&Number.isInteger(d.revision)&&d.revision>=0){current=d;dirty=true;status='이 브라우저의 미저장 필기를 복원했습니다.';}
       } catch {status='임시 필기를 복원하지 못했습니다.';}
     }
-    function edit(title,body) {if(!alive||!current)return;current={...current,title,body};sequence++;dirty=true;status='저장 대기';persist();emit();}
+    function edit(title,body) {if(!alive||!current||(current.title===title&&current.body===body&&current.revision>0))return;current={...current,title,body};sequence++;dirty=true;status='저장 대기';persist();emit();}
     function select(note) {current=note?{...note}:null;dirty=false;sequence++;status='';persist();emit();}
     async function drain() {
       while(alive&&dirty&&current) {
@@ -40,6 +40,7 @@
     function save() {
       if(pending)return pending;
       if(!alive)return Promise.resolve(false);
+      if(!dirty||!current)return Promise.resolve(true);
       pending=drain().finally(()=>{pending=null;emit();});return pending;
     }
     restore();

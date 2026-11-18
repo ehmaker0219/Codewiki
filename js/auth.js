@@ -146,6 +146,7 @@
       if (!activeUserCache || activeUserCache.id !== profile.id) return;
       activeUserCache = {...activeUserCache, full_name:profile.full_name, mbti:profile.mbti};
       renderTopbarAuthControls(activeUserCache, activeUserCache.pending_count || 0);
+      window.CodeWikiStudy?.setUser(activeUserCache);
     }
   };
 

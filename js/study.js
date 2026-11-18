@@ -4,6 +4,7 @@
   const esc=window.CodeWikiLearning.escape;
   let session=null,store=null,notes=[],timer=null,editor=null,loading=false,loadVersion=0,transition=false;
   let editorLoad=null,mounted=false;
+  let listChanges=null,listMarkup=null;
   const visible=()=>Boolean(session)&&window.location.hash==='#study';
   const date=value=>value?new Date(value).toLocaleString('ko-KR',{timeZone:'Asia/Seoul',month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}):'새 노트';
   const byId=id=>host.querySelector('#'+id);
@@ -20,13 +21,19 @@
   }
   const compareTitles=(a,b)=>titleDate(b.title)-titleDate(a.title)||titleCollator.compare(a.title,b.title)||a.id.localeCompare(b.id);
   function lock(value){
+    if(value)closeToolMenus();
     transition=value;const editor=byId('studyEditor');if(editor)editor.inert=value;
     ['studyNew','studyImport'].forEach(id=>{const button=byId(id);if(button)button.disabled=value;});
   }
   function setUser(user) {
     const token=window.CodeWikiAuth?.getSessionToken()||'';
-    if(user?.role==='admin'&&session?.id===user.id&&session.token===token)return;
+    if(user?.role==='admin'&&session?.id===user.id&&session.token===token){
+      session.name=user.full_name;
+      if(mounted)byId('studyHeading').textContent=session.name+'님의 공부방';
+      return;
+    }
     clearTimeout(timer);store?.dispose();store=null;session=null;notes=[];loadVersion++;transition=false;
+    loading=false;listChanges=null;listMarkup=null;
     editor?.destroy();editor=null;mounted=false;host.innerHTML='';
     if(user?.role==='admin'&&token) {
       session={id:user.id,name:user.full_name,token};
@@ -60,14 +67,49 @@
   }
   function mount() {
     mounted=true;
-    host.innerHTML=`<header class="study-header"><div><span class="study-eyebrow">PERSONAL STUDY</span><h1>${esc(session.name)}님의 공부방</h1><p>오늘 배운 내용을 나만의 언어로.</p></div><span class="study-private">나만 보는 노트</span></header>
+    const icon=(paths)=>`<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${paths}</svg>`;
+    const line=path=>icon(`<path d="${path}"/>`);
+    const icons={bold:'<b>B</b>',italic:'<i>I</i>',underline:'<u>U</u>',strike:'<s>S</s>',
+      list:line('M9 6h12M9 12h12M9 18h12M3 6h.01M3 12h.01M3 18h.01'),
+      orderedList:line('M10 6h11M10 12h11M10 18h11M3 3h1v6M2 9h4M2 14c0-3 4-3 4 0 0 2-4 2-4 5h4'),
+      alignLeft:line('M3 5h18M3 10h12M3 15h18M3 20h12'),
+      alignCenter:line('M3 5h18M6 10h12M3 15h18M6 20h12'),
+      alignRight:line('M3 5h18M9 10h12M3 15h18M9 20h12'),
+      alignJustify:line('M3 5h18M3 10h18M3 15h18M3 20h18'),
+      indent:line('M10 5h11M10 10h11M10 15h11M10 20h11M2 9l4 3-4 3'),
+      outdent:line('M10 5h11M10 10h11M10 15h11M10 20h11M6 9l-4 3 4 3'),
+      quote:line('M4 7h6v6H4zM14 7h6v6h-6zM10 13c0 3-2 5-5 5M20 13c0 3-2 5-5 5'),
+      code:line('m8 6-6 6 6 6m8-12 6 6-6 6m-3-15-2 18'),
+      clear:line('m14 3 7 7-10 10H7l-5-5L14 3M7 10l7 7M12 20h10'),
+    };
+    const formatButtons=items=>items.map(([key,label])=>`<button type="button" data-format="${key}" aria-label="${label}" ${key==='clear'?'':'aria-pressed="false"'} title="${label}">${icons[key]||label}</button>`).join('');
+    const palette=(kind,label,colors)=>`<details class="study-color-menu"><summary aria-label="${label}" title="${label}${kind==='highlight'?' (Ctrl+Alt+H)':''}"><span class="study-color-symbol ${kind}" aria-hidden="true">${kind==='highlight'?'▰':'A'}</span><span class="study-menu-arrow" aria-hidden="true">⌄</span></summary><div class="study-color-options" role="group" aria-label="${label} 선택"><span>${label}</span><button type="button" data-color-kind="${kind}" data-color="" class="study-color-reset">${kind==='highlight'?'강조 없음':'자동 색상'}</button><div class="study-swatches">${colors.map(([color,name])=>`<button type="button" data-color-kind="${kind}" data-color="${color}" style="--swatch:${color}" aria-label="${label} ${name}" title="${name}"></button>`).join('')}</div></div></details>`;
+    const tableMenus=[
+      ['행 추가',[['addRowBefore','↑ 위쪽','위 행 추가'],['addRow','↓ 아래쪽','아래 행 추가']]],
+      ['행 삭제',[['deleteRowBefore','↑ 위쪽','위 행 삭제'],['deleteRow','↓ 아래쪽','아래 행 삭제']]],
+      ['열 추가',[['addColumnBefore','← 왼쪽','왼쪽 열 추가'],['addColumn','→ 오른쪽','오른쪽 열 추가']]],
+      ['열 삭제',[['deleteColumnBefore','← 왼쪽','왼쪽 열 삭제'],['deleteColumn','→ 오른쪽','오른쪽 열 삭제']]],
+    ];
+    host.innerHTML=`<header class="study-header"><div><span class="study-eyebrow">PERSONAL STUDY</span><h1 id="studyHeading">${esc(session.name)}님의 공부방</h1><p>오늘 배운 내용을 나만의 언어로.</p></div><span class="study-private">나만 보는 노트</span></header>
       <div class="study-layout"><aside class="study-library"><div class="study-library-heading"><h2>내 필기</h2><button type="button" id="studyNew" class="toss-primary-btn">+ 새 노트</button></div>
       <label class="sr-only" for="studySearch">노트 제목 검색</label><input id="studySearch" type="search" placeholder="노트 제목 검색"><div class="study-import"><button type="button" id="studyImport" class="toss-chip-btn" title="TXT·MD 파일을 여러 개 선택할 수 있습니다">TXT · MD 가져오기</button><input type="file" id="studyFile" accept=".txt,.md,text/plain,text/markdown" multiple hidden><p id="studyImportStatus" role="status" aria-live="polite"></p></div>
       <p id="studyListStatus" role="status"></p><button type="button" id="studyRetryList" class="toss-chip-btn" hidden>목록 다시 불러오기</button><div id="studyList" class="study-list"></div></aside>
       <section class="study-notebook"><div id="studyEmpty" class="study-empty"><span aria-hidden="true">✎</span><h2>첫 페이지를 펼쳐 보세요</h2><p>새 노트를 만들거나 메모장 파일을 가져오세요.</p></div>
       <div id="studyEditor" hidden><label class="sr-only" for="studyTitle">노트 제목</label><input id="studyTitle" class="study-title" maxlength="120" placeholder="노트 제목">
       <div class="study-editor-meta"><span id="studyStatus" role="status" aria-live="polite"></span><div><button type="button" id="studyDownload" class="toss-chip-btn">내려받기</button><button type="button" id="studySave" class="toss-primary-btn">저장</button></div></div>
-      <div class="study-toolbar" role="group" aria-label="글 서식">${[['bold','굵게','Ctrl+B'],['highlight','형광펜',''],['italic','기울임','Ctrl+I'],['heading','제목',''],['list','목록',''],['quote','인용',''],['code','코드','']].map(([key,label,shortcut])=>`<button type="button" data-format="${key}" aria-pressed="false" title="${label}${shortcut?' ('+shortcut+')':''}">${label}</button>`).join('')}<div class="study-history"><button type="button" data-history="undo" title="실행 취소 (Ctrl+Z)">↶ 실행 취소</button><button type="button" data-history="redo" title="다시 실행 (Ctrl+Shift+Z)">↷ 다시 실행</button></div></div>
+      <div class="study-editor-tools">
+      <div class="study-toolbar study-word-tools" role="toolbar" aria-label="필기 서식 도구">
+        <div class="study-tool-group"><button type="button" data-history="undo" aria-label="실행 취소" title="실행 취소">${line('M9 4 3 10l6 6M3 10h11a6 6 0 0 1 0 12')}</button><button type="button" data-history="redo" aria-label="다시 실행" title="다시 실행">${line('m15 4 6 6-6 6m6-6H10a6 6 0 0 0 0 12')}</button></div>
+        <div class="study-tool-group"><label class="sr-only" for="studyParagraphStyle">문단 스타일</label><select id="studyParagraphStyle" title="문단 스타일 (제목 1~3: Ctrl+Alt+1~3)"><option value="paragraph">일반 텍스트</option>${[1,2,3,4,5,6].map(n=>`<option value="h${n}">제목 ${n}</option>`).join('')}<option value="code" disabled>코드 블록</option></select></div>
+        <div class="study-tool-group study-size-group"><button type="button" data-size-step="-1" aria-label="글자 작게" title="글자 작게">−</button><label class="sr-only" for="studyFontSize">글자 크기</label><select id="studyFontSize" title="글자 크기"><option value="">기본</option>${(window.CodeWikiStudyEditor.fontSizes||[]).map(size=>`<option value="${size}">${size}</option>`).join('')}</select><button type="button" data-size-step="1" aria-label="글자 크게" title="글자 크게">+</button></div>
+        <div class="study-tool-group">${formatButtons([['bold','굵게'],['italic','기울임'],['underline','밑줄'],['strike','취소선']])}</div>
+        <div class="study-tool-group">${palette('textColor','글자색',window.CodeWikiStudyEditor.textColors||[])}${palette('highlight','형광펜',window.CodeWikiStudyEditor.highlightColors||[])}</div>
+        <div class="study-tool-group">${formatButtons([['alignLeft','왼쪽 정렬'],['alignCenter','가운데 정렬'],['alignRight','오른쪽 정렬'],['alignJustify','양쪽 정렬']])}</div>
+        <div class="study-tool-group">${formatButtons([['list','글머리 기호'],['orderedList','번호 목록'],['outdent','목록 내어쓰기'],['indent','목록 들여쓰기']])}</div>
+        <div class="study-tool-group">${formatButtons([['quote','인용'],['code','코드 블록']])}<button type="button" data-table="table" title="표 삽입" aria-label="표 삽입">${icon('<rect x="3" y="3" width="18" height="18" rx="1"/><path d="M3 9h18M3 15h18M9 3v18M15 3v18"/>')}</button>${formatButtons([['clear','서식 지우기']])}</div>
+      </div>
+      <div id="studyTableTools" class="study-table-tools" role="group" aria-label="표 편집" hidden><span>표 편집</span>${tableMenus.map(([label,items])=>`<details class="study-table-menu"><summary>${label}<span aria-hidden="true"> ▾</span></summary><div class="study-table-options" role="group" aria-label="${label} 방향">${items.map(([key,text,label])=>`<button type="button" data-table="${key}" aria-label="${label}" title="${label}">${text}</button>`).join('')}</div></details>`).join('')}<button type="button" data-table="deleteTable">표 삭제</button></div>
+      </div>
       <div id="studyBody" class="study-rich-editor"></div>
       <footer class="study-note-footer"><span id="studyCount"></span><div><button type="button" id="studyReload">서버 글 불러오기</button><button type="button" id="studyDelete">노트 삭제</button></div></footer></div></section></div>`;
     byId('studyNew').addEventListener('click',()=>void createNote());
@@ -81,31 +123,71 @@
     editor=window.CodeWikiStudyEditor.create({element:byId('studyBody'),onChange:body=>changed(body),onState:updateToolbar,
       onLimit:()=>window.alert('본문은 20만 자까지 저장할 수 있습니다. 새 노트로 나눠 작성해 주세요.')});
     byId('studyTitle').addEventListener('input',()=>changed());
+    byId('studyFontSize').addEventListener('change',e=>{editor.setFontSize(e.target.value);updateToolbar();});
+    byId('studyParagraphStyle').addEventListener('change',e=>{editor.setParagraphStyle(e.target.value);updateToolbar();});
+    host.querySelectorAll('[data-color-kind],[data-size-step]').forEach(button=>{
+      button.addEventListener('mousedown',e=>e.preventDefault());
+      button.addEventListener('click',()=>{
+        closeToolMenus();
+        if(button.dataset.colorKind)editor.setColor(button.dataset.colorKind,button.dataset.color);
+        else {
+          const sizes=window.CodeWikiStudyEditor.fontSizes,current=Number(editor.fontSize())||14;
+          const step=Number(button.dataset.sizeStep),index=sizes.indexOf(current);
+          editor.setFontSize(String(sizes[Math.max(0,Math.min(sizes.length-1,index+step))]));
+        }
+      });
+    });
     byId('studySave').addEventListener('click',()=>void store.save());
     byId('studyDownload').addEventListener('click',download);
     byId('studyReload').addEventListener('click',()=>void reload());
     byId('studyDelete').addEventListener('click',()=>void remove());
-    host.querySelectorAll('[data-format],[data-history]').forEach(button=>{
+    host.querySelectorAll('[data-format],[data-history],[data-table]').forEach(button=>{
+      const kind=button.dataset.format||button.dataset.history||button.dataset.table;
+      const shortcut=window.CodeWikiStudyEditor.shortcut?.(kind,/Mac|iPhone|iPad/.test(window.navigator?.platform||''));
+      if(shortcut)button.title=(button.title||button.textContent.trim())+' ('+shortcut+')';
       button.addEventListener('mousedown',e=>e.preventDefault());
-      button.addEventListener('click',()=>{editor.command(button.dataset.format||button.dataset.history);updateToolbar();});
+      button.addEventListener('click',()=>{closeToolMenus();editor.command(kind);});
     });
-    host.addEventListener('keydown',shortcuts);
+    host.querySelectorAll('.study-table-menu,.study-color-menu').forEach(menu=>{
+      menu.querySelector('summary').addEventListener('mousedown',e=>e.preventDefault());
+      menu.addEventListener('toggle',()=>{if(menu.open)closeToolMenus(menu);});
+    });
+    byId('studySave').title='저장 ('+(/Mac|iPhone|iPad/.test(window.navigator?.platform||'')?'⌘':'Ctrl')+'+S)';
     fill();
   }
   function shortcuts(e) {
+    if(e.key==='Escape'){
+      const menu=host.querySelector('.study-table-menu[open],.study-color-menu[open]');
+      if(menu){e.preventDefault();closeToolMenus();menu.querySelector('summary').focus();}
+      return;
+    }
     if(!(e.ctrlKey||e.metaKey))return;
     if(e.key.toLowerCase()==='s'){e.preventDefault();void store?.save();}
   }
-  function changed(body=store.current?.body||'') {
+  function closeToolMenus(except=null){
+    host.querySelectorAll('.study-table-menu[open],.study-color-menu[open]').forEach(menu=>{if(menu!==except)menu.open=false;});
+  }
+  function changed(body=store?.current?.body||'') {
     if(!store?.current)return;
     store.edit(byId('studyTitle').value,body);
     clearTimeout(timer);timer=setTimeout(()=>void store?.save(),1200);
-    updateToolbar();
   }
   function updateToolbar() {
     if(!editor)return;
-    host.querySelectorAll('[data-format]').forEach(button=>button.setAttribute('aria-pressed',String(editor.active(button.dataset.format))));
+    byId('studyFontSize').value=String(editor.fontSize?.()||'');
+    byId('studyFontSize').disabled=editor.active('code');
+    byId('studyParagraphStyle').value=editor.paragraphStyle?.()||'paragraph';
+    host.querySelectorAll('[data-format]').forEach(button=>{
+      if(button.dataset.format!=='clear')button.setAttribute('aria-pressed',String(editor.active(button.dataset.format)));
+      button.disabled=!editor.can(button.dataset.format);
+    });
+    host.querySelectorAll('[data-size-step]').forEach(button=>button.disabled=editor.active('code'));
+    host.querySelectorAll('.study-color-menu').forEach(menu=>{menu.inert=editor.active('code');});
+    host.querySelectorAll('[data-color-kind]').forEach(button=>button.setAttribute('aria-pressed',String((editor.color?.(button.dataset.colorKind)||'')===button.dataset.color)));
     host.querySelectorAll('[data-history]').forEach(button=>button.disabled=!editor.can(button.dataset.history));
+    host.querySelectorAll('[data-table]').forEach(button=>button.disabled=!editor.can(button.dataset.table));
+    byId('studyTableTools').hidden=!editor.active('table');
+    if(byId('studyTableTools').hidden)host.querySelectorAll('.study-table-menu[open]').forEach(menu=>menu.open=false);
     byId('studyCount').textContent=editor.text().length.toLocaleString('ko-KR')+'자';
   }
   function update() {
@@ -115,12 +197,16 @@
     byId('studySave').disabled=store.busy;
     if(store.current&&!store.dirty&&store.current.revision){
       const note={...store.current,body:undefined},index=notes.findIndex(n=>n.id===note.id);
+      const previous=notes[index];
+      if(previous&&previous.title===note.title&&previous.updated_at===note.updated_at&&previous.revision===note.revision)return;
       // Selection and save timestamps never affect title-based list ordering.
       if(index<0)notes.unshift(note);else notes[index]=note;
+      listChanges?.set(note.id,note);
       renderList();
     }
   }
   function fill() {
+    closeToolMenus();
     const n=store?.current;
     byId('studyEditor').hidden=!n;byId('studyEmpty').hidden=Boolean(n);
     if(n){byId('studyTitle').value=n.title;editor.setContent(n.body);updateToolbar();}
@@ -131,14 +217,21 @@
     if(!byId('studyList'))return;
     const q=byId('studySearch').value.trim().toLocaleLowerCase();
     const items=notes.filter(n=>n.title.toLocaleLowerCase().includes(q)).sort(compareTitles);
-    byId('studyList').innerHTML=items.map(n=>`<button type="button" class="study-note-link${store?.current?.id===n.id?' active':''}" data-note="${esc(n.id)}"><strong>${esc(n.title)}</strong><span>${esc(date(n.updated_at))}</span></button>`).join('')||(!loading?'<p class="study-list-empty">'+(q?'검색 결과가 없습니다.':'저장된 노트가 없습니다.')+'</p>':'');
+    const markup=items.map(n=>`<button type="button" class="study-note-link${store?.current?.id===n.id?' active':''}" data-note="${esc(n.id)}"><strong>${esc(n.title)}</strong><span>${esc(date(n.updated_at))}</span></button>`).join('')||(!loading?'<p class="study-list-empty">'+(q?'검색 결과가 없습니다.':'저장된 노트가 없습니다.')+'</p>':'');
+    if(markup===listMarkup)return;
+    byId('studyList').innerHTML=markup;listMarkup=markup;
     byId('studyList').querySelectorAll('[data-note]').forEach(b=>b.addEventListener('click',()=>void select(b.dataset.note)));
   }
   async function list() {
-    const s=store,version=++loadVersion;if(!s)return;loading=true;byId('studyListStatus').textContent='목록 불러오는 중…';byId('studyRetryList').hidden=true;
+    if(!store||loading)return;
+    const s=store,version=++loadVersion,changes=new Map();listChanges=changes;
+    loading=true;byId('studyListStatus').textContent='목록 불러오는 중…';byId('studyRetryList').hidden=true;
     try {
       const data=await s.call('cw_list_study_notes');if(store!==s||loadVersion!==version)return;
-      notes=data||[];byId('studyListStatus').textContent='';
+      // Preserve saves/deletions completed while this older list was in flight.
+      const merged=new Map((data||[]).map(note=>[note.id,note]));
+      changes.forEach((note,id)=>{if(note)merged.set(id,note);else merged.delete(id);});
+      notes=[...merged.values()];byId('studyListStatus').textContent='';
       // Open the most recently edited note only on an empty workspace. A restored
       // draft or a note chosen/created while loading always takes precedence.
       if(!s.current&&!transition&&visible()&&notes.length){
@@ -147,7 +240,7 @@
       }
     }
     catch {if(store===s&&loadVersion===version){byId('studyListStatus').textContent='목록을 불러오지 못했습니다.';byId('studyRetryList').hidden=false;}}
-    finally {if(store===s&&loadVersion===version){loading=false;renderList();}}
+    finally {if(store===s&&loadVersion===version){loading=false;listChanges=null;renderList();}}
   }
   async function select(id) {
     if(transition||store?.current?.id===id)return;lock(true);const s=store;
@@ -208,12 +301,16 @@
     const s=store,n=s?.current;if(!n||transition||s.busy)return;
     if(!window.confirm('이 노트를 삭제할까요? 삭제한 노트는 복구할 수 없습니다.'))return;
     lock(true);clearTimeout(timer);
-    try {if(n.revision)await s.call('cw_delete_study_note',{p_id:n.id,p_revision:n.revision});if(store!==s)return;s.select(null);notes=notes.filter(item=>item.id!==n.id);fill();}
+    try {if(n.revision)await s.call('cw_delete_study_note',{p_id:n.id,p_revision:n.revision});if(store!==s)return;s.select(null);notes=notes.filter(item=>item.id!==n.id);listChanges?.set(n.id,null);fill();}
     catch {if(store===s)window.alert('삭제하지 못했습니다. 서버 글을 다시 확인해 주세요.');}
     finally {if(store===s)lock(false);}
   }
   window.CodeWikiStudy={setUser,leave(){if(visible()){history.replaceState(null,'','#doc/'+(window.CodeWikiApp?.getCurrentDocId()||'welcome-abap'));route();}}};
+  host.addEventListener('keydown',shortcuts);
   window.addEventListener('hashchange',route);
+  window.addEventListener('pointerdown',e=>{
+    host.querySelectorAll('.study-table-menu[open],.study-color-menu[open]').forEach(menu=>{if(!menu.contains(e.target))menu.open=false;});
+  });
   window.addEventListener('beforeunload',e=>{if(store?.dirty){e.preventDefault();e.returnValue='';}});
   window.addEventListener('online',()=>{if(store?.dirty)void store.save();});
 })();
