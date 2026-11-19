@@ -158,6 +158,7 @@
     window.CodeWikiPractice?.setUser(user);
     window.CodeWikiObjectGame?.setUser(user);
     adminApproval?.setUser(user);
+    window.CodeWikiAdminMembers?.setUser(user);
   }
   syncUserFeatures(null);
 
@@ -339,8 +340,8 @@
     if (adminSidebarSlot) {
       adminSidebarSlot.innerHTML = (isAdmin || (user.role === 'student' && user.status === 'approved'))
         ? `
-        <a href="#study" id="openStudyBtn" class="sb-menu-item${window.location.hash === '#study' ? ' active' : ''}"><svg class="sb-icon" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="4" width="15" height="17" rx="2"></rect><path d="M9 2v4M16 2v4M3 9h4M3 14h4M3 19h4M10 10h6M10 14h6M10 18h4"></path></svg><span>내 공부방</span></a>
-        ${isAdmin ? `<button type="button" id="openAdminModalBtn" class="sb-menu-item">
+        ${!isAdmin ? `<a href="#study" id="openStudyBtn" class="sb-menu-item${window.location.hash === '#study' ? ' active' : ''}"><svg class="sb-icon" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="4" width="15" height="17" rx="2"></rect><path d="M9 2v4M16 2v4M3 9h4M3 14h4M3 19h4M10 10h6M10 14h6M10 18h4"></path></svg><span>내 공부방</span></a>` : ''}
+        ${isAdmin ? `<a href="#admin/students" id="openStudentDirectoryBtn" class="sb-menu-item${window.location.hash === '#admin/students' ? ' active' : ''}"><svg class="sb-icon" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="M6 17v-1a3 3 0 0 1 6 0v1M15 8h3M15 12h3M15 16h3"/></svg><span>학생 정보</span></a><button type="button" id="openAdminModalBtn" class="sb-menu-item">
           <svg class="sb-icon" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
             <circle cx="9" cy="7" r="4"></circle>

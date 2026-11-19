@@ -34,6 +34,7 @@ for(const file of ['learning-tools','study-store','study'])vm.runInNewContext(fs
 const flush=()=>new Promise(resolve=>setImmediate(resolve));
 (async()=>{
  const api=context.window.CodeWikiStudy;
+ api.setUser({id:'admin',role:'admin',status:'approved'});await flush();assert.equal(calls.length,0);assert.equal(get('studyWorkspace').hidden,true);
  api.setUser({id:'student',role:'student'});await flush();assert.equal(calls.length,0);assert.equal(get('studyWorkspace').hidden,true);
  const fixtures=[
   {title:'261117TUE',updated_at:'2026-11-18T02:00:00Z'},
@@ -45,7 +46,7 @@ const flush=()=>new Promise(resolve=>setImmediate(resolve));
   {title:'개념',updated_at:'2026-11-18T01:00:00Z'},
  ].map(note=>({...note,id:randomUUID(),body:note.title,revision:1}));
  fixtures.forEach(note=>saved.set(note.id,note));
- api.setUser({id:'admin',role:'admin',full_name:'Test Admin'});await flush();
+ api.setUser({id:'study-owner',role:'student',status:'approved',full_name:'Test Student'});await flush();
  assert.equal(get('studyTitle').value,'261112THU','initial note follows modification time, not the title date');
  assert.match(get('studyStatus').textContent,/마지막 저장 .*12:00/,'confirmed timestamp is in the sticky toolbar');
  assert.equal((get('studyWorkspace').innerHTML.match(/id="studyStatus"/g)||[]).length,1);
@@ -60,7 +61,7 @@ const flush=()=>new Promise(resolve=>setImmediate(resolve));
  editorCallbacks.onChange('restored draft');
  await flush();assert.equal(calls.length,beforeTyping,'typing persists locally without a network request');
  assert.equal(timerSchedules,beforeTimers,'typing does not queue an autosave timer');
- api.setUser(null);api.setUser({id:'admin',role:'admin',full_name:'Test Admin'});await flush();
+ api.setUser(null);api.setUser({id:'study-owner',role:'student',status:'approved',full_name:'Test Student'});await flush();
  assert.equal(get('studyTitle').value,'261118 수요일','restored draft takes priority over recent server note');
  assert.equal(editorBody,'restored draft');
  saved.set(fixtures[1].id,{...fixtures[1],body:'Changed on server',revision:3});
@@ -73,7 +74,7 @@ const flush=()=>new Promise(resolve=>setImmediate(resolve));
  assert.equal(get('studySave').textContent,'저장됨');
  assert.match(get('studyStatus').textContent,/저장됨 · 마지막 저장/);
  api.setUser(null);saved.clear();memory.clear();
- api.setUser({id:'admin',role:'admin',full_name:'Test Admin'});await flush();assert.equal(get('studyWorkspace').hidden,false);
+ api.setUser({id:'study-owner',role:'student',status:'approved',full_name:'Test Student'});await flush();assert.equal(get('studyWorkspace').hidden,false);
  const importFile=async file=>{await get('studyFile').events.change({target:{files:[file],value:'file'}});await flush();};
  await importFile({name:'수업 필기.txt',size:30,text:async()=> '## 필기\n**중요** ==복습=='});
  assert.equal(saved.size,1);assert.equal(get('studyTitle').value,'수업 필기');assert.equal(editorBody,'## 필기\n**중요** ==복습==');
@@ -114,8 +115,8 @@ const flush=()=>new Promise(resolve=>setImmediate(resolve));
  assert.deepEqual(new Set(order()),new Set(saved.keys()),'late list keeps additions and deletions');
  assert.ok(get('studyList').innerHTML.includes('첫째 최신'),'late list keeps updated titles');
  const beforeProfile=editorBody;
- api.setUser({id:'admin',role:'admin',full_name:'Updated Admin'});
- assert.equal(get('studyHeading').textContent,'Updated Admin님의 공부방');
+ api.setUser({id:'study-owner',role:'student',status:'approved',full_name:'Updated Student'});
+ assert.equal(get('studyHeading').textContent,'Updated Student님의 공부방');
  assert.equal(editorBody,beforeProfile,'profile refresh preserves current editor');
  const importMany=files=>get('studyFile').events.change({target:{files,value:'files'}});
  assert.match(get('studyWorkspace').innerHTML,/id="studyFile"[^>]*multiple/);

@@ -28,7 +28,7 @@
   }
   function setUser(user) {
     const token=window.CodeWikiAuth?.getSessionToken()||'';
-    const allowed=user?.role==='admin'||(user?.role==='student'&&user.status==='approved');
+    const allowed=user?.role==='student'&&user.status==='approved';
     if(allowed&&session?.id===user.id&&session.token===token){
       session.name=user.full_name;
       if(mounted)byId('studyHeading').textContent=session.name+'님의 공부방';

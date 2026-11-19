@@ -34,6 +34,10 @@ function boot(storage, rpc) {
   assert.equal(app.window.CodeWikiAuth.getCurrentUser().id,'student');
   assert.match(app.get('adminSidebarSlot').innerHTML,/id="openStudyBtn"/);
   assert.ok(!app.get('adminSidebarSlot').innerHTML.includes('id="openAdminModalBtn"'),'student does not receive admin controls');
+  profile.role='admin';await app.window.refresh();
+  assert.ok(!app.get('adminSidebarSlot').innerHTML.includes('id="openStudyBtn"'),'admin study menu is retired');
+  assert.match(app.get('adminSidebarSlot').innerHTML,/id="openAdminModalBtn"/);
+  profile.role='student';
   app = boot(saved,rpc); // New page/browser session using persisted storage.
   await app.window.refresh();
   assert.equal(app.window.CodeWikiAuth.getCurrentUser().id,'student');

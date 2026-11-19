@@ -21,7 +21,11 @@ Supabase SQL Editor에서 파일 전체를 아래 순서대로 실행합니다. 
 9. `migrations/20261119-delete-rejected-signups.sql`
 10. `migrations/20261119-study-folders.sql`
 11. `migrations/20261119-student-study.sql`
-12. **`migrations/20261119-auth-hardening.sql` — 마지막**
+12. `migrations/20261119-student-only-study.sql`
+13. **`migrations/20261119-auth-hardening.sql` — 로그인·가입 함수 변경 후 적용**
+14. `migrations/20261119-admin-members.sql` — 인증 강화의 비밀번호 정책·요청 제한 함수 사용
+
+관리자 공부방을 폐기하는 기존 DB에서는 먼저 DB 소유자가 이전 대상 두 계정을 확인합니다. 단일 트랜잭션 안에서 `codewiki.transfer_from`과 `codewiki.transfer_to`를 해당 UUID로 설정하고 `scripts/transfer-study-owner.sql`을 실행한 뒤, `20261119-student-only-study.sql`의 내용을 적용합니다. 실제 계정 UUID·토큰이나 필기 백업은 공개 저장소에 넣지 않습니다. 이전은 본문·저장 시간·수정 버전·폴더 분류를 유지하며, 폴더 이름 충돌이나 소유권 불일치가 있으면 중단합니다. 관리자 계정 자체와 회원 관리 기능은 유지합니다. 브라우저에만 있는 미저장 초안은 이 DB 이전에 포함되지 않습니다.
 
 6반 출석부 데이터는 별도 비공개 자료로 입력합니다. 실명 명단이나 DB 비밀번호는 저장소에 넣지 않습니다.
 

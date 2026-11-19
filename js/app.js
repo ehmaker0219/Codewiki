@@ -530,6 +530,7 @@
 
   // 메인 문서 렌더링
   function renderDocument(docId) {
+    window.CodeWikiAdminMembers?.leave();
     if (docId === "erp-setup") {
       docId = "sap-architecture";
       history.replaceState(null, "", "#doc/sap-architecture");
