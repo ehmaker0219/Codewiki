@@ -5,11 +5,13 @@ const dialog={innerHTML:'',open:false,setAttribute(){},querySelector:node,showMo
 const ctx={window:{addEventListener(){},CodeWikiAuth:{getSessionToken:()=>token,getSupabaseClient:()=>({rpc:(name,args)=>{calls.push({name,args});return new Promise(resolve=>requests.push(resolve));}}),applyProfile:p=>applied=p,logout:()=>loggedOut++},CodeWikiBirthdays:{today:()=> '2026-11-18',validDate:()=>true,refresh:()=>refreshed++}},document:{createElement:()=>dialog,body:{append(){}}}};
 vm.runInNewContext(fs.readFileSync('js/profile.js','utf8'),ctx);
 const api=ctx.window.CodeWikiProfile;
-const profile={id:'a',username:'member-a',class_name:'6반',role:'student',full_name:'Original',mbti:'ISTJ',birth_date:'2000-01-02',share_with_class:false};
+const profile={id:'a',username:'member-a',class_name:'6반',student_number:5,role:'student',full_name:'Original',mbti:'ISTJ',birth_date:'2000-01-02',share_with_class:false};
 async function run(){
   api.setUser({id:'a',status:'approved'});
   const opening=api.openSettings();requests.shift()({data:profile});await opening;
   assert.equal(node('#profileName').value,'Original');assert.equal(node('#profileClass').textContent,'6반');
+  assert.equal(node('#profileStudentNumber').textContent,'5번');
+  assert.match(dialog.innerHTML,/<dd id="profileStudentNumber">/,'number is text, not an editable input');
   node('#profileName').value=' Updated ';node('#profileMbti').value='ENFP';node('#profileBirthdayShare').checked=true;
   let saving=listeners.get('form:submit')({preventDefault(){}});
   assert.equal(calls.at(-1).name,'cw_update_my_profile');
@@ -20,6 +22,8 @@ async function run(){
   requests.shift()({data:{...profile,full_name:'Updated',mbti:'ENFP'}});await saving;
   assert.equal(applied.full_name,'Updated');assert.equal(refreshed,1);assert.equal(node('#profileStatus').textContent,'저장했습니다.');
   listeners.get('#logoutBtn:click')();assert.equal(loggedOut,1);
+  const unnumbered=api.openSettings();requests.shift()({data:{...profile,student_number:null}});await unnumbered;
+  assert.equal(node('#profileStudentNumber').textContent,'미등록');
   const stale=api.openSettings();token='token-b';api.setUser({id:'b',status:'approved'});
   requests.shift()({data:profile});await stale;
   assert.equal(dialog.open,false);assert.equal(dialog.innerHTML,'');

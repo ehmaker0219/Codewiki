@@ -40,6 +40,7 @@
     const id=user?.role==='student'&&user.status==='approved'?user.id:null;
     if(id!==userId){epoch++;game=null;current=null;output.replaceChildren();status.textContent='';next.disabled=true;if(dialog.open)dialog.close();}
     userId=id;trigger.hidden=!id;
+    const toolsGroup=byId('learningToolsGroup');if(toolsGroup)toolsGroup.hidden=!id;
   }
   function loadBank(){
     if(window.CodeWikiObjectBank)return Promise.resolve(window.CodeWikiObjectBank);

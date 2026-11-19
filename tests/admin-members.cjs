@@ -23,6 +23,10 @@ const fixtures=[{id:'s1',username:'student-one',full_name:'<img onerror=alert(1)
  api.setUser({id:'s',role:'student',status:'approved'});assert.equal(requests.length,0);assert.equal(host.hidden,true);
  api.setUser({id:'a',role:'admin'});assert.equal(requests.length,1);click('[data-members-refresh]');assert.equal(requests.length,1,'read coalescing');
  requests.shift().resolve({data:fixtures});await flush();assert.equal(host.hidden,false);
+ assert.equal(window.location.hash,'#admin/students');
+ api.setPresence([{full_name:'<script>bad</script>',class_name:'6반',role:'student'}]);
+ assert.match(node('membersPresence').innerHTML,/현재 접속 1명/);assert.ok(!node('membersPresence').innerHTML.includes('<script>'));
+ api.setPresence(false);assert.match(node('membersPresence').innerHTML,/확인하지 못했습니다/);
  assert.ok(node('membersTable').innerHTML.includes('&lt;img'));assert.ok(!node('membersTable').innerHTML.includes('<img'));
  const before=requests.length;input('membersSearch','student-two');assert.match(node('membersCount').textContent,/1명/);input('membersClass','1반');assert.match(node('membersCount').textContent,/0명/);assert.equal(requests.length,before,'filters must be local');
  input('membersSearch','');input('membersClass','');

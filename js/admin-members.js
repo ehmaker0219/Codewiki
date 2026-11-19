@@ -4,6 +4,7 @@
   const esc=window.CodeWikiLearning.escape;
   const statuses={approved:'승인 완료',pending:'승인 대기',rejected:'반려'};
   let session=null,active=false,rows=[],version=0,loading=false,query='',classFilter='',statusFilter='',dialog=null,resetBusy=false;
+  let online=null;
   const visible=()=>Boolean(session)&&window.location.hash==='#admin/students';
   const current=(s,v)=>session===s&&version===v&&active;
   function closeReset(){if(dialog){dialog.close();dialog.innerHTML='';}resetBusy=false;}
@@ -11,7 +12,13 @@
   function setUser(user){
     const token=window.CodeWikiAuth?.getSessionToken()||'';
     if(user?.role==='admin'&&session?.id===user.id&&session.token===token)return;
-    clear();session=user?.role==='admin'&&token?{id:user.id,token}:null;query='';classFilter='';statusFilter='';route();
+    clear();online=null;session=user?.role==='admin'&&token?{id:user.id,token}:null;query='';classFilter='';statusFilter='';
+    if(session)openHome();else route();
+  }
+  function openHome(){if(!session)return false;history.replaceState(null,'','#admin/students');route();window.CodeWikiPresence?.refresh();return true;}
+  function renderPresence(){
+    const panel=host.querySelector('#membersPresence');if(!panel)return;
+    panel.innerHTML=online===false?'<strong>접속 상태를 확인하지 못했습니다.</strong><span>잠시 후 자동으로 다시 확인합니다.</span>':online===null?'<strong>접속 상태를 확인하고 있습니다.</strong><span>최근 2분 기준 · 1분마다 갱신</span>':`<strong>현재 접속 ${online.length}명</strong><span>최근 2분 기준 · 관리자 포함</span><div class="members-online-names">${online.map(u=>`<span>${esc(u.full_name)}${u.role==='admin'?' (관리자)':` · ${esc(u.class_name||'')}`}</span>`).join('')||'<span>접속 중인 회원이 없습니다.</span>'}</div>`;
   }
   async function call(name,args,s){
     const controller=new AbortController();let timer;
@@ -23,10 +30,10 @@
     }finally{clearTimeout(timer);}
   }
   function render(){
-    host.innerHTML=`<header class="members-heading"><div><h1>학생 정보</h1><p>가입한 학생의 계정과 프로필을 관리합니다.</p></div><button type="button" class="toss-chip-btn" data-members-refresh ${loading?'disabled':''}>새로고침</button></header>
+    host.innerHTML=`<header class="members-heading"><div><h1>학생 정보</h1><p>가입한 학생의 계정과 프로필을 관리합니다.</p></div><button type="button" class="toss-chip-btn" data-members-refresh ${loading?'disabled':''}>새로고침</button></header><section id="membersPresence" class="members-presence" aria-label="현재 접속자"></section>
       <div class="members-filters"><label>검색<input id="membersSearch" type="search" placeholder="이름 또는 아이디" value="${esc(query)}"></label><label>반<select id="membersClass"><option value="">전체 반</option>${[...new Set(rows.map(u=>u.class_name||'기본반'))].sort((a,b)=>a.localeCompare(b,'ko',{numeric:true})).map(c=>`<option value="${esc(c)}" ${classFilter===c?'selected':''}>${esc(c)}</option>`).join('')}</select></label><label>상태<select id="membersStatus"><option value="">전체 상태</option>${Object.entries(statuses).map(([id,name])=>`<option value="${id}" ${statusFilter===id?'selected':''}>${name}</option>`).join('')}</select></label><span class="members-count" id="membersCount"></span></div>
       <p id="membersMessage" role="status">${loading?'학생 정보를 불러오는 중…':''}</p><div class="members-table-wrap" id="membersTable"></div>`;
-    renderRows();
+    renderPresence();renderRows();
   }
   function renderRows(){
     const q=query.trim().toLocaleLowerCase();
@@ -47,7 +54,8 @@
     document.getElementById('openStudentDirectoryBtn')?.classList.add('active');
     if(active)return;
     window.CodeWikiBoard?.closeIfActive();
-    ['sbHomeItem','sbScheduleItem'].forEach(id=>document.getElementById(id)?.classList.remove('active'));
+    document.getElementById('sbHomeItem')?.classList.add('active');
+    document.getElementById('sbScheduleItem')?.classList.remove('active');
     document.querySelectorAll('.nav-doc-link.active').forEach(el=>el.classList.remove('active'));
     active=true;void load();
   }
@@ -81,5 +89,5 @@
   host.addEventListener('input',e=>{if(e.target.id==='membersSearch'){query=e.target.value;renderRows();}});
   host.addEventListener('change',e=>{if(e.target.id==='membersClass')classFilter=e.target.value;else if(e.target.id==='membersStatus')statusFilter=e.target.value;else return;renderRows();});
   window.addEventListener('hashchange',route);
-  window.CodeWikiAdminMembers={setUser,leave(){if(active){if(window.location.hash==='#admin/students')history.replaceState(null,'','#doc/'+(window.CodeWikiApp?.getCurrentDocId()||'welcome-abap'));clear();}}};
+  window.CodeWikiAdminMembers={setUser,openHome,setPresence(value){online=value;if(active)renderPresence();},leave(){if(active){if(window.location.hash==='#admin/students')history.replaceState(null,'','#doc/'+(window.CodeWikiApp?.getCurrentDocId()||'welcome-abap'));clear();}}};
 })();

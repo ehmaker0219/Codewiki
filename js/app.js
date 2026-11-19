@@ -530,6 +530,7 @@
 
   // 메인 문서 렌더링
   function renderDocument(docId) {
+    if ((docId === 'welcome-abap' || docId === 'welcome-ui5') && window.CodeWikiAdminMembers?.openHome()) return;
     window.CodeWikiAdminMembers?.leave();
     if (docId === "erp-setup") {
       docId = "sap-architecture";
@@ -924,7 +925,7 @@
       const h = window.location.hash;
       if (h.startsWith("#doc/")) {
         const target = h.replace("#doc/", "");
-        if ((window.WIKI_DOCS[target] || target === "erp-setup") && target !== currentDocId) {
+        if ((window.WIKI_DOCS[target] || target === "erp-setup") && (target !== currentDocId || window.CodeWikiAuth?.getCurrentUser()?.role === 'admin')) {
           if (window.CodeWikiBoard) window.CodeWikiBoard.closeIfActive();
           renderDocument(target);
           window.scrollTo({ top: 0, behavior: "smooth" });

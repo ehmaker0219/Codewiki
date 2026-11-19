@@ -292,12 +292,6 @@ body { background-image: none; }
 .sap-code-comment { color:#858585; font-style:italic; }
 .block-code-wrap .copy-code-btn { border:1px solid #9eb1c0; border-radius:2px; background:linear-gradient(#fff,#e0e9f0); color:#21465e; font-size:11px; }
 
-.meal-folder summary { list-style:none; cursor:pointer; }
-.meal-folder summary::-webkit-details-marker { display:none; }
-.meal-chevron { margin-left:auto; transition:transform .15s; }
-.meal-folder[open] .meal-chevron { transform:rotate(90deg); }
-.meal-links { margin:3px 0 8px 20px; padding-left:8px; border-left:1px solid var(--border-subtle); }
-
 #practiceDialog { margin:auto; width:min(600px,calc(100% - 32px)); max-height:calc(100dvh - 40px); overflow:auto; padding:24px; border:1px solid var(--border-subtle); border-radius:10px; background:var(--bg-card); color:var(--text-body); }
 #practiceDialog::backdrop { background:#14243880; }
 .practice-dialog-header { display:flex; align-items:center; justify-content:space-between; gap:12px; }

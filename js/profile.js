@@ -12,7 +12,7 @@
     if(!dialog){dialog=document.createElement('dialog');dialog.className='profile-dialog';dialog.setAttribute('aria-labelledby','profileTitle');document.body.append(dialog);}
     dialog.innerHTML=`<div class="profile-dialog-header"><h2 id="profileTitle">프로필 설정</h2><button type="button" class="icon-btn" data-close-profile aria-label="프로필 설정 닫기">✕</button></div>
       <form id="profileForm">
-        <dl class="profile-account"><dt>아이디</dt><dd id="profileUsername">—</dd><dt>소속 반</dt><dd id="profileClass">—</dd><dt>권한</dt><dd id="profileRole">—</dd></dl>
+        <dl class="profile-account"><dt>아이디</dt><dd id="profileUsername">—</dd><dt>소속 반</dt><dd id="profileClass">—</dd><dt>출석번호</dt><dd id="profileStudentNumber">—</dd><dt>권한</dt><dd id="profileRole">—</dd></dl>
         <label for="profileName">이름</label><input id="profileName" type="text" autocomplete="name" required maxlength="50" disabled>
         <label for="profileMbti">MBTI</label><select id="profileMbti" disabled><option value="">선택 안 함</option>${['ISTJ','ISFJ','INFJ','INTJ','ISTP','ISFP','INFP','INTP','ESTP','ESFP','ENFP','ENTP','ESTJ','ESFJ','ENFJ','ENTJ'].map(m=>`<option>${m}</option>`).join('')}</select>
         <div class="profile-section-title">생일</div><label for="profileBirthDate">생년월일 (선택)</label><input id="profileBirthDate" type="date" min="1900-01-01" max="${window.CodeWikiBirthdays.today()}" disabled>
@@ -32,6 +32,7 @@
       const p=result.data;
       form.querySelector('#profileUsername').textContent=p.username;
       form.querySelector('#profileClass').textContent=p.class_name;
+      form.querySelector('#profileStudentNumber').textContent=p.student_number==null?'미등록':`${p.student_number}번`;
       form.querySelector('#profileRole').textContent=p.role==='admin'?'관리자':'회원';
       name.value=p.full_name;mbti.value=p.mbti||'';date.value=p.birth_date||'';share.checked=Boolean(p.share_with_class);
       name.disabled=false;mbti.disabled=false;date.disabled=false;share.disabled=!date.value;save.disabled=false;message.textContent='';
