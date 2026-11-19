@@ -3,7 +3,7 @@
  * [코드위키 자체 인증 & 수동 승인 시스템: js/auth.js]
  * ----------------------------------------------------------------------------
  * - 구글 로그인이나 이메일 인증을 전혀 사용하지 않는 100% 사이트 내부 전용 로직입니다.
- * - 가입 시 [이름 + 소속 반 + 아이디 + 비밀번호]만 입력하며, 관리자가 직접 승인해야 열람됩니다.
+ * - 가입 시 6반은 이름·출석번호를 서버 명단과 대조하며, 모든 반은 관리자 승인 후 열람됩니다.
  * - 추후 다른 반으로 확장될 때를 대비해 소속 반 구분 태그 및 반별 필터를 지원합니다.
  * ============================================================================
  */
@@ -393,8 +393,9 @@
           ${
             isSignup
               ? `
-            <div class="cw-input-wrap">
+            <div class="cw-input-wrap cw-auth-name-row">
               <input type="text" id="authFullName" class="cw-minimal-input" placeholder="이름" aria-label="이름" autocomplete="name" required />
+              <input type="number" id="authStudentNumber" class="cw-minimal-input" placeholder="출석번호" aria-label="6반 출석번호" inputmode="numeric" min="1" max="30" step="1" required />
             </div>
 
             <div class="cw-auth-date-row">
@@ -480,7 +481,8 @@
               type="password"
               id="authPassword"
               class="cw-minimal-input has-eye"
-              placeholder="비밀번호"
+              placeholder="${isSignup ? "비밀번호 (8자 이상)" : "비밀번호"}"
+              ${isSignup ? 'minlength="8"' : ''}
               autocomplete="${isSignup ? "new-password" : "current-password"}"
               required
             />
@@ -558,6 +560,12 @@
       const syncClassUI = () => {
         if (hiddenClass) hiddenClass.value = chosenClass;
         if (classPreview) classPreview.textContent = chosenClass;
+        const numberInput = document.getElementById("authStudentNumber");
+        if (numberInput) {
+          numberInput.hidden = chosenClass !== "6반";
+          numberInput.disabled = chosenClass !== "6반";
+          numberInput.required = chosenClass === "6반";
+        }
         classGrid?.querySelectorAll("[data-class-val]").forEach(btn => {
           const active = btn.getAttribute("data-class-val") === chosenClass;
           btn.style.background = active ? "var(--toss-blue)" : "var(--bg-subtle)";
@@ -630,10 +638,36 @@
     }
     form.addEventListener("submit", async e => {
       e.preventDefault();
+      if (form.querySelector('button[type="submit"]')?.disabled) return;
       const username = document.getElementById("authUsername").value.trim().toLowerCase();
-      const password = document.getElementById("authPassword").value.trim();
+      const password = document.getElementById("authPassword").value;
+      const showSubmitError = message => {
+        let notice = form.querySelector('[data-signup-error]');
+        if (!notice) {
+          notice = document.createElement("p");
+          notice.dataset.signupError = "";
+          notice.className = "auth-alert";
+          notice.setAttribute("role", "alert");
+          form.appendChild(notice);
+        }
+        notice.textContent = message;
+        const button = form.querySelector('button[type="submit"]');
+        if (button) {
+          button.disabled = false;
+          button.textContent = isSignup ? "계정 만들기" : "로그인";
+        }
+      };
+      if (isSignup && Array.from(password).length < 8) {
+        showSubmitError("비밀번호는 8자 이상 입력해 주세요.");
+        return;
+      }
       const fullName = document.getElementById("authFullName")?.value.trim() || "";
       const className = document.getElementById("authClassName")?.value.trim() || "기본반";
+      const studentNumber = className === "6반" ? Number(document.getElementById("authStudentNumber")?.value) : null;
+      if (isSignup && className === "6반" && (!Number.isInteger(studentNumber) || studentNumber < 1 || studentNumber > 30)) {
+        document.getElementById("authStudentNumber")?.reportValidity();
+        return;
+      }
       const mbti = document.getElementById("authMbti")?.value.trim().toUpperCase() || "";
       const birthDate = document.getElementById("authBirthDate")?.value || "";
       const shareBirthday = Boolean(birthDate);
@@ -652,6 +686,11 @@
 
       // 1) 로컬 모드 동작
       if (!isSupabaseConfigured) {
+        if (isSignup && className === "6반") {
+          authMessage = "6반 가입은 서버에서 출석부 확인이 필요합니다.";
+          renderPreLoginLanding();
+          return;
+        }
         const users = getDemoUsers();
         if (isSignup) {
           if (users.some(u => u.username.toLowerCase() === username)) {
@@ -702,18 +741,23 @@
       }
 
       if (isSignup) {
-        const { data, error } = await supabaseClient.rpc("cw_signup_with_birthday", {
+        let data, error;
+        try {
+          ({ data, error } = await supabaseClient.rpc("cw_signup_with_roster", {
           p_username: username,
           p_password: password,
           p_full_name: fullName,
           p_class_name: className,
           p_mbti: mbti,
           p_birth_date: birthDate || null,
-          p_share_with_class: shareBirthday
-        });
-        if (error) {
-          authMessage = error.message || "가입 신청 중 오류가 발생했습니다.";
-          renderPreLoginLanding();
+          p_share_with_class: shareBirthday,
+          p_student_number: studentNumber
+          }));
+        } catch (_) {
+          error = { message: "연결을 확인한 뒤 다시 신청해 주세요." };
+        }
+        if (error || !data?.session_token) {
+          showSubmitError(error?.message || data?.message || "가입 신청 중 오류가 발생했습니다.");
         } else {
           authMessage = "";
           window.CodeWikiApp?.resetTrackChoice();
@@ -721,13 +765,17 @@
           renderAuthState();
         }
       } else {
-        const { data, error } = await supabaseClient.rpc("cw_login", {
-          p_username: username,
-          p_password: password
-        });
-        if (error || !data) {
-          authMessage = error?.message || "아이디 또는 비밀번호를 확인해 주세요.";
-          renderPreLoginLanding();
+        let data, error;
+        try {
+          ({ data, error } = await supabaseClient.rpc("cw_login", {
+            p_username: username,
+            p_password: password
+          }));
+        } catch (_) {
+          error = { message: "연결을 확인한 뒤 다시 로그인해 주세요." };
+        }
+        if (error || !data?.session_token) {
+          showSubmitError(error?.message || data?.message || "아이디 또는 비밀번호를 확인해 주세요.");
         } else {
           authMessage = "";
           window.CodeWikiApp?.resetTrackChoice();

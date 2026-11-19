@@ -5,9 +5,9 @@
     const groups = [
       {status:'pending', title:'승인 대기 중', empty:'대기 중인 신청자가 없습니다.', actions:[['approved','승인','approve'],['rejected','거절','reject']]},
       {status:'approved', title:'승인 완료 멤버', empty:'승인된 멤버가 없습니다.', actions:[['pending','승인 취소','revoke']]},
-      {status:'rejected', title:'반려됨', actions:[['approved','다시 승인','approve']]}
+      {status:'rejected', title:'반려됨', actions:[['approved','다시 승인','approve'],['delete','삭제','reject']]}
     ];
-    let users = [], filter = 'ALL', generation = 0, sessionKey = '', busy = false, errorMessage = '';
+    let users = [], filter = 'ALL', generation = 0, sessionKey = '', busy = false, errorMessage = '', errorTarget = '';
     const className = user => user.class_name || '기본반';
     const current = (version, token, id) => generation === version && getToken() === token && getUser()?.id === id && getUser()?.role === 'admin';
 
@@ -16,6 +16,7 @@
       users = [];
       busy = false;
       errorMessage = '';
+      errorTarget = '';
       modal.classList.add('hidden');
       modal.innerHTML = '';
     }
@@ -27,7 +28,7 @@
 
     function renderRow(user, group) {
       const date = user.birthday_error ? '조회 실패' : escape(user.birth_date || '미등록');
-      return `<div class="admin-user-row">
+      return `<div class="admin-user-entry"><div class="admin-user-row">
         <div>
           <div class="admin-user-name">
             <span class="cat-type-pill" style="margin-right:4px;">${escape(className(user))}</span>
@@ -39,7 +40,7 @@
         </div>
         <div class="admin-action-btns">${group.actions.map(([next,label,style]) =>
           `<button class="${style}-btn" data-uid="${escape(user.id)}" data-next="${next}" ${busy ? 'disabled' : ''}>${label}</button>`).join('')}</div>
-      </div>`;
+      </div>${errorMessage && errorTarget === String(user.id) ? `<p class="admin-row-error" data-admin-row-error role="alert">${escape(errorMessage)} <button class="toss-chip-btn" data-admin-retry>목록 새로고침</button></p>` : ''}</div>`;
     }
 
     function render() {
@@ -53,7 +54,7 @@
           <button id="closeAdminModalBtn" class="icon-btn" aria-label="닫기">✕</button></div>
         ${classes.length ? `<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px;">${[['ALL','전체',users.length],...classes.map(name=>[name,name,counts.get(name)])].map(([id,label,count]) =>
           `<button type="button" class="toss-chip-btn ${filter === id ? 'active' : ''}" data-class-filter="${escape(id)}" style="height:30px;font-size:12px;">${escape(label)} (${count})</button>`).join('')}</div>` : ''}
-        ${errorMessage ? `<p role="alert">${escape(errorMessage)} <button class="toss-chip-btn" data-admin-retry>다시 시도</button></p>` : ''}
+        ${errorMessage && !errorTarget ? `<p role="alert">${escape(errorMessage)} <button class="toss-chip-btn" data-admin-retry>다시 시도</button></p>` : ''}
         <div class="admin-modal-body">${groups.map((group,index) => {
           const members = visible.filter(user => user.status === group.status);
           if (!members.length && !group.empty) return '';
@@ -65,7 +66,7 @@
     async function open() {
       if (getUser()?.role !== 'admin') return;
       const version = ++generation, token = getToken(), id = getUser().id;
-      users = []; busy = true; errorMessage = '';
+      users = []; busy = true; errorMessage = ''; errorTarget = '';
       modal.classList.remove('hidden'); render();
       try {
         if (!isRemote) users = getDemoUsers().filter(user=>user.role !== 'admin');
@@ -88,17 +89,43 @@
       if (busy || getUser()?.role !== 'admin') return;
       const version = generation, token = getToken(), id = getUser().id;
       const target = button.getAttribute('data-uid'), next = button.getAttribute('data-next');
-      busy = true; errorMessage = ''; render();
+      const deleting = next === 'delete';
+      if (deleting) {
+        const member = users.find(user => String(user.id) === target);
+        if (!member || member.status !== 'rejected' || member.role === 'admin') return;
+        if (!window.confirm(`${member.full_name}님의 거절된 가입 요청과 계정 정보를 삭제할까요?\n삭제 후 같은 아이디로 다시 가입 신청할 수 있습니다. 이 작업은 되돌릴 수 없습니다.`)) return;
+      }
+      busy = true; errorMessage = ''; errorTarget = ''; render();
       try {
         if (isRemote) {
-          const result = await client.rpc('cw_admin_set_status',{p_token:token,p_target_id:target,p_next_status:next});
+          const result = deleting
+            ? await client.rpc('cw_admin_delete_rejected_user',{p_token:token,p_target_id:target})
+            : await client.rpc('cw_admin_set_status',{p_token:token,p_target_id:target,p_next_status:next});
           if (result.error) throw result.error;
-        } else saveDemoUsers(getDemoUsers().map(user=>String(user.id) === target ? {...user,status:next} : user));
+        } else {
+          const demoUsers = getDemoUsers();
+          saveDemoUsers(deleting
+            ? demoUsers.filter(user=>!(String(user.id) === target && user.status === 'rejected' && user.role !== 'admin'))
+            : demoUsers.map(user=>String(user.id) === target ? {...user,status:next} : user));
+        }
         if (!current(version,token,id)) return;
+        if (deleting) {
+          users = users.filter(user=>String(user.id) !== target);
+          busy = false; render();
+          return;
+        }
         await open();
         if (getToken() === token && getUser()?.id === id) await onChange();
-      } catch {
-        if (current(version,token,id)) { busy = false; errorMessage = '승인 상태를 변경하지 못했습니다. 다시 시도해 주세요.'; render(); }
+      } catch (error) {
+        if (current(version,token,id)) {
+          busy = false;
+          errorTarget = target;
+          errorMessage = deleting
+            ? error?.code === 'PGRST202' ? '삭제 기능이 서버에 적용되지 않아 삭제하지 못했습니다.' : '가입 요청을 삭제하지 못했습니다. 목록을 새로 불러온 뒤 다시 시도해 주세요.'
+            : '승인 상태를 변경하지 못했습니다. 다시 시도해 주세요.';
+          render();
+          modal.querySelector?.('[data-admin-row-error]')?.scrollIntoView?.({block:'nearest'});
+        }
       }
     }
 

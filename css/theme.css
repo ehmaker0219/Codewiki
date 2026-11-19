@@ -135,6 +135,11 @@ body {
 .cw-auth-logo { filter: drop-shadow(0 8px 12px #0c3d9320); }
 .cw-minimal-input { border-width: 1px; border-radius: 8px; }
 .cw-auth-form { gap:12px; }
+.cw-auth-name-row { display:flex; gap:8px; }
+.cw-auth-name-row #authFullName { flex:1; min-width:0; }
+.cw-auth-name-row #authStudentNumber { width:100px; flex-shrink:0; }
+.cw-auth-name-row #authStudentNumber[hidden] { display:none; }
+.admin-row-error { color:var(--toss-red); font-size:13px; margin:8px 0 0; line-height:1.6; }
 .cw-auth-form .cw-minimal-input { height:44px; font-size:13px; padding:0 12px; }
 .cw-auth-form .cw-minimal-input.has-eye { padding-right:44px; }
 .cw-auth-form .cw-picker-box { border-width:1px; border-radius:8px; padding:12px; gap:10px; }
