@@ -46,6 +46,10 @@ const read = file => fs.readFileSync(path.join(root,file),'utf8');
     await db.exec('truncate cw_auth_private.limits;');
     await db.exec(read('tests/auth-hardening.sql'));
     for (const file of ['security-regression.sql','session-retention.sql','admin-delete.sql','study-notes.sql','study-folders.sql']) await db.exec(read(`tests/${file}`));
+    // Historical admin-only tests run above, then verify the expanded final policy.
+    await db.exec(read('migrations/20261119-student-study.sql'));
+    await db.exec(read('migrations/20261119-student-study.sql'));
+    await db.exec(read('tests/student-study.sql'));
     console.log('PASS: PostgreSQL auth hardening, unsafe setup rerun blocked, session/admin authorization, study ownership/revisions and private folder regressions');
   } finally { await db.close(); }
 })().catch(error => { console.error(error.message); process.exitCode=1; });

@@ -337,10 +337,10 @@
     const isAdmin = user.role === "admin";
 
     if (adminSidebarSlot) {
-      adminSidebarSlot.innerHTML = isAdmin
+      adminSidebarSlot.innerHTML = (isAdmin || (user.role === 'student' && user.status === 'approved'))
         ? `
         <a href="#study" id="openStudyBtn" class="sb-menu-item${window.location.hash === '#study' ? ' active' : ''}"><svg class="sb-icon" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="4" width="15" height="17" rx="2"></rect><path d="M9 2v4M16 2v4M3 9h4M3 14h4M3 19h4M10 10h6M10 14h6M10 18h4"></path></svg><span>내 공부방</span></a>
-        <button type="button" id="openAdminModalBtn" class="sb-menu-item">
+        ${isAdmin ? `<button type="button" id="openAdminModalBtn" class="sb-menu-item">
           <svg class="sb-icon" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
             <circle cx="9" cy="7" r="4"></circle>
@@ -349,7 +349,7 @@
           </svg>
           <span>학생 승인 관리</span>
           ${pendingCount > 0 ? `<span class="pending-badge" style="margin-left:auto;">${pendingCount}</span>` : ""}
-        </button>
+        </button>` : ''}
       `
         : "";
 

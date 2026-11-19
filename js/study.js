@@ -28,7 +28,8 @@
   }
   function setUser(user) {
     const token=window.CodeWikiAuth?.getSessionToken()||'';
-    if(user?.role==='admin'&&session?.id===user.id&&session.token===token){
+    const allowed=user?.role==='admin'||(user?.role==='student'&&user.status==='approved');
+    if(allowed&&session?.id===user.id&&session.token===token){
       session.name=user.full_name;
       if(mounted)byId('studyHeading').textContent=session.name+'님의 공부방';
       return;
@@ -37,7 +38,7 @@
     store?.dispose();store=null;session=null;notes=[];loadVersion++;transition=false;
     loading=false;listChanges=null;listMarkup=null;
     editor?.destroy();editor=null;mounted=false;host.innerHTML='';
-    if(user?.role==='admin'&&token) {
+    if(allowed&&token) {
       session={id:user.id,name:user.full_name,token};
       store=window.CodeWikiStudyStore.create({owner:user.id,token,storage:localStorage,
         rpc:(...args)=>window.CodeWikiAuth.getSupabaseClient().rpc(...args),onChange:update});
@@ -53,7 +54,7 @@
   function loadEditor() {
     if(editorLoad)return;
     host.innerHTML='<p role="status">필기 편집기를 준비하고 있습니다…</p>';
-    // Load the editor only when an administrator opens the study workspace.
+    // Load the editor only when an eligible member opens their study workspace.
     editorLoad=new Promise((resolve,reject)=>{
       const script=document.createElement('script');
       script.src=document.getElementById('studyEditorSource').dataset.src;
@@ -156,7 +157,7 @@
     });
     byId('studySave').title='저장 ('+(/Mac|iPhone|iPad/.test(window.navigator?.platform||'')?'⌘':'Ctrl')+'+S)';
     const folderStore=store;
-    folders=window.CodeWikiStudyFolders?.create({element:byId('studyFolders'),moveElement:byId('studyFolderMove'),
+    folders=window.CodeWikiStudyFolders?.create({element:byId('studyFolders'),moveElement:byId('studyFolderMove'),listElement:byId('studyList'),
       call:(...args)=>folderStore.call(...args),getNote:()=>folderStore.current,getNotes:()=>notes,onChange:renderList});
     void folders?.load();
     fill();
@@ -224,7 +225,7 @@
     if(!byId('studyList'))return;
     const q=byId('studySearch').value.trim().toLocaleLowerCase();
     const items=notes.filter(n=>(!folders||folders.includesNote(n))&&n.title.toLocaleLowerCase().includes(q)).sort(compareTitles);
-    const markup=items.map(n=>`<button type="button" class="study-note-link${store?.current?.id===n.id?' active':''}" data-note="${esc(n.id)}"><strong>${esc(n.title)}</strong><span>${esc(date(n.updated_at))}</span></button>`).join('')||(!loading?'<p class="study-list-empty">'+(q?'검색 결과가 없습니다.':'저장된 노트가 없습니다.')+'</p>':'');
+    const markup=items.map(n=>`<button type="button" class="study-note-link${store?.current?.id===n.id?' active':''}" data-note="${esc(n.id)}" draggable="true" title="폴더로 드래그하여 이동"><strong>${esc(n.title)}</strong><span>${esc(date(n.updated_at))}</span></button>`).join('')||(!loading?'<p class="study-list-empty">'+(q?'검색 결과가 없습니다.':'저장된 노트가 없습니다.')+'</p>':'');
     if(markup===listMarkup)return;
     byId('studyList').innerHTML=markup;listMarkup=markup;
     byId('studyList').querySelectorAll('[data-note]').forEach(b=>b.addEventListener('click',()=>void select(b.dataset.note)));

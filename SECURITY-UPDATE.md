@@ -20,7 +20,8 @@ Supabase SQL Editor에서 파일 전체를 아래 순서대로 실행합니다. 
 8. `migrations/20261119-class-roster-signup.sql`
 9. `migrations/20261119-delete-rejected-signups.sql`
 10. `migrations/20261119-study-folders.sql`
-11. **`migrations/20261119-auth-hardening.sql` — 마지막**
+11. `migrations/20261119-student-study.sql`
+12. **`migrations/20261119-auth-hardening.sql` — 마지막**
 
 6반 출석부 데이터는 별도 비공개 자료로 입력합니다. 실명 명단이나 DB 비밀번호는 저장소에 넣지 않습니다.
 

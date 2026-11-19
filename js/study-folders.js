@@ -3,9 +3,10 @@
   const esc=window.CodeWikiLearning.escape;
   const collator=new Intl.Collator('ko',{numeric:true,sensitivity:'base'});
   const icon='<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M3 5h6l2 3h10v12H3z" stroke-linejoin="round"/></svg>';
-  function create({element,moveElement,call,getNote,getNotes,onChange}) {
+  function create({element,moveElement,listElement,call,getNote,getNotes,onChange}) {
     let folders=[],assignments=new Map(),filter='all',editing=null,ready=false,pending=false,alive=true,loading=null;
     let message='',markup='',moveMarkup='';
+    let draggedNote=null,dragSource=null,dropTarget=null;
     const folderOf=id=>assignments.get(id)||'';
     const notify=()=>{if(alive){refresh();onChange();}};
     function refresh(){
@@ -76,22 +77,61 @@
         folders=folders.filter(f=>f.id!==saved.id);folders.push(saved);filter=saved.id;editing=null;
       });
     }
-    function move(e){
-      const note=getNote(),folder=e.target.value||null;
-      if(e.target.id!=='studyMoveFolder'||!note?.revision||pending||loading||!ready)return;
-      if((folder||'')===folderOf(note.id))return;
+    function moveNote(id,folder){
+      if(!alive||pending||loading||!ready||!getNotes().some(n=>n.id===id))return;
+      if(folder&&!folders.some(f=>f.id===folder))return;
+      if((folder||'')===folderOf(id))return;
       // Reflect only confirmed server state, including after a failed move.
       moveMarkup='';
       void mutate(async()=>{
-        const result=await call('cw_move_study_note',{p_note_id:note.id,p_folder_id:folder});if(!alive)return;
-        if(result?.note_id!==note.id||result.folder_id!==folder)throw new Error('invalid-move');
-        if(folder)assignments.set(note.id,folder);else assignments.delete(note.id);
+        const result=await call('cw_move_study_note',{p_note_id:id,p_folder_id:folder});if(!alive)return;
+        if(result?.note_id!==id||result.folder_id!==folder)throw new Error('invalid-move');
+        if(folder)assignments.set(id,folder);else assignments.delete(id);
       });
     }
+    function move(e){
+      const note=getNote();
+      if(e.target.id==='studyMoveFolder'&&note?.revision)moveNote(note.id,e.target.value||null);
+    }
+    function clearTarget(){dropTarget?.classList.remove('drag-over');dropTarget=null;}
+    function dragEnd(){clearTarget();dragSource?.classList.remove('dragging');dragSource=null;draggedNote=null;}
+    function dragStart(e){
+      dragEnd();
+      const source=e.target.closest('[data-note]');
+      if(!alive||!ready||pending||loading||!source||!e.dataTransfer||!getNotes().some(n=>n.id===source.dataset.note)){
+        e.preventDefault();return;
+      }
+      draggedNote=source.dataset.note;dragSource=source;
+      e.dataTransfer.effectAllowed='move';
+      e.dataTransfer.setData('application/x-codewiki-note',draggedNote);
+      source.classList.add('dragging');
+    }
+    function targetFor(e){
+      if(!alive||!draggedNote||!ready||pending||loading)return null;
+      const target=e.target.closest('[data-folder-filter]'),id=target?.dataset.folderFilter;
+      return target&&!target.disabled&&id!=='all'&&(id===''||folders.some(f=>f.id===id))&&id!==folderOf(draggedNote)?target:null;
+    }
+    function dragOver(e){
+      const target=targetFor(e);
+      if(target!==dropTarget){clearTarget();dropTarget=target;target?.classList.add('drag-over');}
+      if(target){e.preventDefault();if(e.dataTransfer)e.dataTransfer.dropEffect='move';}
+    }
+    function dragLeave(e){if(dropTarget&&!dropTarget.contains(e.relatedTarget))clearTarget();}
+    function drop(e){
+      const target=targetFor(e),id=draggedNote,folder=target?.dataset.folderFilter||null;
+      if(target)e.preventDefault();
+      dragEnd();
+      if(target)moveNote(id,folder);
+    }
     element.addEventListener('click',click);element.addEventListener('submit',submit);moveElement.addEventListener('change',move);
+    const dragEvents={dragover:dragOver,dragenter:dragOver,dragleave:dragLeave,drop};
+    Object.entries(dragEvents).forEach(([name,fn])=>element.addEventListener(name,fn));
+    listElement?.addEventListener('dragstart',dragStart);listElement?.addEventListener('dragend',dragEnd);
     refresh();
     return {load,refresh,includesNote:note=>filter==='all'||folderOf(note.id)===filter,
-      dispose(){alive=false;element.removeEventListener('click',click);element.removeEventListener('submit',submit);moveElement.removeEventListener('change',move);}};
+      dispose(){alive=false;dragEnd();element.removeEventListener('click',click);element.removeEventListener('submit',submit);moveElement.removeEventListener('change',move);
+        Object.entries(dragEvents).forEach(([name,fn])=>element.removeEventListener(name,fn));
+        listElement?.removeEventListener('dragstart',dragStart);listElement?.removeEventListener('dragend',dragEnd);}};
   }
   window.CodeWikiStudyFolders={create};
 })();

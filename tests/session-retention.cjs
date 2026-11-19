@@ -11,7 +11,7 @@ function boot(storage, rpc) {
     return nodes.get(id);
   };
   const timers=new Map();let timerId=0;
-  const context = {window:{supabase:{createClient:(url,key,options)=>{assert.equal(typeof options.accessToken,'function');return {rpc};}},scrollTo(){},CodeWikiApp:{hasSelectedTrack:()=>true}},
+  const context = {window:{location:{hash:'#study'},supabase:{createClient:(url,key,options)=>{assert.equal(typeof options.accessToken,'function');return {rpc};}},scrollTo(){},CodeWikiApp:{hasSelectedTrack:()=>true}},
     AbortController,setTimeout:fn=>{const id=++timerId;timers.set(id,fn);return id;},clearTimeout:id=>timers.delete(id),
     document:{getElementById:get,body:get('body')},
     localStorage:{getItem:k=>storage.get(k),setItem:(k,v)=>storage.set(k,v),removeItem:k=>storage.delete(k)}};
@@ -32,6 +32,8 @@ function boot(storage, rpc) {
   let app = boot(saved,rpc);
   await app.window.refresh();
   assert.equal(app.window.CodeWikiAuth.getCurrentUser().id,'student');
+  assert.match(app.get('adminSidebarSlot').innerHTML,/id="openStudyBtn"/);
+  assert.ok(!app.get('adminSidebarSlot').innerHTML.includes('id="openAdminModalBtn"'),'student does not receive admin controls');
   app = boot(saved,rpc); // New page/browser session using persisted storage.
   await app.window.refresh();
   assert.equal(app.window.CodeWikiAuth.getCurrentUser().id,'student');

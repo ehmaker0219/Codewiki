@@ -3,12 +3,13 @@ const tick=()=>new Promise(resolve=>setImmediate(resolve));
 function node(){return {innerHTML:'',events:{},input:{value:'',focus(){}},querySelector(){return this.input;},
  addEventListener(name,fn){this.events[name]=fn;},removeEventListener(name){delete this.events[name];}};}
 function harness(){
- const element=node(),moveElement=node(),requests=[],notes=[{id:'n1'},{id:'n2'}];let changes=0,confirm=true;
+ const element=node(),moveElement=node(),listElement=node(),requests=[],notes=[{id:'n1'},{id:'n2'}];let changes=0,confirm=true;
  const current={id:'n1',title:'A',body:'unsaved body',revision:2};
  const context={window:{CodeWikiLearning:{escape:s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))},confirm:()=>confirm},crypto:{randomUUID}};
  vm.runInNewContext(fs.readFileSync('js/study-folders.js','utf8'),context);
- const api=context.window.CodeWikiStudyFolders.create({element,moveElement,call:(name,args)=>new Promise((resolve,reject)=>requests.push({name,args,resolve,reject})),getNote:()=>current,getNotes:()=>notes,onChange:()=>changes++});
- return {api,element,moveElement,requests,current,changes:()=>changes,confirm:value=>confirm=value,
+ const api=context.window.CodeWikiStudyFolders.create({element,moveElement,listElement,call:(name,args)=>new Promise((resolve,reject)=>requests.push({name,args,resolve,reject})),getNote:()=>current,getNotes:()=>notes,onChange:()=>changes++});
+ const event=dataset=>{const classes=new Set(),target={dataset,classList:{add:n=>classes.add(n),remove:n=>classes.delete(n)},contains:()=>false};return {target:{closest:()=>target},classes,prevented:false,preventDefault(){this.prevented=true;},dataTransfer:{setData(){}}};};
+ return {api,element,moveElement,listElement,requests,current,event,changes:()=>changes,confirm:value=>confirm=value,
  click:dataset=>element.events.click({target:{closest:()=>({dataset})}}),
  submit:name=>{element.input.value=name;element.events.submit({preventDefault(){}});},
  move:value=>moveElement.events.change({target:{id:'studyMoveFolder',value}})};
@@ -32,8 +33,23 @@ function harness(){
  h.confirm(false);h.click({folderAction:'delete'});assert.equal(h.requests.length,0);h.confirm(true);h.click({folderAction:'delete'});
  assert.equal(h.requests[0].args.p_revision,2);h.requests.shift().resolve(null);await tick();
  assert.equal(h.api.includesNote({id:'n1'}),true,'deleted folder notes are unfiled');assert.equal(JSON.stringify(h.current),before);
+ // Only a local note drag may move a note; payloads from files/other tabs are ignored.
+ const external=h.event({folderFilter:'f1'});h.element.events.drop(external);assert.equal(h.requests.length,0);
+ const drag=h.event({note:'n2'});h.listElement.events.dragstart(drag);assert.equal(drag.dataTransfer.effectAllowed,'move');assert.ok(drag.classes.has('dragging'));
+ const all=h.event({folderFilter:'all'});h.element.events.dragover(all);assert.equal(all.prevented,false);
+ const target=h.event({folderFilter:'f1'});h.element.events.dragover(target);assert.ok(target.classes.has('drag-over'));assert.equal(target.prevented,true);assert.equal(h.requests.length,0,'hover must not call server');
+ h.element.events.drop(target);assert.equal(drag.classes.size,0);assert.equal(target.classes.size,0);
+ assert.equal(h.requests[0].args.p_note_id,'n2','drag must move dragged note, not current note');
+ h.element.events.drop(target);assert.equal(h.requests.length,1,'duplicate drop must not send again');
+ h.requests.shift().resolve({note_id:'n2',folder_id:'f1'});await tick();assert.equal(JSON.stringify(h.current),before);
+ h.click({folderFilter:'f1'});assert.equal(h.api.includesNote({id:'n2'}),true);
+ h.listElement.events.dragstart(h.event({note:'n2'}));const same=h.event({folderFilter:'f1'});h.element.events.drop(same);assert.equal(h.requests.length,0,'same folder is a no-op');
+ h.listElement.events.dragstart(h.event({note:'n2'}));const unfiled=h.event({folderFilter:''});h.element.events.drop(unfiled);
+ assert.equal(h.requests[0].args.p_folder_id,null);h.requests.shift().reject({code:'TIMEOUT'});await tick();assert.equal(h.api.includesNote({id:'n2'}),true,'failed drag keeps confirmed assignment');
+ h.listElement.events.dragstart(h.event({note:'n2'}));h.element.events.drop(unfiled);h.requests.shift().resolve({note_id:'n2',folder_id:null});await tick();assert.equal(h.api.includesNote({id:'n2'}),false);
+ h.listElement.events.dragstart(h.event({note:'n2'}));h.listElement.events.dragend();h.element.events.drop(target);assert.equal(h.requests.length,0,'cancelled drag must not move');
  h.current.revision=0;h.api.refresh();assert.match(h.moveElement.innerHTML,/disabled/);h.move('f1');assert.equal(h.requests.length,0,'unsaved note cannot be moved');
  const late=h.api.load();const count=h.changes();h.api.dispose();h.requests.shift().resolve({folders:[],assignments:[]});await late;
- assert.equal(h.changes(),count,'late result revived disposed session');assert.deepEqual(h.element.events,{});
+ assert.equal(h.changes(),count,'late result revived disposed session');assert.deepEqual(h.element.events,{});assert.deepEqual(h.listElement.events,{});
  console.log('PASS: folder filters, safe names, coalesced reads, create/rename/delete, confirmed moves, draft preservation, failure recovery and logout isolation');
 })().catch(error=>{console.error(error);process.exitCode=1;});
