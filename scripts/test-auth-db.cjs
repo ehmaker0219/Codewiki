@@ -15,8 +15,9 @@ const read = file => fs.readFileSync(path.join(root,file),'utf8');
     await db.exec(read('supabase-setup.sql'));
     for (const file of ['20261118-birthdays.sql','20261118-profile.sql','20261118-session-retention.sql',
       '20261118-learning-progress.sql','20261118-study-notes.sql','20261118-study-conflict-response.sql',
-      '20261119-class-roster-signup.sql','20261119-delete-rejected-signups.sql']) {
+      '20261119-class-roster-signup.sql','20261119-delete-rejected-signups.sql','20261119-study-folders.sql']) {
       await db.exec(read(`migrations/${file}`));
+      if(file==='20261119-study-folders.sql')await db.exec(read(`migrations/${file}`));
     }
     for (const file of ['security-regression.sql','class-roster.sql','admin-delete.sql']) await db.exec(read(`tests/${file}`));
     // Demonstrate the original failure through a real caller, then remove the fixture.
@@ -44,7 +45,7 @@ const read = file => fs.readFileSync(path.join(root,file),'utf8');
     assert.equal(count.rows[0].attempts,1,'failed request commits its quota');
     await db.exec('truncate cw_auth_private.limits;');
     await db.exec(read('tests/auth-hardening.sql'));
-    for (const file of ['security-regression.sql','session-retention.sql','admin-delete.sql','study-notes.sql']) await db.exec(read(`tests/${file}`));
-    console.log('PASS: PostgreSQL auth hardening, unsafe setup rerun blocked, committed failure quota, session/admin authorization and study ownership/revision regressions');
+    for (const file of ['security-regression.sql','session-retention.sql','admin-delete.sql','study-notes.sql','study-folders.sql']) await db.exec(read(`tests/${file}`));
+    console.log('PASS: PostgreSQL auth hardening, unsafe setup rerun blocked, session/admin authorization, study ownership/revisions and private folder regressions');
   } finally { await db.close(); }
 })().catch(error => { console.error(error.message); process.exitCode=1; });

@@ -25,6 +25,24 @@
 .study-note-link:hover {background:var(--toss-blue-soft,#e9f0fb);}
 .study-note-link.active {background:var(--toss-blue-soft,#e9f0fb);border-color:#a9c3e3;}
 .study-list-empty,#studyListStatus {font-size:12px;color:var(--text-muted);line-height:1.6;}
+.study-folders {border-bottom:1px solid var(--border-hairline);padding-bottom:12px;margin-bottom:12px;}
+.study-folder-heading,.study-folder-actions {display:flex;align-items:center;justify-content:space-between;gap:6px;margin-bottom:6px;}
+.study-folder-heading>span {font-size:11px;color:var(--text-muted);}
+.study-folders button {font:inherit;font-size:11px;border:0;border-radius:4px;padding:6px;background:transparent;color:var(--text-sub);}
+.study-folders button:hover {background:var(--toss-blue-soft);color:var(--text-strong);}
+.study-folders nav {display:flex;flex-direction:column;gap:3px;max-height:240px;overflow-y:auto;}
+.study-folders .study-folder-link {display:flex;align-items:center;gap:7px;width:100%;text-align:left;padding:8px;font-size:12px;}
+.study-folder-link svg {flex-shrink:0;}
+.study-folder-link span {flex:1;overflow-wrap:anywhere;}
+.study-folder-link small {color:var(--text-muted);}
+.study-folders .study-folder-link.active {color:var(--text-strong);background:var(--toss-blue-soft);font-weight:600;}
+.study-folder-form {margin-top:8px;padding:10px;border:1px solid var(--border-hairline);border-radius:5px;}
+.study-folder-form label {display:block;font-size:11px;margin-bottom:6px;}
+.study-folder-form input {width:100%;min-width:0;background:var(--bg-card);color:var(--text-strong);border:1px solid var(--border-hairline);border-radius:4px;padding:7px;font-size:12px;}
+.study-folder-status {font-size:11px;color:var(--text-muted);line-height:1.6;margin:6px 0;}
+.study-folder-status:empty {display:none;}
+.study-folder-move {display:flex;align-items:center;gap:8px;padding:0 24px 8px;color:var(--text-sub);font-size:12px;}
+.study-folder-move select {font:inherit;max-width:240px;border:1px solid var(--border-hairline);border-radius:4px;background:var(--bg-card);color:var(--text-strong);padding:5px 8px;}
 .study-notebook {min-width:0;}
 .study-empty {min-height:540px;display:flex;flex-direction:column;justify-content:center;align-items:center;padding:24px;text-align:center;}
 .study-empty>span {font-size:36px;color:#7295c0;}

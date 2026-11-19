@@ -5,6 +5,7 @@
   let session=null,store=null,notes=[],editor=null,loading=false,loadVersion=0,transition=false;
   let editorLoad=null,mounted=false;
   let listChanges=null,listMarkup=null;
+  let folders=null;
   const visible=()=>Boolean(session)&&window.location.hash==='#study';
   const date=value=>value?new Date(value).toLocaleString('ko-KR',{timeZone:'Asia/Seoul',month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}):'새 노트';
   const byId=id=>host.querySelector('#'+id);
@@ -32,6 +33,7 @@
       if(mounted)byId('studyHeading').textContent=session.name+'님의 공부방';
       return;
     }
+    folders?.dispose();folders=null;
     store?.dispose();store=null;session=null;notes=[];loadVersion++;transition=false;
     loading=false;listChanges=null;listMarkup=null;
     editor?.destroy();editor=null;mounted=false;host.innerHTML='';
@@ -46,7 +48,7 @@
     const open=visible();
     host.hidden=!open;shell.classList.toggle('study-hidden',open);
     document.getElementById('openStudyBtn')?.classList.toggle('active',open);
-    if(open){window.CodeWikiBoard?.closeIfActive();document.getElementById('sbHomeItem')?.classList.remove('active');document.getElementById('sbScheduleItem')?.classList.remove('active');document.querySelectorAll('.nav-doc-link.active').forEach(el=>el.classList.remove('active'));if(!window.CodeWikiStudyEditor){loadEditor();return;}if(!mounted)mount();void list();}
+    if(open){window.CodeWikiBoard?.closeIfActive();document.getElementById('sbHomeItem')?.classList.remove('active');document.getElementById('sbScheduleItem')?.classList.remove('active');document.querySelectorAll('.nav-doc-link.active').forEach(el=>el.classList.remove('active'));if(!window.CodeWikiStudyEditor){loadEditor();return;}if(!mounted)mount();else void folders?.load();void list();}
   }
   function loadEditor() {
     if(editorLoad)return;
@@ -92,9 +94,10 @@
     host.innerHTML=`<header class="study-header"><div><span class="study-eyebrow">PERSONAL STUDY</span><h1 id="studyHeading">${esc(session.name)}님의 공부방</h1><p>오늘 배운 내용을 나만의 언어로.</p></div><span class="study-private">나만 보는 노트</span></header>
       <div class="study-layout"><aside class="study-library"><div class="study-library-heading"><h2>내 필기</h2><button type="button" id="studyNew" class="toss-primary-btn">+ 새 노트</button></div>
       <label class="sr-only" for="studySearch">노트 제목 검색</label><input id="studySearch" type="search" placeholder="노트 제목 검색"><div class="study-import"><button type="button" id="studyImport" class="toss-chip-btn" title="TXT·MD 파일을 여러 개 선택할 수 있습니다">TXT · MD 가져오기</button><input type="file" id="studyFile" accept=".txt,.md,text/plain,text/markdown" multiple hidden><p id="studyImportStatus" role="status" aria-live="polite"></p></div>
-      <p id="studyListStatus" role="status"></p><button type="button" id="studyRetryList" class="toss-chip-btn" hidden>목록 다시 불러오기</button><div id="studyList" class="study-list"></div></aside>
+      <div id="studyFolders" class="study-folders"></div><p id="studyListStatus" role="status"></p><button type="button" id="studyRetryList" class="toss-chip-btn" hidden>목록 다시 불러오기</button><div id="studyList" class="study-list"></div></aside>
       <section class="study-notebook"><div id="studyEmpty" class="study-empty"><span aria-hidden="true">✎</span><h2>첫 페이지를 펼쳐 보세요</h2><p>새 노트를 만들거나 메모장 파일을 가져오세요.</p></div>
       <div id="studyEditor" hidden><label class="sr-only" for="studyTitle">노트 제목</label><input id="studyTitle" class="study-title" maxlength="120" placeholder="노트 제목">
+      <div id="studyFolderMove" class="study-folder-move"></div>
       <div class="study-editor-tools">
       <div class="study-editor-meta"><span id="studyStatus" role="status" aria-live="polite"></span><div><button type="button" id="studyDownload" class="toss-chip-btn">내려받기</button><button type="button" id="studySave" class="toss-primary-btn">저장</button></div></div>
       <div class="study-toolbar study-word-tools" role="toolbar" aria-label="필기 서식 도구">
@@ -112,7 +115,7 @@
       <div id="studyBody" class="study-rich-editor"></div>
       <footer class="study-note-footer"><span id="studyCount"></span><div><button type="button" id="studyReload">서버 글 불러오기</button><button type="button" id="studyDelete">노트 삭제</button></div></footer></div></section></div>`;
     byId('studyNew').addEventListener('click',()=>void createNote());
-    byId('studyRetryList').addEventListener('click',()=>void list());
+    byId('studyRetryList').addEventListener('click',()=>{void list();void folders?.load();});
     byId('studySearch').addEventListener('input',renderList);
     byId('studyImport').addEventListener('click',()=>byId('studyFile').click());
     byId('studyFile').addEventListener('change',async e=>{
@@ -152,6 +155,10 @@
       menu.addEventListener('toggle',()=>{if(menu.open)closeToolMenus(menu);});
     });
     byId('studySave').title='저장 ('+(/Mac|iPhone|iPad/.test(window.navigator?.platform||'')?'⌘':'Ctrl')+'+S)';
+    const folderStore=store;
+    folders=window.CodeWikiStudyFolders?.create({element:byId('studyFolders'),moveElement:byId('studyFolderMove'),
+      call:(...args)=>folderStore.call(...args),getNote:()=>folderStore.current,getNotes:()=>notes,onChange:renderList});
+    void folders?.load();
     fill();
   }
   function shortcuts(e) {
@@ -201,6 +208,7 @@
       // Selection and save timestamps never affect title-based list ordering.
       if(index<0)notes.unshift(note);else notes[index]=note;
       listChanges?.set(note.id,note);
+      folders?.refresh();
       renderList();
     }
   }
@@ -210,12 +218,12 @@
     byId('studyEditor').hidden=!n;byId('studyEmpty').hidden=Boolean(n);
     if(n){byId('studyTitle').value=n.title;editor.setContent(n.body);updateToolbar();}
     else editor?.destroy();
-    update();renderList();
+    update();folders?.refresh();renderList();
   }
   function renderList() {
     if(!byId('studyList'))return;
     const q=byId('studySearch').value.trim().toLocaleLowerCase();
-    const items=notes.filter(n=>n.title.toLocaleLowerCase().includes(q)).sort(compareTitles);
+    const items=notes.filter(n=>(!folders||folders.includesNote(n))&&n.title.toLocaleLowerCase().includes(q)).sort(compareTitles);
     const markup=items.map(n=>`<button type="button" class="study-note-link${store?.current?.id===n.id?' active':''}" data-note="${esc(n.id)}"><strong>${esc(n.title)}</strong><span>${esc(date(n.updated_at))}</span></button>`).join('')||(!loading?'<p class="study-list-empty">'+(q?'검색 결과가 없습니다.':'저장된 노트가 없습니다.')+'</p>':'');
     if(markup===listMarkup)return;
     byId('studyList').innerHTML=markup;listMarkup=markup;
@@ -239,7 +247,7 @@
       }
     }
     catch {if(store===s&&loadVersion===version){byId('studyListStatus').textContent='목록을 불러오지 못했습니다.';byId('studyRetryList').hidden=false;}}
-    finally {if(store===s&&loadVersion===version){loading=false;listChanges=null;renderList();}}
+    finally {if(store===s&&loadVersion===version){loading=false;listChanges=null;folders?.refresh();renderList();}}
   }
   async function select(id) {
     if(transition||store?.current?.id===id)return;lock(true);const s=store;
