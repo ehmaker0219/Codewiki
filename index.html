@@ -11,9 +11,10 @@
   <link rel="stylesheet" href="css/theme.css?v=7641f370fcfc" />
   <link rel="stylesheet" href="css/profile.css?v=386bcc74d5e6" />
   <link rel="stylesheet" href="css/admin-members.css?v=6552de795079" />
-  <link rel="stylesheet" href="css/birthdays.css?v=f858766dad1c" />
+  <link rel="stylesheet" href="css/birthdays.css?v=52caacd0ea90" />
   <link rel="stylesheet" href="css/schedule.css?v=7357dc7efd11" />
   <link rel="stylesheet" href="css/study.css?v=7d0efebf5dd6" />
+  <link rel="stylesheet" href="css/mentoring.css?v=2496571647c0" />
   <link rel="stylesheet" href="css/object-game.css?v=97180b09645e" />
 </head>
 <body>
@@ -89,6 +90,7 @@
             </div>
           </details>
           <div id="studySidebarSlot"></div>
+          <button type="button" id="openMentoringBtn" class="sb-menu-item" hidden><svg class="sb-icon" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 4H5v17h14V4h-4M9 3h6v4H9zM8 12h8M8 16h5"/></svg><span>멘토링</span></button>
           <details class="sidebar-menu-group" id="mealMenuGroup" open>
             <summary class="sb-menu-item">
               <svg class="sb-icon" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11h18a9 9 0 0 1-18 0ZM8 20h8M7 7c-2-2 2-3 0-5M12 7c-2-2 2-3 0-5M17 7c-2-2 2-3 0-5"/></svg>
@@ -161,6 +163,7 @@
 
       <!-- 본문 + 우측 보조 패널 (데이터가 있을 때만 우측 패널 노출) -->
       <section id="studyWorkspace" class="study-workspace" aria-label="개인 공부방" hidden></section>
+      <section id="mentoringPage" class="mentoring-page" aria-label="멘토링 활동 기록" hidden></section>
       <section id="adminMembersPage" class="members-page" aria-label="학생 정보" hidden></section>
       <section id="objectGamePage" class="object-game-page" hidden aria-labelledby="objectGameTitle" aria-describedby="objectGameIntro">
         <div class="object-game-header"><h1 id="objectGameTitle">DATA 미니게임</h1></div>
@@ -196,7 +199,7 @@
           </div>
         </aside>
       </div>
-      <footer class="site-footer">최근 업데이트 <time id="siteUpdatedAt" datetime="2026-11-19T07:10:36.751Z" data-version="eb1a1e7acae1a765">2026.11.19 16:10 (KST)</time></footer>
+      <footer class="site-footer">최근 업데이트 <time id="siteUpdatedAt" datetime="2026-11-19T08:56:23.358Z" data-version="5ab5088f8284a5eb">2026.11.19 17:56 (KST)</time></footer>
     </div>
   </div>
 
@@ -225,17 +228,17 @@
 
   <script src="js/data.js?v=e525842bb097"></script>
   <script src="js/ui5-data.js?v=fa64b5a1a556"></script>
-  <script src="js/class-notes.js?v=1cf9b1e85a4b"></script>
-  <script src="js/lesson-days.js?v=648cf8e9cfdf"></script>
-  <script src="js/example-notes.js?v=92e53236c72c"></script>
+  <script src="js/class-notes.js?v=c35c69519bbe"></script>
+  <script src="js/lesson-days.js?v=ec7035c94e00"></script>
+  <script src="js/example-notes.js?v=f4e52d7236ca"></script>
   <script src="js/learning-tools.js?v=7c06a8493ef2"></script>
   <script src="js/profile.js?v=8656479ddf78"></script>
-  <script src="js/birthdays.js?v=2cf683cb4adc"></script>
+  <script src="js/birthdays.js?v=a206e20bf51d"></script>
   <script src="js/progress.js?v=5daa2cd3faf4"></script>
   <script src="js/visualizers.js?v=dbbc291349e3"></script>
   <script src="js/schedule-data.js?v=7a907468c4cd"></script>
-  <script src="js/schedule.js?v=c034a3ef8fe8"></script>
-  <script src="js/app.js?v=404aa48c3d92"></script>
+  <script src="js/schedule.js?v=1f8871091c42"></script>
+  <script src="js/app.js?v=d517c29818d0"></script>
   <script src="js/admin.js?v=fa529e2d1ef0"></script>
   <script src="js/admin-members.js?v=deec93dd0db8"></script>
   <script src="js/presence.js?v=945d605e473f"></script>
@@ -243,8 +246,12 @@
   <script src="js/study-store.js?v=d06196e4f21c"></script>
   <script src="js/study-folders.js?v=8554c9be03cc"></script>
   <script src="js/study.js?v=611548f86f5d"></script>
-  <script src="js/auth.js?v=b207e998e4ff"></script>
-  <script src="js/board.js?v=307cf5efed21"></script>
+  <script src="js/mentoring-store.js?v=2d2c77ead568"></script>
+  <script src="js/mentoring-model.js?v=3f46447603d3"></script>
+  <script src="js/mentoring-team-store.js?v=3957d155a0d4"></script>
+  <script src="js/mentoring.js?v=15165e6a9b79"></script>
+  <script src="js/auth.js?v=efadd89f3d18"></script>
+  <script src="js/board.js?v=91a98e33a9ab"></script>
   <script src="js/practice.js?v=f1c393395841"></script>
   <script src="js/practice-ui.js?v=9b9d96b845b5"></script>
   <script type="application/json" id="objectGameBankSource" data-src="js/object-game-bank.js?v=09f9192ee9cf"></script>

@@ -1,6 +1,18 @@
 /** Expected results are explanatory; none of these examples has been run in SAP here. */
 (() => {
+  const sqlRequirements = 'Standard ABAP 7.52 기준입니다. SCARR·SPFLI·SFLIGHT 교육용 테이블이 있는 시스템에서 실행하세요. 실제 출력은 현재 클라이언트의 데이터에 따라 달라집니다.';
+  const sqlExample = (input, expected) => ({input, expected, requirements:sqlRequirements});
   const notes = {
+    'Open SQL 기본 조회': sqlExample('p_carr = LH', 'LH가 있으면 항공사 코드·이름·통화가 출력되고, 없으면 조회 결과가 없습니다가 출력됩니다.'),
+    '항공사 이름과 가장 빠른 운항일': sqlExample('p_carr = LH', '항공사 이름과 해당 항공사의 가장 이른 운항일 한 건을 출력합니다. 같은 날짜라면 노선 번호가 작은 행을 선택합니다. 데이터가 없는 조회 부분은 출력되지 않습니다.'),
+    '이름 기준으로 작업 영역과 테이블에 받기': sqlExample('SCARR의 LH 행', '대상 필드 순서가 달라도 이름으로 매핑됩니다. LH가 있으면 코드·이름과 행 수 1, 없으면 행 수 0이 출력됩니다.'),
+    '조회 결과를 이어 담기': sqlExample('SCARR의 LH·AA 행', '두 항공사가 모두 있으면 합친 행 수 2, 다시 채운 행 수 1입니다. 없는 항공사는 추가되지 않습니다.'),
+    '선택 범위와 문자열 조건': sqlExample('s_carr에 항공사 범위 입력 또는 비워 두기', '선택한 코드 범위 안에서 이름이 L 또는 A로 시작하는 항공사만 코드순으로 출력됩니다. 범위를 비우면 코드 제한 없이 이름 조건을 적용합니다.'),
+    '항공사별 좌석 집계': sqlExample('SFLIGHT에 저장된 데이터', '총 좌석 수가 양수인 운항을 대상으로 항공사별 건수와 점유 좌석 통계를 출력합니다. 조건을 만족하는 운항이 2건 미만인 항공사는 제외됩니다.'),
+    '집계 결과와 실제 원본 건수 비교': sqlExample('carrid가 LH이면서 AA인 불가능한 조건', '원본 0건에도 집계 결과 한 행이 생겨 0, 0, 0, 1이 출력됩니다. 순서는 matched, max_occupied, sy-subrc, sy-dbcnt입니다.'),
+    '항공사와 독일 출발 노선 연결': sqlExample('SCARR·SPFLI의 현재 데이터', '항공사별 독일 출발 노선을 출력합니다. 해당 노선이 없는 항공사도 표시되며 오른쪽 열은 ABAP 초기값으로 보입니다.'),
+    '노선이 있는 항공사만 조회': sqlExample('SCARR·SPFLI의 현재 데이터', 'SPFLI에 노선이 하나 이상 있는 항공사를 한 행씩 코드순으로 출력합니다.'),
+    '빈 기준 테이블을 막는 FOR ALL ENTRIES': sqlExample('독일 출발 노선과 운항 데이터', '해당 노선의 운항 건수를 출력합니다. 기준 노선이 없으면 두 번째 조회를 실행하지 않고 조회할 노선이 없습니다를 출력합니다.'),
     '로컬 클래스의 정적 메서드': {input:'iv_number = 5', expected:'10이 출력됩니다.'},
     '구조 타입과 구조 변수': {input:'id = 1, name = 홍길동', expected:'1 홍길동 / 홍길동이 출력됩니다.'},
     '같은 이름의 필드만 복사': {input:'원본 name = 홍길동, 대상 score = 80', expected:'홍길동 80이 출력됩니다. score는 원본에 같은 이름의 필드가 없어 유지됩니다.'},

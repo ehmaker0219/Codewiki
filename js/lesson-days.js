@@ -78,6 +78,22 @@
       from('abap-data-report', '내부 테이블 정렬'),
       from('abap-data-report', 'CLEAR·REFRESH·FREE'),
       from('abap-data-report', 'Header Line과 OCCURS — 기존 코드 읽기')
+    ]},
+    {date: '2026-11-19', source: '261119 목요일.md', sections: [
+      from('abap-open-sql', 'Open SQL과 Transparent Table'),
+      from('abap-open-sql', 'SELECT 기본 구조와 호스트 변수'),
+      from('abap-open-sql', '한 행 조회와 정렬된 첫 행'),
+      from('abap-open-sql', '작업 영역·내부 테이블·CORRESPONDING'),
+      from('abap-open-sql', 'INTO TABLE과 APPENDING TABLE'),
+      from('abap-open-sql', 'WHERE 조건과 NULL'),
+      from('abap-open-sql', 'DISTINCT·집계·GROUP BY·HAVING'),
+      from('abap-open-sql', '조회 결과가 없을 때와 시스템 필드'),
+      from('abap-open-sql', 'JOIN과 ON·WHERE의 차이'),
+      from('abap-open-sql', '보완: 서브쿼리와 FOR ALL ENTRIES'),
+      from('abap-open-sql', 'INSERT·UPDATE·MODIFY·DELETE'),
+      from('abap-open-sql', '보완: 트랜잭션과 안전한 변경'),
+      from('abap-open-sql', '보완: 성능과 다음 문법'),
+      from('abap-open-sql', '필기와 참고 자료')
     ]}
   ];
   // Dates are rebuilt from explicit source associations, including split topics.

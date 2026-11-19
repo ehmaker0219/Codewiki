@@ -1,0 +1,122 @@
+#mentoringPage[hidden],#mentoringPage [hidden],#openMentoringBtn[hidden],.app-shell.mentoring-hidden {display:none!important;}
+.mentoring-page {width:100%;max-width:1440px;margin:0 auto;padding:28px 24px;color:var(--text-strong);}
+.mentoring-page .sr-only {position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;}
+.mentoring-heading {display:flex;align-items:center;justify-content:space-between;gap:16px;}
+.mentoring-eyebrow {font-size:10px;font-weight:700;letter-spacing:.12em;color:var(--text-muted);}
+.mentoring-heading h1 {font-size:23px;margin:8px 0;}
+.mentoring-heading p,.mentoring-local {font-size:13px;line-height:1.7;color:var(--text-sub);}
+.mentoring-local {padding:12px 16px;margin:20px 0;background:var(--toss-blue-soft);border-radius:8px;}
+.mentoring-page button,.mentoring-page input,.mentoring-page textarea {font:inherit;}
+.mentoring-page button {cursor:pointer;}
+.mentoring-page button:disabled {cursor:default;opacity:.5;}
+.mentoring-page .toss-primary-btn,.mentoring-page .toss-chip-btn {width:auto;height:auto;min-height:32px;padding:8px 12px;font-size:12px;white-space:nowrap;}
+.mentoring-layout {display:grid;grid-template-columns:220px minmax(0,1fr);border:1px solid var(--border-hairline);border-radius:10px;background:var(--bg-card);overflow:clip;min-height:480px;}
+.mentoring-library {padding:20px 14px;background:var(--bg-subtle);border-right:1px solid var(--border-hairline);min-width:0;}
+.mentoring-library h2 {font-size:14px;margin:0 0 16px;}
+.mentoring-page input:not([type=checkbox]):not([type=file]),.mentoring-page textarea {width:100%;min-width:0;border:1px solid var(--border-hairline);border-radius:6px;padding:10px 12px;background:var(--bg-card);color:var(--text-strong);font-size:13px;line-height:1.6;}
+.mentoring-page input:focus-visible,.mentoring-page textarea:focus-visible,.mentoring-page button:focus-visible {outline:2px solid var(--accent,#0c3378);outline-offset:2px;}
+#mentoringList {display:flex;flex-direction:column;gap:6px;margin-top:16px;max-height:65vh;overflow:auto;overscroll-behavior:contain;}
+.mentoring-record {text-align:left;border:1px solid transparent;border-radius:6px;padding:12px;background:transparent;color:var(--text-strong);}
+.mentoring-record strong {display:block;overflow-wrap:anywhere;font-size:13px;line-height:1.6;}
+.mentoring-record span {display:block;margin-top:5px;font-size:11px;color:var(--text-sub);}
+.mentoring-record:hover,.mentoring-record.active {background:var(--toss-blue-soft);}
+.mentoring-record.active {border-color:#a9c3e3;}
+.mentoring-main {min-width:0;}
+.mentoring-actions {display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap;padding:14px 20px;border-bottom:1px solid var(--border-hairline);background:var(--bg-card);}
+.mentoring-actions>div {display:flex;flex-wrap:wrap;gap:6px;}
+#mentoringStatus {font-size:11px;line-height:1.6;color:var(--text-sub);}
+.mentoring-form {padding:24px;}
+.mentoring-form section+section {margin-top:28px;}
+.mentoring-form h2 {font-size:15px;margin:0 0 12px;}
+.mentoring-fields {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;}
+.mentoring-fields label {display:flex;flex-direction:column;gap:7px;font-size:12px;color:var(--text-sub);}
+.mentoring-complete {display:flex;align-items:center;gap:8px;margin-top:16px;font-size:12px;}
+.mentoring-complete input {accent-color:var(--accent,#0c3378);}
+.mentoring-section-title {display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px;}
+.mentoring-section-title h2 {margin:0;}
+.mentoring-page textarea {resize:vertical;min-height:110px;}
+#mentoringPage textarea[data-field="code"] {font-family:Consolas,monospace;}
+.mentoring-help,#mentoringFileStatus {color:var(--text-sub);font-size:12px;line-height:1.7;overflow-wrap:anywhere;}
+.mentoring-upload {display:flex;flex-wrap:wrap;gap:12px;align-items:center;font-size:12px;padding:12px;border:1px dashed var(--border-hairline);border-radius:6px;}
+.mentoring-upload input {max-width:100%;font-size:12px;}
+.mentoring-attachment {display:flex;align-items:center;gap:8px;padding:12px 0;border-bottom:1px solid var(--border-hairline);font-size:12px;}
+.mentoring-attachment>span {flex:1;min-width:0;overflow-wrap:anywhere;}
+.mentoring-attachment small {color:var(--text-muted);}
+.mentoring-attachment button,.mentoring-delete {background:transparent;border:0;padding:6px;color:var(--text-sub);font-size:12px;flex-shrink:0;}
+.mentoring-delete {color:#ba4545;margin-top:24px;}
+.mentoring-empty {padding:60px 24px;text-align:center;color:var(--text-sub);font-size:13px;line-height:1.7;}
+.mentoring-empty h2 {font-size:18px;color:var(--text-strong);}
+.mentoring-import-note {display:block;width:100%;padding:12px;margin:8px 0;border:1px solid var(--border-hairline);border-radius:6px;text-align:left;background:var(--bg-subtle);color:var(--text-strong);font-size:13px;}
+.mentoring-report {padding:32px;line-height:1.8;font-size:14px;overflow-wrap:anywhere;}
+.mentoring-report header {border-bottom:2px solid var(--text-strong);padding-bottom:20px;}
+.mentoring-report header p {font-size:12px;color:var(--text-sub);margin:0;}
+.mentoring-report h1 {font-size:26px;line-height:1.4;margin:8px 0;}
+.mentoring-report header span {font-size:11px;color:var(--text-sub);}
+.mentoring-report-info {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;padding:20px 0;border-bottom:1px solid var(--border-hairline);}
+.mentoring-report-info dt {font-size:11px;color:var(--text-sub);}
+.mentoring-report-info dd {margin:4px 0 0;white-space:pre-wrap;}
+.mentoring-report section {margin-top:28px;}
+.mentoring-report h2 {font-size:16px;margin:0 0 10px;break-after:avoid;}
+.mentoring-report-text,.mentoring-report pre {white-space:pre-wrap;}
+.mentoring-report pre {padding:16px;background:var(--bg-subtle);font:12px/1.8 Consolas,monospace;overflow-wrap:anywhere;}
+.mentoring-report figure {margin:20px 0;break-inside:avoid;}
+.mentoring-report img {max-width:100%;max-height:650px;object-fit:contain;}
+.mentoring-report figcaption,.mentoring-report footer {font-size:11px;color:var(--text-sub);}
+.mentoring-report footer {margin-top:32px;padding-top:12px;border-top:1px solid var(--border-hairline);}
+.mentoring-role {display:flex;align-items:center;gap:12px;font-size:12px;flex-wrap:wrap;}
+.mentoring-local label {display:flex;align-items:center;gap:10px;margin-top:10px;}
+.mentoring-page select {font:inherit;font-size:12px;padding:8px;border:1px solid var(--border-hairline);border-radius:6px;background:var(--bg-card);color:var(--text-strong);max-width:100%;}
+.mentoring-field {display:flex;flex-direction:column;gap:8px;margin-bottom:18px;font-size:13px;color:var(--text-sub);}
+.mentoring-fields .mentoring-field {margin-bottom:0;}
+.mentoring-fields {margin-bottom:18px;}
+.mentoring-status-badge {display:inline-block;font-size:11px;line-height:1.6;border-radius:6px;background:var(--toss-blue-soft);padding:5px 8px;color:var(--text-sub);}
+.mentoring-own {padding:20px;border:1px solid #a9c3e3;border-radius:8px;background:var(--bg-subtle);}
+.mentoring-submissions {display:grid;grid-template-columns:minmax(0,1fr);gap:16px;}
+.mentoring-submission {border:1px solid var(--border-hairline);border-radius:8px;padding:20px;min-width:0;}
+.mentoring-submission h3 {font-size:15px;margin:0;}
+.mentoring-text-block {line-height:1.8;overflow-wrap:anywhere;margin:18px 0;}
+.mentoring-form .mentoring-text-block+.mentoring-text-block {margin-top:18px;}
+.mentoring-text-block h3 {font-size:13px;margin:0 0 8px;break-after:avoid;}
+.mentoring-text-block pre {font:12px/1.8 Consolas,monospace;padding:14px;background:var(--bg-subtle);white-space:pre-wrap;overflow-wrap:anywhere;}
+.mentoring-feedback {border-top:1px solid var(--border-hairline);margin-top:18px;padding-top:18px;}
+.mentoring-feedback .mentoring-field {margin-bottom:0;}
+.mentoring-inline-actions {display:flex;gap:8px;flex-wrap:wrap;}
+.mentoring-own [data-action=submit] {margin-top:16px;}
+.mentoring-comment {border:1px solid var(--border-hairline);border-radius:8px;padding:16px;margin:12px 0;background:var(--bg-subtle);}
+.mentoring-comment header {display:flex;gap:10px;align-items:center;flex-wrap:wrap;font-size:12px;}
+.mentoring-comment header span {color:var(--text-muted);font-size:11px;}
+.mentoring-comment header label {margin-left:auto;display:flex;align-items:center;gap:6px;font-size:11px;}
+.mentoring-comment p {font-size:13px;line-height:1.8;white-space:pre-wrap;overflow-wrap:anywhere;margin:12px 0 0;}
+.mentoring-conversation>label {margin-top:16px;}
+#mentoringUpdates {padding:12px 20px;margin:0;background:var(--toss-blue-soft);}
+#mentoringPage [data-action=delete] {margin-top:24px;color:#ba4545!important;}
+.mentoring-actions {position:sticky;top:56px;z-index:10;}
+.mentoring-report .mentoring-text-block {font-size:13px;}
+@media(max-width:680px){
+ .mentoring-page {padding:20px 12px;}
+ .mentoring-heading {align-items:flex-start;}
+ .mentoring-heading h1 {font-size:21px;}
+ .mentoring-layout {grid-template-columns:minmax(0,1fr);}
+ .mentoring-library {border-right:0;border-bottom:1px solid var(--border-hairline);}
+ #mentoringList {max-height:180px;}
+ .mentoring-form,.mentoring-report {padding:20px 16px;}
+ .mentoring-fields,.mentoring-report-info {grid-template-columns:minmax(0,1fr);}
+ .mentoring-section-title {align-items:flex-start;flex-wrap:wrap;}
+ .mentoring-role {justify-content:flex-end;}
+ .mentoring-own,.mentoring-submission {padding:16px 12px;}
+ .mentoring-actions {position:static;}
+}
+@media print {
+ @page {size:A4;margin:16mm;}
+ body.mentoring-print {background:#fff!important;color:#111!important;}
+ body.mentoring-print .docked-sidebar,body.mentoring-print .edge-collapse-btn,
+ body.mentoring-print .workspace-area> :not(#mentoringPage),
+ body.mentoring-print .mentoring-heading,body.mentoring-print .mentoring-local,body.mentoring-print .mentoring-library,
+ body.mentoring-print .mentoring-actions,body.mentoring-print #mentoringEditor,body.mentoring-print #mentoringUpdates,body.mentoring-print dialog {display:none!important;}
+ body.mentoring-print .app-layout,body.mentoring-print .workspace-area,body.mentoring-print .mentoring-page,body.mentoring-print .mentoring-layout,body.mentoring-print .mentoring-main {display:block!important;width:auto!important;max-width:none!important;min-height:0!important;height:auto!important;margin:0!important;padding:0!important;border:0!important;overflow:visible!important;background:#fff!important;}
+ body.mentoring-print .mentoring-report {display:block!important;padding:0;color:#111;background:#fff;font-size:10pt;}
+ body.mentoring-print .mentoring-report :is(dt,header p,header span,figcaption,footer) {color:#555;}
+ body.mentoring-print .mentoring-report h1 {font-size:20pt;}
+ body.mentoring-print .mentoring-report h2 {font-size:12pt;}
+ body.mentoring-print .mentoring-report pre {color:#111;background:#f4f5f7;}
+}

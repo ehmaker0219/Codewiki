@@ -12,3 +12,11 @@
 .birthday-member-detail:not(:empty) { margin-top:14px; padding-top:14px; border-top:1px solid var(--border-subtle); font-size:13px; }
 .birthday-member-detail p { margin:5px 0 0; }
 .birthday-directory-empty { color:var(--text-muted); }
+.schedule-header-tools {display:flex;align-items:center;gap:12px;flex-wrap:wrap;justify-content:flex-end;}
+.schedule-header-actions #scheduleBirthdays {display:inline-flex;align-items:center;gap:8px;min-height:38px;padding:8px 13px;border-color:var(--toss-blue);background:var(--toss-blue-soft);color:var(--toss-blue);font-weight:600;}
+.schedule-header-actions #scheduleBirthdays[aria-pressed="true"] {background:var(--toss-blue);color:#fff;}
+#scheduleBirthdays svg {flex-shrink:0;}
+#scheduleDetailPanel {min-width:0;scroll-margin-top:76px;}
+.birthday-class-label {display:flex;align-items:center;gap:10px;font-size:12px;margin-bottom:14px;color:var(--text-sub);}
+.birthday-class-label select {min-width:0;flex:1;padding:7px;border:1px solid var(--border-subtle);border-radius:5px;background:var(--bg-card);color:var(--text-body);font:inherit;}
+@media(max-width:680px){.schedule-header-actions:has(#scheduleBirthdays){align-items:flex-end;flex-direction:column;}.schedule-header-tools{width:100%;justify-content:space-between;gap:8px;}}

@@ -937,7 +937,7 @@
       const h = window.location.hash;
       if (h.startsWith("#doc/")) {
         const target = h.replace("#doc/", "");
-        if ((window.WIKI_DOCS[target] || target === "erp-setup") && (target !== currentDocId || appShell?.classList.contains('object-game-hidden') || window.CodeWikiAuth?.getCurrentUser()?.role === 'admin')) {
+        if ((window.WIKI_DOCS[target] || target === "erp-setup") && (target !== currentDocId || appShell?.classList.contains('object-game-hidden') || appShell?.classList.contains('mentoring-hidden') || window.CodeWikiAuth?.getCurrentUser()?.role === 'admin')) {
           if (window.CodeWikiBoard) window.CodeWikiBoard.closeIfActive();
           renderDocument(target);
           window.scrollTo({ top: 0, behavior: "smooth" });

@@ -165,6 +165,7 @@
     window.CodeWikiProgress?.setUser(user);
     window.CodeWikiBirthdays?.setUser(user);
     window.CodeWikiStudy?.setUser(user);
+    window.CodeWikiMentoring?.setUser(user);
     window.CodeWikiPractice?.setUser(user);
     window.CodeWikiObjectGame?.setUser(user);
     adminApproval?.setUser(user);

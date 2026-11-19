@@ -29,6 +29,8 @@ const container={innerHTML:'',querySelector:node,querySelectorAll(selector){
 },scrollIntoView(){}};
 api.render(container);
 assert.ok(container.innerHTML.includes('교육 일정'));
+assert.match(container.innerHTML,/id="scheduleBirthdays" aria-pressed="false"/);
+assert.match(container.innerHTML,/<svg width="18"/);
 listeners['#scheduleMonth:change']({target:{value:'2027-02'}});
 assert.ok(container.innerHTML.includes('2027년 2월'));
 assert.ok(container.innerHTML.includes('설날'));
@@ -39,7 +41,8 @@ assert.ok(container.innerHTML.includes('이번 달에는 선택한 분류의 일
 const people=[{full_name:'김테스트',month:8,day:2},{full_name:'<Birthday>',month:2,day:6},{full_name:'윤테스트',month:2,day:29}];
 ctx.window.CodeWikiBirthdays={forDate:key=>people.filter(p=>p.month===Number(key.slice(5,7))&&p.day===Number(key.slice(8))),getStatus:()=> 'ready',getMembers:()=>people};
 listeners['#scheduleMonth:change']({target:{value:'2027-02'}});
-listeners['#scheduleFilter:change']({target:{value:'birthday'}});
+listeners['#scheduleBirthdays:click']();
+assert.match(container.innerHTML,/id="scheduleBirthdays" aria-pressed="true"/);
 assert.ok(container.innerHTML.includes('🎂 &lt;Birthday&gt; 생일'));
 assert.ok(container.innerHTML.includes('이름을 선택하면 생일이 표시됩니다.'));
 listeners['#scheduleMonth:change']({target:{value:'2026-11'}});
@@ -59,4 +62,7 @@ ctx.window.CodeWikiBirthdays.getMembers=()=>[];
 api.render(container);
 assert.ok(container.innerHTML.includes('공개된 생일이 아직 없습니다.'));
 assert.ok(!container.innerHTML.includes('<strong>김테스트</strong>'));
+listeners['#scheduleBirthdays:click']();
+assert.match(container.innerHTML,/id="scheduleBirthdays" aria-pressed="false"/);
+assert.ok(!container.innerHTML.includes('id="birthdayDirectoryTitle"'));
 console.log('PASS: 193 source dates, 13 closures, 4 assessments, 8 milestones, year boundaries, phase ranges, month/filter/empty-state rendering');

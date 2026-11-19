@@ -22,6 +22,16 @@ assert.deepEqual(Array.from(docs['abap-types'].lessonDates),['2026-11-12','2026-
 assert.deepEqual(Array.from(docs['abap-data-report'].lessonDates),['2026-11-18']);
 assert.equal(daily('18').sourceFile,'261118 수요일 (2).md');
 assert.equal(daily('18').sections.length,9);
+assert.equal(daily('19').sourceFile,'261119 목요일.md');
+assert.equal(daily('19').title,'2026-11-19 (목)');
+assert.deepEqual(Array.from(docs['abap-open-sql'].lessonDates),['2026-11-19']);
+assert.ok(daily('19').sections.some(s=>s.title==='JOIN과 ON·WHERE의 차이'));
+assert.ok(daily('19').sections.some(s=>s.title==='조회 결과가 없을 때와 시스템 필드'));
+assert.ok(!daily('18').sections.some(s=>s.sourceDocId==='abap-open-sql'));
+assert.ok(tools.search(index,'Open SQL').some(r=>r.doc.id==='abap-open-sql'));
+assert.ok(tools.search(index,'FOR ALL ENTRIES').some(r=>r.doc.id==='lesson-2026-11-19'));
+assert.ok(JSON.stringify(docs['welcome-abap']).includes('[[abap-open-sql|Open SQL]]'));
+assert.ok(JSON.stringify(docs['learning-roadmap']).includes('[[abap-open-sql|Open SQL]]'));
 assert.ok(!daily('17').sections.some(s=>s.title==='로컬 클래스의 정의와 구현'));
 assert.ok(!JSON.stringify(daily('18')).includes('codewiki-rich-v1'));
 assert.ok(tools.search(index,'MOVE-CORRESPONDING').some(r=>r.doc.id==='abap-types'));
