@@ -1,7 +1,7 @@
-#objectGameDialog{width:min(620px,calc(100vw - 32px));max-height:calc(100dvh - 32px);margin:auto;overflow:auto;box-sizing:border-box;border:1px solid var(--border-subtle);border-radius:18px;padding:28px;background:var(--bg-card);color:var(--text-body);box-shadow:0 24px 80px #10274730}
-#objectGameDialog::backdrop{background:#10203966}
+#objectGamePage{max-width:900px;margin:28px auto;padding:32px;box-sizing:border-box;border:1px solid var(--border-subtle);border-radius:10px;background:var(--bg-card);color:var(--text-body);width:calc(100% - 56px)}
+#objectGamePage[hidden],.app-shell.object-game-hidden{display:none}
 .object-game-header,.object-game-footer{display:flex;align-items:center;justify-content:space-between;gap:16px}
-.object-game-header h2{font-size:20px;margin:0;color:var(--text-strong)}
+.object-game-header h1{font-size:20px;margin:0;color:var(--text-strong)}
 .object-game-intro{font-size:13px;color:var(--text-caption);line-height:1.6;margin:12px 0 24px}
 .object-game-meta{color:var(--toss-blue);font-size:12px;font-weight:700;margin:0 0 16px}
 .object-game-context{font-size:12px;color:var(--text-caption);margin-bottom:8px}
@@ -10,7 +10,7 @@
 .object-game-option{display:flex;align-items:center;text-align:left;gap:10px;min-height:64px;padding:12px;border:1px solid var(--border-subtle);border-radius:10px;font:inherit;font-size:13px;background:var(--bg-card);color:var(--text-body);cursor:pointer}
 .object-game-option-number{display:grid;place-items:center;flex-shrink:0;width:24px;height:24px;border-radius:6px;background:var(--bg-chip);font-size:12px;color:var(--text-caption)}
 .object-game-option:hover:not(:disabled){border-color:var(--toss-blue);background:var(--bg-subtle)}
-.object-game-option:focus-visible,#objectGameDialog button:focus-visible{outline:2px solid var(--toss-blue);outline-offset:3px}
+.object-game-option:focus-visible,#objectGamePage button:focus-visible{outline:2px solid var(--toss-blue);outline-offset:3px}
 .object-game-option:disabled{cursor:default;opacity:.65}
 .object-game-option.is-correct{border-color:#25855b;background:#eaf8ef;color:#185c3b;opacity:1}
 .object-game-option.is-wrong{border-color:#c95757;background:#fff0f0;color:#9a2929;opacity:1}
@@ -22,4 +22,4 @@
 .object-game-footer{border-top:1px solid var(--border-subtle);padding-top:18px;margin-top:18px}
 #objectGameScore{font-size:12px;color:var(--text-caption)}
 #objectGameNext{width:auto;flex-shrink:0;padding:12px 20px}
-@media(max-width:480px){#objectGameDialog{padding:20px}.object-game-options{grid-template-columns:1fr}.object-game-option{min-height:50px}}
+@media(max-width:480px){#objectGamePage{padding:20px;margin:20px 12px;width:calc(100% - 24px)}.object-game-options{grid-template-columns:1fr}.object-game-option{min-height:50px}}

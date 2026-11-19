@@ -71,6 +71,7 @@
       sbHomeItem.setAttribute("data-doc", homeId);
     }
     const brandHomeLink = document.getElementById("brandHomeLink");
+
     if (brandHomeLink) {
       brandHomeLink.setAttribute("href", `#doc/${homeId}`);
     }
@@ -905,6 +906,17 @@
   function initControls() {
     const appLayout = document.getElementById("appLayout");
     const toggleBtn = document.getElementById("sidebarToggleBtn");
+    // Keep wheel gestures over the fixed sidebar from scrolling the document,
+    // including its non-scrolling header/footer and short menu lists.
+    const sidebar = document.querySelector('.docked-sidebar');
+    const sidebarScroll = document.querySelector('.sidebar-scroll-body');
+    sidebar?.addEventListener('wheel', e => {
+      if (e.ctrlKey || !e.deltaY || !sidebarScroll) return;
+      const atBoundary = e.deltaY < 0 ? sidebarScroll.scrollTop <= 0
+        : sidebarScroll.scrollTop + sidebarScroll.clientHeight >= sidebarScroll.scrollHeight - 1;
+      if (!sidebarScroll.contains(e.target) || atBoundary) e.preventDefault();
+    }, {passive:false});
+
     const brandHomeLink = document.getElementById("brandHomeLink");
 
     brandHomeLink?.addEventListener("click", e => {
@@ -925,7 +937,7 @@
       const h = window.location.hash;
       if (h.startsWith("#doc/")) {
         const target = h.replace("#doc/", "");
-        if ((window.WIKI_DOCS[target] || target === "erp-setup") && (target !== currentDocId || window.CodeWikiAuth?.getCurrentUser()?.role === 'admin')) {
+        if ((window.WIKI_DOCS[target] || target === "erp-setup") && (target !== currentDocId || appShell?.classList.contains('object-game-hidden') || window.CodeWikiAuth?.getCurrentUser()?.role === 'admin')) {
           if (window.CodeWikiBoard) window.CodeWikiBoard.closeIfActive();
           renderDocument(target);
           window.scrollTo({ top: 0, behavior: "smooth" });

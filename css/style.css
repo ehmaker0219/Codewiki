@@ -269,7 +269,9 @@ code, pre, .mono {
 /* 사이드바 중앙 스크롤 메뉴 */
 .sidebar-scroll-body {
   flex: 1;
+  min-height: 0;
   overflow-y: auto;
+  overscroll-behavior-y: contain;
   padding: 8px 14px 20px;
   display: flex;
   flex-direction: column;
@@ -280,6 +282,33 @@ code, pre, .mono {
   display: flex;
   flex-direction: column;
   gap: 3px;
+}
+
+.sb-group[hidden] { display:none; }
+
+#adminSidebarSlot:empty { display:none; }
+.admin-workspace #brandTrackToggle,
+.admin-workspace #homeMenuGroup > summary,
+.admin-workspace #mealMenuGroup,
+.admin-workspace #openPracticeBtn { display:none; }
+.admin-workspace #workspaceNavigation { gap:24px; }
+.admin-workspace #adminSidebarSlot,
+.admin-workspace #homeMenuGroup > .sidebar-submenu {
+  display:flex;
+  flex-direction:column;
+  gap:3px;
+  margin:0;
+  padding:0;
+  border:0;
+}
+.admin-workspace #workspaceNavigation .sb-group-label { margin-bottom:8px; }
+.admin-workspace #workspaceNavigation .sb-menu-item {
+  min-height:36px;
+  padding:8px 11px;
+  font-size:13px;
+  font-weight:600;
+  line-height:20px;
+  gap:9px;
 }
 
 .sb-group-header-row {

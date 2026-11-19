@@ -151,6 +151,16 @@
 
   // Authentication owns session propagation; feature modules don't control each other.
   function syncUserFeatures(user) {
+    const isAdmin = user?.role === 'admin';
+    document.body.classList[isAdmin ? 'add' : 'remove']('admin-workspace');
+    const operationsLabel = document.getElementById('adminOperationsLabel');
+    if (operationsLabel) operationsLabel.hidden = !isAdmin;
+    if (isAdmin) {
+      const homeMenu = document.getElementById('homeMenuGroup');
+      if (homeMenu) homeMenu.open = true;
+    }
+    const learningContents = document.getElementById('learningContentsGroup');
+    if (learningContents) learningContents.hidden = user?.role !== 'student' || user.status !== 'approved';
     window.CodeWikiProfile?.setUser(user);
     window.CodeWikiProgress?.setUser(user);
     window.CodeWikiBirthdays?.setUser(user);
@@ -344,7 +354,7 @@
     if (adminSidebarSlot) {
       adminSidebarSlot.innerHTML = (isAdmin || (user.role === 'student' && user.status === 'approved'))
         ? `
-        ${isAdmin ? `<a href="#admin/students" id="openStudentDirectoryBtn" class="sb-menu-item${window.location.hash === '#admin/students' ? ' active' : ''}"><svg class="sb-icon" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="M6 17v-1a3 3 0 0 1 6 0v1M15 8h3M15 12h3M15 16h3"/></svg><span>학생 정보</span></a><button type="button" id="openAdminModalBtn" class="sb-menu-item">
+        ${isAdmin ? `<div class="sb-group-label">학생 관리</div><a href="#admin/students" id="openStudentDirectoryBtn" class="sb-menu-item${window.location.hash === '#admin/students' ? ' active' : ''}"><svg class="sb-icon" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="M6 17v-1a3 3 0 0 1 6 0v1M15 8h3M15 12h3M15 16h3"/></svg><span>학생 정보</span></a><button type="button" id="openAdminModalBtn" class="sb-menu-item">
           <svg class="sb-icon" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
             <circle cx="9" cy="7" r="4"></circle>
@@ -362,8 +372,9 @@
 
     if (sidebarProfileSlot) {
       sidebarProfileSlot.innerHTML = `
-        <div class="sb-profile-card sb-profile-simple"><span class="sb-profile-name">${escapeHtml(user.full_name)}</span></div>
+        <div class="sb-profile-card sb-profile-simple"><span class="sb-profile-name">${escapeHtml(user.full_name)}</span>
         <button type="button" id="profileSettingsBtn" class="sb-profile-settings"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21v-2a8 8 0 0 1 16 0v2"/></svg><span>프로필 설정</span></button>
+        </div>
       `;
       document.getElementById("profileSettingsBtn")?.addEventListener("click", () => window.CodeWikiProfile?.openSettings());
     }

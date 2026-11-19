@@ -33,14 +33,16 @@
     };
   }
   const byId=id=>document.getElementById(id);
-  const trigger=byId('openObjectGameBtn'),dialog=byId('objectGameDialog'),output=byId('objectGameContent');
+  const trigger=byId('openObjectGameBtn'),host=byId('objectGamePage'),shell=byId('appShell'),output=byId('objectGameContent');
   const next=byId('objectGameNext'),status=byId('objectGameScore');
   let userId=null,game=null,current=null,bankPromise=null,epoch=0;
+  const visible=()=>Boolean(userId)&&window.location.hash==='#data-game';
   function setUser(user){
     const id=user?.role==='student'&&user.status==='approved'?user.id:null;
-    if(id!==userId){epoch++;game=null;current=null;output.replaceChildren();status.textContent='';next.disabled=true;if(dialog.open)dialog.close();}
+    if(id!==userId){epoch++;game=null;current=null;output.replaceChildren();status.textContent='';next.disabled=true;}
     userId=id;trigger.hidden=!id;
     const toolsGroup=byId('learningToolsGroup');if(toolsGroup)toolsGroup.hidden=!id;
+    route();
   }
   function loadBank(){
     if(window.CodeWikiObjectBank)return Promise.resolve(window.CodeWikiObjectBank);
@@ -59,7 +61,7 @@
   }
   function element(tag,className,text){const el=document.createElement(tag);el.className=className;if(text!==undefined)el.textContent=text;return el;}
   function draw(){
-    if(!userId||!game)return;
+    if(!visible()||!game)return;
     current=game.next();const {question,options,round,seen,total}=current;
     output.replaceChildren();
     const meta=element('p','object-game-meta',`${round}회차 · ${seen} / ${total}`);
@@ -71,7 +73,7 @@
       const button=element('button','object-game-option');button.type='button';
       button.append(element('span','object-game-option-number',String(i+1)),element('span','',option.label));
       button.addEventListener('click',()=>{
-        if(!userId)return;const result=game.answer(option.id);if(!result)return;
+        if(!visible())return;const result=game.answer(option.id);if(!result)return;
         for(const child of choices.children){child.disabled=true;if(child.dataset.answer===question.answer)child.classList.add('is-correct');}
         if(!result.correct)button.classList.add('is-wrong');
         const answer=options.find(o=>o.id===question.answer).label;
@@ -84,18 +86,27 @@
     const hint=element('details','object-game-hint');hint.append(element('summary','','힌트 보기'),element('p','',question.hint));
     output.append(meta,context,name,choices,hint,feedback);next.disabled=false;next.textContent='다음 문제 →';name.focus();
   }
-  async function open(){
-    if(!userId)return;
-    if(!dialog.open)dialog.showModal();
-    if(game){next.focus();return;}
+  async function prepare(){
+    if(!visible()||game)return;
     const request=++epoch;output.textContent='문제를 준비하고 있습니다…';next.disabled=true;
-    try{const bank=await loadBank();if(request!==epoch||!userId||!dialog.open)return;game=createGame(bank);draw();}
-    catch{if(request!==epoch||!userId||!dialog.open)return;output.textContent='문제를 불러오지 못했습니다. 다시 시도해 주세요.';next.disabled=false;next.textContent='다시 시도';}
+    try{const bank=await loadBank();if(request!==epoch||!visible())return;game=createGame(bank);draw();}
+    catch{if(request!==epoch||!visible())return;output.textContent='문제를 불러오지 못했습니다. 다시 시도해 주세요.';next.disabled=false;next.textContent='다시 시도';}
   }
-  window.CodeWikiObjectGame={createGame,setUser};
-  trigger.addEventListener('click',open);
-  next.addEventListener('click',()=>game?draw():open());
-  byId('closeObjectGameBtn').addEventListener('click',()=>dialog.close());
-  dialog.addEventListener('close',()=>{epoch++;if(userId)trigger.focus();});
+  function route(){
+    const open=visible(),entering=open&&host.hidden;
+    host.hidden=!open;shell.classList.toggle('object-game-hidden',open);trigger.classList.toggle('active',open);
+    if(!open){epoch++;return;}
+    window.CodeWikiBoard?.closeIfActive();
+    document.querySelectorAll('#sbHomeItem.active,#sbScheduleItem.active,.nav-doc-link.active').forEach(el=>el.classList.remove('active'));
+    if(entering)window.scrollTo({top:0,behavior:'instant'});
+    return prepare();
+  }
+  window.CodeWikiObjectGame={createGame,setUser,leave(){
+    if(window.location.hash==='#data-game')history.replaceState(null,'','#doc/'+(window.CodeWikiApp?.getCurrentDocId()||'welcome-abap'));
+    route();
+  }};
+  trigger.addEventListener('click',()=>{if(!userId)return;if(window.location.hash==='#data-game')return route();window.location.hash='#data-game';});
+  next.addEventListener('click',()=>game?draw():prepare());
+  window.addEventListener('hashchange',route);
   setUser(window.CodeWikiAuth?.getCurrentUser()||null);
 })();

@@ -7,14 +7,14 @@
   <link rel="icon" type="image/svg+xml" href="assets/logo-symbol.svg?v=32baec3f0703" />
   <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/style.css?v=67fa0a616f12" />
+  <link rel="stylesheet" href="css/style.css?v=930f355c53ce" />
   <link rel="stylesheet" href="css/theme.css?v=7641f370fcfc" />
-  <link rel="stylesheet" href="css/profile.css?v=c8934ffc3694" />
+  <link rel="stylesheet" href="css/profile.css?v=386bcc74d5e6" />
   <link rel="stylesheet" href="css/admin-members.css?v=7fb134447cdc" />
   <link rel="stylesheet" href="css/birthdays.css?v=f858766dad1c" />
   <link rel="stylesheet" href="css/schedule.css?v=7357dc7efd11" />
   <link rel="stylesheet" href="css/study.css?v=84a9f1bebbaf" />
-  <link rel="stylesheet" href="css/object-game.css?v=1bfb8cd82181" />
+  <link rel="stylesheet" href="css/object-game.css?v=97180b09645e" />
 </head>
 <body>
   <!-- 로그인 후 전체 레이아웃: 좌측 고정 일체형 사이드바 + 우측 워크스페이스 -->
@@ -50,7 +50,8 @@
 
       <!-- 중앙 스크롤 메뉴 영역 -->
       <div class="sidebar-scroll-body">
-        <div class="sb-group">
+        <div class="sb-group" id="workspaceNavigation">
+          <div id="adminSidebarSlot"></div>
           <details class="sidebar-menu-group" id="homeMenuGroup" open>
             <summary class="sidebar-home-heading">
           <a href="#doc/welcome-abap" class="sb-menu-item" id="sbHomeItem" data-doc="welcome-abap">
@@ -65,6 +66,7 @@
               <svg class="sidebar-group-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m9 5 7 7-7 7"/></svg>
             </summary>
             <div class="sidebar-submenu">
+          <div class="sb-group-label" id="adminOperationsLabel" hidden>운영 관리</div>
           <a href="#doc/education-schedule" class="sb-menu-item" id="sbScheduleItem" data-doc="education-schedule">
             <svg class="sb-icon" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 11h18M7 15h3M14 15h3"/></svg>
             <span>교육 일정</span>
@@ -100,11 +102,10 @@
             </div>
           </details>
           <button type="button" id="openPracticeBtn" class="sb-menu-item" hidden><span aria-hidden="true">✎</span><span>연습문제</span></button>
-          <div id="adminSidebarSlot"></div>
         </div>
 
         <!-- 카테고리 폴더 섹션 -->
-        <div class="sb-group">
+        <div class="sb-group" id="learningContentsGroup" hidden>
           <div class="sb-group-label">목차</div>
           <div class="nav-view-switch" role="group" aria-label="목차 보기 방식">
             <button type="button" data-nav-view="topic" aria-pressed="true">주제별</button>
@@ -161,6 +162,12 @@
       <!-- 본문 + 우측 보조 패널 (데이터가 있을 때만 우측 패널 노출) -->
       <section id="studyWorkspace" class="study-workspace" aria-label="개인 공부방" hidden></section>
       <section id="adminMembersPage" class="members-page" aria-label="학생 정보" hidden></section>
+      <section id="objectGamePage" class="object-game-page" hidden aria-labelledby="objectGameTitle" aria-describedby="objectGameIntro">
+        <div class="object-game-header"><h1 id="objectGameTitle">DATA 미니게임</h1></div>
+        <p id="objectGameIntro" class="object-game-intro">이 이름은 어떤 종류일까요? 이름 규칙을 익히는 100문제입니다. 접두어는 명명 관례이며, 실제 객체 종류는 선언이나 저장소에서 확인하세요.</p>
+        <div id="objectGameContent"></div>
+        <div class="object-game-footer"><span id="objectGameScore"></span><button type="button" id="objectGameNext" class="toss-primary-btn" disabled>다음 문제 →</button></div>
+      </section>
       <div class="app-shell" id="appShell">
         <main class="main-content">
           <article class="toss-card article-card" id="articleContainer"></article>
@@ -189,7 +196,7 @@
           </div>
         </aside>
       </div>
-      <footer class="site-footer">최근 업데이트 <time id="siteUpdatedAt" datetime="2026-11-19T05:12:16.860Z" data-version="fe69d3f57f75474b">2026.11.19 14:12 (KST)</time></footer>
+      <footer class="site-footer">최근 업데이트 <time id="siteUpdatedAt" datetime="2026-11-19T05:32:13.606Z" data-version="dbc6a2de251a0342">2026.11.19 14:32 (KST)</time></footer>
     </div>
   </div>
 
@@ -215,12 +222,7 @@
     <div class="practice-actions"><button type="button" id="copyPracticeBtn" class="toss-chip-btn" disabled>문제 복사</button><span id="practiceCopyStatus" role="status"></span><button type="button" id="nextPracticeBtn" class="toss-chip-btn" disabled>다른 문제</button></div>
   </dialog>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <dialog id="objectGameDialog" aria-labelledby="objectGameTitle" aria-describedby="objectGameIntro">
-    <div class="object-game-header"><h2 id="objectGameTitle">DATA 미니게임</h2><button type="button" id="closeObjectGameBtn" class="icon-btn" aria-label="미니게임 닫기">✕</button></div>
-    <p id="objectGameIntro" class="object-game-intro">이 이름은 어떤 종류일까요? 이름 규칙을 익히는 100문제입니다. 접두어는 명명 관례이며, 실제 객체 종류는 선언이나 저장소에서 확인하세요.</p>
-    <div id="objectGameContent"></div>
-    <div class="object-game-footer"><span id="objectGameScore"></span><button type="button" id="objectGameNext" class="toss-primary-btn" disabled>다음 문제 →</button></div>
-  </dialog>
+
   <script src="js/data.js?v=e525842bb097"></script>
   <script src="js/ui5-data.js?v=fa64b5a1a556"></script>
   <script src="js/class-notes.js?v=1cf9b1e85a4b"></script>
@@ -233,7 +235,7 @@
   <script src="js/visualizers.js?v=dbbc291349e3"></script>
   <script src="js/schedule-data.js?v=7a907468c4cd"></script>
   <script src="js/schedule.js?v=c034a3ef8fe8"></script>
-  <script src="js/app.js?v=eba17a14df56"></script>
+  <script src="js/app.js?v=404aa48c3d92"></script>
   <script src="js/admin.js?v=fa529e2d1ef0"></script>
   <script src="js/admin-members.js?v=681b441109e3"></script>
   <script src="js/presence.js?v=945d605e473f"></script>
@@ -241,11 +243,11 @@
   <script src="js/study-store.js?v=d06196e4f21c"></script>
   <script src="js/study-folders.js?v=8554c9be03cc"></script>
   <script src="js/study.js?v=611548f86f5d"></script>
-  <script src="js/auth.js?v=f1167e392870"></script>
-  <script src="js/board.js?v=1192ff1d912e"></script>
+  <script src="js/auth.js?v=b207e998e4ff"></script>
+  <script src="js/board.js?v=307cf5efed21"></script>
   <script src="js/practice.js?v=f1c393395841"></script>
   <script src="js/practice-ui.js?v=9b9d96b845b5"></script>
   <script type="application/json" id="objectGameBankSource" data-src="js/object-game-bank.js?v=09f9192ee9cf"></script>
-  <script src="js/object-game.js?v=e4fc0759644b"></script>
+  <script src="js/object-game.js?v=cfea3cf8219a"></script>
 </body>
 </html>

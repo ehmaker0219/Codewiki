@@ -9,7 +9,7 @@ const buttons=Array.from({length:7},(_,i)=>Object.assign(node(),{getAttribute:()
 get('classPickerGrid').querySelectorAll=()=>buttons;
 get('authGateForm').querySelector=selector=>selector.includes('submit')?get('submit'):get('authGateForm').notice;
 const ctx={window:{supabase:{createClient:()=>({rpc:(name,args)=>new Promise((resolve,reject)=>requests.push({name,args,resolve,reject}))})}},
-  document:{getElementById:get,createElement:node},localStorage:{getItem(){return null;},setItem(){}},
+  document:{body:node(),getElementById:get,createElement:node},localStorage:{getItem(){return null;},setItem(){}},
   console,AbortController,setTimeout,clearTimeout};
 ctx.window.CodeWikiBirthdays={validDate:()=>true,setUser(){},today:()=> '2026-11-19'};
 vm.runInNewContext(source.replace(/  renderAuthState\(\);\s*\}\)\(\);\s*$/,

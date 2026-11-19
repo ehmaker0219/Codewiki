@@ -49,7 +49,7 @@ async function logoutTest() {
     }};
     const context = {window:{supabase:{createClient:()=>client}, CodeWikiApp:{resetTrackChoice:()=>calls.push('reset')}, alert:()=>calls.push('alert')},
       localStorage:{getItem:k=>saved.get(k), setItem:(k,v)=>saved.set(k,v), removeItem:k=>saved.delete(k)},
-      document:{getElementById:element}, console};
+      document:{body:element(),getElementById:element}, console};
     // Expose the actual closure only in the test harness; replace unrelated UI rendering.
     vm.runInNewContext(auth.replace(/  renderAuthState\(\);\s*\}\)\(\);\s*$/, '  renderAuthState = async () => {}; window.testLogout = logout;\n})();'),context);
     await context.window.testLogout();
@@ -71,7 +71,7 @@ async function logoutTest() {
   let resolveProfile;
   const saved = new Map([['codewiki_supa_token_v1','old-token']]);
   const context = {window:{supabase:{createClient:()=>({rpc:()=>new Promise(resolve=>{resolveProfile=resolve;})})}},
-    localStorage:{getItem:k=>saved.get(k)}, document:{getElementById:element}, AbortController,setTimeout,clearTimeout,console};
+    localStorage:{getItem:k=>saved.get(k)}, document:{body:element(),getElementById:element}, AbortController,setTimeout,clearTimeout,console};
   vm.runInNewContext(auth.replace(/  renderAuthState\(\);\s*\}\)\(\);\s*$/, '  window.testRefresh = renderAuthState;\n})();'),context);
   const refresh = context.window.testRefresh();
   saved.delete('codewiki_supa_token_v1');
