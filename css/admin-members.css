@@ -19,6 +19,11 @@
 .members-table td {overflow-wrap:anywhere;min-width:55px;}
 .members-table td:first-child {font-weight:600;}
 .members-table button {white-space:nowrap;}
+.members-sort {display:inline-flex;align-items:center;gap:6px;padding:4px 0;border:0;background:transparent;color:inherit;font:inherit;cursor:pointer;}
+.members-sort span {color:var(--text-muted);}
+.members-table th[aria-sort=ascending] .members-sort,.members-table th[aria-sort=descending] .members-sort {color:var(--toss-blue);}
+.members-sort:hover {color:var(--toss-blue);}
+.members-sort:focus-visible {outline:2px solid var(--toss-blue);outline-offset:3px;border-radius:2px;}
 .members-page [role=status] {font-size:12px;line-height:1.6;}
 .members-reset-note {font-size:12px;line-height:1.6;color:var(--text-sub);}
 @media(max-width:680px){.members-page {margin:12px;padding:18px;}.members-heading {align-items:flex-start;}.members-filters label:first-child {width:100%;}.members-filters input {flex:1;min-width:0;}.members-count {margin-left:0;}}

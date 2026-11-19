@@ -3,6 +3,9 @@
   const host=document.getElementById('adminMembersPage'),shell=document.getElementById('appShell');
   const esc=window.CodeWikiLearning.escape;
   const statuses={approved:'승인 완료',pending:'승인 대기',rejected:'반려'};
+  const columns=[['full_name','이름'],['class_name','반'],['student_number','번호'],['username','아이디'],['birth_date','생년월일'],['mbti','MBTI'],['status','가입 상태'],['created_at','가입일']];
+  const collator=new Intl.Collator('ko',{numeric:true,sensitivity:'base'});
+  let sortKey='full_name',sortDirection=1;
   let session=null,active=false,rows=[],version=0,loading=false,query='',classFilter='',statusFilter='',dialog=null,resetBusy=false;
   let online=null;
   const visible=()=>Boolean(session)&&window.location.hash==='#admin/students';
@@ -13,6 +16,7 @@
     const token=window.CodeWikiAuth?.getSessionToken()||'';
     if(user?.role==='admin'&&session?.id===user.id&&session.token===token)return;
     clear();online=null;session=user?.role==='admin'&&token?{id:user.id,token}:null;query='';classFilter='';statusFilter='';
+    sortKey='full_name';sortDirection=1;
     if(session)openHome();else route();
   }
   function openHome(){if(!session)return false;history.replaceState(null,'','#admin/students');route();window.CodeWikiPresence?.refresh();return true;}
@@ -37,9 +41,32 @@
   }
   function renderRows(){
     const q=query.trim().toLocaleLowerCase();
-    const filtered=rows.filter(u=>(!q||`${u.full_name} ${u.username}`.toLocaleLowerCase().includes(q))&&(!classFilter||(u.class_name||'기본반')===classFilter)&&(!statusFilter||u.status===statusFilter)).sort((a,b)=>a.full_name.localeCompare(b.full_name,'ko')||a.username.localeCompare(b.username));
+    const filtered=rows.filter(u=>(!q||`${u.full_name} ${u.username}`.toLocaleLowerCase().includes(q))&&(!classFilter||(u.class_name||'기본반')===classFilter)&&(!statusFilter||u.status===statusFilter)).sort(compareRows);
     host.querySelector('#membersCount').textContent=`${filtered.length}명 / 전체 ${rows.length}명`;
-    host.querySelector('#membersTable').innerHTML=filtered.length?`<table class="members-table"><caption>학생 계정 목록 · 생년월일은 관리자 전용</caption><thead><tr>${['이름','반','번호','아이디','생년월일','MBTI','가입 상태','가입일','비밀번호'].map(t=>`<th scope="col">${t}</th>`).join('')}</tr></thead><tbody>${filtered.map(u=>`<tr><td>${esc(u.full_name)}</td><td>${esc(u.class_name||'기본반')}</td><td>${esc(u.student_number??'—')}</td><td>${esc(u.username)}</td><td>${esc(u.birth_date||'미등록')}</td><td>${esc(u.mbti||'—')}</td><td>${esc(statuses[u.status]||u.status)}</td><td>${esc(formatDate(u.created_at))}</td><td><button type="button" class="toss-chip-btn" data-reset-student="${esc(u.id)}">재설정</button></td></tr>`).join('')}</tbody></table>`:loading?'':'<p class="members-reset-note">표시할 학생이 없습니다.</p>';
+    host.querySelector('#membersTable').innerHTML=filtered.length?`<table class="members-table"><caption>학생 계정 목록 · 생년월일은 관리자 전용</caption><thead><tr>${columns.map(([key,label])=>`<th scope="col" aria-sort="${sortKey===key?(sortDirection===1?'ascending':'descending'):'none'}"><button type="button" class="members-sort" data-members-sort="${key}" aria-label="${label} ${sortKey===key&&sortDirection===1?'내림차순':'오름차순'} 정렬">${label}<span aria-hidden="true">${sortKey===key?(sortDirection===1?'↑':'↓'):'↕'}</span></button></th>`).join('')}<th scope="col">비밀번호</th></tr></thead><tbody>${filtered.map(u=>`<tr><td>${esc(u.full_name)}</td><td>${esc(u.class_name||'기본반')}</td><td>${esc(u.student_number??'—')}</td><td>${esc(u.username)}</td><td>${esc(u.birth_date||'미등록')}</td><td>${esc(u.mbti||'—')}</td><td>${esc(statuses[u.status]||u.status)}</td><td>${esc(formatDate(u.created_at))}</td><td><button type="button" class="toss-chip-btn" data-reset-student="${esc(u.id)}">재설정</button></td></tr>`).join('')}</tbody></table>`:loading?'':'<p class="members-reset-note">표시할 학생이 없습니다.</p>';
+  }
+  function sortValue(row){
+    const value=sortKey==='status'?statuses[row.status]:row[sortKey];
+    if(value==null||value==='')return null;
+    if(sortKey==='student_number'||sortKey==='birth_date'||sortKey==='created_at'){
+      const number=sortKey==='student_number'?Number(value):new Date(value).getTime();
+      return Number.isFinite(number)?number:null;
+    }
+    return String(value);
+  }
+  function compareRows(a,b){
+    const left=sortValue(a),right=sortValue(b);
+    // Keep unregistered values last in both directions.
+    if(left===null&&right!==null)return 1;
+    if(left!==null&&right===null)return -1;
+    const result=left===null?0:typeof left==='number'?left-right:collator.compare(left,right);
+    return result*sortDirection||collator.compare(a.full_name||'',b.full_name||'')||collator.compare(a.username||'',b.username||'')||collator.compare(a.id,b.id);
+  }
+  function sortBy(key){
+    if(!active||!session||!columns.some(([id])=>id===key))return;
+    sortDirection=sortKey===key?-sortDirection:1;sortKey=key;
+    renderRows();
+    host.querySelector(`[data-members-sort="${key}"]`)?.focus({preventScroll:true});
   }
   function formatDate(value){const d=new Date(value);return value&&!Number.isNaN(d.getTime())?d.toLocaleDateString('ko-KR',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'}):'—';}
   async function load(){
@@ -85,7 +112,7 @@
     });
     dialog.showModal();admin.focus();
   }
-  host.addEventListener('click',e=>{if(e.target.closest('[data-members-refresh]'))void load();const b=e.target.closest('[data-reset-student]');if(b)openReset(b.dataset.resetStudent);});
+  host.addEventListener('click',e=>{if(e.target.closest('[data-members-refresh]'))void load();const sort=e.target.closest('[data-members-sort]');if(sort)sortBy(sort.dataset.membersSort);const b=e.target.closest('[data-reset-student]');if(b)openReset(b.dataset.resetStudent);});
   host.addEventListener('input',e=>{if(e.target.id==='membersSearch'){query=e.target.value;renderRows();}});
   host.addEventListener('change',e=>{if(e.target.id==='membersClass')classFilter=e.target.value;else if(e.target.id==='membersStatus')statusFilter=e.target.value;else return;renderRows();});
   window.addEventListener('hashchange',route);

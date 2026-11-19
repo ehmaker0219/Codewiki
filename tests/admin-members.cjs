@@ -14,7 +14,7 @@ const context={window,document:{getElementById:node,querySelectorAll:()=>[],crea
  setTimeout:fn=>{const id=++timerId;timers.set(id,fn);return id;},clearTimeout:id=>timers.delete(id)};
 vm.runInNewContext(fs.readFileSync('js/admin-members.js','utf8'),context);
 const api=window.CodeWikiAdminMembers,host=node('adminMembersPage');
-const click=(kind,id)=>host.events.click({target:{closest:selector=>selector===kind?{dataset:{resetStudent:id}}:null}});
+const click=(kind,id)=>host.events.click({target:{closest:selector=>selector===kind?{dataset:{resetStudent:id,membersSort:id}}:null}});
 const input=(id,value)=>host.events[id==='membersSearch'?'input':'change']({target:{id,value}});
 const submit=()=>node('form').events.submit({preventDefault(){}});
 const fixtures=[{id:'s1',username:'student-one',full_name:'<img onerror=alert(1)>',class_name:'1반',student_number:null,mbti:'INTJ',status:'approved',birth_date:'2000-01-02',created_at:'2026-11-19T00:00:00Z'},
@@ -43,6 +43,22 @@ const fixtures=[{id:'s1',username:'student-one',full_name:'<img onerror=alert(1)
  api.setUser(null);assert.equal(host.innerHTML,'');assert.equal(node('dialog').innerHTML,'');
  api.setUser({id:'a',role:'admin'});const late=requests.shift();api.setUser({id:'s',role:'student'});late.resolve({data:fixtures});await flush();assert.equal(host.innerHTML,'');assert.equal(host.hidden,true);
  token='other-admin';api.setUser({id:'a2',role:'admin'});requests.shift().resolve({error:{code:'PGRST202'}});await flush();assert.match(node('membersMessage').textContent,/아직 서버에 적용/);
+ const sortable=[
+  {id:'n1',full_name:'김가',username:'user10',class_name:'10반',student_number:10,birth_date:'2002-01-01',created_at:'2026-11-19T10:00:00Z',status:'approved'},
+  {id:'n2',full_name:'김나',username:'user2',class_name:'2반',student_number:2,birth_date:'1999-01-01',created_at:'2026-11-18T10:00:00Z',status:'pending'},
+  {id:'n3',full_name:'김다',username:'user3',class_name:'1반',student_number:null,birth_date:null,created_at:null,status:'rejected'}];
+ const order=()=>[...node('membersTable').innerHTML.matchAll(/data-reset-student="(.*?)"/g)].map(m=>m[1]);
+ click('[data-members-refresh]');requests.shift().resolve({data:sortable});await flush();
+ assert.deepEqual(order(),['n1','n2','n3']);
+ click('[data-members-sort]','student_number');assert.deepEqual(order(),['n2','n1','n3']);
+ assert.match(node('membersTable').innerHTML,/aria-sort="ascending"><button[^>]*data-members-sort="student_number"/);
+ click('[data-members-sort]','student_number');assert.deepEqual(order(),['n1','n2','n3']);
+ for(const key of ['birth_date','created_at']){click('[data-members-sort]',key);assert.deepEqual(order(),['n2','n1','n3']);click('[data-members-sort]',key);assert.deepEqual(order(),['n1','n2','n3']);}
+ click('[data-members-sort]','class_name');assert.deepEqual(order(),['n3','n2','n1']);
+ click('[data-members-sort]','username');assert.deepEqual(order(),['n2','n3','n1']);
+ input('membersClass','2반');assert.deepEqual(order(),['n2']);input('membersClass','');assert.deepEqual(order(),['n2','n3','n1']);
+ assert.equal(requests.length,0,'sorting and filtering must not request the server');
+ click('[data-members-refresh]');requests.shift().resolve({data:sortable});await flush();assert.deepEqual(order(),['n2','n3','n1'],'refresh retains sorting');
  api.leave();assert.equal(host.hidden,true);assert.equal(host.innerHTML,'');assert.equal(timers.size,0);
  console.log('PASS: admin-only directory, escaped fields, local filters, bounded/coalesced reads, reauthentication reset, duplicate guard, credential clearing, timeout and session isolation');
 })().catch(e=>{console.error(e);process.exitCode=1;});
