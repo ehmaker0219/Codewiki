@@ -3,7 +3,7 @@
   const host=document.getElementById('adminMembersPage'),shell=document.getElementById('appShell');
   const esc=window.CodeWikiLearning.escape;
   const statuses={approved:'승인 완료',pending:'승인 대기',rejected:'반려'};
-  const columns=[['full_name','이름'],['class_name','반'],['student_number','번호'],['username','아이디'],['birth_date','생년월일'],['mbti','MBTI'],['status','가입 상태'],['created_at','가입일']];
+  const columns=[['student_number','번호'],['full_name','이름'],['class_name','반'],['username','아이디'],['birth_date','생년월일'],['mbti','MBTI'],['status','가입 상태'],['created_at','가입일']];
   const collator=new Intl.Collator('ko',{numeric:true,sensitivity:'base'});
   let sortKey='full_name',sortDirection=1;
   let session=null,active=false,rows=[],version=0,loading=false,query='',classFilter='',statusFilter='',dialog=null,resetBusy=false;
@@ -43,7 +43,7 @@
     const q=query.trim().toLocaleLowerCase();
     const filtered=rows.filter(u=>(!q||`${u.full_name} ${u.username}`.toLocaleLowerCase().includes(q))&&(!classFilter||(u.class_name||'기본반')===classFilter)&&(!statusFilter||u.status===statusFilter)).sort(compareRows);
     host.querySelector('#membersCount').textContent=`${filtered.length}명 / 전체 ${rows.length}명`;
-    host.querySelector('#membersTable').innerHTML=filtered.length?`<table class="members-table"><caption>학생 계정 목록 · 생년월일은 관리자 전용</caption><thead><tr>${columns.map(([key,label])=>`<th scope="col" aria-sort="${sortKey===key?(sortDirection===1?'ascending':'descending'):'none'}"><button type="button" class="members-sort" data-members-sort="${key}" aria-label="${label} ${sortKey===key&&sortDirection===1?'내림차순':'오름차순'} 정렬">${label}<span aria-hidden="true">${sortKey===key?(sortDirection===1?'↑':'↓'):'↕'}</span></button></th>`).join('')}<th scope="col">비밀번호</th></tr></thead><tbody>${filtered.map(u=>`<tr><td>${esc(u.full_name)}</td><td>${esc(u.class_name||'기본반')}</td><td>${esc(u.student_number??'—')}</td><td>${esc(u.username)}</td><td>${esc(u.birth_date||'미등록')}</td><td>${esc(u.mbti||'—')}</td><td>${esc(statuses[u.status]||u.status)}</td><td>${esc(formatDate(u.created_at))}</td><td><button type="button" class="toss-chip-btn" data-reset-student="${esc(u.id)}">재설정</button></td></tr>`).join('')}</tbody></table>`:loading?'':'<p class="members-reset-note">표시할 학생이 없습니다.</p>';
+    host.querySelector('#membersTable').innerHTML=filtered.length?`<table class="members-table"><caption>학생 계정 목록 · 생년월일은 관리자 전용</caption><thead><tr>${columns.map(([key,label])=>`<th scope="col" aria-sort="${sortKey===key?(sortDirection===1?'ascending':'descending'):'none'}"><button type="button" class="members-sort" data-members-sort="${key}" aria-label="${label} ${sortKey===key&&sortDirection===1?'내림차순':'오름차순'} 정렬">${label}<span aria-hidden="true">${sortKey===key?(sortDirection===1?'↑':'↓'):'↕'}</span></button></th>`).join('')}<th scope="col">비밀번호</th></tr></thead><tbody>${filtered.map(u=>`<tr><td>${esc(u.student_number??'—')}</td><td>${esc(u.full_name)}</td><td>${esc(u.class_name||'기본반')}</td><td>${esc(u.username)}</td><td>${esc(u.birth_date||'미등록')}</td><td>${esc(u.mbti||'—')}</td><td>${esc(statuses[u.status]||u.status)}</td><td>${esc(formatDate(u.created_at))}</td><td><button type="button" class="toss-chip-btn" data-reset-student="${esc(u.id)}">재설정</button></td></tr>`).join('')}</tbody></table>`:loading?'':'<p class="members-reset-note">표시할 학생이 없습니다.</p>';
   }
   function sortValue(row){
     const value=sortKey==='status'?statuses[row.status]:row[sortKey];
