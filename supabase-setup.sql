@@ -7,6 +7,17 @@
 
 begin;
 
+-- Initial setup must not replace the guarded login/signup RPCs on a hardened DB.
+-- Apply incremental migrations instead; see SECURITY-UPDATE.md.
+do $guard$
+begin
+  if to_regnamespace('cw_auth_private') is not null then
+    raise exception '인증 보완이 적용된 DB입니다. 기본 설정을 재실행하지 말고 SECURITY-UPDATE.md의 추가 마이그레이션 절차를 따르세요.'
+      using errcode = '55000';
+  end if;
+end;
+$guard$;
+
 create extension if not exists pgcrypto with schema extensions;
 
 -- 1. 자체 회원 및 승인 상태 테이블

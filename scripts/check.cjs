@@ -12,5 +12,6 @@ for (const file of fs.readdirSync(path.join(root,'js')).filter(file=>file.endsWi
 for (const file of fs.readdirSync(path.join(root,'scripts')).filter(file=>file.endsWith('.cjs'))) run(['--check',`scripts/${file}`]);
 const tests = fs.readdirSync(path.join(root,'tests')).filter(file=>file.endsWith('.cjs')).sort();
 for (const file of tests) run([`tests/${file}`]);
+run(['scripts/test-auth-db.cjs']);
 require('./update-assets.cjs').updateAssets(true);
-console.log(`PASS: JavaScript syntax, ${tests.length} regression suites, static asset versions`);
+console.log(`PASS: JavaScript syntax, ${tests.length} regression suites, isolated PostgreSQL tests, static asset versions`);

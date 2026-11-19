@@ -1,8 +1,29 @@
 # 보안 업데이트 적용
 
-1. Supabase SQL Editor에서 소유자 권한으로 `supabase-setup.sql` 전체를 실행합니다. 기존 회원과 게시글은 유지됩니다. 기존 만료 시간이 없는 세션은 무효화되므로 다시 로그인해야 합니다.
-2. 기존 초기 관리자 비밀번호를 변경하지 않은 `admin` 계정은 임의의 비밀번호로 잠그고 세션을 폐기합니다. 이미 비밀번호를 변경한 계정은 보존합니다.
-3. 관리자 계정이 필요하면 사이트에서 본인만 아는 비밀번호로 회원가입한 뒤, SQL Editor에서 해당 회원의 UUID와 아이디를 확인하고 아래 SQL로 승격합니다. 이 작업은 DB 소유자가 직접 수행합니다. 예시 UUID를 실제 본인 계정 UUID로 바꾸세요.
+## 기존 사이트 업데이트
+
+기본 설정 SQL을 재실행하지 않습니다. 이번 변경에 필요한 추가 마이그레이션만 DB 소유자 권한으로 적용합니다. `cw_auth_private`가 이미 있는 DB에서는 `supabase-setup.sql`이 변경 전에 중단되어 기존 인증 보호를 보존합니다. 이 차단을 삭제하거나 해당 스키마를 지워서 우회하지 마세요.
+
+로그인·가입 함수를 변경하는 마이그레이션을 실행했다면 **`migrations/20261119-auth-hardening.sql`을 반드시 마지막에 다시 적용**합니다. 생일·출석부 가입 API도 같은 원칙을 따릅니다. 기존 회원과 게시글을 삭제할 필요는 없습니다.
+
+## 새 DB 초기 설정 순서
+
+Supabase SQL Editor에서 파일 전체를 아래 순서대로 실행합니다. 부분 선택 실행은 하지 않습니다.
+
+1. `supabase-setup.sql`
+2. `migrations/20261118-birthdays.sql`
+3. `migrations/20261118-profile.sql`
+4. `migrations/20261118-session-retention.sql`
+5. `migrations/20261118-learning-progress.sql`
+6. `migrations/20261118-study-notes.sql`
+7. `migrations/20261118-study-conflict-response.sql`
+8. `migrations/20261119-class-roster-signup.sql`
+9. `migrations/20261119-delete-rejected-signups.sql`
+10. **`migrations/20261119-auth-hardening.sql` — 마지막**
+
+6반 출석부 데이터는 별도 비공개 자료로 입력합니다. 실명 명단이나 DB 비밀번호는 저장소에 넣지 않습니다.
+
+관리자 계정이 필요하면 사이트에서 본인만 아는 비밀번호로 회원가입한 뒤, SQL Editor에서 해당 회원의 UUID와 아이디를 확인하고 아래 SQL로 승격합니다. 이 작업은 DB 소유자가 직접 수행합니다. 예시 UUID를 실제 본인 계정 UUID로 바꾸세요.
 
 ```sql
 select id, username, role from public.cw_users;
@@ -12,17 +33,19 @@ set role = 'admin', status = 'approved',
 where id = '본인-계정-UUID'::uuid;
 ```
 
-4. SQL 적용 후 수정된 프런트엔드를 배포합니다. SQL 적용 전 새 프런트엔드를 사용하면 로그아웃 RPC가 없어 로그아웃 오류가 표시됩니다.
-5. 관리자와 일반 회원으로 다시 로그인해서 게시판, 승인 처리, 로그아웃을 확인합니다. 세션 유효기간은 로그인 또는 가입부터 12시간이며, 로그아웃 즉시 서버에서 폐기됩니다. 네트워크 오류로 폐기에 실패하면 오류를 표시하고 재시도할 수 있도록 토큰을 유지합니다.
+## 적용 확인
+
+필수 SQL 적용 후 프런트엔드를 배포합니다. 세션 유효기간은 **일반 회원 24시간, 관리자 12시간**이며 로그아웃 즉시 서버에서 폐기됩니다. 네트워크 오류로 폐기에 실패하면 오류를 표시하고 재시도할 수 있도록 토큰을 유지합니다.
+
+`cw_auth_private`는 API 노출 스키마에 추가하지 않습니다. 신규 비밀번호는 8자 이상, UTF-8 72바이트 이하이며 로그인·가입 요청 횟수 제한을 유지합니다. 자세한 정책은 [README.md](README.md#로그인가입-보안-보완)를 참고하세요.
 
 정적 프런트엔드 수정만으로 운영 DB가 갱신되지는 않습니다. 로컬 데모 모드는 기본 관리자 계정을 자동 생성하지 않습니다.
 
 검증 명령
 
 ```powershell
-node --check js/auth.js
-node --check js/board.js
-node tests/security-regression.cjs
+pnpm install --frozen-lockfile
+node scripts/check.cjs
 ```
 
-DB 회귀 테스트는 별도 테스트 DB에 스키마를 적용한 후 `tests/security-regression.sql`을 실행합니다. 테스트 변경은 마지막에 롤백합니다. 운영 DB에는 테스트 스크립트를 실행하지 마세요.
+기본 검사에는 메모리 PostgreSQL 검사가 포함됩니다. 최초 설정, 인증 강화 재실행, 잘못된 기본 설정 재실행 차단, 약한 비밀번호·우회 API 거부, 요청 횟수 유지, 권한·세션·메모 소유권과 수정 충돌을 검증합니다. DB URL이나 운영 자격증명을 사용하지 않습니다. 운영 DB에는 테스트 스크립트를 실행하지 마세요.

@@ -18,7 +18,7 @@ node scripts/preview.cjs
 
 ## 로그인·가입 보안 보완
 
-`migrations/20261119-auth-hardening.sql`은 기본 설정·생일·출석부 가입 마이그레이션을 적용한 뒤 **마지막에** 적용합니다. 기존 로그인/가입 구현은 외부 호출 권한이 없는 `cw_auth_private` 스키마로 옮기고, 공개 API는 공통 검사를 통과한 후 호출합니다. 과거 가입 API와 남은 오버로드도 우회 경로가 되지 않도록 권한을 제한합니다. 향후 기본 설정 SQL을 재실행하면 공개 함수를 덮어쓸 수 있으므로 이 마이그레이션을 다시 마지막에 적용해야 합니다.
+`migrations/20261119-auth-hardening.sql`은 기본 설정·생일·출석부 가입 마이그레이션을 적용한 뒤 **마지막에** 적용합니다. 기존 로그인/가입 구현은 외부 호출 권한이 없는 `cw_auth_private` 스키마로 옮기고, 공개 API는 공통 검사를 통과한 후 호출합니다. 과거 가입 API와 남은 오버로드도 우회 경로가 되지 않도록 권한을 제한합니다. 인증 보완 이후 기본 설정 SQL은 재실행을 차단합니다. 로그인·가입 함수를 변경하는 추가 마이그레이션을 적용했다면 인증 보완을 다시 마지막에 적용합니다. 전체 순서는 [보안 업데이트 안내](SECURITY-UPDATE.md)를 따릅니다.
 
 - 로그인: 계정당 5분에 10회, 전체 5분에 300회. 성공·실패 요청 모두 계산합니다.
 - 가입: 같은 아이디당 15분에 3회, 모든 가입 API 합계 1시간에 60회.
@@ -28,7 +28,7 @@ node scripts/preview.cjs
 
 `cw_auth_private`를 API 노출 스키마에 추가하지 않으며 PostgREST는 기본 COMMIT 방식과 클라이언트의 `Prefer: tx=rollback`을 허용하지 않는 설정을 유지합니다. 2026-11-19 기존 Supabase에 인증 보완 SQL을 적용하고 공개 함수·비공개 스키마 접근 권한을 확인했습니다. 운영 테스트 계정은 만들지 않았으며 기존 회원 데이터는 변경하지 않았습니다.
 
-격리된 메모리 PostgreSQL 테스트: 설치된 `@electric-sql/pglite` 패키지 디렉터리를 `CODEWIKI_PGLITE_PATH`로 지정한 뒤 `node scripts/test-auth-db.cjs`를 실행합니다. DB URL이나 운영 자격증명을 받지 않습니다. 약한 비밀번호의 기존 재현, 모든 가입 경로, 실패 횟수 유지, 제한 만료, 예전 API 차단, 권한·세션·출석부·생일 원자성, 마이그레이션 재실행을 검사합니다. 이 마이그레이션 이후 실패 응답은 SQL 예외가 아닌 오류 JSON이므로 이전 `class-roster.sql`/`birthdays.sql`의 실패 검사는 해당 이전 단계에서 실행하며, 이후 검사는 `auth-hardening.sql`을 사용합니다.
+격리된 메모리 PostgreSQL 테스트는 `pnpm install --frozen-lockfile` 후 `node scripts/check.cjs`에 자동 포함됩니다. DB 검사만 실행하려면 `node scripts/test-auth-db.cjs`를 사용합니다. DB URL이나 운영 자격증명을 받지 않습니다. 약한 비밀번호의 기존 재현, 모든 가입 경로, 실패 횟수 유지, 제한 만료, 예전 API 차단, 권한·세션·출석부·생일 원자성, 마이그레이션 재실행 및 메모 소유권·수정 충돌을 검사합니다. 이 마이그레이션 이후 실패 응답은 SQL 예외가 아닌 오류 JSON이므로 이전 `class-roster.sql`/`birthdays.sql`의 실패 검사는 해당 이전 단계에서 실행하며, 이후 검사는 `auth-hardening.sql`을 사용합니다. 이미 설치한 PGlite를 사용할 때만 `CODEWIKI_PGLITE_PATH`로 패키지 경로를 지정할 수 있습니다.
 
 ## 작업을 옮기는 순서
 
@@ -61,7 +61,7 @@ node scripts/preview.cjs
 ```sh
 # JS/CSS를 수정한 뒤 정적 파일 캐시 키 갱신
 node scripts/update-assets.cjs
-# 전체 JS 문법, 모든 CJS 회귀 테스트, 캐시 키 일치 검사
+# 전체 JS 문법, CJS 및 격리 PostgreSQL 회귀 테스트, 캐시 키 일치 검사
 node scripts/check.cjs
 ```
 

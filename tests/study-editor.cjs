@@ -33,6 +33,29 @@ for(const source of [
 ])roundtrip(source);
 const literal={type:'doc',content:[{type:'paragraph',content:[{type:'text',text:'**기호** ==같음== <script> & 한글 😀'}]}]};
 assert.deepEqual(plain(editor.parse(editor.serialize(literal))),literal,'typed syntax remains literal after saving');
+const emptyParagraph={type:'paragraph'};
+const textParagraph=text=>({type:'paragraph',content:[{type:'text',text}]});
+for(const content of [
+ [emptyParagraph],
+ [emptyParagraph,textParagraph('A')],
+ [textParagraph('A'),emptyParagraph,emptyParagraph,textParagraph('B')],
+ [textParagraph('A'),emptyParagraph],
+ [{type:'blockquote',content:[textParagraph('A'),emptyParagraph]}],
+ [{type:'bulletList',content:[{type:'listItem',content:[textParagraph('A'),emptyParagraph]}]}],
+]){
+ const doc={type:'doc',content};
+ assert.deepEqual(plain(editor.parse(editor.serialize(doc))),doc,'editor-created empty paragraphs survive saving');
+}
+assert.notEqual(editor.serialize({type:'doc',content:[textParagraph('A')]}),
+ editor.serialize({type:'doc',content:[textParagraph('A'),emptyParagraph]}),
+ 'adding only a blank paragraph must be detected as a dirty edit');
+for(const type of ['paragraph','heading','codeBlock']){
+ const block={type,content:[{type:'text',text:'\t들여쓰기\t내용'}]};
+ if(type==='heading')block.attrs={level:2};
+ if(type==='codeBlock')block.attrs={language:null};
+ const doc={type:'doc',content:[block]};
+ assert.deepEqual(plain(editor.parse(editor.serialize(doc))),doc,'tabs survive saving in '+type);
+}
 const attack=editor.parse('<img src=x onerror=alert(1)>\n<script>alert(1)</script>');
 assert.ok(!JSON.stringify(attack).includes('"type":"image"'));
 assert.match(attack.content[0].content[0].text,/<img/,'HTML stays literal text');

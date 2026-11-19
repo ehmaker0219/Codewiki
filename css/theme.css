@@ -206,6 +206,10 @@ body { background-image: none; }
 .workspace-topbar { height: 56px; padding: 0 24px; background: var(--bg-card); backdrop-filter: none; }
 .search-input { border-radius: 3px; }
 .icon-btn { border-radius: 3px; box-shadow: none; }
+.theme-icon { display: block; flex-shrink: 0; }
+.theme-icon-sun { display: none; }
+:root[data-theme="dark"] .theme-icon-moon { display: none; }
+:root[data-theme="dark"] .theme-icon-sun { display: block; }
 .app-shell, .app-shell.single-col { max-width: 1440px; padding: 20px 24px 40px; gap: 18px; }
 .app-shell { grid-template-columns: minmax(0, 1fr) 200px; }
 .app-shell.single-col { grid-template-columns: minmax(0, 1fr); }

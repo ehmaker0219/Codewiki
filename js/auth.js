@@ -26,6 +26,26 @@
   const DEMO_SESSION_KEY = "codewiki_custom_session_v1";
   const SUPA_TOKEN_KEY = "codewiki_supa_token_v1";
 
+  // Bound both fetch and adapters that ignore abort. A late response must never
+  // resume a timed-out submission; timers are released on every outcome.
+  async function authRpc(name, args) {
+    const controller = new AbortController();
+    let timer;
+    try {
+      const timeout = new Promise((_, reject) => {
+        timer = setTimeout(() => {
+          reject(Object.assign(new Error('auth-timeout'), {code:'TIMEOUT'}));
+          controller.abort();
+        }, 15000);
+      });
+      const request = supabaseClient.rpc(name, args);
+      return await Promise.race([
+        typeof request?.abortSignal === 'function' ? request.abortSignal(controller.signal) : request,
+        timeout
+      ]);
+    } finally { clearTimeout(timer); }
+  }
+
   // Demo mode never provisions a privileged account with a shared password.
   const defaultDemoUsers = [];
 
@@ -260,23 +280,12 @@
         <p class="auth-desc">저장된 로그인 정보를 확인하고 있습니다.</p>
       </div></div>`;
     }
-    let profile, error, sessionTimer;
-    const sessionAbort = new AbortController();
+    let profile, error;
     try {
-      const timeout = new Promise((_,reject) => {
-        sessionTimer = setTimeout(() => {
-          reject(Object.assign(new Error('session-timeout'), {code:'TIMEOUT'}));
-          sessionAbort.abort();
-        },15000);
-      });
-      const request = supabaseClient.rpc("cw_me", { p_token: token });
-      ({ data: profile, error } = await Promise.race([
-        typeof request?.abortSignal === 'function' ? request.abortSignal(sessionAbort.signal) : request,
-        timeout
-      ]));
+      ({ data: profile, error } = await authRpc("cw_me", { p_token: token }));
     } catch (cause) {
       error = cause;
-    } finally { clearTimeout(sessionTimer); }
+    }
 
     // Ignore a response from a session that was logged out or replaced while awaiting RPC.
     if (getSupaToken() !== token || version !== authStateVersion) return;
@@ -740,10 +749,8 @@
         submitBtn.textContent = "처리 중...";
       }
 
-      if (isSignup) {
-        let data, error;
-        try {
-          ({ data, error } = await supabaseClient.rpc("cw_signup_with_roster", {
+      const tokenBeforeSubmit = getSupaToken();
+      const args = isSignup ? {
           p_username: username,
           p_password: password,
           p_full_name: fullName,
@@ -752,36 +759,25 @@
           p_birth_date: birthDate || null,
           p_share_with_class: shareBirthday,
           p_student_number: studentNumber
-          }));
-        } catch (_) {
-          error = { message: "연결을 확인한 뒤 다시 신청해 주세요." };
-        }
-        if (error || !data?.session_token) {
-          showSubmitError(error?.message || data?.message || "가입 신청 중 오류가 발생했습니다.");
-        } else {
-          authMessage = "";
-          window.CodeWikiApp?.resetTrackChoice();
-          setSupaToken(data.session_token);
-          renderAuthState();
-        }
+      } : {p_username: username, p_password: password};
+      let data, error;
+      try {
+        ({ data, error } = await authRpc(isSignup ? "cw_signup_with_roster" : "cw_login", args));
+      } catch (cause) {
+        error = {message: cause.code === 'TIMEOUT'
+          ? (isSignup ? "응답이 지연되고 있습니다. 가입되었을 수 있으니 로그인으로 확인해 주세요." : "응답이 지연되고 있습니다. 잠시 후 다시 로그인해 주세요.")
+          : "연결을 확인한 뒤 다시 시도해 주세요."};
+      }
+      // Switching forms or accounts invalidates this submission, even if the
+      // server finishes it later. Never overwrite a newer session.
+      if (document.getElementById('authGateForm') !== form || getSupaToken() !== tokenBeforeSubmit) return;
+      if (error || !data?.session_token) {
+        showSubmitError(error?.message || data?.message || (isSignup ? "가입 신청 중 오류가 발생했습니다." : "아이디 또는 비밀번호를 확인해 주세요."));
       } else {
-        let data, error;
-        try {
-          ({ data, error } = await supabaseClient.rpc("cw_login", {
-            p_username: username,
-            p_password: password
-          }));
-        } catch (_) {
-          error = { message: "연결을 확인한 뒤 다시 로그인해 주세요." };
-        }
-        if (error || !data?.session_token) {
-          showSubmitError(error?.message || data?.message || "아이디 또는 비밀번호를 확인해 주세요.");
-        } else {
-          authMessage = "";
-          window.CodeWikiApp?.resetTrackChoice();
-          setSupaToken(data.session_token);
-          renderAuthState();
-        }
+        authMessage = "";
+        window.CodeWikiApp?.resetTrackChoice();
+        setSupaToken(data.session_token);
+        renderAuthState();
       }
     });
   }

@@ -34,4 +34,20 @@ assert.equal(textReads,1,'cursor-only transactions do not traverse the full docu
 assert.equal(conversions,1,'cursor-only transactions do not serialize content');
 view.setContent('other note');assert.equal(view.text(),'other note');assert.equal(textReads,2);
 view.destroy();assert.equal(view.text(),'','destroy clears cached text');
-console.log('PASS: shared serialization, single toolbar update, cached character counts and note-switch invalidation');
+// A new document shares old immutable blocks; only edited blocks need scanning.
+let scans=0,encodings=0;
+const blockContext=vm.createContext({
+ needsRichData:block=>{scans++;return block.rich;},
+ schema:{text:value=>value,nodes:{doc:{create:(_,blocks)=>blocks},codeBlock:{create:(_,body)=>body}}},
+});
+vm.runInContext(source.slice(source.indexOf('const encodedBlocks='),source.indexOf('const serializedDocs=')),blockContext);
+const block=(text,rich=false)=>({rich,descendants(){},toJSON(){encodings++;return {text};}});
+const a=block('unchanged table',true),b=block('old paragraph');
+const doc=blocks=>({forEach:fn=>blocks.forEach(fn)});
+const first=blockContext.encodeRichContent(doc([a,b]));
+const changed=block('new paragraph',true);
+const second=blockContext.encodeRichContent(doc([a,changed]));
+assert.equal(scans,3,'unchanged blocks are not rescanned');
+assert.equal(encodings,2,'unchanged rich blocks are not encoded again');
+assert.equal(first[0],second[0]);assert.match(second[1],/new paragraph/,'edited block must invalidate cached content');
+console.log('PASS: shared serialization, unchanged-block reuse, single toolbar update, cached character counts and note-switch invalidation');

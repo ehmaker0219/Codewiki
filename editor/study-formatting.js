@@ -63,7 +63,10 @@ export const ParagraphFormat=Extension.create({
 });
 
 export function needsRichData(node){
-  return Boolean(node.attrs.textAlign)||node.marks.some(mark=>
+  // Markdown can trim leading tabs or reinterpret them as indented code.
+  // Code blocks already preserve literal whitespace in their fenced form.
+  return (node.type.name==='paragraph'&&node.content.size===0)||
+    (node.isTextblock&&!node.type.spec.code&&node.textContent.includes('\t'))||Boolean(node.attrs.textAlign)||node.marks.some(mark=>
     ['fontSize','textColor','underline','strike'].includes(mark.type.name)||mark.type.name==='highlight'&&mark.attrs.color);
 }
 export function validateFormatting(node){

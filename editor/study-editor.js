@@ -60,7 +60,34 @@ function runAction(editor,kind,focus=false){
 }
 const studyShortcuts=Extension.create({
   name:'studyShortcuts',priority:1000,
-  addKeyboardShortcuts(){return Object.fromEntries(Object.entries(studyActions).map(([kind,{key}])=>[key,()=>runAction(this.editor,kind)]));},
+  addKeyboardShortcuts(){return {
+    ...Object.fromEntries(Object.entries(studyActions).map(([kind,{key}])=>[key,()=>runAction(this.editor,kind)])),
+    Tab:()=>{
+      // Tables keep their native next-cell navigation. Everywhere else, keep
+      // the caret in the note instead of moving focus to footer buttons.
+      if(this.editor.isActive('table'))return false;
+      if(this.editor.isActive('listItem')&&runAction(this.editor,'indent'))return true;
+      this.editor.commands.command(({tr,dispatch})=>{
+        if(dispatch)tr.insertText('\t');
+        return true;
+      });
+      return true;
+    },
+    'Shift-Tab':()=>{
+      if(this.editor.isActive('table'))return false;
+      if(this.editor.isActive('listItem')&&runAction(this.editor,'outdent'))return true;
+      this.editor.commands.command(({state,tr,dispatch})=>{
+        const {empty,$from,from}=state.selection;
+        if(empty&&$from.parent.isTextblock){
+          const before=$from.parent.textBetween(0,$from.parentOffset);
+          const count=before.endsWith('\t')?1:before.match(/ {1,2}$/)?.[0].length||0;
+          if(count&&dispatch)tr.delete(from-count,from);
+        }
+        return true;
+      });
+      return true;
+    },
+  };},
 });
 const extensions = [StarterKit.configure({link:false,trailingNode:false}), StudyHighlight, FontSize, TextColor, ParagraphFormat, TableKit, studyShortcuts];
 const schema = getSchema(extensions);
@@ -160,12 +187,20 @@ function parse(body){
 }
 // Markdown cannot represent every visual format. Preserve affected top-level blocks
 // as schema-validated data, leaving the rest as ordinary portable Markdown.
+// Unchanged ProseMirror blocks retain identity between edits. Do not rescan or
+// JSON-encode every table/list on each keystroke; WeakMap releases old blocks.
+const encodedBlocks=new WeakMap();
 function encodeRichContent(doc){
   const blocks=[];
   doc.forEach(block=>{
-    let sized=needsRichData(block);
-    block.descendants(child=>{if(needsRichData(child))sized=true;return !sized;});
-    blocks.push(sized?schema.nodes.codeBlock.create({language:'codewiki-rich-v1'},schema.text(JSON.stringify(block.toJSON()))):block);
+    let encoded=encodedBlocks.get(block);
+    if(!encoded){
+      let rich=needsRichData(block);
+      if(!rich)block.descendants(child=>{if(needsRichData(child))rich=true;return !rich;});
+      encoded=rich?schema.nodes.codeBlock.create({language:'codewiki-rich-v1'},schema.text(JSON.stringify(block.toJSON()))):block;
+      encodedBlocks.set(block,encoded);
+    }
+    blocks.push(encoded);
   });
   return schema.nodes.doc.create(doc.attrs,blocks);
 }

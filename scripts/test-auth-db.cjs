@@ -1,5 +1,5 @@
 // In-memory PostgreSQL only. No connection string, network, or production writes.
-// Supply an installed @electric-sql/pglite directory via CODEWIKI_PGLITE_PATH.
+// Uses the pinned development dependency; CODEWIKI_PGLITE_PATH can override it.
 const fs = require('node:fs');
 const path = require('node:path');
 const assert = require('node:assert/strict');
@@ -13,7 +13,9 @@ const read = file => fs.readFileSync(path.join(root,file),'utf8');
   try {
     await db.exec('create role anon; create role authenticated; create schema extensions;');
     await db.exec(read('supabase-setup.sql'));
-    for (const file of ['20261118-birthdays.sql','20261119-class-roster-signup.sql','20261119-delete-rejected-signups.sql']) {
+    for (const file of ['20261118-birthdays.sql','20261118-profile.sql','20261118-session-retention.sql',
+      '20261118-learning-progress.sql','20261118-study-notes.sql','20261118-study-conflict-response.sql',
+      '20261119-class-roster-signup.sql','20261119-delete-rejected-signups.sql']) {
       await db.exec(read(`migrations/${file}`));
     }
     for (const file of ['security-regression.sql','class-roster.sql','admin-delete.sql']) await db.exec(read(`tests/${file}`));
@@ -27,6 +29,12 @@ const read = file => fs.readFileSync(path.join(root,file),'utf8');
     const migration=read('migrations/20261119-auth-hardening.sql');
     await db.exec(migration);
     await db.exec(migration); // idempotence: no wrapper recursion or loss of quota state
+    // An outdated runbook must not replace hardened RPCs, even on accidental rerun.
+    const definition=()=>db.query("select pg_get_functiondef('public.cw_login(text,text)'::regprocedure) as body");
+    const guardedLogin=(await definition()).rows[0].body;
+    await assert.rejects(db.exec(read('supabase-setup.sql')),error=>error.code==='55000');
+    await db.exec('rollback;');
+    assert.equal((await definition()).rows[0].body,guardedLogin,'setup rerun replaced login guard');
     // Separate committed requests: failure must not undo its quota update.
     await db.exec('set role anon;');
     const failure=await db.query("select public.cw_login('missing-user','wrong') as result");
@@ -36,7 +44,7 @@ const read = file => fs.readFileSync(path.join(root,file),'utf8');
     assert.equal(count.rows[0].attempts,1,'failed request commits its quota');
     await db.exec('truncate cw_auth_private.limits;');
     await db.exec(read('tests/auth-hardening.sql'));
-    for (const file of ['security-regression.sql','session-retention.sql','admin-delete.sql']) await db.exec(read(`tests/${file}`));
-    console.log('PASS: PostgreSQL auth hardening, baseline reproduction, committed failure quota, migration rerun and authorization regressions');
+    for (const file of ['security-regression.sql','session-retention.sql','admin-delete.sql','study-notes.sql']) await db.exec(read(`tests/${file}`));
+    console.log('PASS: PostgreSQL auth hardening, unsafe setup rerun blocked, committed failure quota, session/admin authorization and study ownership/revision regressions');
   } finally { await db.close(); }
 })().catch(error => { console.error(error.message); process.exitCode=1; });

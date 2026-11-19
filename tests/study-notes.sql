@@ -24,13 +24,13 @@ begin
   assert public.cw_get_study_note(a,n)->>'body'='**굵게** ==중요== <script>not HTML</script>';
   assert public.cw_get_study_note(b,n) is null;
   assert jsonb_array_length(public.cw_list_study_notes(b))=0;
-  begin perform public.cw_save_study_note(b,n,'stolen','stolen',1);raise exception 'cross-owner update permitted';exception when serialization_failure then null;end;
-  begin perform public.cw_delete_study_note(b,n,1);raise exception 'cross-owner delete permitted';exception when serialization_failure then null;end;
-  begin perform public.cw_save_study_note(b,n,'stolen','stolen',0);raise exception 'cross-owner insert permitted';exception when serialization_failure then null;end;
+  begin perform public.cw_save_study_note(b,n,'stolen','stolen',1);raise exception 'cross-owner update permitted';exception when sqlstate 'PT409' then null;end;
+  begin perform public.cw_delete_study_note(b,n,1);raise exception 'cross-owner delete permitted';exception when sqlstate 'PT409' then null;end;
+  begin perform public.cw_save_study_note(b,n,'stolen','stolen',0);raise exception 'cross-owner insert permitted';exception when sqlstate 'PT409' then null;end;
   saved:=public.cw_save_study_note(a,n,'수정','version 2',1);
   assert (saved->>'revision')::int=2;
-  begin perform public.cw_save_study_note(a,n,'old','old',1);raise exception 'stale overwrite permitted';exception when serialization_failure then null;end;
-  begin perform public.cw_delete_study_note(a,n,1);raise exception 'stale delete permitted';exception when serialization_failure then null;end;
+  begin perform public.cw_save_study_note(a,n,'old','old',1);raise exception 'stale overwrite permitted';exception when sqlstate 'PT409' then null;end;
+  begin perform public.cw_delete_study_note(a,n,1);raise exception 'stale delete permitted';exception when sqlstate 'PT409' then null;end;
   begin perform public.cw_save_study_note(a,n,' ','',2);raise exception 'empty title permitted';exception when invalid_parameter_value then null;end;
   begin perform public.cw_save_study_note(a,n,'large',repeat('x',200001),2);raise exception 'oversize permitted';exception when invalid_parameter_value then null;end;
   foreach t in array array[s,e,gen_random_uuid(),null::uuid] loop

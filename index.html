@@ -8,7 +8,7 @@
   <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/style.css?v=0cb51756c1c2" />
-  <link rel="stylesheet" href="css/theme.css?v=7052def1238a" />
+  <link rel="stylesheet" href="css/theme.css?v=eab5f49e1dfb" />
   <link rel="stylesheet" href="css/profile.css?v=c8934ffc3694" />
   <link rel="stylesheet" href="css/birthdays.css?v=f858766dad1c" />
   <link rel="stylesheet" href="css/schedule.css?v=7357dc7efd11" />
@@ -127,8 +127,14 @@
           <button id="quizModeBtn" class="toss-chip-btn hidden" title="빈칸 복습 모드">
             <span>암기 모드</span>
           </button>
-          <button id="themeToggleBtn" class="icon-btn" title="테마 전환" aria-label="테마 전환">
-            <span id="themeIcon">🌙</span>
+          <button id="themeToggleBtn" class="icon-btn" title="다크 모드로 전환" aria-label="다크 모드로 전환">
+            <svg class="theme-icon theme-icon-moon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M20.5 13A8.5 8.5 0 0 1 11 3.5 8.5 8.5 0 1 0 20.5 13Z" />
+            </svg>
+            <svg class="theme-icon theme-icon-sun" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true">
+              <circle cx="12" cy="12" r="4" />
+              <path d="M12 2v2m0 16v2M2 12h2m16 0h2M4.93 4.93l1.42 1.42m11.3 11.3 1.42 1.42M4.93 19.07l1.42-1.42m11.3-11.3 1.42-1.42" />
+            </svg>
           </button>
         </div>
       </header>
@@ -163,7 +169,7 @@
           </div>
         </aside>
       </div>
-      <footer class="site-footer">최근 업데이트 <time id="siteUpdatedAt" datetime="2026-11-19T00:39:32.980Z" data-version="112e59ff65b18ba7">2026.11.19 09:39 (KST)</time></footer>
+      <footer class="site-footer">최근 업데이트 <time id="siteUpdatedAt" datetime="2026-11-19T01:26:49.515Z" data-version="a0fc9d46c51bbb43">2026.11.19 10:26 (KST)</time></footer>
     </div>
   </div>
 
@@ -207,12 +213,12 @@
   <script src="js/visualizers.js?v=dbbc291349e3"></script>
   <script src="js/schedule-data.js?v=7a907468c4cd"></script>
   <script src="js/schedule.js?v=c034a3ef8fe8"></script>
-  <script src="js/app.js?v=9dea467ad843"></script>
+  <script src="js/app.js?v=59c12dde9d5f"></script>
   <script src="js/admin.js?v=fa529e2d1ef0"></script>
-  <script type="application/json" id="studyEditorSource" data-src="js/study-editor.js?v=6c524902ef77"></script>
+  <script type="application/json" id="studyEditorSource" data-src="js/study-editor.js?v=b54522cdee01"></script>
   <script src="js/study-store.js?v=d06196e4f21c"></script>
   <script src="js/study.js?v=3d09f36fc349"></script>
-  <script src="js/auth.js?v=0b6a157ec715"></script>
+  <script src="js/auth.js?v=7e74bc0f882e"></script>
   <script src="js/board.js?v=07470c7a2510"></script>
   <script src="js/practice.js?v=f1c393395841"></script>
   <script src="js/practice-ui.js?v=9b9d96b845b5"></script>

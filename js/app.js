@@ -948,12 +948,13 @@
     });
 
     const themeToggleBtn = document.getElementById("themeToggleBtn");
-    const themeIcon = document.getElementById("themeIcon");
     themeToggleBtn.addEventListener("click", () => {
       const root = document.documentElement;
       const next = root.getAttribute("data-theme") === "light" ? "dark" : "light";
       root.setAttribute("data-theme", next);
-      themeIcon.textContent = next === "light" ? "🌙" : "☀️";
+      const label = next === "light" ? "다크 모드로 전환" : "라이트 모드로 전환";
+      themeToggleBtn.title = label;
+      themeToggleBtn.setAttribute("aria-label", label);
     });
   }
 
