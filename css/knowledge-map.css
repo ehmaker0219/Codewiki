@@ -791,6 +791,10 @@
 }
 
 /* Home page minimalist entry banner */
+.doc-top-widget .kmap-home-entry {
+  margin-bottom: 26px;
+}
+
 .kmap-home-entry {
   display: flex;
   align-items: center;

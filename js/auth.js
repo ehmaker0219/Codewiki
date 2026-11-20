@@ -128,10 +128,6 @@
     document.body.classList[isAdmin ? 'add' : 'remove']('admin-workspace');
     const operationsLabel = document.getElementById('adminOperationsLabel');
     if (operationsLabel) operationsLabel.hidden = !isAdmin;
-    if (isAdmin) {
-      const homeMenu = document.getElementById('homeMenuGroup');
-      if (homeMenu) homeMenu.open = true;
-    }
     const learningContents = document.getElementById('learningContentsGroup');
     if (learningContents) learningContents.hidden = user?.role !== 'student' || user.status !== 'approved';
     if (!user) {

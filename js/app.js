@@ -588,6 +588,7 @@
     // Preserve the shared TOC node before replacing the current document.
     if (tocCardWrap) sidebarRight?.prepend(tocCardWrap);
     articleContainer.innerHTML = `
+      ${doc.topWidgetId ? `<div class="doc-top-widget" data-widget-id="${esc(doc.topWidgetId)}"></div>` : ""}
       ${
         hasMetaTop
           ? `

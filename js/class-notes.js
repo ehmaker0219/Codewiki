@@ -177,34 +177,37 @@ START-OF-SELECTION.
   const typeSource = docs['abap-types'].sections.pop();
   docs['abap-types'].sections.push(
     section('구조체 선언과 컴포넌트', text('구조체는 서로 다른 타입의 컴포넌트를 하나로 묶습니다. ABAP Dictionary의 글로벌 구조를 참조하거나 프로그램 안에서 TYPES로 로컬 구조 타입을 정의할 수 있습니다.', 'ts_는 구조 타입, gs_는 구조 변수에 붙인 학습용 명명 관례입니다. 필드에 접근할 때는 구조변수-컴포넌트 형식을 사용합니다. 구조 하나는 한 건의 데이터를, [[abap-data-report|내부 테이블]]은 여러 행을 담습니다.'),
-      code('구조 타입과 구조 변수', `TYPES: BEGIN OF ts_student,
-         id   TYPE i,
-         name TYPE c LENGTH 20,
-       END OF ts_student.
-DATA gs_student TYPE ts_student.
-DATA lv_name TYPE ts_student-name.
+      code('구조 타입과 구조 변수', `TYPES: BEGIN OF ts_carrier,
+         carrid   TYPE scarr-carrid,
+         carrname TYPE scarr-carrname,
+       END OF ts_carrier.
+DATA gs_carrier TYPE ts_carrier.
+DATA lv_carrname TYPE ts_carrier-carrname.
 
-gs_student-id = 1.
-gs_student-name = '홍길동'.
-lv_name = gs_student-name.
-WRITE: / gs_student-id, gs_student-name, / lv_name.`), text('TYPE ts_student-name은 구조 타입의 컴포넌트 타입을 참조합니다. ABAP Dictionary의 구조·테이블 필드도 TYPE 글로벌타입-필드명으로 참조할 수 있습니다. 기존 변수의 컴포넌트를 기준으로 선언할 때는 LIKE gs_student-name을 사용합니다.')),
+gs_carrier-carrid = 'LH'.
+gs_carrier-carrname = 'Lufthansa'.
+lv_carrname = gs_carrier-carrname.
+WRITE: / gs_carrier-carrid, gs_carrier-carrname, / lv_carrname.`), text('TYPE ts_carrier-carrname은 구조 타입의 컴포넌트 타입을 참조합니다. ABAP Dictionary의 구조·테이블 필드도 TYPE scarr-carrid, TYPE spfli-connid처럼 글로벌타입-필드명으로 참조할 수 있습니다. 기존 변수의 컴포넌트를 기준으로 선언할 때는 LIKE gs_carrier-carrname을 사용합니다.')),
     section('구조체 간 MOVE-CORRESPONDING', text('이름이 같은 컴포넌트끼리 값을 전달합니다. 이름이 다른 대상 컴포넌트는 그대로 남으며, 같은 이름이어도 타입이 다르면 변환 가능 여부를 확인해야 합니다.'),
-      code('같은 이름의 필드만 복사', `TYPES: BEGIN OF ts_source,
-         id   TYPE i,
-         name TYPE c LENGTH 20,
-       END OF ts_source,
-       BEGIN OF ts_target,
-         name  TYPE c LENGTH 20,
-         score TYPE i,
-       END OF ts_target.
-DATA gs_source TYPE ts_source.
-DATA gs_target TYPE ts_target.
-gs_source-id = 1.
-gs_source-name = '홍길동'.
-gs_target-score = 80.
+      code('같은 이름의 필드만 복사', `TYPES: BEGIN OF ts_spfli,
+         carrid   TYPE spfli-carrid,
+         connid   TYPE spfli-connid,
+         cityfrom TYPE spfli-cityfrom,
+       END OF ts_spfli,
+       BEGIN OF ts_flight,
+         carrid   TYPE sflight-carrid,
+         connid   TYPE sflight-connid,
+         seatsocc TYPE sflight-seatsocc,
+       END OF ts_flight.
+DATA gs_spfli  TYPE ts_spfli.
+DATA gs_flight TYPE ts_flight.
+gs_spfli-carrid   = 'LH'.
+gs_spfli-connid   = '0400'.
+gs_spfli-cityfrom = 'FRANKFURT'.
+gs_flight-seatsocc = 320.
 
-MOVE-CORRESPONDING gs_source TO gs_target.
-WRITE: / gs_target-name, gs_target-score.`)));
+MOVE-CORRESPONDING gs_spfli TO gs_flight.
+WRITE: / gs_flight-carrid, gs_flight-connid, gs_flight-seatsocc.`)));
   typeSource.blocks[0].paragraphs[0] = typeSource.blocks[0].paragraphs[0].replace('11/12.', '11/12 · 11/18.');
   docs['abap-types'].sections.push(typeSource);
 
@@ -215,21 +218,22 @@ WRITE: / gs_target-name, gs_target-score.`)));
       ['키 접근', '가능', '가능', '가능'],
       ['기본 키 중복', 'NON-UNIQUE', 'UNIQUE / NON-UNIQUE', 'UNIQUE'],
       ['행 관리', '추가된 순서, SORT로 정렬 가능', '키 순서로 자동 정렬', '키의 해시로 관리']
-    ]), text('INDEX 2는 두 번째 행에 접근한다는 뜻입니다. 열 번호가 아닙니다. 키 접근은 id = 2처럼 필드 값으로 행을 찾습니다. 보조 키는 이후 학습 범위로 남겨 둡니다.')),
+    ]), text("INDEX 2는 두 번째 행에 접근한다는 뜻입니다. 열 번호가 아닙니다. 키 접근은 carrid = 'LH'처럼 필드 값으로 행을 찾습니다. 보조 키는 이후 학습 범위로 남겨 둡니다.")),
     section('내부 테이블 타입과 변수 선언', text('먼저 [[abap-types|구조체]]로 행 타입을 만들고 TYPES로 재사용할 테이블 타입을 정의합니다. DATA에서 테이블 종류와 행 타입을 바로 지정할 수도 있습니다.'),
-      code('행 타입과 세 가지 테이블 선언', `TYPES: BEGIN OF ts_student,
-         id    TYPE i,
-         name  TYPE c LENGTH 20,
-         score TYPE i,
-       END OF ts_student.
-TYPES tt_students TYPE STANDARD TABLE OF ts_student
-                  WITH NON-UNIQUE KEY id.
-DATA gt_students TYPE tt_students.
-DATA gs_student TYPE ts_student.
-DATA gt_sorted TYPE SORTED TABLE OF ts_student
-               WITH UNIQUE KEY id.
-DATA gt_hashed TYPE HASHED TABLE OF ts_student
-               WITH UNIQUE KEY id.`),
+      code('행 타입과 세 가지 테이블 선언', `TYPES: BEGIN OF ts_spfli,
+         carrid   TYPE spfli-carrid,
+         connid   TYPE spfli-connid,
+         cityfrom TYPE spfli-cityfrom,
+         fltime   TYPE spfli-fltime,
+       END OF ts_spfli.
+TYPES tt_spfli TYPE STANDARD TABLE OF ts_spfli
+               WITH NON-UNIQUE KEY carrid connid.
+DATA gt_spfli  TYPE tt_spfli.
+DATA gs_spfli  TYPE ts_spfli.
+DATA gt_sorted TYPE SORTED TABLE OF ts_spfli
+               WITH UNIQUE KEY carrid connid.
+DATA gt_hashed TYPE HASHED TABLE OF ts_spfli
+               WITH UNIQUE KEY carrid connid.`),
       text('STANDARD TABLE은 TABLE로 줄여 쓸 수 있습니다. 구조 행 타입에 기본 키(DEFAULT KEY)를 쓰면 문자형·바이트형 컴포넌트가 키에 포함됩니다. NUMC도 숫자 계산 타입이 아닌 문자형입니다. 예제처럼 필요한 키를 명시하면 의도를 쉽게 파악할 수 있습니다.')),
     section('행 추가·조회·수정·삭제', table(['문장', '역할'], [
       ['APPEND ... TO', 'Standard Table의 끝에 행 추가'],
@@ -239,54 +243,58 @@ DATA gt_hashed TYPE HASHED TABLE OF ts_student
       ['DELETE TABLE ... WITH TABLE KEY', '기본 키로 찾은 행 삭제']
     ]), text('INSERT INTO TABLE을 항상 특정 위치에 넣는 명령이라고 생각하지 마세요. Index Table에서 위치를 지정하는 형식은 INSERT ... INTO ... INDEX n입니다. Sorted Table은 정렬 순서를 지켜야 합니다. READ TABLE 후에는 [[abap-loops|sy-subrc]]를 확인합니다.'),
       code('내부 테이블 조작 전체 예제', `REPORT zcw_internal_table.
-TYPES: BEGIN OF ts_student,
-         id    TYPE i,
-         name  TYPE c LENGTH 20,
-         score TYPE i,
-       END OF ts_student.
-DATA gt_students TYPE STANDARD TABLE OF ts_student
-                 WITH NON-UNIQUE KEY id.
-DATA gs_student TYPE ts_student.
+TYPES: BEGIN OF ts_spfli,
+         carrid   TYPE spfli-carrid,
+         connid   TYPE spfli-connid,
+         cityfrom TYPE spfli-cityfrom,
+         fltime   TYPE spfli-fltime,
+       END OF ts_spfli.
+DATA gt_spfli TYPE STANDARD TABLE OF ts_spfli
+              WITH NON-UNIQUE KEY carrid connid.
+DATA gs_spfli TYPE ts_spfli.
 
-gs_student-id = 1.
-gs_student-name = '홍길동'.
-gs_student-score = 70.
-APPEND gs_student TO gt_students.
+gs_spfli-carrid   = 'LH'.
+gs_spfli-connid   = '0400'.
+gs_spfli-cityfrom = 'FRANKFURT'.
+gs_spfli-fltime   = 545.
+APPEND gs_spfli TO gt_spfli.
 
-gs_student-id = 2.
-gs_student-name = '김학생'.
-gs_student-score = 90.
-INSERT gs_student INTO TABLE gt_students.
+gs_spfli-carrid   = 'AA'.
+gs_spfli-connid   = '0017'.
+gs_spfli-cityfrom = 'NEW YORK'.
+gs_spfli-fltime   = 361.
+INSERT gs_spfli INTO TABLE gt_spfli.
 
-READ TABLE gt_students INTO gs_student WITH KEY id = 1.
+READ TABLE gt_spfli INTO gs_spfli WITH KEY carrid = 'LH' connid = '0400'.
 IF sy-subrc = 0.
-  gs_student-score = 80.
-  MODIFY TABLE gt_students FROM gs_student.
+  gs_spfli-fltime = 560.
+  MODIFY TABLE gt_spfli FROM gs_spfli.
 ENDIF.
 
-DELETE TABLE gt_students WITH TABLE KEY id = 2.
-LOOP AT gt_students INTO gs_student.
-  WRITE: / gs_student-id, gs_student-name, gs_student-score.
-ENDLOOP.`), text('이 예제의 기본 키는 id입니다. 키가 중복되면 MODIFY TABLE은 일치하는 첫 행을 바꿉니다. 여러 행을 조건으로 지울 때는 DELETE gt_students WHERE score < 60.처럼 WHERE를 사용합니다.')),
-    section('내부 테이블 정렬', text('Standard Table에서 SORT로 행 순서를 바꿉니다. BY 뒤에는 정렬할 필드가 필요하며, SORT gt_students BY.처럼 비워 두면 안 됩니다. Sorted Table은 선언된 키 순서를 자동으로 유지합니다.'),
-      code('점수 내림차순·이름 오름차순', `SORT gt_students BY score DESCENDING
-                    name ASCENDING.`), text('점수가 높은 행이 먼저 오고, 점수가 같으면 이름 오름차순으로 정렬됩니다. SORT gt_students.는 기본 키 기준 정렬이므로 여기서는 id를 기준으로 정렬합니다.')),
+DELETE TABLE gt_spfli WITH TABLE KEY carrid = 'AA' connid = '0017'.
+LOOP AT gt_spfli INTO gs_spfli.
+  WRITE: / gs_spfli-carrid, gs_spfli-connid, gs_spfli-cityfrom, gs_spfli-fltime.
+ENDLOOP.`), text('이 예제의 기본 키는 carrid와 connid입니다. 키가 중복되면 MODIFY TABLE은 일치하는 첫 행을 바꿉니다. 여러 행을 조건으로 지울 때는 DELETE gt_spfli WHERE fltime < 300.처럼 WHERE를 사용합니다.')),
+    section('내부 테이블 정렬', text('Standard Table에서 SORT로 행 순서를 바꿉니다. BY 뒤에는 정렬할 필드가 필요하며, SORT gt_spfli BY.처럼 비워 두면 안 됩니다. Sorted Table은 선언된 키 순서를 자동으로 유지합니다.'),
+      code('비행시간 내림차순·항공사 오름차순', `SORT gt_spfli BY fltime DESCENDING
+                 carrid ASCENDING.`), text('비행시간(fltime)이 긴 행이 먼저 오고, 비행시간이 같으면 항공사 코드(carrid) 오름차순으로 정렬됩니다. SORT gt_spfli.는 기본 키 기준 정렬이므로 여기서는 carrid와 connid를 기준으로 정렬합니다.')),
     section('CLEAR·REFRESH·FREE', table(['문장', '의미'], [
-      ['CLEAR gs_student-score.', '구조체의 한 필드를 초기값으로 변경'],
-      ['CLEAR gs_student.', '구조체 전체 필드를 초기값으로 변경'],
-      ['CLEAR gt_students.', 'Header Line이 없는 내부 테이블의 행을 모두 비움'],
-      ['REFRESH gt_students.', '테이블 본문을 비우는 기존 문법'],
-      ['FREE gt_students.', '행을 비우고 테이블 본문에 할당된 메모리도 해제']
+      ['CLEAR gs_spfli-fltime.', '구조체의 한 필드를 초기값으로 변경'],
+      ['CLEAR gs_spfli.', '구조체 전체 필드를 초기값으로 변경'],
+      ['CLEAR gt_spfli.', 'Header Line이 없는 내부 테이블의 행을 모두 비움'],
+      ['REFRESH gt_spfli.', '테이블 본문을 비우는 기존 문법'],
+      ['FREE gt_spfli.', '행을 비우고 테이블 본문에 할당된 메모리도 해제']
     ]), text('CLEAR는 변수 선언 자체를 삭제하지 않습니다. 초기화한 구조체와 테이블은 다시 사용할 수 있습니다. 새 코드에서 Header Line 없는 테이블을 비울 때는 CLEAR를 사용할 수 있습니다.')),
     section('Header Line과 OCCURS — 기존 코드 읽기', text('15번 프로그램 필기: WITH HEADER LINE을 사용한 옛 문법에서는 테이블과 같은 이름의 작업 영역이 함께 생깁니다. 문장에 따라 같은 이름이 작업 영역 또는 본문을 가리켜 혼동하기 쉽습니다. 새 코드에서는 gs_ 작업 영역과 gt_ 테이블을 분리하세요.'),
       code('Header Line과 테이블 본문 구분', `REPORT zcw_header_line.
-DATA gt_numbers TYPE STANDARD TABLE OF i WITH HEADER LINE.
-gt_numbers = 10.          " Header Line에 값 대입
-APPEND gt_numbers.       " Header Line을 본문에 추가
-CLEAR gt_numbers.        " Header Line만 초기화, 본문 1행 유지
-WRITE / lines( gt_numbers ).
-CLEAR gt_numbers[].      " 테이블 본문 초기화
-WRITE / lines( gt_numbers ).`),
+DATA gt_scarr TYPE STANDARD TABLE OF scarr WITH HEADER LINE.
+gt_scarr-carrid   = 'LH'.       " Header Line에 값 대입
+gt_scarr-carrname = 'Lufthansa'.
+APPEND gt_scarr.                " Header Line을 본문에 추가
+CLEAR gt_scarr.                 " Header Line만 초기화, 본문 1행 유지
+WRITE / lines( gt_scarr[] ).
+CLEAR gt_scarr[].               " 테이블 본문 초기화
+WRITE / lines( gt_scarr[] ).`),
       text('OCCURS n은 과거 내부 테이블 선언에서 초기 메모리 할당 규모를 지정하던 문법입니다. 최대 n건까지만 저장한다는 의미가 아니며 필요하면 테이블은 늘어납니다. 단순 구조 타입 선언에 저장 건수 제한으로 붙이지 않습니다. Header Line과 OCCURS는 기존 Standard ABAP 코드를 읽기 위한 내용입니다.')),
     section('이후 학습', text('DB에서 데이터를 읽고 변경하는 문법은 [[abap-open-sql|Open SQL]]에서 이어집니다. 이 문서는 11월 18일 필기의 내부 테이블 범위이며, 리포트의 상세 구성과 ALV 화면 구성은 준비 중입니다.'))
   ], '11/18', [
@@ -498,10 +506,10 @@ ENDIF.`), text('SELECT 열에 키를 빼면 원래 서로 다른 행이 같은 �
     ]), text('이 문장들은 DB 테이블을 대상으로 합니다. [[abap-data-report|내부 테이블]]의 INSERT·MODIFY·DELETE와 문장이 비슷해도 저장 위치와 트랜잭션이 다릅니다. 일부 필드만 바꾸려면 완성되지 않은 작업 영역으로 MODIFY하기보다 UPDATE ... SET으로 의도를 드러내세요.',
       '변경 예제는 별도 Z 연습용 테이블을 정의한 뒤 실습해야 합니다. SCARR·SFLIGHT나 업무 표준 테이블을 실습용으로 직접 변경하지 마세요. 결과 코드는 문장·단일/일괄 처리별로 다르며 DB 오류는 예외로 발생할 수도 있습니다. sy-subrc와 sy-dbcnt를 바로 확인하고 예외 처리도 설계합니다.'),
       table(['문법 형태 — 그대로 실행하는 코드가 아님', '전제'], [
-        ['INSERT zcw_sql_demo FROM @gs_demo.', 'ZCW_SQL_DEMO의 키와 모든 필수 값이 준비된 작업 영역'],
-        ["UPDATE zcw_sql_demo SET memo = @gv_memo WHERE id = @gv_id.", '정확한 키 조건과 입력 검증'],
-        ['MODIFY zcw_sql_demo FROM @gs_demo.', '초기값까지 포함한 행 전체를 저장하려는 경우'],
-        ['DELETE FROM zcw_sql_demo WHERE id = @gv_id.', '삭제 권한·대상 확인·복구 계획']
+        ['INSERT zcw_scarr_demo FROM @gs_scarr.', 'ZCW_SCARR_DEMO의 키(carrid 등)와 모든 필수 값이 준비된 작업 영역'],
+        ['UPDATE zcw_scarr_demo SET carrname = @gv_carrname WHERE carrid = @gv_carrid.', '정확한 키 조건과 입력 검증'],
+        ['MODIFY zcw_scarr_demo FROM @gs_scarr.', '초기값까지 포함한 행 전체를 저장하려는 경우'],
+        ['DELETE FROM zcw_scarr_demo WHERE carrid = @gv_carrid.', '삭제 권한·대상 확인·복구 계획']
       ])),
     section('보완: 트랜잭션과 안전한 변경', text(
       'COMMIT WORK는 현재 작업 단위의 변경을 확정하고, ROLLBACK WORK는 현재 DB LUW의 미확정 변경을 되돌립니다. 이미 커밋한 변경까지 되돌리는 기능은 아닙니다. 화면 전환·RFC 등에서 암묵적인 커밋이 생길 수 있어 “COMMIT을 안 썼으니 영구 저장되지 않는다”라고 가정하면 안 됩니다.',
@@ -555,7 +563,8 @@ ENDIF.`), text('SELECT 열에 키를 빼면 원래 서로 다른 행이 같은 �
   docs['learning-roadmap'].subtitle = '수업 필기 기반 ABAP 학습 순서';
   docs['learning-roadmap'].summary = '11월 11~19일 필기를 주제별로 정리했습니다. 본문이 채워진 문서부터 읽고, 이후 과정은 준비된 목차로 확인하세요.';
   docs['learning-roadmap'].sections[0].blocks[0].rows = order.map(id => [docs[id].stepNum, `[[${id}|${docs[id].title}]]`, connections[id] ? '필기 정리 · 예제' : '목차 준비 · 본문 예정']);
-  docs['welcome-abap'].sections[0].blocks = [{ type: 'widget', widgetId: 'knowledge-map-entry' }, text('[[learning-roadmap|전체 학습 목차]]에서 주제별 내용을 확인하세요. 수업 필기에서 다루지 않은 ERP 모듈은 목차로 남겨 두었습니다.'), table(['분야', '문서'], [
+  docs['welcome-abap'].topWidgetId = 'knowledge-map-entry';
+  docs['welcome-abap'].sections[0].blocks = [text('[[learning-roadmap|전체 학습 목차]]에서 주제별 내용을 확인하세요. 수업 필기에서 다루지 않은 ERP 모듈은 목차로 남겨 두었습니다.'), table(['분야', '문서'], [
     ['시스템과 개발', '[[sap-architecture|SAP 시스템 구조]] · [[abap-development|개발 객체와 전송 관리]] · [[abap-program-types|프로그램 종류]]'],
     ['ABAP 기본기', '[[abap-basics|ABAP 기초]] · [[abap-types|자료형과 초기값]] · [[abap-loops|반복문과 시스템 필드]] · [[abap-debug-messages|디버깅과 메시지]]'],
     ['모듈화', '[[abap-modularization|프로그램 모듈화]] · [[abap-bapi|BAPI와 RFC]] · [[abap-objects|클래스와 메서드]]'],
