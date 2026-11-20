@@ -98,10 +98,10 @@
       <label class="sr-only" for="studySearch">노트 제목 검색</label><input id="studySearch" type="search" placeholder="노트 제목 검색"><div class="study-import"><button type="button" id="studyImport" class="toss-chip-btn" title="TXT·MD 파일을 여러 개 선택할 수 있습니다">TXT · MD 가져오기</button><input type="file" id="studyFile" accept=".txt,.md,text/plain,text/markdown" multiple hidden><p id="studyImportStatus" role="status" aria-live="polite"></p></div>
       <div id="studyFolders" class="study-folders"></div><p id="studyListStatus" role="status"></p><button type="button" id="studyRetryList" class="toss-chip-btn" hidden>목록 다시 불러오기</button><div id="studyList" class="study-list"></div></aside>
       <section class="study-notebook"><div id="studyEmpty" class="study-empty"><span aria-hidden="true">✎</span><h2>첫 페이지를 펼쳐 보세요</h2><p>새 노트를 만들거나 메모장 파일을 가져오세요.</p></div>
-      <div id="studyEditor" hidden><label class="sr-only" for="studyTitle">노트 제목</label><input id="studyTitle" class="study-title" maxlength="120" placeholder="노트 제목">
+      <div id="studyEditor" hidden><div class="study-note-heading"><label class="sr-only" for="studyTitle">노트 제목</label><input id="studyTitle" class="study-title" maxlength="120" placeholder="노트 제목"><button type="button" id="studyDelete" class="study-action-icon study-delete-icon" aria-label="노트 삭제" title="노트 삭제">${line('M3 6h18M9 6V4h6v2M5 6l1 14h12l1-14M10 10v6M14 10v6')}</button></div>
       <div id="studyFolderMove" class="study-folder-move"></div>
+      <div class="study-editor-meta"><span id="studyStatus" role="status" aria-live="polite"></span><div><button type="button" id="studyDownload" class="toss-chip-btn study-action-icon" aria-label="노트 내려받기" title="노트 내려받기">${line('M12 3v12m-5-5 5 5 5-5M5 16v5h14v-5')}</button><button type="button" id="studySave" class="toss-primary-btn study-action-icon" aria-label="저장" title="저장" aria-busy="false"><span class="study-save-symbol">${icon('<path d="M5 3h12l4 4v14H3V3h2Z"/><path d="M7 3v6h9V3M7 21v-8h10v8M13 5v2"/>')}</span><span class="study-save-spinner" aria-hidden="true"></span></button></div></div>
       <div class="study-editor-tools">
-      <div class="study-editor-meta"><span id="studyStatus" role="status" aria-live="polite"></span><div><button type="button" id="studyDownload" class="toss-chip-btn">내려받기</button><button type="button" id="studySave" class="toss-primary-btn">저장</button></div></div>
       <div class="study-toolbar study-word-tools" role="toolbar" aria-label="필기 서식 도구">
         <div class="study-tool-group"><button type="button" data-history="undo" aria-label="실행 취소" title="실행 취소">${line('M9 4 3 10l6 6M3 10h11a6 6 0 0 1 0 12')}</button><button type="button" data-history="redo" aria-label="다시 실행" title="다시 실행">${line('m15 4 6 6-6 6m6-6H10a6 6 0 0 0 0 12')}</button></div>
         <div class="study-tool-group"><label class="sr-only" for="studyParagraphStyle">문단 스타일</label><select id="studyParagraphStyle" title="문단 스타일 (제목 1~3: Ctrl+Alt+1~3)"><option value="paragraph">일반 텍스트</option>${[1,2,3,4,5,6].map(n=>`<option value="h${n}">제목 ${n}</option>`).join('')}<option value="code" disabled>코드 블록</option></select></div>
@@ -115,7 +115,7 @@
       <div id="studyTableTools" class="study-table-tools" role="group" aria-label="표 편집" hidden><span>표 편집</span>${tableMenus.map(([label,items])=>`<details class="study-table-menu"><summary>${label}<span aria-hidden="true"> ▾</span></summary><div class="study-table-options" role="group" aria-label="${label} 방향">${items.map(([key,text,label])=>`<button type="button" data-table="${key}" aria-label="${label}" title="${label}">${text}</button>`).join('')}</div></details>`).join('')}<button type="button" data-table="deleteTable">표 삭제</button></div>
       </div>
       <div id="studyBody" class="study-rich-editor"></div>
-      <footer class="study-note-footer"><span id="studyCount"></span><div><button type="button" id="studyReload">서버 글 불러오기</button><button type="button" id="studyDelete">노트 삭제</button></div></footer></div></section></div>`;
+      <footer class="study-note-footer"><span id="studyCount"></span><div><button type="button" id="studyReload">서버 글 불러오기</button></div></footer></div></section></div>`;
     byId('studyNew').addEventListener('click',()=>void createNote());
     byId('studyRetryList').addEventListener('click',()=>{void list();void folders?.load();});
     byId('studySearch').addEventListener('input',renderList);
@@ -156,7 +156,6 @@
       menu.querySelector('summary').addEventListener('mousedown',e=>e.preventDefault());
       menu.addEventListener('toggle',()=>{if(menu.open)closeToolMenus(menu);});
     });
-    byId('studySave').title='저장 ('+(/Mac|iPhone|iPad/.test(window.navigator?.platform||'')?'⌘':'Ctrl')+'+S)';
     const folderStore=store;
     folders=window.CodeWikiStudyFolders?.create({element:byId('studyFolders'),moveElement:byId('studyFolderMove'),listElement:byId('studyList'),
       call:(...args)=>folderStore.call(...args),getNote:()=>folderStore.current,getNotes:()=>notes,onChange:renderList});
@@ -201,8 +200,12 @@
     if(!store||!byId('studyStatus'))return;
     const savedAt=store.current?.updated_at;
     byId('studyStatus').textContent=[store.status,savedAt?'마지막 저장 '+date(savedAt):''].filter(Boolean).join(' · ');
-    byId('studySave').disabled=store.busy;
-    byId('studySave').textContent=store.busy?'저장 중…':store.conflicted?'현재 글로 저장':store.dirty?'저장':'저장됨';
+    const saveButton=byId('studySave');
+    const saveLabel=store.busy?'저장 중…':store.conflicted?'현재 글로 저장':store.dirty?'저장':'저장됨';
+    saveButton.disabled=store.busy;
+    saveButton.setAttribute('aria-busy',String(store.busy));
+    saveButton.setAttribute('aria-label',saveLabel);
+    saveButton.title=saveLabel+' ('+(/Mac|iPhone|iPad/.test(window.navigator?.platform||'')?'⌘':'Ctrl')+'+S)';
     if(store.current&&!store.dirty&&store.current.revision){
       const titleInput=byId('studyTitle');
       if(titleInput&&titleInput.value!==store.current.title)titleInput.value=store.current.title;

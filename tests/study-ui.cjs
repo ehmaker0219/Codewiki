@@ -1,6 +1,6 @@
 const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict'),{randomUUID}=require('node:crypto');
 const elements=new Map(),saved=new Map(),memory=new Map(),calls=[],alerts=[];
-let failSaveTitle='',deferList=false,finishList,timerSchedules=0;
+let failSaveTitle='',deferList=false,finishList,timerSchedules=0,deferSave=false,finishSave;
 let downloadedBlob,downloadedName;
 function get(id){if(!elements.has(id))elements.set(id,{innerHTML:'',textContent:'',value:'',hidden:false,events:{},dataset:{},
   classList:{toggle(){},remove(){},add(){}},addEventListener(name,handler){this.events[name]=handler;},
@@ -9,7 +9,7 @@ function get(id){if(!elements.has(id))elements.set(id,{innerHTML:'',textContent:
     return [...this.innerHTML.matchAll(/data-note="([^"]+)"/g)].map(([,noteId])=>{
       const button=get('note-'+noteId);button.dataset.note=noteId;return button;
     });
-  },focus(){},setAttribute(){}});return elements.get(id);}
+  },focus(){},attributes:{},setAttribute(name,value){this.attributes[name]=value;},getAttribute(name){return this.attributes[name]??null;}});return elements.get(id);}
 const context={window:{location:{hash:'#study'},addEventListener(){},alert:m=>alerts.push(m),confirm:()=>true},
   document:{getElementById:get,querySelectorAll:()=>[],createElement(tag){assert.equal(tag,'a');return {click(){downloadedName=this.download;}};}},
   Blob,URL:{createObjectURL(blob){downloadedBlob=blob;return 'blob:test';},revokeObjectURL(){}},
@@ -23,7 +23,7 @@ const client={rpc:async(name,args)=>{
    return {data};
  }
  if(name==='cw_get_study_note')return {data:saved.get(args.p_id)};
- if(name==='cw_save_study_note'){if(args.p_title===failSaveTitle)return {error:{message:'offline'}};if((saved.get(args.p_id)?.revision||0)!==args.p_revision)return {error:{code:'PT409'}};const note={id:args.p_id,title:args.p_title,body:args.p_body,revision:args.p_revision+1,updated_at:new Date().toISOString()};saved.set(note.id,note);return {data:note};}
+ if(name==='cw_save_study_note'){if(deferSave)await new Promise(resolve=>{finishSave=resolve;});if(args.p_title===failSaveTitle)return {error:{message:'offline'}};if((saved.get(args.p_id)?.revision||0)!==args.p_revision)return {error:{code:'PT409'}};const note={id:args.p_id,title:args.p_title,body:args.p_body,revision:args.p_revision+1,updated_at:new Date().toISOString()};saved.set(note.id,note);return {data:note};}
  if(name==='cw_delete_study_note'){saved.delete(args.p_id);return {data:null};}
  throw Error('unexpected RPC');
 }};
@@ -51,10 +51,12 @@ const flush=()=>new Promise(resolve=>setImmediate(resolve));
  fixtures.forEach(note=>saved.set(note.id,note));
  api.setUser({id:'study-owner',role:'student',status:'approved',full_name:'Test Student'});await flush();
  assert.equal(get('studyTitle').value,'261112THU','initial note follows modification time, not the title date');
- assert.match(get('studyStatus').textContent,/마지막 저장 .*12:00/,'confirmed timestamp is in the sticky toolbar');
+ assert.match(get('studyStatus').textContent,/마지막 저장 .*12:00/,'confirmed timestamp is in the save status row');
  assert.equal((get('studyWorkspace').innerHTML.match(/id="studyStatus"/g)||[]).length,1);
  assert.ok(!get('studyWorkspace').innerHTML.includes('studySaveSummary'),'save status is not duplicated');
- assert.equal(get('studySave').textContent,'저장됨');
+ assert.equal(get('studySave').getAttribute('aria-label'),'저장됨');
+ assert.equal(get('studySave').getAttribute('aria-busy'),'false');
+ assert.equal((get('studyWorkspace').innerHTML.match(/id="studyDelete"/g)||[]).length,1,'one delete action after moving it to the heading');
  const renderedTitles=()=>get('studyList').querySelectorAll('[data-note]').map(button=>saved.get(button.dataset.note).title);
  assert.deepEqual(renderedTitles(),['20261120FRI','2026-11-19 목요일','261118 수요일','261117TUE','261112THU','개념','복습']);
  await get('note-'+fixtures[1].id).events.click();await flush();
@@ -69,12 +71,14 @@ const flush=()=>new Promise(resolve=>setImmediate(resolve));
  assert.equal(editorBody,'restored draft');
  saved.set(fixtures[1].id,{...fixtures[1],body:'Changed on server',revision:3});
  await get('studySave').events.click();await flush();
- assert.equal(get('studySave').textContent,'현재 글로 저장');
+ assert.equal(get('studySave').getAttribute('aria-label'),'현재 글로 저장');
+ assert.equal(get('studySave').title,'현재 글로 저장 (Ctrl+S)','conflict overwrite action and save shortcut remain explicit with icon-only UI');
+ assert.equal(get('studySave').getAttribute('aria-busy'),'false');
  assert.match(get('studyStatus').textContent,/서버에 다른 버전/);
  assert.equal(editorBody,'restored draft');
  await get('studySave').events.click();await flush();
  assert.equal(saved.get(fixtures[1].id).body,'restored draft','explicit conflict resolution saves current text');
- assert.equal(get('studySave').textContent,'저장됨');
+ assert.equal(get('studySave').getAttribute('aria-label'),'저장됨');
  assert.match(get('studyStatus').textContent,/저장됨 · 마지막 저장/);
  // Exercise the actual download handler, Blob and reimport path with the real
  // editor codec: a lossy plain-Markdown conversion must not pass as a backup.
@@ -94,7 +98,17 @@ const flush=()=>new Promise(resolve=>setImmediate(resolve));
  assert.equal(backup,backupBody,'download preserves the current unsaved body byte for byte');
  assert.equal(downloadedName,'261118 수요일.md');
  assert.equal(calls.length,callsBeforeDownload,'download does not write to the server');
- await get('studySave').events.click();await flush();
+ deferSave=true;
+ const saveCalls=calls.filter(name=>name==='cw_save_study_note').length;
+ get('studySave').events.click();await flush();
+ assert.equal(get('studySave').getAttribute('aria-busy'),'true','spinner stays active during a delayed request');
+ assert.equal(get('studySave').getAttribute('aria-label'),'저장 중…');
+ assert.equal(get('studySave').disabled,true);
+ get('studySave').events.click();await flush();
+ assert.equal(calls.filter(name=>name==='cw_save_study_note').length,saveCalls+1,'duplicate save clicks do not send extra requests');
+ deferSave=false;finishSave();await flush();
+ assert.equal(get('studySave').getAttribute('aria-busy'),'false','spinner stops on success');
+ assert.equal(get('studySave').disabled,false);
  await get('studyFile').events.change({target:{files:[{name:downloadedName,size:downloadedBlob.size,text:async()=>backup}],value:'file'}});
  await flush();
  assert.equal(editorBody,backupBody,'reimport retains rich text and multiline tables');
@@ -165,6 +179,8 @@ const flush=()=>new Promise(resolve=>setImmediate(resolve));
  ]);
  assert.equal(saved.size,beforeBatch+4);assert.equal(editorBody,'keep this draft');assert.equal(unread,true);
  assert.match(get('studyImportStatus').textContent,/1개 가져오기 완료.*저장 실패로 중단/);
+ assert.equal(get('studySave').getAttribute('aria-busy'),'false','spinner also stops after a failed save');
+ assert.equal(get('studySave').disabled,false,'failed save can be retried');
  assert.ok([...memory.values()].some(value=>value.includes('keep this draft')));
  failSaveTitle='';await get('studySave').events.click();await flush();
  assert.equal(saved.size,beforeBatch+5,'failed import remains retryable without creating a duplicate');
