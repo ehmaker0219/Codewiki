@@ -421,6 +421,7 @@
       const isAllDone = !c.upcoming && c.topics.length > 0 && c.doneCount === c.topics.length;
       return `
         <button type="button" class="kmap-cluster${c.upcoming ? ' is-upcoming' : ''}" data-kmap-cluster="${esc(c.id)}" style="left:${c.x}px;top:${c.y}px;">
+          <span class="kmap-cluster-index">${esc(c.step)}</span>
           <span class="kmap-cluster-title">${esc(c.title)}</span>
           <span class="kmap-cluster-meta${isAllDone ? ' is-complete' : ''}">${esc(metaText)}</span>
         </button>

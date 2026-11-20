@@ -16,7 +16,7 @@
   <link rel="stylesheet" href="css/study.css?v=e1a678dc0bf3" />
   <link rel="stylesheet" href="css/mentoring.css?v=2496571647c0" />
   <link rel="stylesheet" href="css/object-game.css?v=97180b09645e" />
-  <link rel="stylesheet" href="css/knowledge-map.css?v=cfa74309c6ab" />
+  <link rel="stylesheet" href="css/knowledge-map.css?v=d758a709ec96" />
 </head>
 <body>
   <!-- 로그인 후 전체 레이아웃: 좌측 고정 일체형 사이드바 + 우측 워크스페이스 -->
@@ -93,11 +93,11 @@
               <svg class="sidebar-group-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m9 5 7 7-7 7"/></svg>
             </summary>
             <div class="sidebar-submenu">
+          <div id="studySidebarSlot"></div>
           <button type="button" id="openObjectGameBtn" class="sb-menu-item" hidden><svg class="sb-icon" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 3 9 9-9 9-9-9Z"/><path d="M9 12h6M12 9v6"/></svg><span>DATA 미니게임</span></button>
+          <button type="button" id="openMentoringBtn" class="sb-menu-item" hidden><svg class="sb-icon" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 4H5v17h14V4h-4M9 3h6v4H9zM8 12h8M8 16h5"/></svg><span>멘토링</span></button>
             </div>
           </details>
-          <div id="studySidebarSlot"></div>
-          <button type="button" id="openMentoringBtn" class="sb-menu-item" hidden><svg class="sb-icon" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 4H5v17h14V4h-4M9 3h6v4H9zM8 12h8M8 16h5"/></svg><span>멘토링</span></button>
           <details class="sidebar-menu-group" id="mealMenuGroup" open>
             <summary class="sb-menu-item">
               <svg class="sb-icon" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11h18a9 9 0 0 1-18 0ZM8 20h8M7 7c-2-2 2-3 0-5M12 7c-2-2 2-3 0-5M17 7c-2-2 2-3 0-5"/></svg>
@@ -207,7 +207,7 @@
           </div>
         </aside>
       </div>
-      <footer class="site-footer">최근 업데이트 <time id="siteUpdatedAt" datetime="2026-11-20T02:48:35.658Z" data-version="a6a60e1a4c8f3dfe">2026.11.20 11:48 (KST)</time></footer>
+      <footer class="site-footer">최근 업데이트 <time id="siteUpdatedAt" datetime="2026-11-20T04:39:14.240Z" data-version="f6dafca8fe685d6b">2026.11.20 13:39 (KST)</time></footer>
     </div>
   </div>
 
@@ -235,10 +235,10 @@
   </dialog>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.119.2/dist/umd/supabase.js" integrity="sha384-A97u3Qnt9GZHURO9YJZRe7VQgGUeFzcv6I1oIGnUTxQrCxnpQMwR0/G8F2zt9abZ" crossorigin="anonymous"></script>
 
-  <script src="js/data.js?v=01efd6bd105e"></script>
+  <script src="js/data.js?v=25327584982f"></script>
   <script src="js/ui5-data.js?v=fa64b5a1a556"></script>
-  <script src="js/class-notes.js?v=8f2fb3bc843c"></script>
-  <script src="js/lesson-days.js?v=ec7035c94e00"></script>
+  <script src="js/class-notes.js?v=c6f906f1101b"></script>
+  <script src="js/lesson-days.js?v=f9d79f638afb"></script>
   <script src="js/example-notes.js?v=f4e52d7236ca"></script>
   <script src="js/learning-tools.js?v=acdbc030d4ff"></script>
   <script src="js/profile.js?v=0d4ca61b9624"></script>
@@ -266,6 +266,6 @@
   <script src="js/practice-ui.js?v=9b9d96b845b5"></script>
   <script type="application/json" id="objectGameBankSource" data-src="js/object-game-bank.js?v=09f9192ee9cf"></script>
   <script src="js/object-game.js?v=cfea3cf8219a"></script>
-  <script src="js/knowledge-map.js?v=d7d6fb3a6aa6"></script>
+  <script src="js/knowledge-map.js?v=8029c5c384d0"></script>
 </body>
 </html>

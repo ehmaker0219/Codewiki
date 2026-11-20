@@ -28,7 +28,7 @@
         ['SE41', 'Menu Painter'], ['SE51', 'Screen Painter'], ['SE09', 'Transport Organizer']
       ])),
       from('abap-development', '개발·품질·운영 시스템'),
-      from('abap-development', '패키지와 요청'),
+      from('abap-development', '패키지와 Change Request'),
       from('abap-basics', '문장과 주석'),
       section('abap-basics', '입력·변수·대입·출력', table(['문장', '역할'], [
         ['PARAMETERS', '선택 화면의 입력 필드'], ['DATA', '변수 선언'],
@@ -37,7 +37,7 @@
     ]},
     {date: '2026-11-12', source: '261112THU.txt', sections: [
       from('abap-development', '트랜잭션 코드 생성'),
-      section('abap-development', '릴리스와 패키지 변경', text('문법 검사와 활성화·실행 확인을 거친 뒤 SE09에서 태스크와 요청을 릴리스합니다. 대상 시스템 반영에는 임포트 절차가 이어집니다.', '패키지 이동은 객체의 Additional Functions → Change Package에서 확인합니다. 새 패키지와 요청의 전송 설정도 확인하세요.')),
+      section('abap-development', '릴리스와 패키지 변경', text('문법 검사와 활성화·실행 확인을 거친 뒤 SE09에서 태스크와 Change Request를 릴리스합니다. 대상 시스템 반영에는 임포트 절차가 이어집니다.', '패키지 이동은 객체의 Additional Functions → Change Package에서 확인합니다. 새 패키지와 Change Request의 전송 설정도 확인하세요.')),
       section('abap-debug-messages', '런타임 오류 조회', text('ST22에서 ABAP 런타임 오류의 덤프 내역을 확인합니다. 발생 시각, 프로그램과 오류 위치를 살펴봅니다.')),
       from('abap-types', '주요 기본 타입'), from('abap-types', '길이를 지정하는 타입'),
       from('abap-basics', '변수 선언과 대입'),
