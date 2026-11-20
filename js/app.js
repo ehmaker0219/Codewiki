@@ -243,10 +243,17 @@
 
   function renderDateNavigation(allDocs, readSet) {
     const esc = window.CodeWikiLearning?.escape || (v => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])));
-    return (window.WIKI_LESSON_DAYS || []).filter(day => day.track === currentTrack).map(day =>
-      '<a href="#doc/' + esc(day.docId) + '" class="nav-doc-link ' + (day.docId === currentDocId ? 'active' : '') + '" data-doc="' + esc(day.docId) + '"><span>' + esc(day.title) + '</span>' +
-      (readSet.has(day.docId) ? '<span class="read-check-mark" title="완료">✓</span>' : '') + '</a>'
-    ).join('');
+    let lastWeek = null;
+    return (window.WIKI_LESSON_DAYS || []).filter(day => day.track === currentTrack).map(day => {
+      const validWeek = Number.isInteger(day.week) && day.week > 0;
+      const divider = validWeek && day.week !== lastWeek
+        ? '<div class="nav-week-divider" role="separator" aria-label="' + esc(day.week + '주차') + '"><span aria-hidden="true">' + esc(day.week + '주차') + '</span></div>'
+        : '';
+      if (validWeek) lastWeek = day.week;
+      return divider +
+        '<a href="#doc/' + esc(day.docId) + '" class="nav-doc-link ' + (day.docId === currentDocId ? 'active' : '') + '" data-doc="' + esc(day.docId) + '"><span>' + esc(day.title) + '</span>' +
+        (readSet.has(day.docId) ? '<span class="read-check-mark" title="완료">✓</span>' : '') + '</a>';
+    }).join('');
   }
 
   // 좌측 고정 사이드바 렌더링 (불필요한 빈 요소 자동 숨김)

@@ -16,7 +16,7 @@
   put('sap-architecture', 'SAP 시스템 구조', '사용자 요청이 처리되는 흐름과 서버 구성 요소의 역할을 구분합니다.', ['Dispatcher', 'Work Process', '워크 프로세스', 'Message Server', 'Gateway', 'ICM', 'SAP GUI'], [
     section('요청 처리 흐름', text('SAP GUI → Dispatcher → 사용 가능한 Work Process → 필요한 경우 데이터베이스 접근 → 결과 반환 순서로 이해할 수 있습니다. 모든 요청이 데이터베이스 작업을 수행하는 것은 아닙니다.', 'Dispatcher는 요청을 받아 작업을 배분합니다. 큐를 단순한 처리 순서 예제로 이해하되, 실제 스케줄링 전체를 항상 FIFO라고 단정하지 않습니다.')),
     section('워크 프로세스와 잠금', table(['구분', '역할'], [
-      ['Dialog', '사용자의 대화형 요청 처리'], ['Background', '예약된 배치 작업과 비대화형 처리'], ['Update', '업데이트 태스크의 데이터 변경 처리'], ['Spool', '인쇄 요청 처리'], ['Enqueue', 'SAP 논리 잠금 관리. 현대 구성에서는 ASCS의 별도 Enqueue Server가 담당하며 과거 Enqueue Work Process와 구분']
+      ['Dialog', '사용자의 대화형 요청 처리'], ['Background', '예약된 배치 작업과 비대화형 처리'], ['Update', '업데이트 Task의 데이터 변경 처리'], ['Spool', '인쇄 요청 처리'], ['Enqueue', 'SAP 논리 잠금 관리. 현대 구성에서는 ASCS의 별도 Enqueue Server가 담당하며 과거 Enqueue Work Process와 구분']
     ]), text('SM50에서 현재 애플리케이션 서버의 프로세스를, SM04에서 해당 서버의 사용자·세션을 확인합니다. 잠금은 동시에 같은 업무 데이터를 변경할 때 충돌을 조정하는 장치입니다.')),
     section('통신 구성 요소', table(['구성 요소', '역할'], [
       ['Message Server', '애플리케이션 서버 간 통신 조정과 로그온 부하 분산 지원'], ['Gateway', 'RFC 통신 처리'], ['ICM', 'HTTP(S) 등 인터넷 프로토콜 통신 처리']
@@ -24,11 +24,11 @@
   ], '11/11', [['SAP Help · AS ABAP 구조', 'https://help.sap.com/docs/ABAP_PLATFORM_NEW/1ba3197c1aa7489882770103e3a610dc/f9e2350eca7f4a109eb0a7bc63135e27.html']]);
 
   put('abap-development', '개발 객체와 전송 관리', 'Program을 Package에 담고 Change Request를 통해 다른 시스템으로 전달하는 흐름입니다.', ['패키지', 'Package', 'Change Request', 'Workbench Request', 'Customizing Request', 'Transport'], [
-    section('개발·품질·운영 시스템', text('일반적인 시스템 구성은 개발(DEV) → 품질 검증(QAS) → 운영(PRD)입니다. 개발 객체의 변경을 Change Request와 태스크로 기록하고 검증 후 대상 시스템으로 전송합니다.', 'Change Request를 누가 만들고 몇 개로 관리하는지는 팀의 정책에 따릅니다. SI는 항상 Change Request 하나, SM은 여러 개라는 고정 규칙은 없습니다.')),
+    section('개발·품질·운영 시스템', text('일반적인 시스템 구성은 개발(DEV) → 품질 검증(QAS) → 운영(PRD)입니다. 개발 객체의 변경을 Change Request와 Task로 기록하고 검증 후 대상 시스템으로 전송합니다.', 'Change Request를 누가 만들고 몇 개로 관리하는지는 팀의 정책에 따릅니다. SI는 항상 Change Request 하나, SM은 여러 개라는 고정 규칙은 없습니다.')),
     section('Package와 Change Request', table(['항목', '의미'], [
-      ['Package', '관련 개발 객체를 묶고 전송 속성 등을 관리하는 단위'], ['Workbench Request', 'Program·사전 객체 등 저장소 변경을 관리하는 Change Request'], ['Customizing Request', '커스터마이징 설정 변경을 관리하는 Change Request'], ['태스크', 'Change Request 아래에서 작업자별 변경을 모으는 단위']
-    ]), text('SE80에서 객체와 Package를 탐색하고, SE09에서 Change Request와 태스크를 관리합니다. 고객 객체에는 보통 Y/Z 접두어 또는 등록된 네임스페이스를 사용합니다.', 'Transport Layer는 전송 경로와 관련된 설정입니다. 이름의 첫 글자만으로 고객 객체와 SAP 객체를 판정하지 않습니다. 로컬 Package $TMP의 객체는 일반 Change Request에 기록되지 않습니다.')),
-    section('작성에서 전송까지', text('Package와 Change Request 확인 → Program 작성 → 문법 검사 → 활성화 → 실행·디버깅 → 태스크와 Change Request 릴리스 → 대상 시스템으로 임포트하는 흐름입니다.', '저장은 편집 내용을 보관하고, 활성화는 실행 가능한 활성 버전을 만드는 과정입니다. 릴리스만으로 운영 반영이 끝나는 것은 아니며, 임포트와 검증 절차가 따릅니다. 단축키는 [[sap-gui-shortcuts|단축키 모음]]을 참고하세요.')),
+      ['Package', '관련 개발 객체를 묶고 전송 속성 등을 관리하는 단위'], ['Workbench Request', 'Program·사전 객체 등 저장소 변경을 관리하는 Change Request'], ['Customizing Request', '커스터마이징 설정 변경을 관리하는 Change Request'], ['Task', 'Change Request 아래에서 작업자별 변경을 모으는 단위']
+    ]), text('SE80에서 객체와 Package를 탐색하고, SE09에서 Change Request와 Task를 관리합니다. 고객 객체에는 보통 Y/Z 접두어 또는 등록된 네임스페이스를 사용합니다.', 'Transport Layer는 전송 경로와 관련된 설정입니다. 이름의 첫 글자만으로 고객 객체와 SAP 객체를 판정하지 않습니다. 로컬 Package $TMP의 객체는 일반 Change Request에 기록되지 않습니다.')),
+    section('작성에서 전송까지', text('Package와 Change Request 확인 → Program 작성 → 문법 검사 → 활성화 → 실행·디버깅 → Task와 Change Request 릴리스 → 대상 시스템으로 임포트하는 흐름입니다.', '저장은 편집 내용을 보관하고, 활성화는 실행 가능한 활성 버전을 만드는 과정입니다. 릴리스만으로 운영 반영이 끝나는 것은 아니며, 임포트와 검증 절차가 따릅니다. 단축키는 [[sap-gui-shortcuts|단축키 모음]]을 참고하세요.')),
     section('트랜잭션 코드 생성', text('SE93에서 실행 대상에 맞는 트랜잭션 유형을 선택합니다. 클래식 실행 가능 리포트는 리포트 트랜잭션, 화면 번호를 시작점으로 사용하는 Program은 대화형 트랜잭션을 검토합니다.', '선택 항목의 순서 번호 대신 유형 이름과 실행 대상을 확인하세요. Program 이름과 T-Code 이름을 같게 하는 것은 팀의 명명 관례이며 필수 조건은 아닙니다.'))
   ], '11/11 · 11/12');
 

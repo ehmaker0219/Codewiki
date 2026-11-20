@@ -128,8 +128,11 @@
     document.body.classList[isAdmin ? 'add' : 'remove']('admin-workspace');
     const operationsLabel = document.getElementById('adminOperationsLabel');
     if (operationsLabel) operationsLabel.hidden = !isAdmin;
+    const isApprovedStudent = user?.role === 'student' && user.status === 'approved';
     const learningContents = document.getElementById('learningContentsGroup');
-    if (learningContents) learningContents.hidden = user?.role !== 'student' || user.status !== 'approved';
+    if (learningContents) learningContents.hidden = !isApprovedStudent;
+    const learningTools = document.getElementById('learningToolsGroup');
+    if (learningTools) learningTools.hidden = !isApprovedStudent;
     if (!user) {
       if (adminSidebarSlot) adminSidebarSlot.innerHTML = "";
       if (sidebarProfileSlot) sidebarProfileSlot.innerHTML = "";

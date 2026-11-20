@@ -251,7 +251,7 @@ window.WIKI_DOCS = {
       ["SE51", "Screen Painter", "Dynpro 화면의 레이아웃과 흐름 로직 편집"]
     ]],
     ["Change Request와 실행 코드 관리", [
-      ["SE09", "Transport Organizer", "Change Request와 태스크 생성·조회·관리"],
+      ["SE09", "Transport Organizer", "Change Request와 Task 생성·조회·관리"],
       ["SE93", "Transaction Maintenance", "트랜잭션 코드 생성·변경 및 실행 대상 연결"]
     ]]
   ];

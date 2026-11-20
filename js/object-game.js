@@ -41,7 +41,6 @@
     const id=user?.role==='student'&&user.status==='approved'?user.id:null;
     if(id!==userId){epoch++;game=null;current=null;output.replaceChildren();status.textContent='';next.disabled=true;}
     userId=id;trigger.hidden=!id;
-    const toolsGroup=byId('learningToolsGroup');if(toolsGroup)toolsGroup.hidden=!id;
     route();
   }
   function loadBank(){

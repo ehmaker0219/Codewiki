@@ -37,7 +37,7 @@
     ]},
     {date: '2026-11-12', source: '261112THU.txt', sections: [
       from('abap-development', '트랜잭션 코드 생성'),
-      section('abap-development', '릴리스와 Package 변경', text('문법 검사와 활성화·실행 확인을 거친 뒤 SE09에서 태스크와 Change Request를 릴리스합니다. 대상 시스템 반영에는 임포트 절차가 이어집니다.', 'Package 이동은 객체의 Additional Functions → Change Package에서 확인합니다. 새 Package와 Change Request의 전송 설정도 확인하세요.')),
+      section('abap-development', '릴리스와 Package 변경', text('문법 검사와 활성화·실행 확인을 거친 뒤 SE09에서 Task와 Change Request를 릴리스합니다. 대상 시스템 반영에는 임포트 절차가 이어집니다.', 'Package 이동은 객체의 Additional Functions → Change Package에서 확인합니다. 새 Package와 Change Request의 전송 설정도 확인하세요.')),
       section('abap-debug-messages', '런타임 오류 조회', text('ST22에서 ABAP 런타임 오류의 덤프 내역을 확인합니다. 발생 시각, Program과 오류 위치를 살펴봅니다.')),
       from('abap-types', '주요 기본 타입'), from('abap-types', '길이를 지정하는 타입'),
       from('abap-basics', '변수 선언과 대입'),
@@ -99,13 +99,20 @@
   // Dates are rebuilt from explicit source associations, including split topics.
   for (const doc of Object.values(docs)) if (doc.track === 'abap') doc.lessonDates = [];
   const weekdays = ['일', '월', '화', '수', '목', '금', '토'];
+  const weekOriginMs = Date.UTC(2026, 10, 9);
+  const weekOf = date => {
+    const [y, m, d] = date.split('-').map(Number);
+    const week = Math.floor((Date.UTC(y, m - 1, d) - weekOriginMs) / 604800000) + 1;
+    return week > 0 ? week : null;
+  };
   window.WIKI_LESSON_DAYS = days.map(day => {
     const id = 'lesson-' + day.date;
     const title = `${day.date} (${weekdays[new Date(day.date + 'T12:00:00').getDay()]})`;
+    const week = day.week ?? weekOf(day.date);
     for (const topic of new Set(day.sections.map(s => s.sourceDocId))) docs[topic].lessonDates.push(day.date);
-    docs[id] = {id, title, track:'abap', isDailyLesson:true, aliases:[], tcodes:[], specs:{},
+    docs[id] = {id, title, track:'abap', isDailyLesson:true, week, aliases:[], tcodes:[], specs:{},
       sourceFile:day.source, sourceTopics:[...new Set(day.sections.map(s => s.sourceDocId))],
       summary:'해당 날짜의 원본 필기 범위로 정리했습니다. 설명과 학습용 예제는 이해를 돕기 위해 보완했습니다.', sections:day.sections};
-    return {date:day.date, title, docId:id, track:'abap'};
+    return {date:day.date, title, docId:id, track:'abap', week};
   });
 })();
