@@ -94,6 +94,12 @@
       from('abap-open-sql', '보완: 트랜잭션과 안전한 변경'),
       from('abap-open-sql', '보완: 성능과 다음 문법'),
       from('abap-open-sql', '필기와 참고 자료')
+    ]},
+    {date: '2026-11-20', source: '261120 금요일 (1).md', sections: [
+      from('abap-data-report', 'Classic ABAP Report와 Selection Screen'),
+      from('abap-data-report', 'Report 처리 순서'),
+      from('abap-development', 'SE80에서 Program이 안 보일 때'),
+      from('abap-open-sql', '최신 문법(Strict Mode)과 쉼표·@ 규칙')
     ]}
   ];
   // Dates are rebuilt from explicit source associations, including split topics.

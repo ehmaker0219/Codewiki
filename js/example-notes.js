@@ -20,6 +20,8 @@
     '내부 테이블 조작 전체 예제': {input:'LH 0400 (FRANKFURT, 545분) / AA 0017 (NEW YORK, 361분)', expected:'LH 0400 FRANKFURT 560만 출력됩니다. LH 0400의 비행시간(fltime)을 수정하고 AA 0017을 삭제한 결과입니다.', requirements:'SPFLI 교육용 테이블이 있는 시스템에서 실행하세요.'},
     '비행시간 내림차순·항공사 오름차순': {input:'gt_spfli에 비행시간(fltime)과 항공사 코드(carrid)가 있는 여러 행', expected:'비행시간 내림차순, 동점이면 항공사 코드 오름차순으로 행 순서가 바뀝니다. 출력문은 없습니다.', requirements:'내부 테이블 조작 전체 예제의 gt_spfli 선언과 데이터 추가 뒤에 넣고 디버거에서 확인하세요.'},
     'Header Line과 테이블 본문 구분': {input:'Header Line에 SCARR 행(LH / Lufthansa)을 담아 한 행 추가', expected:'1, 0이 순서대로 출력됩니다. 첫 CLEAR는 Header Line만, 두 번째 CLEAR는 본문을 비웁니다.', requirements:'SCARR 교육용 테이블이 있고 Header Line을 허용하는 클래식 실행 가능 리포트에서 기존 문법 학습용으로만 사용하세요. 클래스 내부나 ABAP Cloud용 예제가 아닙니다.'},
+    'SELECT-OPTIONS와 cl_demo_output 출력': sqlExample('so_carr에 항공사 범위 입력 또는 비워 두기', '선택 조건에 맞는 SPFLI 노선 목록이 cl_demo_output 화면에 표 형태로 출력됩니다. 조건을 비워 두면 전체 노선이 출력됩니다.'),
+    'Classic ABAP Report 이벤트 흐름': sqlExample('Selection Screen 초기값 LH 그대로 실행하거나 다른 항공사 범위 입력', '초기 화면에 LH가 미리 채워지며, 조건을 모두 비우고 실행하면 오류 메시지가 표시됩니다. 유효한 조건으로 실행하면 SPFLI 노선 목록이 cl_demo_output으로 출력됩니다.'),
     'TYPE · LIKE · VALUE · CLEAR': {input:'별도 입력 없음', expected:'0, 17, 20이 각각 한 줄씩 출력됩니다.'},
     '선택 화면에서 숫자 입력받기': {input:'p_count = 3', expected:'입력: 3 / 두 배: 6', requirements:'인라인 DATA 선언을 지원하는 Standard ABAP 환경에서 실행하세요.'},
     '문자와 숫자의 초기값': {input:'코드의 초기값 그대로', expected:'정수 초기값은 0 / 0000이 출력됩니다. lv_text는 공백 5자리로 초기화됩니다.'},
@@ -44,7 +46,7 @@
       if (block.type !== 'code') continue;
       const full = /^\s*REPORT\s/im.test(block.code || '');
       block.example = {kind:full ? 'SE38 리포트 전체 코드' : '리포트에 넣는 일부 코드',
-        placement:full ? 'SE38에서 실행 가능 Program을 만들고 REPORT 이름을 Program 이름에 맞춘 뒤 활성화·실행하세요.' : 'REPORT 선언이 있는 실행 가능 Program의 실행부에 넣으세요. 아래 추가 조건이 있으면 그 위치를 우선합니다.',
+        placement:full ? 'SE38에서 실행 가능 Program을 만들고 REPORT 이름(zabap_f##_##)을 본인 Program 이름에 맞춘 뒤 활성화·실행하세요.' : 'REPORT 선언이 있는 실행 가능 Program의 실행부에 넣으세요. 아래 추가 조건이 있으면 그 위치를 우선합니다.',
         verification:'SAP 실행 미확인', ...notes[block.label]};
     }
   }

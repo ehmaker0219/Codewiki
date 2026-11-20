@@ -29,19 +29,20 @@
       ['Package', '관련 개발 객체를 묶고 전송 속성 등을 관리하는 단위'], ['Workbench Request', 'Program·사전 객체 등 저장소 변경을 관리하는 Change Request'], ['Customizing Request', '커스터마이징 설정 변경을 관리하는 Change Request'], ['Task', 'Change Request 아래에서 작업자별 변경을 모으는 단위']
     ]), text('SE80에서 객체와 Package를 탐색하고, SE09에서 Change Request와 Task를 관리합니다. 고객 객체에는 보통 Y/Z 접두어 또는 등록된 네임스페이스를 사용합니다.', 'Transport Layer는 전송 경로와 관련된 설정입니다. 이름의 첫 글자만으로 고객 객체와 SAP 객체를 판정하지 않습니다. 로컬 Package $TMP의 객체는 일반 Change Request에 기록되지 않습니다.')),
     section('작성에서 전송까지', text('Package와 Change Request 확인 → Program 작성 → 문법 검사 → 활성화 → 실행·디버깅 → Task와 Change Request 릴리스 → 대상 시스템으로 임포트하는 흐름입니다.', '저장은 편집 내용을 보관하고, 활성화는 실행 가능한 활성 버전을 만드는 과정입니다. 릴리스만으로 운영 반영이 끝나는 것은 아니며, 임포트와 검증 절차가 따릅니다. 단축키는 [[sap-gui-shortcuts|단축키 모음]]을 참고하세요.')),
-    section('트랜잭션 코드 생성', text('SE93에서 실행 대상에 맞는 트랜잭션 유형을 선택합니다. 클래식 실행 가능 리포트는 리포트 트랜잭션, 화면 번호를 시작점으로 사용하는 Program은 대화형 트랜잭션을 검토합니다.', '선택 항목의 순서 번호 대신 유형 이름과 실행 대상을 확인하세요. Program 이름과 T-Code 이름을 같게 하는 것은 팀의 명명 관례이며 필수 조건은 아닙니다.'))
-  ], '11/11 · 11/12');
+    section('트랜잭션 코드 생성', text('SE93에서 실행 대상에 맞는 트랜잭션 유형을 선택합니다. 클래식 실행 가능 리포트는 리포트 트랜잭션, 화면 번호를 시작점으로 사용하는 Program은 대화형 트랜잭션을 검토합니다.', '선택 항목의 순서 번호 대신 유형 이름과 실행 대상을 확인하세요. Program 이름과 T-Code 이름을 같게 하는 것은 팀의 명명 관례이며 필수 조건은 아닙니다.')),
+    section('SE80에서 Program이 안 보일 때', text('SE80 Object Navigator에서 Package 아래에 생성한 Program이 목록에 바로 보이지 않을 때가 있습니다.', '해당 Package 또는 객체 목록에서 우클릭 → Additional Functions → Rebuild Object List를 실행하면 저장소 객체 트리가 갱신되어 정상적으로 표시됩니다.'))
+  ], '11/11 · 11/12 · 11/20');
 
   put('abap-basics', 'ABAP 기초', '문장 구조, 변수 선언, 입력과 출력의 기본 흐름을 익힙니다.', ['ABAP 기초', 'DATA', 'PARAMETERS', 'CLEAR', 'TYPE', 'LIKE'], [
     section('문장과 주석', text('ABAP 문장은 마침표(.)로 끝납니다. 키워드와 식별자는 대소문자를 구분하지 않지만, 문자열 리터럴의 내용은 구분됩니다.', '큰따옴표(") 뒤는 해당 줄의 주석이며, 첫 번째 열의 별표(*)는 줄 전체를 주석으로 만듭니다. F1 문서에 obsolete로 표시된 구문은 유지보수 시 의미를 익히되 새 코드에서는 대안을 검토합니다.')),
-    section('변수 선언과 대입', code('TYPE · LIKE · VALUE · CLEAR', `REPORT zcw_basics.
+    section('변수 선언과 대입', code('TYPE · LIKE · VALUE · CLEAR', `REPORT zabap_f##_##.
 DATA lv_count TYPE i VALUE 17.
 DATA lv_copy LIKE lv_count.
 CONSTANTS lc_limit TYPE i VALUE 20.
 lv_copy = lv_count.
 CLEAR lv_count.
 WRITE: / lv_count, / lv_copy, / lc_limit.`), text('TYPE은 타입을, LIKE는 기존 데이터 객체의 타입을 참조합니다. VALUE는 선언 시 값을 지정합니다. 대입은 = 로 표현할 수 있으며 MOVE 원본 TO 대상도 기존 코드에서 볼 수 있습니다.', 'CLEAR는 빈 문자열을 일괄 대입하는 명령이 아니라 타입별 초기값으로 되돌리는 명령입니다. 자세한 값은 [[abap-types|자료형과 초기값]]을 참고하세요.')),
-    section('입력과 출력', code('선택 화면에서 숫자 입력받기', `REPORT zcw_input.
+    section('입력과 출력', code('선택 화면에서 숫자 입력받기', `REPORT zabap_f##_##.
 PARAMETERS p_count TYPE i DEFAULT 3.
 START-OF-SELECTION.
   DATA(lv_double) = p_count * 2.
@@ -72,7 +73,7 @@ WRITE / '안녕하세요'(002).`))
     section('반복문 비교', table(['문장', '용도', '참고'], [
       ['DO n TIMES', '정해진 횟수 반복', '현재 회차는 sy-index'], ['DO ... ENDDO', '종료 조건을 내부에 둔 반복', 'EXIT 등 종료 경로 필요'], ['WHILE ... ENDWHILE', '조건이 참인 동안 반복', '조건을 바꾸는 코드 필요'], ['LOOP AT ... ENDLOOP', '내부 테이블 행 순회', 'sy-tabix는 테이블 종류와 접근 방식에 따라 해석'], ['SELECT ... ENDSELECT', '조회 결과 행별 처리', 'sy-dbcnt는 처리된 DB 행 수; 일반 루프 인덱스가 아님']
     ])),
-    section('CONTINUE와 EXIT', code('짝수는 건너뛰고 7에서 종료', `REPORT zcw_loop.
+    section('CONTINUE와 EXIT', code('짝수는 건너뛰고 7에서 종료', `REPORT zabap_f##_##.
 DO 10 TIMES.
   IF sy-index = 7.
     EXIT.
@@ -102,7 +103,7 @@ ENDDO.`), text('출력은 1, 3, 5입니다. CONTINUE는 현재 반복의 남은 
     ])),
     section('서브루틴 매개변수', table(['선언 방식', '전달과 반영'], [
       ['USING VALUE(p)', '값 복사. 내부 변경은 호출자에게 복사되지 않음'], ['CHANGING VALUE(p)', '값을 복사하고 정상 종료 시 결과를 호출자에게 반영'], ['USING p / CHANGING p', '참조 전달. 같은 실제 데이터를 가리키므로 변경이 호출자에 반영']
-    ]), text('참조 전달에서 USING은 읽기 전용을 보장하지 않습니다. 입력용은 USING, 변경 의도가 있는 값은 CHANGING으로 드러내는 관례가 중요합니다.', 'FORM의 형식 매개변수에 LENGTH/DECIMALS를 직접 붙이는 대신 미리 정의한 완전 타입을 사용합니다. TYPE ANY 같은 제네릭 타입은 유연하지만 정적 검사와 사용 가능한 연산이 제한됩니다.'), code('입력은 복사하고 결과는 반영', `REPORT zcw_form.
+    ]), text('참조 전달에서 USING은 읽기 전용을 보장하지 않습니다. 입력용은 USING, 변경 의도가 있는 값은 CHANGING으로 드러내는 관례가 중요합니다.', 'FORM의 형식 매개변수에 LENGTH/DECIMALS를 직접 붙이는 대신 미리 정의한 완전 타입을 사용합니다. TYPE ANY 같은 제네릭 타입은 유연하지만 정적 검사와 사용 가능한 연산이 제한됩니다.'), code('입력은 복사하고 결과는 반영', `REPORT zabap_f##_##.
 DATA lv_result TYPE i.
 PERFORM double_number USING 3 CHANGING lv_result.
 WRITE / lv_result.
@@ -125,7 +126,7 @@ ENDFORM.`)),
     section('글로벌 클래스와 로컬 클래스', text('글로벌 클래스는 저장소 객체로 관리하며 SE24에서 확인할 수 있습니다. 로컬 클래스는 Program 안에 정의합니다. 클래스는 속성과 메서드를 함께 묶는 단위입니다.')),
     section('정적 호출과 인스턴스 호출', table(['종류', '표기', '특징'], [
       ['정적 메서드', '클래스명=>메서드명( )', '객체 생성 없이 클래스에 호출'], ['인스턴스 메서드', '참조변수->메서드명( )', '생성된 객체를 참조하여 호출']
-    ]), text('TYPE REF TO는 객체 참조를 보관할 변수를 선언합니다. 선언만으로 객체가 생기지는 않으며 CREATE OBJECT 또는 NEW로 생성합니다.'), code('로컬 클래스의 인스턴스 메서드', `REPORT zcw_object.
+    ]), text('TYPE REF TO는 객체 참조를 보관할 변수를 선언합니다. 선언만으로 객체가 생기지는 않으며 CREATE OBJECT 또는 NEW로 생성합니다.'), code('로컬 클래스의 인스턴스 메서드', `REPORT zabap_f##_##.
 CLASS lcl_greeter DEFINITION.
   PUBLIC SECTION.
     METHODS greet.
@@ -151,7 +152,7 @@ START-OF-SELECTION.
   // 11/18: retain earlier sections so their curated daily pages stay unchanged.
   docs['abap-objects'].sections.splice(-1, 1,
     section('로컬 클래스의 정의와 구현', text('12번 Program 필기: DEFINITION에서 속성과 메서드의 인터페이스를 선언하고 IMPLEMENTATION에서 메서드의 동작을 작성합니다. 속성만 선언하고 구현할 메서드가 없다면 구현부를 생략할 수 있습니다.', '접근 영역은 PUBLIC → PROTECTED → PRIVATE 순서입니다. 수업에서는 PUBLIC과 PRIVATE를 사용했지만 영역이 두 종류뿐인 것은 아닙니다. CLASS-METHODS는 정적 메서드, METHODS는 인스턴스 메서드 선언입니다.'),
-      code('로컬 클래스의 정적 메서드', `REPORT zcw_local_class.
+      code('로컬 클래스의 정적 메서드', `REPORT zabap_f##_##.
 CLASS lcl_calculator DEFINITION.
   PUBLIC SECTION.
     CLASS-METHODS double
@@ -211,7 +212,7 @@ WRITE: / gs_flight-carrid, gs_flight-connid, gs_flight-seatsocc.`)));
   typeSource.blocks[0].paragraphs[0] = typeSource.blocks[0].paragraphs[0].replace('11/12.', '11/12 · 11/18.');
   docs['abap-types'].sections.push(typeSource);
 
-  put('abap-data-report', '데이터 처리와 리포트', '구조체를 행 타입으로 사용하는 내부 테이블을 선언하고 추가·조회·수정·삭제합니다.', ['내부 테이블', 'Internal Table', 'STANDARD TABLE', 'SORTED TABLE', 'HASHED TABLE', 'Header Line', 'OCCURS'], [
+  put('abap-data-report', '데이터 처리와 리포트', '구조체를 행 타입으로 사용하는 Internal Table과 Classic ABAP Report의 Selection Screen·처리 순서를 정리합니다.', ['내부 테이블', 'Internal Table', 'STANDARD TABLE', 'SORTED TABLE', 'HASHED TABLE', 'Header Line', 'OCCURS', 'Classic ABAP Report', 'Selection Screen', 'SELECT-OPTIONS', 'INITIALIZATION', 'AT SELECTION-SCREEN', 'START-OF-SELECTION', 'cl_demo_output'], [
     section('내부 테이블의 종류와 접근', text('14번 Program 필기: 내부 테이블은 Program 실행 중 여러 행을 메모리에 보관합니다. 데이터베이스 테이블에 저장하는 것과는 다릅니다. 아래는 기본 키와 기본 인덱스를 기준으로 한 비교입니다.'), table(['구분', 'STANDARD TABLE', 'SORTED TABLE', 'HASHED TABLE'], [
       ['분류', 'Index Table', 'Index Table', 'Hashed Table'],
       ['인덱스 접근', '가능', '가능', '기본 인덱스 없음'],
@@ -242,7 +243,7 @@ DATA gt_hashed TYPE HASHED TABLE OF ts_spfli
       ['MODIFY TABLE ... FROM', '기본 키로 찾은 행 수정'],
       ['DELETE TABLE ... WITH TABLE KEY', '기본 키로 찾은 행 삭제']
     ]), text('INSERT INTO TABLE을 항상 특정 위치에 넣는 명령이라고 생각하지 마세요. Index Table에서 위치를 지정하는 형식은 INSERT ... INTO ... INDEX n입니다. Sorted Table은 정렬 순서를 지켜야 합니다. READ TABLE 후에는 [[abap-loops|sy-subrc]]를 확인합니다.'),
-      code('내부 테이블 조작 전체 예제', `REPORT zcw_internal_table.
+      code('내부 테이블 조작 전체 예제', `REPORT zabap_f##_##.
 TYPES: BEGIN OF ts_spfli,
          carrid   TYPE spfli-carrid,
          connid   TYPE spfli-connid,
@@ -286,7 +287,7 @@ ENDLOOP.`), text('이 예제의 기본 키는 carrid와 connid입니다. 키가 
       ['FREE gt_spfli.', '행을 비우고 테이블 본문에 할당된 메모리도 해제']
     ]), text('CLEAR는 변수 선언 자체를 삭제하지 않습니다. 초기화한 구조체와 테이블은 다시 사용할 수 있습니다. 새 코드에서 Header Line 없는 테이블을 비울 때는 CLEAR를 사용할 수 있습니다.')),
     section('Header Line과 OCCURS — 기존 코드 읽기', text('15번 Program 필기: WITH HEADER LINE을 사용한 옛 문법에서는 테이블과 같은 이름의 작업 영역이 함께 생깁니다. 문장에 따라 같은 이름이 작업 영역 또는 본문을 가리켜 혼동하기 쉽습니다. 새 코드에서는 gs_ 작업 영역과 gt_ 테이블을 분리하세요.'),
-      code('Header Line과 테이블 본문 구분', `REPORT zcw_header_line.
+      code('Header Line과 테이블 본문 구분', `REPORT zabap_f##_##.
 DATA gt_scarr TYPE STANDARD TABLE OF scarr WITH HEADER LINE.
 gt_scarr-carrid   = 'LH'.       " Header Line에 값 대입
 gt_scarr-carrname = 'Lufthansa'.
@@ -296,12 +297,69 @@ WRITE / lines( gt_scarr[] ).
 CLEAR gt_scarr[].               " 테이블 본문 초기화
 WRITE / lines( gt_scarr[] ).`),
       text('OCCURS n은 과거 내부 테이블 선언에서 초기 메모리 할당 규모를 지정하던 문법입니다. 최대 n건까지만 저장한다는 의미가 아니며 필요하면 테이블은 늘어납니다. 단순 구조 타입 선언에 저장 건수 제한으로 붙이지 않습니다. Header Line과 OCCURS는 기존 Standard ABAP 코드를 읽기 위한 내용입니다.')),
-    section('이후 학습', text('DB에서 데이터를 읽고 변경하는 문법은 [[abap-open-sql|Open SQL]]에서 이어집니다. 이 문서는 11월 18일 필기의 내부 테이블 범위이며, 리포트의 상세 구성과 ALV 화면 구성은 준비 중입니다.'))
-  ], '11/18', [
+    section('Classic ABAP Report와 Selection Screen', text(
+      'Classic ABAP Report는 실행 시 사용자 입력을 받는 Selection Screen을 제공합니다. 입력 방식은 단일 값을 받는 Single Value(PARAMETERS)와 범위·복수 조건을 받는 Selection Condition(SELECT-OPTIONS)으로 구분합니다.'),
+      table(['구분', '문장 예', 'Selection Screen 동작과 WHERE 절 사용'], [
+        ['Single Value', 'PARAMETERS p_carr TYPE spfli-carrid.', '값 하나만 입력받습니다. Selection Screen에서 부등호·범위 조건을 직접 고를 수 없고, WHERE 절에서 단일 값 비교(= 등)로 사용합니다.'],
+        ['Selection Condition', 'SELECT-OPTIONS so_carr FOR gv_carrid.', '입력 칸 두 개(~부터·~까지)와 다중 선택 버튼, 비교 옵션(부호)을 제공합니다. WHERE 절 내에서 IN으로 사용합니다.']
+      ]),
+      text('SELECT-OPTIONS so_carr FOR ...로 선언하면 so_carr는 Header Line과 Internal Table(Selection Table)을 함께 선언합니다. 내부적으로는 아래 4개 컬럼으로 구성됩니다.'),
+      table(['Sign', 'Option', 'Low', 'High'], [
+        ['I (포함) 또는 E (제외)', '부등호 · 비교 연산자 (EQ, NE, BT, CP, GT 등)', '~부터 (단일 값 또는 하한)', '~까지 (상한 값)']
+      ]),
+      text('FOR 뒤에는 타입 이름이 아니라 이미 선언된 데이터 객체(변수 또는 TABLES 선언 필드)를 지정합니다. 화면 입력을 비워 두면 WHERE ... IN @so_carr 조건은 제한 없이 전체 데이터를 통과시킵니다.'),
+      code('SELECT-OPTIONS와 cl_demo_output 출력', `REPORT zabap_f##_##.
+
+DATA gv_carrid TYPE spfli-carrid.
+SELECT-OPTIONS so_carr FOR gv_carrid.
+
+SELECT carrid, connid, cityfrom, cityto
+  FROM spfli
+  WHERE carrid IN @so_carr
+  INTO TABLE @DATA(gt_connections).
+
+cl_demo_output=>display( gt_connections ).`),
+      text('cl_demo_output=>display( gt_connections ).은 학습·테스트용으로 Internal Table을 빠르게 화면에 출력하는 정적 메서드입니다. 실무 조회 화면용 ALV와는 구분해서 사용하세요.')),
+    section('Report 처리 순서', text('Classic ABAP Report는 REPORT 선언 이후 PARAMETERS·SELECT-OPTIONS·DATA 선언을 거쳐 아래 이벤트 순서대로 처리됩니다.'),
+      table(['단계', '역할'], [
+        ['1. 선언부 (REPORT · PARAMETERS · SELECT-OPTIONS · DATA)', 'Program 헤더, Selection Screen 입력 항목, 데이터 변수 선언'],
+        ['2. INITIALIZATION', 'Selection Screen 표시 전 초기값 설정'],
+        ['3. DISPLAY SELECTION SCREEN', 'Selection Screen 화면 표시 및 사용자 입력 대기'],
+        ['4. AT SELECTION-SCREEN', 'Selection Screen 권한 체크 및 입력값 검증 등 체크 로직'],
+        ['5. START-OF-SELECTION', '메인 처리 로직(이벤트를 생략한 실행 코드의 기본 위치). WRITE 출력은 List Buffer로 이동'],
+        ['6. Display List Buffer as List', 'List Buffer에 모인 결과를 리스트 화면으로 표시']
+      ]),
+      code('Classic ABAP Report 이벤트 흐름', `REPORT zabap_f##_##.
+
+DATA gv_carrid TYPE spfli-carrid.
+SELECT-OPTIONS so_carr FOR gv_carrid.
+
+INITIALIZATION.
+  so_carr-sign   = 'I'.
+  so_carr-option = 'EQ'.
+  so_carr-low    = 'LH'.
+  APPEND so_carr.
+
+AT SELECTION-SCREEN.
+  IF so_carr[] IS INITIAL.
+    MESSAGE '항공사 조건을 입력해 주세요.' TYPE 'E'.
+  ENDIF.
+
+START-OF-SELECTION.
+  SELECT carrid, connid, cityfrom, cityto
+    FROM spfli
+    WHERE carrid IN @so_carr
+    INTO TABLE @DATA(gt_connections).
+  cl_demo_output=>display( gt_connections ).`),
+      text('so_carr는 Header Line과 Internal Table 본문을 함께 가지므로 INITIALIZATION에서는 Header Line(so_carr-sign 등)에 값을 채운 뒤 APPEND so_carr.로 본문에 넣고, AT SELECTION-SCREEN에서는 본문이 비었는지 so_carr[] IS INITIAL로 검사합니다.')),
+    section('이후 학습', text('DB에서 데이터를 읽고 변경하는 문법은 [[abap-open-sql|Open SQL]]에서 이어집니다. 이 문서는 11월 18일 Internal Table과 11월 20일 Classic ABAP Report 필기를 정리한 범위이며, ALV 화면 구성은 준비 중입니다.'))
+  ], '11/18 · 11/20', [
     ['SAP Help · 내부 테이블과 키', 'https://help.sap.com/saphelp_gbt10/helpdata/en/fc/eb35de358411d1829f0000e829fbfe/content.htm'],
     ['SAP Help · 기본 키 컴포넌트', 'https://help.sap.com/docs/ABAP_PLATFORM_NEW/8132142fd1a144a59303663a03a7c2d4/3606e11612b046e1b801fde0e26682b3.html'],
     ['SAP Help · OCCURS와 기존 선언', 'https://help.sap.com/saphelp_em900/helpdata/en/fc/eb3646358411d1829f0000e829fbfe/content.htm'],
-    ['SAP Help · 내부 테이블 정렬', 'https://help.sap.com/docs/abap-cloud/abap-concepts/sorting-table-content']
+    ['SAP Help · 내부 테이블 정렬', 'https://help.sap.com/docs/abap-cloud/abap-concepts/sorting-table-content'],
+    ['SAP ABAP 7.52 · SELECT-OPTIONS', 'https://help.sap.com/doc/abapdocu_752_index_htm/7.52/en-US/abapselect-options.htm'],
+    ['SAP ABAP 7.52 · 리포트 이벤트 순서', 'https://help.sap.com/doc/abapdocu_752_index_htm/7.52/en-US/abenprogram_events.htm']
   ]);
 
   put('abap-open-sql', 'Open SQL', 'DB 테이블 조회부터 조건·집계·JOIN과 데이터 변경까지 정리합니다.',
@@ -317,7 +375,7 @@ WRITE / lines( gt_scarr[] ).`),
     section('SELECT 기본 구조와 호스트 변수', text(
       'SELECT는 열, FROM은 데이터 소스, WHERE는 행 조건, INTO는 결과 저장 위치입니다. SQL 안에서 ABAP 변수는 @로 구분합니다. WHERE carrid = @p_carr의 carrid는 DB 열이고 p_carr는 Program 변수입니다. 여기서 =는 대입이 아닌 비교입니다.',
       '예제는 INTO를 뒤에 쓰는 문법으로 통일합니다. 과거 코드의 INTO ... WHERE ... 순서와 섞지 마세요. 한 열은 단일 변수로, 여러 열은 구조체로, 여러 행은 내부 테이블로 받을 수 있습니다.'),
-      code('Open SQL 기본 조회', `REPORT zcw_sql_read.
+      code('Open SQL 기본 조회', `REPORT zabap_f##_##.
 PARAMETERS p_carr TYPE scarr-carrid DEFAULT 'LH'.
 
 SELECT carrid, carrname, currcode
@@ -337,7 +395,7 @@ ENDIF.`), text('sy-subrc는 후속 문장으로 바뀔 수 있으므로 조회 �
       ['키로 한 행 조회', 'SELECT SINGLE ...', '키를 모두 지정하지 않으면 여러 후보 중 어느 행인지 보장되지 않음'],
       ['정렬 기준에 따른 첫 행', 'ORDER BY ... INTO TABLE ... UP TO 1 ROWS', '동점까지 구분하도록 정렬 열 지정'],
       ['여러 행 제한', 'ORDER BY ... INTO TABLE ... UP TO n ROWS', 'ORDER BY가 없으면 반환 순서 보장 안 됨']
-    ]), code('항공사 이름과 가장 빠른 운항일', `REPORT zcw_sql_single.
+    ]), code('항공사 이름과 가장 빠른 운항일', `REPORT zabap_f##_##.
 PARAMETERS p_carr TYPE scarr-carrid DEFAULT 'LH'.
 DATA gv_name TYPE scarr-carrname.
 
@@ -360,7 +418,7 @@ ENDLOOP.`), text('SINGLE은 최대 한 행이며 결과가 없으면 0행입니�
     section('작업 영역·내부 테이블·CORRESPONDING', text(
       '일반 다중 행 SELECT를 작업 영역으로 받으면 SELECT ... ENDSELECT에서 한 행씩 처리합니다. INTO TABLE은 결과를 내부 테이블에 모으므로 일반적으로 ENDSELECT가 없습니다. PACKAGE SIZE를 쓰는 패키지 처리에는 별도 반복 규칙이 적용됩니다.',
       '명시한 열들을 CORRESPONDING 없이 구조체로 받으면 열 순서와 대상 컴포넌트의 타입이 맞아야 합니다. CORRESPONDING FIELDS OF는 결과 열의 이름(AS 별칭 포함)과 대상 컴포넌트 이름을 연결합니다. OF 뒤는 필드명이 아니라 대상 작업 영역 또는 내부 테이블입니다.'),
-      code('이름 기준으로 작업 영역과 테이블에 받기', `REPORT zcw_sql_targets.
+      code('이름 기준으로 작업 영역과 테이블에 받기', `REPORT zabap_f##_##.
 TYPES: BEGIN OF ts_carrier,
          carrname TYPE scarr-carrname,
          carrid   TYPE scarr-carrid,
@@ -381,7 +439,7 @@ WRITE: / '테이블 행 수:', lines( gt_carriers ).`), text('작업 영역에�
     section('INTO TABLE과 APPENDING TABLE', text(
       '일반 SELECT ... INTO TABLE은 대상 내부 테이블의 기존 행을 비운 뒤 조회 결과로 채웁니다. APPENDING TABLE은 기존 행을 유지하고 조회한 행을 추가합니다. 변수를 두 번 정의해서 덮어쓰는 현상과는 다릅니다.',
       'APPENDING이 중복을 자동 제거하지는 않습니다. 아래 Standard Table에는 같은 행이 두 번 들어갈 수 있고, UNIQUE 키를 가진 대상은 키 충돌도 고려해야 합니다.'),
-      code('조회 결과를 이어 담기', `REPORT zcw_sql_append.
+      code('조회 결과를 이어 담기', `REPORT zabap_f##_##.
 DATA gt_carriers TYPE STANDARD TABLE OF scarr WITH EMPTY KEY.
 
 SELECT * FROM scarr WHERE carrid = 'LH'
@@ -401,7 +459,7 @@ WRITE: / '다시 채운 행 수:', lines( gt_carriers ).`), text('이 예제의 
       ['IN (...) · IN @range', '값 목록 또는 선택 범위 테이블'],
       ['LIKE', '%는 길이 0 이상 문자열, _는 한 문자. ABAP의 CP 패턴과 구분'],
       ['IS NULL · IS NOT NULL', 'DB의 NULL 여부. 공백이나 숫자 0 여부와 다름']
-    ]), code('선택 범위와 문자열 조건', `REPORT zcw_sql_where.
+    ]), code('선택 범위와 문자열 조건', `REPORT zabap_f##_##.
 DATA gv_carrid TYPE scarr-carrid.
 SELECT-OPTIONS s_carr FOR gv_carrid.
 
@@ -421,7 +479,7 @@ ENDLOOP.`), text('선택 범위는 SIGN·OPTION·LOW·HIGH로 포함/제외와 �
         ['COUNT( * )', '행 수'], ['COUNT( DISTINCT 열 )', 'NULL을 제외한 서로 다른 값의 개수'],
         ['GROUP BY', '지정한 열 조합별로 묶기. 단순 열 조회에서 집계하지 않는 열은 그룹에도 지정'],
         ['WHERE / HAVING', '집계 전 원본 행 필터 / 집계 후 그룹 필터']
-      ]), code('항공사별 좌석 집계', `REPORT zcw_sql_group.
+      ]), code('항공사별 좌석 집계', `REPORT zabap_f##_##.
 SELECT carrid, COUNT( * ) AS flight_count,
        MIN( seatsocc ) AS min_occupied,
        MAX( seatsocc ) AS max_occupied,
@@ -444,7 +502,7 @@ ENDLOOP.`), text('예제는 좌석 수를 집계합니다. 금액을 합치거�
       ['GROUP BY가 있는 집계', '그룹 자체가 없으면 결과 0행'],
       ['별칭 없는 COUNT( * )만 단독 조회, GROUP BY 없음', '예외: sy-dbcnt가 집계한 원본 행 수. 0건이면 sy-subrc = 4, sy-dbcnt = 0']
     ]), text('따라서 집계 후 sy-dbcnt가 1이라고 해서 원본 데이터가 한 건 있었다고 판단하면 안 됩니다. COUNT 단독 예외는 INTO를 생략할 수 있는 기존 형식과 연결됩니다. 새 코드에서는 개수를 명시적인 변수에 받아 판단하는 편이 읽기 쉽습니다.'),
-      code('집계 결과와 실제 원본 건수 비교', `REPORT zcw_sql_empty.
+      code('집계 결과와 실제 원본 건수 비교', `REPORT zabap_f##_##.
 SELECT COUNT( * ) AS matched,
        MAX( seatsocc ) AS max_occupied
   FROM sflight
@@ -461,7 +519,7 @@ WRITE: / gs_summary-matched, gs_summary-max_occupied,
       ['CROSS JOIN', '양쪽의 모든 조합. 결과가 급격히 커질 수 있음']
     ]), text('필기의 “Right Outer Join 사용 불가”는 모든 ABAP 버전에 적용되지 않습니다. 수업 시스템의 릴리스와 문법 검사로 확인하세요. 같은 의미를 테이블 순서를 바꾼 LEFT OUTER JOIN으로 표현할 수도 있습니다.',
       'AS는 별칭, 별칭~열은 소속 테이블을 명시합니다. ON은 행을 연결하는 조건이고 WHERE는 연결된 결과를 걸러냅니다. LEFT JOIN 오른쪽 열에 대한 WHERE 조건은 NULL 행을 제외해 왼쪽 보존 효과를 잃게 할 수 있습니다.'),
-      code('항공사와 독일 출발 노선 연결', `REPORT zcw_sql_join.
+      code('항공사와 독일 출발 노선 연결', `REPORT zabap_f##_##.
 SELECT a~carrid, a~carrname, b~connid, b~cityfrom, b~cityto
   FROM scarr AS a
   LEFT OUTER JOIN spfli AS b
@@ -474,7 +532,7 @@ LOOP AT gt_routes INTO DATA(gs_route).
 ENDLOOP.`), text('독일 출발 노선이 없는 항공사도 남습니다. countryfr 조건을 WHERE b~countryfr = ...로 옮기면 그 행들이 제외됩니다. 한 항공사에 여러 노선이 있으면 항공사 정보가 여러 행에 반복되는 것은 정상입니다.')),
     section('보완: 서브쿼리와 FOR ALL ENTRIES', text(
       'EXISTS는 하위 조회에 맞는 행이 하나라도 있는지 검사합니다. IN ( SELECT ... )는 하위 조회의 값 집합과 비교합니다. JOIN처럼 상대쪽 열을 함께 표시할 필요 없이 존재 여부로 걸러낼 때 유용합니다.'),
-      code('노선이 있는 항공사만 조회', `REPORT zcw_sql_exists.
+      code('노선이 있는 항공사만 조회', `REPORT zabap_f##_##.
 SELECT a~carrid, a~carrname FROM scarr AS a
   WHERE EXISTS ( SELECT * FROM spfli AS b
                    WHERE b~carrid = a~carrid )
@@ -483,7 +541,7 @@ SELECT a~carrid, a~carrname FROM scarr AS a
 LOOP AT gt_carriers INTO DATA(gs_carrier).
   WRITE: / gs_carrier-carrid, gs_carrier-carrname.
 ENDLOOP.`), text('FOR ALL ENTRIES는 이미 가진 내부 테이블의 각 행을 조건으로 조회하고 결과의 중복 행을 제거합니다. 기준 테이블이 비어 있으면 WHERE 전체가 무시될 수 있으므로 반드시 비어 있지 않은지 먼저 검사합니다.'),
-      code('빈 기준 테이블을 막는 FOR ALL ENTRIES', `REPORT zcw_sql_fae.
+      code('빈 기준 테이블을 막는 FOR ALL ENTRIES', `REPORT zabap_f##_##.
 SELECT carrid, connid FROM spfli
   WHERE countryfr = 'DE'
   INTO TABLE @DATA(gt_keys).
@@ -523,8 +581,15 @@ ENDIF.`), text('SELECT 열에 키를 빼면 원래 서로 다른 행이 같은 �
       ['측정', 'ST05 SQL Trace 등으로 호출 횟수·실행 시간 확인. JOIN이 항상 최선이라고 단정하지 않음'],
       ['입력과 권한', '값은 @변수로 전달. 동적 테이블/열/WHERE 문자열은 별도 검증. Open SQL 자체가 업무 권한을 자동 보장하지 않음']
     ]), text('추가 문법은 필요할 때 확장하세요. CASE·COALESCE는 SQL 안의 조건/NULL 처리, UNION·UNION ALL은 조회 결과 결합, WITH는 공통 테이블 식, OFFSET은 정렬된 결과의 앞부분 건너뛰기에 사용됩니다. UNION은 중복 제거, UNION ALL은 중복 유지입니다. 필드 수와 타입 호환성도 맞춰야 합니다.',
-      '이들 문법과 최신 SQL 함수·내부 테이블을 FROM에 사용하는 기능은 릴리스별 지원 범위가 다릅니다. 이 페이지의 기본 예제와 구분해 대상 시스템의 키워드 문서를 확인하세요.'))
-  ], '11/19', [
+      '이들 문법과 최신 SQL 함수·내부 테이블을 FROM에 사용하는 기능은 릴리스별 지원 범위가 다릅니다. 이 페이지의 기본 예제와 구분해 대상 시스템의 키워드 문서를 확인하세요.')),
+    section('최신 문법(Strict Mode)과 쉼표·@ 규칙', text(
+      'Open SQL에서 INTO 절을 SELECT 문의 마지막에 작성하거나, SELECT 절에 일반 컬럼과 집계 함수를 함께 쓰는 등 최신 문법 요소가 들어가면 컴파일러가 최신 문법(Strict Mode)으로 간주합니다.',
+      '최신 문법으로 판정되면 SELECT 컬럼 목록에 쉼표(,)를 붙여 구분하고 ABAP 호스트 변수 앞에도 모두 @를 붙여야 합니다. 한 SELECT 문 안에서 구문법과 최신 문법을 섞어 쓰면 문법 오류가 발생합니다.'),
+      table(['최신 문법으로 간주되는 예', '함께 지켜야 하는 규칙'], [
+        ['INTO ~ 절을 SELECT 문 마지막에 작성', 'SELECT 컬럼 목록을 쉼표(,)로 구분'],
+        ['SELECT 절에 일반 컬럼 + 집계 함수 함께 작성', 'ABAP 호스트 변수 앞에 모두 @ 붙이기 (@p_carr, @so_carr, @DATA(...))']
+      ]))
+  ], '11/19 · 11/20', [
     ['SAP ABAP 7.52 · SELECT', 'https://help.sap.com/doc/abapdocu_752_index_htm/7.52/en-US/abapselect.htm'],
     ['SAP ABAP 7.52 · INTO와 APPENDING', 'https://help.sap.com/doc/abapdocu_752_index_htm/7.52/en-US/abapinto_clause.htm'],
     ['SAP ABAP 7.52 · 정렬된 첫 행과 건수 제한', 'https://help.sap.com/doc/abapdocu_752_index_htm/7.52/en-US/abapselect_up_to_offset.htm'],
@@ -540,7 +605,7 @@ ENDIF.`), text('SELECT 열에 키를 빼면 원래 서로 다른 행이 같은 �
   for (const [id, doc] of Object.entries(docs)) {
     docs[id] = JSON.parse(JSON.stringify(doc).replaceAll('[[erp-setup|실습 준비]]', '[[sap-architecture|SAP 시스템 구조]]').replaceAll('[[erp-setup|', '[[sap-architecture|'));
   }
-  const order = ['sap-architecture', 'abap-development', 'abap-basics', 'abap-types', 'abap-loops', 'abap-debug-messages', 'abap-program-types', 'abap-modularization', 'abap-bapi', 'abap-objects', 'abap-dictionary', 'abap-data-report', 'abap-open-sql', 'erp-fi', 'erp-co', 'erp-mm', 'erp-sd', 'erp-pp', 'erp-resources'];
+  const order = ['sap-architecture', 'abap-development', 'abap-basics', 'abap-types', 'abap-loops', 'abap-debug-messages', 'abap-program-types', 'abap-modularization', 'abap-bapi', 'abap-objects', 'abap-data-report', 'abap-open-sql', 'abap-dictionary', 'erp-fi', 'erp-co', 'erp-mm', 'erp-sd', 'erp-pp', 'erp-resources'];
   order.forEach((id, i) => { docs[id].stepNum = String(i + 1).padStart(2, '0'); });
   const connections = {
     'sap-architecture': ['sap-tcode-reference', 'abap-development'],
@@ -561,14 +626,14 @@ ENDIF.`), text('SELECT 열에 키를 빼면 원래 서로 다른 행이 같은 �
   const owners = { 'SAP GUI': 'sap-architecture', '자료형': 'abap-types', 'Include 프로그램': 'abap-program-types', '리포트 프로그램': 'abap-program-types', 'Open SQL': 'abap-open-sql' };
   for (const doc of Object.values(docs)) doc.aliases = (doc.aliases || []).filter(alias => !owners[alias] || owners[alias] === doc.id);
   docs['learning-roadmap'].subtitle = '수업 필기 기반 ABAP 학습 순서';
-  docs['learning-roadmap'].summary = '11월 11~19일 필기를 주제별로 정리했습니다. 본문이 채워진 문서부터 읽고, 이후 과정은 준비된 목차로 확인하세요.';
+  docs['learning-roadmap'].summary = '11월 11~20일 필기를 주제별로 정리했습니다. 본문이 채워진 문서부터 읽고, 이후 과정은 준비된 목차로 확인하세요.';
   docs['learning-roadmap'].sections[0].blocks[0].rows = order.map(id => [docs[id].stepNum, `[[${id}|${docs[id].title}]]`, connections[id] ? '필기 정리 · 예제' : '목차 준비 · 본문 예정']);
   docs['welcome-abap'].topWidgetId = 'knowledge-map-entry';
   docs['welcome-abap'].sections[0].blocks = [text('[[learning-roadmap|전체 학습 목차]]에서 주제별 내용을 확인하세요. 수업 필기에서 다루지 않은 ERP 모듈은 목차로 남겨 두었습니다.'), table(['분야', '문서'], [
     ['시스템과 개발', '[[sap-architecture|SAP 시스템 구조]] · [[abap-development|개발 객체와 전송 관리]] · [[abap-program-types|Program 종류]]'],
     ['ABAP 기본기', '[[abap-basics|ABAP 기초]] · [[abap-types|자료형과 초기값]] · [[abap-loops|반복문과 시스템 필드]] · [[abap-debug-messages|디버깅과 메시지]]'],
     ['모듈화', '[[abap-modularization|프로그램 모듈화]] · [[abap-bapi|BAPI와 RFC]] · [[abap-objects|클래스와 메서드]]'],
-    ['데이터 처리', '[[abap-types|구조체와 자료형]] · [[abap-data-report|내부 테이블]] · [[abap-open-sql|Open SQL]]'],
+    ['데이터 처리', '[[abap-types|구조체와 자료형]] · [[abap-data-report|내부 테이블 · Report]] · [[abap-open-sql|Open SQL]]'],
     ['이후 학습', '[[abap-dictionary|데이터 사전]] · [[learning-roadmap|ERP 모듈 목차]]']
   ])];
   const sortedIds = ['welcome-abap', 'learning-roadmap', ...order];

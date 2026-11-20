@@ -24,9 +24,9 @@
     },
     {
       id: 'data', step: '04', title: '데이터 처리',
-      subtitle: 'DDIC · 내부 테이블 · Open SQL',
+      subtitle: '내부 테이블 · Report · Open SQL · DDIC',
       x: 900, y: 930, angles: [-145, -35, 90],
-      docs: ['abap-dictionary', 'abap-data-report', 'abap-open-sql']
+      docs: ['abap-data-report', 'abap-open-sql', 'abap-dictionary']
     },
     {
       id: 'reference', step: '05', title: '실전 참고',
