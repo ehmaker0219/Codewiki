@@ -1,0 +1,705 @@
+/* Prezi-style minimalist zoomable Knowledge Map for CodeWiki */
+.app-shell.map-hidden {
+  display: none;
+}
+
+.kmap-page {
+  width: 100%;
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 20px 24px 16px;
+}
+
+.kmap-stage {
+  position: relative;
+  width: 100%;
+  height: calc(100vh - 134px);
+  min-height: 540px;
+  border-radius: 24px;
+  border: 1px solid var(--border-subtle);
+  background-color: var(--bg-card);
+  background-image:
+    radial-gradient(circle at 18% 12%, var(--toss-blue-soft) 0%, transparent 46%),
+    radial-gradient(circle, var(--border-subtle) 1px, transparent 1px);
+  background-size: 100% 100%, 28px 28px;
+  box-shadow: var(--shadow-card);
+  overflow: hidden;
+  user-select: none;
+  touch-action: none;
+  cursor: grab;
+}
+
+.kmap-stage.is-dragging {
+  cursor: grabbing;
+}
+
+/* Floating top HUD: minimalist breadcrumb + zoom controls */
+.kmap-hud-top {
+  position: absolute;
+  top: 16px;
+  left: 18px;
+  right: 18px;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  pointer-events: none;
+}
+
+.kmap-breadcrumb,
+.kmap-controls {
+  pointer-events: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 8px;
+  border-radius: 999px;
+  background: var(--bg-header);
+  backdrop-filter: blur(14px);
+  border: 1px solid var(--border-subtle);
+  box-shadow: 0 6px 20px rgba(18, 35, 65, 0.08);
+}
+
+.kmap-crumb {
+  border: none;
+  background: transparent;
+  color: var(--text-sub);
+  font-family: inherit;
+  font-size: 12.5px;
+  font-weight: 500;
+  padding: 4px 10px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background-color 0.16s ease, color 0.16s ease;
+  white-space: nowrap;
+}
+
+.kmap-crumb:hover {
+  background: var(--bg-subtle);
+  color: var(--text-strong);
+}
+
+.kmap-crumb.is-current {
+  background: var(--toss-blue-soft);
+  color: var(--toss-blue);
+  font-weight: 600;
+}
+
+.kmap-crumb-sep {
+  color: var(--text-muted);
+  font-size: 12px;
+  padding: 0 1px;
+}
+
+.kmap-ctrl-btn {
+  border: none;
+  background: transparent;
+  color: var(--text-sub);
+  font-family: inherit;
+  font-size: 12.5px;
+  font-weight: 600;
+  height: 28px;
+  min-width: 28px;
+  padding: 0 8px;
+  border-radius: 999px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  transition: background-color 0.16s ease, color 0.16s ease;
+}
+
+.kmap-ctrl-btn:hover:not(:disabled) {
+  background: var(--bg-subtle);
+  color: var(--text-strong);
+}
+
+.kmap-ctrl-btn:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.kmap-ctrl-divider {
+  width: 1px;
+  height: 14px;
+  background: var(--border-subtle);
+  margin: 0 2px;
+}
+
+.kmap-zoom-label {
+  min-width: 42px;
+  text-align: center;
+  font-size: 11.5px;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-muted);
+}
+
+/* Camera world */
+.kmap-world {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 1800px;
+  height: 1060px;
+  transform-origin: 0 0;
+  will-change: transform;
+  transition: transform 0.62s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.kmap-world.is-instant {
+  transition: none;
+}
+
+.kmap-edges {
+  position: absolute;
+  inset: 0;
+  width: 1800px;
+  height: 1060px;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.kmap-flow-edge {
+  fill: none;
+  stroke: var(--border-subtle);
+  stroke-width: 2.2;
+  stroke-linecap: round;
+  transition: opacity 0.4s ease, stroke 0.3s ease;
+}
+
+.kmap-flow-edge.is-secondary {
+  stroke-dasharray: 6 7;
+  opacity: 0.72;
+}
+
+.kmap-flow-edge.is-dim {
+  opacity: 0.14;
+}
+
+.kmap-spoke-edge {
+  fill: none;
+  stroke: var(--toss-blue);
+  stroke-width: 1.5;
+  stroke-opacity: 0.24;
+  transition: opacity 0.4s ease;
+}
+
+.kmap-spoke-edge.is-hidden {
+  opacity: 0;
+}
+
+.kmap-cross-edge {
+  fill: none;
+  stroke: var(--toss-blue);
+  stroke-width: 2.4;
+  stroke-dasharray: 7 5;
+  stroke-linecap: round;
+  opacity: 0.78;
+}
+
+/* Cluster planet */
+.kmap-cluster {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  width: 244px;
+  height: 244px;
+  border-radius: 50%;
+  border: 1.5px solid var(--border-subtle);
+  background: var(--bg-card);
+  box-shadow: 0 14px 36px -22px rgba(18, 35, 65, 0.24);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 24px;
+  gap: 6px;
+  cursor: pointer;
+  font-family: inherit;
+  color: var(--text-strong);
+  transition:
+    transform 0.32s cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 0.42s ease,
+    border-color 0.25s ease,
+    box-shadow 0.25s ease,
+    background-color 0.25s ease;
+}
+
+.kmap-cluster:hover {
+  transform: translate(-50%, -50%) scale(1.045);
+  border-color: var(--toss-blue);
+  box-shadow: 0 18px 40px -20px rgba(10, 51, 121, 0.32);
+}
+
+.kmap-cluster:focus-visible {
+  outline: 3px solid var(--toss-blue);
+  outline-offset: 4px;
+}
+
+.kmap-cluster.is-upcoming {
+  border-style: dashed;
+  background: var(--bg-subtle);
+}
+
+.kmap-cluster.is-dim {
+  opacity: 0.16;
+}
+
+.kmap-cluster.is-dim:hover {
+  opacity: 0.55;
+}
+
+/* When zoomed into a cluster, its center bubble shrinks into a calm core anchor */
+.kmap-cluster.is-open {
+  width: 146px;
+  height: 146px;
+  padding: 14px;
+  border-color: var(--toss-blue);
+  background: var(--toss-blue-soft);
+  box-shadow: 0 0 0 12px rgba(49, 130, 246, 0.06);
+}
+
+.kmap-cluster.is-open .kmap-cluster-sub,
+.kmap-cluster.is-open .kmap-cluster-dots {
+  display: none;
+}
+
+.kmap-cluster.is-open .kmap-cluster-title {
+  font-size: 14px;
+}
+
+.kmap-cluster-step {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--toss-blue);
+  background: var(--toss-blue-soft);
+  padding: 2px 9px;
+  border-radius: 999px;
+}
+
+.kmap-cluster.is-open .kmap-cluster-step {
+  background: var(--bg-card);
+}
+
+.kmap-cluster-title {
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  line-height: 1.3;
+  color: var(--text-strong);
+}
+
+.kmap-cluster-sub {
+  font-size: 12.5px;
+  color: var(--text-sub);
+  line-height: 1.45;
+  max-width: 176px;
+}
+
+.kmap-cluster-meta {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+.kmap-cluster-meta.is-complete {
+  color: var(--toss-green, #00b493);
+}
+
+.kmap-cluster-dots {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  margin-top: 4px;
+}
+
+.kmap-mini-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--border-subtle);
+}
+
+.kmap-mini-dot.is-ready {
+  background: var(--toss-blue);
+  opacity: 0.45;
+}
+
+.kmap-mini-dot.is-done {
+  background: var(--toss-green, #00b493);
+  opacity: 1;
+}
+
+/* Child topic nodes: hidden in Overview (minimalist), bloom cleanly on Cluster zoom */
+.kmap-topic {
+  position: absolute;
+  transform: translate(-50%, -50%) scale(0.76);
+  min-width: 146px;
+  max-width: 192px;
+  padding: 11px 14px;
+  border-radius: 16px;
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-card);
+  box-shadow: 0 10px 26px -18px rgba(18, 35, 65, 0.28);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  text-align: left;
+  font-family: inherit;
+  color: var(--text-strong);
+  cursor: pointer;
+  opacity: 0;
+  pointer-events: none;
+  transition:
+    opacity 0.36s ease,
+    transform 0.36s cubic-bezier(0.22, 1, 0.36, 1),
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.kmap-topic.is-visible {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translate(-50%, -50%) scale(1);
+}
+
+.kmap-topic.is-visible:hover {
+  transform: translate(-50%, -50%) scale(1.05);
+  border-color: var(--toss-blue);
+  box-shadow: 0 14px 30px -16px rgba(10, 51, 121, 0.35);
+}
+
+.kmap-topic:focus-visible {
+  outline: 3px solid var(--toss-blue);
+  outline-offset: 3px;
+}
+
+.kmap-topic.is-related {
+  opacity: 0.92;
+  pointer-events: auto;
+  transform: translate(-50%, -50%) scale(0.95);
+  border-color: var(--toss-blue);
+  border-style: dashed;
+}
+
+.kmap-topic.is-dim {
+  opacity: 0.36;
+}
+
+.kmap-topic.is-selected {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translate(-50%, -50%) scale(1.08);
+  border-color: var(--toss-blue);
+  background: var(--bg-card);
+  box-shadow: 0 0 0 4px var(--toss-blue-soft), 0 16px 34px -18px rgba(10, 51, 121, 0.45);
+  z-index: 6;
+}
+
+.kmap-topic-head {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+}
+
+.kmap-topic-step {
+  font-size: 10.5px;
+  font-weight: 700;
+  color: var(--toss-blue);
+  background: var(--toss-blue-soft);
+  padding: 1px 6px;
+  border-radius: 6px;
+}
+
+.kmap-topic-check {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--toss-green, #00b493);
+}
+
+.kmap-topic-pending {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text-muted);
+  background: var(--bg-subtle);
+  padding: 1px 6px;
+  border-radius: 6px;
+}
+
+.kmap-topic-title {
+  font-size: 13px;
+  font-weight: 650;
+  letter-spacing: -0.02em;
+  line-height: 1.35;
+  color: var(--text-strong);
+}
+
+/* Crisp 1:1 Topic Focus Card (Level 2) */
+.kmap-focus-card {
+  position: absolute;
+  left: 50%;
+  bottom: 22px;
+  transform: translateX(-50%);
+  z-index: 25;
+  width: min(480px, calc(100% - 32px));
+  padding: 20px 22px;
+  border-radius: 20px;
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-card);
+  box-shadow: 0 20px 48px -20px rgba(18, 35, 65, 0.32);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  animation: kmapCardIn 0.24s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@keyframes kmapCardIn {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 10px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+
+.kmap-focus-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.kmap-focus-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--toss-blue);
+  margin-bottom: 4px;
+}
+
+.kmap-focus-done {
+  color: var(--toss-green, #00b493);
+  background: var(--toss-green-soft, rgba(0, 180, 147, 0.14));
+  padding: 1px 7px;
+  border-radius: 999px;
+  font-size: 11px;
+}
+
+.kmap-focus-title {
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  color: var(--text-strong);
+  line-height: 1.35;
+}
+
+.kmap-focus-summary {
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--text-sub);
+}
+
+.kmap-focus-related {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.kmap-focus-related-label {
+  font-size: 11.5px;
+  color: var(--text-muted);
+  margin-right: 2px;
+}
+
+.kmap-related-pill {
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-subtle);
+  color: var(--text-body);
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 500;
+  padding: 4px 10px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background-color 0.15s ease, color 0.15s ease;
+}
+
+.kmap-related-pill:hover {
+  border-color: var(--toss-blue);
+  background: var(--toss-blue-soft);
+  color: var(--toss-blue);
+}
+
+.kmap-focus-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding-top: 4px;
+}
+
+.kmap-focus-open {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 38px;
+  padding: 0 18px;
+  border: none;
+  border-radius: 12px;
+  background: var(--toss-blue);
+  color: #ffffff;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.16s ease, transform 0.16s ease;
+}
+
+.kmap-focus-open:hover {
+  background: var(--toss-blue-hover);
+  transform: translateY(-1px);
+}
+
+.kmap-focus-back {
+  border: none;
+  background: transparent;
+  color: var(--text-sub);
+  font-family: inherit;
+  font-size: 12.5px;
+  font-weight: 500;
+  padding: 6px 10px;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.kmap-focus-back:hover {
+  background: var(--bg-subtle);
+  color: var(--text-strong);
+}
+
+/* Quiet bottom hint (Overview / Cluster level) */
+.kmap-hint {
+  position: absolute;
+  left: 50%;
+  bottom: 16px;
+  transform: translateX(-50%);
+  z-index: 15;
+  padding: 6px 14px;
+  border-radius: 999px;
+  background: var(--bg-header);
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--border-subtle);
+  font-size: 11.5px;
+  color: var(--text-muted);
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+/* Home page minimalist entry banner */
+.kmap-home-entry {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 20px 24px;
+  margin-bottom: 22px;
+  border-radius: 18px;
+  border: 1px solid var(--border-subtle);
+  background:
+    radial-gradient(circle at 92% 50%, var(--toss-blue-soft) 0%, transparent 52%),
+    var(--bg-subtle);
+}
+
+.kmap-home-entry-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.kmap-home-entry-eyebrow {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  color: var(--toss-blue);
+}
+
+.kmap-home-entry-title {
+  font-size: 15.5px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--text-strong);
+}
+
+.kmap-home-entry-desc {
+  font-size: 12.5px;
+  color: var(--text-sub);
+}
+
+.kmap-home-entry-btn {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 38px;
+  padding: 0 16px;
+  border-radius: 12px;
+  background: var(--toss-blue);
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: background-color 0.16s ease, transform 0.16s ease;
+}
+
+.kmap-home-entry-btn:hover {
+  background: var(--toss-blue-hover);
+  transform: translateY(-1px);
+}
+
+@media (max-width: 720px) {
+  .kmap-page {
+    padding: 12px;
+  }
+  .kmap-stage {
+    height: calc(100vh - 118px);
+    min-height: 460px;
+    border-radius: 18px;
+  }
+  .kmap-hud-top {
+    top: 10px;
+    left: 10px;
+    right: 10px;
+    flex-wrap: wrap;
+  }
+  .kmap-hint {
+    display: none;
+  }
+  .kmap-home-entry {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .kmap-world,
+  .kmap-cluster,
+  .kmap-topic,
+  .kmap-focus-card {
+    transition: none !important;
+    animation: none !important;
+  }
+}

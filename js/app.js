@@ -540,6 +540,7 @@
   function renderDocument(docId) {
     if ((docId === 'welcome-abap' || docId === 'welcome-ui5') && window.CodeWikiAdminMembers?.openHome()) return;
     window.CodeWikiAdminMembers?.leave();
+    window.CodeWikiKnowledgeMap?.leave?.();
     if (docId === "erp-setup") {
       docId = "sap-architecture";
       history.replaceState(null, "", "#doc/sap-architecture");
@@ -944,7 +945,7 @@
       const h = window.location.hash;
       if (h.startsWith("#doc/")) {
         const target = h.replace("#doc/", "");
-        const appHidden = appShell?.classList.contains('object-game-hidden') || appShell?.classList.contains('mentoring-hidden') || appShell?.classList.contains('study-hidden') || appShell?.classList.contains('members-hidden') || appShell?.classList.contains('board-mode-shell');
+        const appHidden = appShell?.classList.contains('object-game-hidden') || appShell?.classList.contains('mentoring-hidden') || appShell?.classList.contains('study-hidden') || appShell?.classList.contains('members-hidden') || appShell?.classList.contains('board-mode-shell') || appShell?.classList.contains('map-hidden');
         if ((window.WIKI_DOCS[target] || target === "erp-setup") && (target !== currentDocId || appHidden)) {
           if (window.CodeWikiBoard) window.CodeWikiBoard.closeIfActive();
           renderDocument(target);

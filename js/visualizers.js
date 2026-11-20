@@ -8,6 +8,17 @@
  */
 (function () {
   window.WIKI_WIDGETS = {
-    // 추후 제작할 인터랙티브 시각화 위젯이 이곳에 등록됩니다.
+    'knowledge-map-entry'(slot) {
+      slot.innerHTML = `
+        <div class="kmap-home-entry">
+          <div class="kmap-home-entry-copy">
+            <span class="kmap-home-entry-eyebrow">VISUAL MAP</span>
+            <strong class="kmap-home-entry-title">ABAP 개념 지도</strong>
+            <span class="kmap-home-entry-desc">전체 학습 흐름을 줌인·줌아웃하며 한눈에 탐색하세요.</span>
+          </div>
+          <a href="#map" class="kmap-home-entry-btn">개념 지도 열기 →</a>
+        </div>
+      `;
+    }
   };
 })();

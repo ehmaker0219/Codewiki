@@ -86,6 +86,7 @@
     window.CodeWikiAdminMembers?.leave();
     window.CodeWikiStudy?.leave();
     window.CodeWikiMentoring?.leave();
+    window.CodeWikiKnowledgeMap?.leave?.();
     const version = ++viewVersion, token = window.CodeWikiAuth?.getSessionToken();
     const isCurrent = () => version === viewVersion && isBoardViewActive && token === window.CodeWikiAuth?.getSessionToken();
     articleContainer.classList.remove('calendar-article');

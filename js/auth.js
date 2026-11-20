@@ -148,6 +148,7 @@
     window.CodeWikiMentoring?.setUser(user);
     window.CodeWikiPractice?.setUser(user);
     window.CodeWikiObjectGame?.setUser(user);
+    window.CodeWikiKnowledgeMap?.setUser?.(user);
     adminApproval?.setUser(user);
     window.CodeWikiAdminMembers?.setUser(user);
     window.CodeWikiPresence?.setUser(user);
