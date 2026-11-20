@@ -56,5 +56,12 @@ end;
 $fn$;
 revoke all on function public.cw_admin_student_directory(uuid),public.cw_admin_reset_student_password(uuid,uuid,text,text) from public;
 grant execute on function public.cw_admin_student_directory(uuid),public.cw_admin_reset_student_password(uuid,uuid,text,text) to anon,authenticated;
+do $transport_guard$
+begin
+  if to_regprocedure('public.cw_secure_auth(text,jsonb,uuid,timestamptz)') is not null then
+    revoke all on function public.cw_admin_reset_student_password(uuid,uuid,text,text) from public,anon,authenticated;
+  end if;
+end;
+$transport_guard$;
 notify pgrst,'reload schema';
 commit;

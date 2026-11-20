@@ -9,6 +9,7 @@ function node(id){
 }
 const window={location:{hash:'#admin/students'},events:{},addEventListener(k,fn){this.events[k]=fn;},CodeWikiLearning:{escape:s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))},
  CodeWikiAuth:{getSessionToken:()=>token,getSupabaseClient:()=>({rpc:(name,args)=>new Promise((resolve,reject)=>requests.push({name,args,resolve,reject}))})}};
+window.CodeWikiAuth.credentialRequest=(name,args)=>window.CodeWikiAuth.getSupabaseClient().rpc(name,args);
 const context={window,document:{getElementById:node,querySelectorAll:()=>[],createElement:()=>node('dialog'),body:{append(){}}},
  history:{replaceState:(a,b,hash)=>window.location.hash=hash},AbortController,TextEncoder,
  setTimeout:fn=>{const id=++timerId;timers.set(id,fn);return id;},clearTimeout:id=>timers.delete(id)};

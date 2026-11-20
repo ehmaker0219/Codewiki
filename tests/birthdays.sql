@@ -52,7 +52,7 @@ begin
   end loop;
   begin perform 1 from public.cw_birthdays;raise exception 'direct read allowed'; exception when insufficient_privilege then null; end;
   begin delete from public.cw_birthdays;raise exception 'direct write allowed'; exception when insufficient_privilege then null; end;
-  begin perform public.cw_set_my_birthday(a,current_date+1,true);raise exception 'future date allowed'; exception when invalid_parameter_value then null; end;
+  begin perform public.cw_set_my_birthday(a,(now() at time zone 'Asia/Seoul')::date+1,true);raise exception 'future date allowed'; exception when invalid_parameter_value then null; end;
   begin perform public.cw_set_my_birthday(a,'1899-12-31',true);raise exception 'invalid date allowed'; exception when invalid_parameter_value then null; end;
   perform public.cw_set_my_birthday(b,'1998-11-18',false);
   if jsonb_array_length(public.cw_list_birthdays(a))<>1 then raise exception 'opt out failed'; end if;
@@ -61,7 +61,7 @@ begin
   signup:=public.cw_signup_with_birthday('verify-signup-'||gen_random_uuid(),gen_random_uuid()::text,'Signup fixture','verify-class-a','','2002-12-03',true);
   if public.cw_get_my_birthday((signup->>'session_token')::uuid)->>'birth_date'<>'2002-12-03' then raise exception 'signup birthday not saved'; end if;
   begin
-    perform public.cw_signup_with_birthday('verify-invalid-'||a,gen_random_uuid()::text,'Invalid fixture','verify-class-a','',current_date+1,true);
+    perform public.cw_signup_with_birthday('verify-invalid-'||a,gen_random_uuid()::text,'Invalid fixture','verify-class-a','',(now() at time zone 'Asia/Seoul')::date+1,true);
     raise exception 'invalid signup allowed';
   exception when invalid_parameter_value then null; end;
 end;

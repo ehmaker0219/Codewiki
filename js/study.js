@@ -41,7 +41,7 @@
     if(allowed&&token) {
       session={id:user.id,name:user.full_name,token};
       store=window.CodeWikiStudyStore.create({owner:user.id,token,storage:localStorage,
-        rpc:(...args)=>window.CodeWikiAuth.getSupabaseClient().rpc(...args),onChange:update});
+        rpc:(...args)=>{const c=window.CodeWikiAuth.getSupabaseClient();return c?c.rpc(...args):Promise.reject(Error('supabase-unavailable'));},onChange:update});
     }
     route();
   }
@@ -58,7 +58,8 @@
     editorLoad=new Promise((resolve,reject)=>{
       const script=document.createElement('script');
       script.src=document.getElementById('studyEditorSource').dataset.src;
-      script.onload=resolve;script.onerror=()=>{script.remove();reject(new Error('editor-load'));};
+      script.onload=()=>{if(window.CodeWikiStudyEditor)resolve();else{script.remove();reject(new Error('editor-init'));}};
+      script.onerror=()=>{script.remove();reject(new Error('editor-load'));};
       document.head.append(script);
     });
     editorLoad.then(()=>{editorLoad=null;if(visible())route();}).catch(()=>{
@@ -203,6 +204,8 @@
     byId('studySave').disabled=store.busy;
     byId('studySave').textContent=store.busy?'저장 중…':store.conflicted?'현재 글로 저장':store.dirty?'저장':'저장됨';
     if(store.current&&!store.dirty&&store.current.revision){
+      const titleInput=byId('studyTitle');
+      if(titleInput&&titleInput.value!==store.current.title)titleInput.value=store.current.title;
       const note={...store.current,body:undefined},index=notes.findIndex(n=>n.id===note.id);
       const previous=notes[index];
       if(previous&&previous.title===note.title&&previous.updated_at===note.updated_at&&previous.revision===note.revision)return;
@@ -252,14 +255,14 @@
   }
   async function select(id) {
     if(transition||store?.current?.id===id)return;lock(true);const s=store;
-    try {if(s.dirty){window.alert('현재 글을 저장한 뒤 다른 노트를 선택해 주세요.');return;}const n=await s.call('cw_get_study_note',{p_id:id});if(store!==s)return;if(!n)throw new Error();if(s.dirty){window.alert('현재 노트를 편집 중입니다. 저장 후 다시 선택해 주세요.');return;}s.select(n);fill();}
+    try {if(s.dirty){window.alert('현재 글을 저장한 뒤 다른 노트를 선택해 주세요.');return;}const n=await s.call('cw_get_study_note',{p_id:id});if(store!==s)return;if(!n)throw new Error();if(s.dirty){window.alert('현재 노트를 편집 중입니다. 저장 후 다시 선택해 주세요.');return;}if(!s.select(n))return;fill();}
     catch {if(store===s)window.alert('노트를 불러오지 못했습니다. 다시 시도해 주세요.');}
     finally {if(store===s)lock(false);}
   }
   async function createNote(title='',body='') {
-    if(transition||!store)return;lock(true);const s=store;
-    try {if(s.dirty){window.alert('현재 글을 저장한 뒤 새 노트를 만들어 주세요.');return;}s.select({id:crypto.randomUUID(),title:title.slice(0,120),body,revision:0});s.edit(title.slice(0,120),body);fill();byId('studyTitle').focus();if(body)await s.save();}
-    finally {if(store===s){lock(false);byId('studyTitle').focus();}}
+    if(transition||!store)return;lock(true);const s=store;let created=false;
+    try {if(s.dirty){window.alert('현재 글을 저장한 뒤 새 노트를 만들어 주세요.');return;}if(!s.select({id:crypto.randomUUID(),title:title.slice(0,120),body,revision:0}))return;created=true;s.edit(title.slice(0,120),body);fill();if(body)await s.save();}
+    finally {if(store===s){lock(false);if(created)byId('studyTitle').focus();}}
   }
   async function importFiles(files) {
     if(!files.length||transition||!store)return;
@@ -293,6 +296,7 @@
   }
   function download() {
     const n=store?.current;if(!n)return;
+    // Keep the lossless editor payload: this download is also the note's backup.
     const blob=new Blob([n.body],{type:'text/markdown;charset=utf-8'}),url=URL.createObjectURL(blob),a=document.createElement('a');
     a.href=url;a.download=(n.title||'필기').replace(/[<>:"/\\|?*\x00-\x1f]/g,'_')+'.md';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
   }
@@ -301,7 +305,7 @@
     if(s.dirty&&!window.confirm('미저장 내용을 서버 글로 바꿀까요? 필요한 내용은 먼저 내려받아 주세요.'))return;
     lock(true);
     const originalTitle=n.title,originalBody=n.body;
-    try {const fresh=await s.call('cw_get_study_note',{p_id:n.id});if(store!==s)return;if(!fresh){window.alert('서버에 없는 노트입니다. 현재 글은 유지합니다.');return;}if(s.current.title!==originalTitle||s.current.body!==originalBody){window.alert('불러오는 동안 작성한 내용이 있어 현재 글을 유지합니다.');return;}s.select(fresh);fill();}
+    try {const fresh=await s.call('cw_get_study_note',{p_id:n.id});if(store!==s)return;if(!fresh){window.alert('서버에 없는 노트입니다. 현재 글은 유지합니다.');return;}if(s.current.title!==originalTitle||s.current.body!==originalBody){window.alert('불러오는 동안 작성한 내용이 있어 현재 글을 유지합니다.');return;}if(!s.select(fresh))return;fill();}
     catch {if(store===s)window.alert('서버 글을 불러오지 못했습니다.');}
     finally {if(store===s)lock(false);}
   }
@@ -317,6 +321,7 @@
   host.addEventListener('keydown',shortcuts);
   window.addEventListener('hashchange',route);
   window.addEventListener('pointerdown',e=>{
+    if(host.hidden)return;
     host.querySelectorAll('.study-table-menu[open],.study-color-menu[open]').forEach(menu=>{if(!menu.contains(e.target))menu.open=false;});
   });
   window.addEventListener('beforeunload',e=>{if(store?.dirty){e.preventDefault();e.returnValue='';}});

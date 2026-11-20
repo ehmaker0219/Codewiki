@@ -1,5 +1,13 @@
 -- Private dates of birth. Peer RPC returns only month/day, never a birth year.
 begin;
+do $guard$
+begin
+  if to_regnamespace('cw_auth_private') is not null then
+    raise exception '인증 보완이 적용된 DB입니다. 이전 가입 마이그레이션을 재실행하지 말고 SECURITY-UPDATE.md 절차를 따르세요.'
+      using errcode = '55000';
+  end if;
+end;
+$guard$;
 create table if not exists public.cw_birthdays (
   user_id uuid primary key references public.cw_users(id) on delete cascade,
   birth_date date not null check (birth_date >= date '1900-01-01'),

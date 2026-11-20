@@ -1,7 +1,10 @@
 /* Admin approval UI. Authentication owns the session and injects data access. */
 (() => {
-  function create({modal, getToken, getUser, client, isRemote, getDemoUsers, saveDemoUsers, onChange}) {
+  function create({modal, getToken, getUser, client, onChange}) {
     const escape = window.CodeWikiLearning.escape;
+    const rpcCall = (name, args) => window.CodeWikiLearning?.rpcWithTimeout
+      ? window.CodeWikiLearning.rpcWithTimeout(() => client.rpc(name, args))
+      : client.rpc(name, args);
     const groups = [
       {status:'pending', title:'승인 대기 중', empty:'대기 중인 신청자가 없습니다.', actions:[['approved','승인','approve'],['rejected','거절','reject']]},
       {status:'approved', title:'승인 완료 멤버', empty:'승인된 멤버가 없습니다.', actions:[['pending','승인 취소','revoke']]},
@@ -49,7 +52,7 @@
       const classes = [...counts.keys()].sort((a,b) => a.localeCompare(b,'ko',{numeric:true}));
       if (filter !== 'ALL' && !counts.has(filter)) filter = 'ALL';
       const visible = filter === 'ALL' ? users : users.filter(user => className(user) === filter);
-      modal.innerHTML = `<div class="admin-modal-card toss-card" role="dialog" aria-modal="true" aria-labelledby="adminApprovalTitle" style="max-width:560px;">
+      modal.innerHTML = `<div class="admin-modal-card toss-card" role="dialog" aria-modal="true" aria-labelledby="adminApprovalTitle" tabindex="-1" style="max-width:560px;">
         <div class="admin-modal-header"><div><span class="toss-badge-blue">Admin</span><h3 id="adminApprovalTitle" class="admin-modal-title">학생 승인 관리</h3></div>
           <button id="closeAdminModalBtn" class="icon-btn" aria-label="닫기">✕</button></div>
         ${classes.length ? `<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px;">${[['ALL','전체',users.length],...classes.map(name=>[name,name,counts.get(name)])].map(([id,label,count]) =>
@@ -68,19 +71,17 @@
       const version = ++generation, token = getToken(), id = getUser().id;
       users = []; busy = true; errorMessage = ''; errorTarget = '';
       modal.classList.remove('hidden'); render();
+      modal.querySelector?.('.admin-modal-card')?.focus?.();
       try {
-        if (!isRemote) users = getDemoUsers().filter(user=>user.role !== 'admin');
-        else {
-          // Independent reads run together; birthday failure doesn't hide approval requests.
-          const [list, birthdays] = await Promise.all([
-            client.rpc('cw_admin_list_users',{p_token:token}),
-            Promise.resolve().then(()=>client.rpc('cw_admin_birthdays',{p_token:token})).catch(error=>({error}))
-          ]);
-          if (!current(version,token,id)) return;
-          if (list.error) throw list.error;
-          const dates = new Map((birthdays.data || []).map(row=>[row.user_id,row.birth_date]));
-          users = (list.data || []).map(user=>({...user,birth_date:dates.get(user.id),birthday_error:Boolean(birthdays.error)}));
-        }
+        // Independent reads run together; birthday failure doesn't hide approval requests.
+        const [list, birthdays] = await Promise.all([
+          rpcCall('cw_admin_list_users',{p_token:token}),
+          Promise.resolve().then(()=>rpcCall('cw_admin_birthdays',{p_token:token})).catch(error=>({error}))
+        ]);
+        if (!current(version,token,id)) return;
+        if (list.error) throw list.error;
+        const dates = new Map((birthdays.data || []).map(row=>[row.user_id,row.birth_date]));
+        users = (list.data || []).map(user=>({...user,birth_date:dates.get(user.id),birthday_error:Boolean(birthdays.error)}));
       } catch { if (current(version,token,id)) errorMessage = '회원 목록을 불러오지 못했습니다.'; }
       if (current(version,token,id)) { busy = false; render(); }
     }
@@ -97,17 +98,10 @@
       }
       busy = true; errorMessage = ''; errorTarget = ''; render();
       try {
-        if (isRemote) {
-          const result = deleting
-            ? await client.rpc('cw_admin_delete_rejected_user',{p_token:token,p_target_id:target})
-            : await client.rpc('cw_admin_set_status',{p_token:token,p_target_id:target,p_next_status:next});
-          if (result.error) throw result.error;
-        } else {
-          const demoUsers = getDemoUsers();
-          saveDemoUsers(deleting
-            ? demoUsers.filter(user=>!(String(user.id) === target && user.status === 'rejected' && user.role !== 'admin'))
-            : demoUsers.map(user=>String(user.id) === target ? {...user,status:next} : user));
-        }
+        const result = deleting
+          ? await rpcCall('cw_admin_delete_rejected_user',{p_token:token,p_target_id:target})
+          : await rpcCall('cw_admin_set_status',{p_token:token,p_target_id:target,p_next_status:next});
+        if (result.error) throw result.error;
         if (!current(version,token,id)) return;
         if (deleting) {
           users = users.filter(user=>String(user.id) !== target);

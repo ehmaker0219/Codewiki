@@ -23,11 +23,18 @@
       </form>`;
     const form=dialog.querySelector('form'),name=form.querySelector('#profileName'),mbti=form.querySelector('#profileMbti'),date=form.querySelector('#profileBirthDate'),share=form.querySelector('#profileBirthdayShare'),message=form.querySelector('#profileStatus'),save=form.querySelector('[type=submit]');
     const current=()=>session===s&&dialog.open&&form.isConnected;
+    const rpcCall=(name,args)=>{
+      const client=window.CodeWikiAuth?.getSupabaseClient();
+      if(!client)return Promise.reject(new Error('서버 연결을 확인해 주세요.'));
+      return window.CodeWikiLearning?.rpcWithTimeout
+        ? window.CodeWikiLearning.rpcWithTimeout(()=>client.rpc(name,args))
+        : client.rpc(name,args);
+    };
     dialog.querySelector('[data-close-profile]').addEventListener('click',()=>dialog.close());
     form.querySelector('#logoutBtn').addEventListener('click',()=>window.CodeWikiAuth.logout());
-    dialog.showModal();
+    if(!dialog.open)dialog.showModal();
     try {
-      const result=await window.CodeWikiAuth.getSupabaseClient().rpc('cw_get_my_profile',{p_token:s.token});
+      const result=await rpcCall('cw_get_my_profile',{p_token:s.token});
       if(!current())return;if(result.error)throw result.error;
       const p=result.data;
       form.querySelector('#profileUsername').textContent=p.username;
@@ -44,7 +51,7 @@
       if(!window.CodeWikiBirthdays.validDate(date.value)){message.textContent='생년월일을 확인해 주세요.';date.focus();return;}
       save.disabled=true;message.textContent='저장 중…';
       try {
-        const result=await window.CodeWikiAuth.getSupabaseClient().rpc('cw_update_my_profile',{p_token:s.token,p_full_name:name.value.trim(),p_mbti:mbti.value,p_birth_date:date.value||null,p_share_with_class:Boolean(date.value&&share.checked)});
+        const result=await rpcCall('cw_update_my_profile',{p_token:s.token,p_full_name:name.value.trim(),p_mbti:mbti.value,p_birth_date:date.value||null,p_share_with_class:Boolean(date.value&&share.checked)});
         if(session!==s)return;if(result.error)throw result.error;
         window.CodeWikiAuth.applyProfile(result.data);
         void window.CodeWikiBirthdays.refresh();

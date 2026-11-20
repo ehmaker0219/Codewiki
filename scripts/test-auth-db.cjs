@@ -11,7 +11,7 @@ const read = file => fs.readFileSync(path.join(root,file),'utf8');
 (async () => {
   const db = new PGlite({extensions:{pgcrypto}});
   try {
-    await db.exec('create role anon; create role authenticated; create schema extensions;');
+    await db.exec('create role anon; create role authenticated; create role service_role; create schema extensions;');
     await db.exec(read('supabase-setup.sql'));
     for (const file of ['20261118-birthdays.sql','20261118-profile.sql','20261118-session-retention.sql',
       '20261118-learning-progress.sql','20261118-study-notes.sql','20261118-study-conflict-response.sql',
@@ -19,7 +19,7 @@ const read = file => fs.readFileSync(path.join(root,file),'utf8');
       await db.exec(read(`migrations/${file}`));
       if(file==='20261119-study-folders.sql')await db.exec(read(`migrations/${file}`));
     }
-    for (const file of ['security-regression.sql','class-roster.sql','admin-delete.sql']) await db.exec(read(`tests/${file}`));
+    for (const file of ['security-regression.sql','birthdays.sql','learning-progress.sql','class-roster.sql','admin-delete.sql']) await db.exec(read(`tests/${file}`));
     // Demonstrate the original failure through a real caller, then remove the fixture.
     await db.exec('set role anon;');
     const before = await db.query("select public.cw_signup('auth-before','','Test','1반','') as result");
@@ -33,8 +33,10 @@ const read = file => fs.readFileSync(path.join(root,file),'utf8');
     // An outdated runbook must not replace hardened RPCs, even on accidental rerun.
     const definition=()=>db.query("select pg_get_functiondef('public.cw_login(text,text)'::regprocedure) as body");
     const guardedLogin=(await definition()).rows[0].body;
-    await assert.rejects(db.exec(read('supabase-setup.sql')),error=>error.code==='55000');
-    await db.exec('rollback;');
+    for (const unsafe of ['supabase-setup.sql','migrations/20261118-birthdays.sql','migrations/20261119-class-roster-signup.sql']) {
+      await assert.rejects(db.exec(read(unsafe)),error=>error.code==='55000',`${unsafe} rerun must be blocked`);
+      await db.exec('rollback;');
+    }
     assert.equal((await definition()).rows[0].body,guardedLogin,'setup rerun replaced login guard');
     // Separate committed requests: failure must not undo its quota update.
     await db.exec('set role anon;');
@@ -63,6 +65,17 @@ const read = file => fs.readFileSync(path.join(root,file),'utf8');
     await db.exec(read('migrations/20261119-profile-student-number.sql'));
     await db.exec(read('migrations/20261119-profile-student-number.sql'));
     await db.exec(read('tests/profile.sql'));
+    await db.exec(read('migrations/20261120-encrypted-auth.sql'));
+    await db.exec(read('migrations/20261120-encrypted-auth.sql'));
+    // Old migration reruns must not reopen direct credential endpoints.
+    await db.exec(read('migrations/20261119-auth-hardening.sql'));
+    await db.exec(read('migrations/20261119-admin-members.sql'));
+    await db.exec(read('tests/encrypted-auth.sql'));
+    await db.exec(read('migrations/20261120-security-review-hardening.sql'));
+    await db.exec(read('migrations/20261120-security-review-hardening.sql'));
+    await db.exec(read('tests/security-review-hardening.sql'));
+    await db.exec(read('tests/encrypted-auth.sql'));
+    await db.exec(read('tests/learning-progress.sql'));
     console.log('PASS: PostgreSQL auth hardening, unsafe setup rerun blocked, session/admin authorization, study ownership/revisions and private folder regressions');
   } finally { await db.close(); }
 })().catch(error => { console.error(error.message); process.exitCode=1; });

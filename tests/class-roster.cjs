@@ -11,6 +11,7 @@ get('authGateForm').querySelector=selector=>selector.includes('submit')?get('sub
 const ctx={window:{supabase:{createClient:()=>({rpc:(name,args)=>new Promise((resolve,reject)=>requests.push({name,args,resolve,reject}))})}},
   document:{body:node(),getElementById:get,createElement:node},localStorage:{getItem(){return null;},setItem(){}},
   console,AbortController,setTimeout,clearTimeout};
+ctx.window.CodeWikiSecureAuth={create:()=>({request:(name,args)=>ctx.window.supabase.createClient().rpc(name,args)})};
 ctx.window.CodeWikiBirthdays={validDate:()=>true,setUser(){},today:()=> '2026-11-19'};
 vm.runInNewContext(source.replace(/  renderAuthState\(\);\s*\}\)\(\);\s*$/,
   '  authFormMode="signup"; renderPreLoginLanding(); renderAuthState=()=>{window.success=true;};\n})();'),ctx);

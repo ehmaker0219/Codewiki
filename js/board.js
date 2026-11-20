@@ -27,7 +27,7 @@
   }
 
   function saveLocalPosts(posts) {
-    localStorage.setItem(DEMO_POSTS_KEY, JSON.stringify(posts));
+    try { localStorage.setItem(DEMO_POSTS_KEY, JSON.stringify(posts)); } catch {}
   }
 
   let pendingRead = null;
@@ -54,7 +54,6 @@
   let modalVersion = 0;
 
   const articleContainer = document.getElementById("articleContainer");
-  const navboxCard = document.getElementById("navboxCard");
   const sidebarRight = document.querySelector(".sidebar-right");
   const writeModal = document.getElementById("boardWriteModal");
   const openBoardBtn = document.getElementById("openBoardBtn");
@@ -93,7 +92,6 @@
     document.getElementById('sbScheduleItem')?.classList.remove('active');
     isBoardViewActive = true;
     if (openBoardBtn) openBoardBtn.classList.add("active");
-    if (navboxCard) navboxCard.classList.add("hidden");
     if (sidebarRight) sidebarRight.classList.add("hidden");
     document.querySelector(".app-shell")?.classList.add("board-mode-shell");
 
@@ -199,13 +197,13 @@
                       ${
                         isAdmin
                           ? `
-                        <button class="board-action-btn copy-prompt-btn" data-post-id="${post.id}" title="클릭 후 AI 채팅창에 그대로 붙여넣어 수정을 지시하세요!">
+                        <button class="board-action-btn copy-prompt-btn" data-post-id="${escapeHtml(post.id)}" title="클릭 후 AI 채팅창에 그대로 붙여넣어 수정을 지시하세요!">
                           📋 AI 수정 요청용 복사
                         </button>
-                        <button class="board-action-btn toggle-status-btn" data-post-id="${post.id}">
+                        <button class="board-action-btn toggle-status-btn" data-post-id="${escapeHtml(post.id)}">
                           ${isDone ? "대기 상태로 되돌리기" : "✓ 반영 완료 처리"}
                         </button>
-                        <button class="board-action-btn reply-note-btn" data-post-id="${post.id}">
+                        <button class="board-action-btn reply-note-btn" data-post-id="${escapeHtml(post.id)}">
                           💬 답변 메모
                         </button>
                       `
@@ -214,7 +212,7 @@
                       ${
                         canDelete
                           ? `
-                        <button class="board-action-btn delete-post-btn" data-post-id="${post.id}">
+                        <button class="board-action-btn delete-post-btn" data-post-id="${escapeHtml(post.id)}">
                           삭제
                         </button>
                       `
@@ -265,11 +263,12 @@
         const promptText = `[코드위키 건의사항 반영 요청]\n- 구분: ${post.category}\n- 대상 문서: ${
           post.target_doc_title || "새 문서/전체"
         } (${post.target_doc_id || "신규"})\n- 건의 제목: ${post.title}\n- 상세 내용: ${post.content}\n\n위 건의 내용을 바탕으로 코드위키 문서를 알맞은 시각적 블록으로 업데이트해줘!`;
-        navigator.clipboard.writeText(promptText);
-        btn.textContent = "✓ 복사됨! AI에게 붙여넣기 하세요";
-        setTimeout(() => {
-          btn.textContent = "📋 AI 수정 요청용 복사";
-        }, 2000);
+        const reset = label => {
+          btn.textContent = label;
+          setTimeout(() => { btn.textContent = "📋 AI 수정 요청용 복사"; }, 2000);
+        };
+        if (!navigator.clipboard?.writeText) { reset("복사 불가"); return; }
+        navigator.clipboard.writeText(promptText).then(() => reset("✓ 복사됨! AI에게 붙여넣기 하세요")).catch(() => reset("복사 실패"));
       });
     });
 
@@ -392,7 +391,11 @@
         } else {
           saveLocalPosts(getLocalPosts().map(p => p.id === target.id ? { ...p, admin_note: note, status } : p));
         }
-        if (token !== window.CodeWikiAuth?.getSessionToken() || modalRequest !== modalVersion) return;
+        if (token !== window.CodeWikiAuth?.getSessionToken()) return;
+        if (modalRequest !== modalVersion) {
+          await refreshAfterChange(version, token);
+          return;
+        }
         writeModal.classList.add("hidden");
         await refreshAfterChange(version,token);
       } catch (error) {
@@ -457,8 +460,8 @@
               ${docs
                 .map(
                   d => `
-                <option value="${d.id}" ${d.id === preselectedDocId ? "selected" : ""}>
-                  ${d.stepNum ? `[${d.stepNum}] ` : ""}${d.title}
+                <option value="${escapeHtml(d.id)}" ${d.id === preselectedDocId ? "selected" : ""}>
+                  ${d.stepNum ? `[${escapeHtml(d.stepNum)}] ` : ""}${escapeHtml(d.title)}
                 </option>
               `
                 )
@@ -543,7 +546,11 @@
           if (error) throw error;
         }
 
-        if (token !== window.CodeWikiAuth?.getSessionToken() || modalRequest !== modalVersion) return;
+        if (token !== window.CodeWikiAuth?.getSessionToken()) return;
+        if (modalRequest !== modalVersion) {
+          await refreshAfterChange(version, token, false);
+          return;
+        }
         writeModal.classList.add("hidden");
         await refreshAfterChange(version,token,true);
       } catch {
@@ -553,11 +560,9 @@
   }
 
   function escapeHtml(str) {
-    return String(str || "")
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;")
-      .replace(/"/g, "&quot;");
+    if (window.CodeWikiLearning?.escape) return window.CodeWikiLearning.escape(str ?? "");
+    return String(str ?? "")
+      .replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
   }
 
   writeModal?.addEventListener("click", e => {
@@ -572,19 +577,36 @@
     }
   });
 
+  function closeIfActive() {
+    ++viewVersion;
+    if (isBoardViewActive) {
+      isBoardViewActive = false;
+      if (openBoardBtn) openBoardBtn.classList.remove("active");
+      document.querySelector(".app-shell")?.classList.remove("board-mode-shell");
+    }
+  }
+
+  function setUser(user) {
+    if (!user) {
+      pendingRead = null;
+      ++badgeVersion;
+      if (boardOpenCountBadge) {
+        boardOpenCountBadge.textContent = "0";
+        boardOpenCountBadge.classList.add("hidden");
+      }
+      closeIfActive();
+    }
+  }
+
   window.CodeWikiBoard = {
     openBoardView,
     openWriteModal,
-    closeIfActive() {
-      ++viewVersion;
-      if (isBoardViewActive) {
-        isBoardViewActive = false;
-        if (openBoardBtn) openBoardBtn.classList.remove("active");
-        document.querySelector(".app-shell")?.classList.remove("board-mode-shell");
-      }
-    },
+    closeIfActive,
+    setUser,
     refreshBadge
   };
 
-  refreshBadge();
+  if (!window.CodeWikiAuth?.isSupabaseConfigured() || window.CodeWikiAuth?.getCurrentUser()) {
+    refreshBadge();
+  }
 })();

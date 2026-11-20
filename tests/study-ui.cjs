@@ -1,6 +1,7 @@
 const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict'),{randomUUID}=require('node:crypto');
 const elements=new Map(),saved=new Map(),memory=new Map(),calls=[],alerts=[];
 let failSaveTitle='',deferList=false,finishList,timerSchedules=0;
+let downloadedBlob,downloadedName;
 function get(id){if(!elements.has(id))elements.set(id,{innerHTML:'',textContent:'',value:'',hidden:false,events:{},dataset:{},
   classList:{toggle(){},remove(){},add(){}},addEventListener(name,handler){this.events[name]=handler;},
   querySelector(selector){return get(selector.replace(/^#/,''));},querySelectorAll(selector){
@@ -10,7 +11,9 @@ function get(id){if(!elements.has(id))elements.set(id,{innerHTML:'',textContent:
     });
   },focus(){},setAttribute(){}});return elements.get(id);}
 const context={window:{location:{hash:'#study'},addEventListener(){},alert:m=>alerts.push(m),confirm:()=>true},
-  document:{getElementById:get,querySelectorAll:()=>[]},localStorage:{getItem:k=>memory.get(k),setItem:(k,v)=>memory.set(k,v),removeItem:k=>memory.delete(k)},
+  document:{getElementById:get,querySelectorAll:()=>[],createElement(tag){assert.equal(tag,'a');return {click(){downloadedName=this.download;}};}},
+  Blob,URL:{createObjectURL(blob){downloadedBlob=blob;return 'blob:test';},revokeObjectURL(){}},
+  localStorage:{getItem:k=>memory.get(k),setItem:(k,v)=>memory.set(k,v),removeItem:k=>memory.delete(k)},
   crypto:{randomUUID},AbortController,setTimeout:()=>++timerSchedules,clearTimeout(){},history:{replaceState(){}},console};
 const client={rpc:async(name,args)=>{
  calls.push(name);
@@ -73,6 +76,30 @@ const flush=()=>new Promise(resolve=>setImmediate(resolve));
  assert.equal(saved.get(fixtures[1].id).body,'restored draft','explicit conflict resolution saves current text');
  assert.equal(get('studySave').textContent,'저장됨');
  assert.match(get('studyStatus').textContent,/저장됨 · 마지막 저장/);
+ // Exercise the actual download handler, Blob and reimport path with the real
+ // editor codec: a lossy plain-Markdown conversion must not pass as a backup.
+ const codecContext={window:{}};
+ vm.runInNewContext(fs.readFileSync('js/study-editor.js','utf8'),codecContext);
+ const codec=codecContext.window.CodeWikiStudyEditor;
+ const richParagraph={type:'paragraph',attrs:{textAlign:'center'},content:[{type:'text',text:'중요 **기호**',marks:[
+   {type:'underline'},{type:'fontSize',attrs:{size:24}},{type:'textColor',attrs:{color:'#ff0000'}}]}]};
+ const table=JSON.parse(JSON.stringify(codec.parse('| 항목 | 내용 |\n| --- | --- |\n| A | B |').content[0]));
+ table.content[1].content[0].content.push({type:'paragraph',content:[{type:'text',text:'표 안의 두 번째 문단'}]});
+ const backupBody=codec.serialize({type:'doc',content:[richParagraph,table]});
+ assert.match(backupBody,/codewiki-rich-v1/);assert.match(backupBody,/codewiki-table-v1/);
+ editorBody=backupBody;editorCallbacks.onChange(backupBody);
+ const callsBeforeDownload=calls.length;
+ get('studyDownload').events.click();
+ const backup=await downloadedBlob.text();
+ assert.equal(backup,backupBody,'download preserves the current unsaved body byte for byte');
+ assert.equal(downloadedName,'261118 수요일.md');
+ assert.equal(calls.length,callsBeforeDownload,'download does not write to the server');
+ await get('studySave').events.click();await flush();
+ await get('studyFile').events.change({target:{files:[{name:downloadedName,size:downloadedBlob.size,text:async()=>backup}],value:'file'}});
+ await flush();
+ assert.equal(editorBody,backupBody,'reimport retains rich text and multiline tables');
+ assert.deepEqual(codec.parse(editorBody),codec.parse(backupBody));
+ assert.ok([...saved.values()].some(note=>note.body===backupBody),'reimport saves the lossless body');
  api.setUser(null);saved.clear();memory.clear();
  api.setUser({id:'study-owner',role:'student',status:'approved',full_name:'Test Student'});await flush();assert.equal(get('studyWorkspace').hidden,false);
  const importFile=async file=>{await get('studyFile').events.change({target:{files:[file],value:'file'}});await flush();};

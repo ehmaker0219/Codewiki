@@ -62,6 +62,10 @@ alter table public.cw_feedback_posts add column if not exists author_mbti text d
 
 alter table public.cw_users enable row level security;
 alter table public.cw_feedback_posts enable row level security;
+revoke all on table public.cw_users, public.cw_feedback_posts from public, anon, authenticated;
+create unique index if not exists cw_users_session_token_uidx
+  on public.cw_users (session_token)
+  where session_token is not null;
 
 -- 기존 함수 충돌 방지 정리
 drop function if exists public.cw_signup(text, text, text, text);
@@ -77,7 +81,7 @@ create or replace function public.cw_signup(
 )
 returns jsonb
 language plpgsql
-security definer set search_path = public, extensions
+security definer set search_path = pg_catalog, public, extensions, pg_temp
 as $fn$
 declare
   v_clean_id text := lower(trim(p_username));
@@ -125,7 +129,7 @@ create or replace function public.cw_login(
 )
 returns jsonb
 language plpgsql
-security definer set search_path = public, extensions
+security definer set search_path = pg_catalog, public, extensions, pg_temp
 as $fn$
 declare
   v_user public.cw_users;
@@ -161,7 +165,7 @@ $fn$;
 create or replace function public.cw_me(p_token uuid)
 returns jsonb
 language plpgsql
-security definer set search_path = public
+security definer set search_path = pg_catalog, public, pg_temp
 as $fn$
 declare
   v_user public.cw_users;
@@ -198,7 +202,7 @@ $fn$;
 create or replace function public.cw_admin_list_users(p_token uuid)
 returns jsonb
 language plpgsql
-security definer set search_path = public
+security definer set search_path = pg_catalog, public, pg_temp
 as $fn$
 declare
   v_caller public.cw_users;
@@ -239,15 +243,24 @@ create or replace function public.cw_admin_set_status(
 )
 returns void
 language plpgsql
-security definer set search_path = public
+security definer set search_path = pg_catalog, public, pg_temp
 as $fn$
 begin
-  if not exists (select 1 from public.cw_users where session_token = p_token and session_expires_at > now() and role = 'admin') then
+  perform 1 from public.cw_users
+    where session_token = p_token and session_expires_at > now() and role = 'admin'
+    for share;
+  if not found then
     raise exception '관리자 권한이 필요합니다.';
   end if;
 
+  if p_next_status is null or p_next_status not in ('pending', 'approved', 'rejected') then
+    raise exception '잘못된 상태 값입니다.' using errcode = '22023';
+  end if;
+
   update public.cw_users
-  set status = p_next_status
+  set status = p_next_status,
+      session_token = case when p_next_status = 'approved' then session_token else null end,
+      session_expires_at = case when p_next_status = 'approved' then session_expires_at else null end
   where id = p_target_id and role <> 'admin';
 end;
 $fn$;
@@ -256,7 +269,7 @@ $fn$;
 create or replace function public.cw_list_posts(p_token uuid)
 returns jsonb
 language plpgsql
-security definer set search_path = public
+security definer set search_path = pg_catalog, public, pg_temp
 as $fn$
 begin
   if not exists (
@@ -304,10 +317,12 @@ create or replace function public.cw_create_post(
 )
 returns void
 language plpgsql
-security definer set search_path = public
+security definer set search_path = pg_catalog, public, pg_temp
 as $fn$
 declare
   v_user public.cw_users;
+  v_title text := trim(coalesce(p_title, ''));
+  v_content text := trim(coalesce(p_content, ''));
 begin
   select * into v_user
   from public.cw_users
@@ -317,10 +332,18 @@ begin
     raise exception '승인된 멤버만 작성할 수 있습니다.';
   end if;
 
+  if p_category is null or p_category not in ('내용 추가', '수정 요청', '오타·오류', '질문·기타') then
+    raise exception '건의 유형을 확인해 주세요.' using errcode = '22023';
+  end if;
+  if char_length(v_title) not between 1 and 200 or char_length(v_content) not between 1 and 5000 then
+    raise exception '제목은 200자, 내용은 5,000자 이하로 입력해 주세요.' using errcode = '22023';
+  end if;
+
   insert into public.cw_feedback_posts (
     author_id, author_name, author_class, author_mbti, category, target_doc_id, target_doc_title, title, content, status
   ) values (
-    v_user.id, v_user.full_name, v_user.class_name, v_user.mbti, p_category, p_target_doc_id, p_target_doc_title, trim(p_title), trim(p_content), 'open'
+    v_user.id, v_user.full_name, v_user.class_name, v_user.mbti, p_category,
+    left(p_target_doc_id, 120), left(p_target_doc_title, 200), v_title, v_content, 'open'
   );
 end;
 $fn$;
@@ -334,7 +357,7 @@ create or replace function public.cw_update_post(
 )
 returns void
 language plpgsql
-security definer set search_path = public
+security definer set search_path = pg_catalog, public, pg_temp
 as $fn$
 begin
   if not exists (select 1 from public.cw_users where session_token = p_token and session_expires_at > now() and role = 'admin') then
@@ -355,12 +378,14 @@ create or replace function public.cw_delete_post(
 )
 returns void
 language plpgsql
-security definer set search_path = public
+security definer set search_path = pg_catalog, public, pg_temp
 as $fn$
 declare
   v_user public.cw_users;
 begin
-  select * into v_user from public.cw_users where session_token = p_token and session_expires_at > now();
+  select * into v_user from public.cw_users
+    where session_token = p_token and session_expires_at > now()
+      and (status = 'approved' or role = 'admin');
   if not found then
     raise exception '로그인이 필요합니다.';
   end if;
@@ -375,7 +400,7 @@ $fn$;
 create or replace function public.cw_logout(p_token uuid)
 returns void
 language plpgsql
-security definer set search_path = public
+security definer set search_path = pg_catalog, public, pg_temp
 as $fn$
 begin
   update public.cw_users
@@ -383,6 +408,32 @@ begin
   where session_token = p_token;
 end;
 $fn$;
+
+revoke all on function
+  public.cw_signup(text, text, text, text, text),
+  public.cw_login(text, text),
+  public.cw_me(uuid),
+  public.cw_admin_list_users(uuid),
+  public.cw_admin_set_status(uuid, uuid, text),
+  public.cw_list_posts(uuid),
+  public.cw_create_post(uuid, text, text, text, text, text),
+  public.cw_update_post(uuid, bigint, text, text),
+  public.cw_delete_post(uuid, bigint),
+  public.cw_logout(uuid)
+from public;
+
+grant execute on function
+  public.cw_signup(text, text, text, text, text),
+  public.cw_login(text, text),
+  public.cw_me(uuid),
+  public.cw_admin_list_users(uuid),
+  public.cw_admin_set_status(uuid, uuid, text),
+  public.cw_list_posts(uuid),
+  public.cw_create_post(uuid, text, text, text, text, text),
+  public.cw_update_post(uuid, bigint, text, text),
+  public.cw_delete_post(uuid, bigint),
+  public.cw_logout(uuid)
+to anon, authenticated, service_role;
 
 -- Revoke only the historical, unchanged bootstrap password.
 -- This literal is used solely to retire the old credential, never to create an account.

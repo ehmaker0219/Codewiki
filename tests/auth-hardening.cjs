@@ -15,6 +15,7 @@ function harness(mode) {
   }})}},
     document:{body:node(),getElementById:get,createElement:node},localStorage:{getItem:k=>saved.get(k),setItem:(k,v)=>saved.set(k,v)},
     console,AbortController,setTimeout:(fn,ms)=>{assert.equal(ms,15000);const id=++timerId;timers.set(id,fn);return id;},clearTimeout:id=>timers.delete(id)};
+  ctx.window.CodeWikiSecureAuth={create:()=>({request:(name,args,{signal})=>ctx.window.supabase.createClient().rpc(name,args).abortSignal(signal)})};
   ctx.window.CodeWikiBirthdays={validDate:()=>true,setUser(){},today:()=> '2026-11-19'};
   vm.runInNewContext(source.replace(/  renderAuthState\(\);\s*\}\)\(\);\s*$/,
     `  authFormMode=${JSON.stringify(mode)}; renderPreLoginLanding(); renderAuthState=()=>{window.success=true;};\n})();`),ctx);

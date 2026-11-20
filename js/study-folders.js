@@ -69,7 +69,9 @@
     }
     function submit(e){
       e.preventDefault();if(!editing||pending||loading)return;
-      const name=element.querySelector('#studyFolderName').value.trim();if(!name||name.length>60)return;
+      const name=element.querySelector('#studyFolderName').value.trim();
+      if(!name){message='폴더 이름을 입력해 주세요.';refresh();element.querySelector('#studyFolderName')?.focus();return;}
+      if(name.length>60){message='폴더 이름은 60자 이하로 입력해 주세요.';refresh();return;}
       editing={...editing,name};const draft={...editing};
       void mutate(async()=>{
         const saved=await call('cw_save_study_folder',{p_id:draft.id,p_name:draft.name,p_revision:draft.revision});if(!alive)return;

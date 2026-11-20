@@ -1,0 +1,3 @@
+[functions.secure-auth]
+# Password authentication happens inside the gateway. No Supabase Auth JWT exists yet.
+verify_jwt = false

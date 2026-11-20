@@ -17,7 +17,8 @@
     if(user?.role==='admin'&&session?.id===user.id&&session.token===token)return;
     clear();online=null;session=user?.role==='admin'&&token?{id:user.id,token}:null;query='';classFilter='';statusFilter='';
     sortKey='full_name';sortDirection=1;
-    if(session)openHome();else route();
+    const h=window.location.hash;
+    if(session&&(!h||h==='#admin/students'||h==='#doc/welcome-abap'||h==='#doc/welcome-ui5'))openHome();else route();
   }
   function openHome(){if(!session)return false;history.replaceState(null,'','#admin/students');route();window.CodeWikiPresence?.refresh();return true;}
   function renderPresence(){
@@ -28,7 +29,11 @@
     const controller=new AbortController();let timer;
     try{
       const timeout=new Promise((_,reject)=>{timer=setTimeout(()=>{reject({code:'TIMEOUT'});controller.abort();},15000);});
-      const request=window.CodeWikiAuth.getSupabaseClient().rpc(name,{p_token:s.token,...args});
+      const client=window.CodeWikiAuth?.getSupabaseClient();
+      if(name!=='cw_admin_reset_student_password'&&!client)throw new Error('서버 연결을 확인해 주세요.');
+      const request=name==='cw_admin_reset_student_password'
+        ? window.CodeWikiAuth.credentialRequest(name,{p_token:s.token,...args})
+        : client.rpc(name,{p_token:s.token,...args});
       const result=await Promise.race([typeof request?.abortSignal==='function'?request.abortSignal(controller.signal):request,timeout]);
       if(result.error)throw result.error;if(result.data?.code)throw result.data;return result.data;
     }finally{clearTimeout(timer);}
@@ -81,6 +86,9 @@
     document.getElementById('openStudentDirectoryBtn')?.classList.add('active');
     if(active)return;
     window.CodeWikiBoard?.closeIfActive();
+    window.CodeWikiStudy?.leave();
+    window.CodeWikiMentoring?.leave();
+    window.CodeWikiObjectGame?.leave();
     document.getElementById('sbHomeItem')?.classList.add('active');
     document.getElementById('sbScheduleItem')?.classList.remove('active');
     document.querySelectorAll('.nav-doc-link.active').forEach(el=>el.classList.remove('active'));

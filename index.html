@@ -8,7 +8,7 @@
   <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/style.css?v=930f355c53ce" />
-  <link rel="stylesheet" href="css/theme.css?v=7641f370fcfc" />
+  <link rel="stylesheet" href="css/theme.css?v=a6dacb8a72c6" />
   <link rel="stylesheet" href="css/profile.css?v=386bcc74d5e6" />
   <link rel="stylesheet" href="css/admin-members.css?v=6552de795079" />
   <link rel="stylesheet" href="css/birthdays.css?v=52caacd0ea90" />
@@ -199,7 +199,7 @@
           </div>
         </aside>
       </div>
-      <footer class="site-footer">최근 업데이트 <time id="siteUpdatedAt" datetime="2026-11-19T08:56:23.358Z" data-version="5ab5088f8284a5eb">2026.11.19 17:56 (KST)</time></footer>
+      <footer class="site-footer">최근 업데이트 <time id="siteUpdatedAt" datetime="2026-11-20T01:21:45.885Z" data-version="8d92d429b9a40cc6">2026.11.20 10:21 (KST)</time></footer>
     </div>
   </div>
 
@@ -219,39 +219,41 @@
   <div id="boardWriteModal" class="admin-modal-backdrop hidden"></div>
 
   <dialog id="practiceDialog" aria-labelledby="practiceTitle">
-    <div class="practice-dialog-header"><h2 id="practiceTitle">연습문제</h2><button type="button" id="closePracticeBtn" class="icon-btn" aria-label="연습문제 닫기">✕</button></div>    <label for="practiceCategory">공부할 주제</label>
+    <div class="practice-dialog-header"><h2 id="practiceTitle">연습문제</h2><button type="button" id="closePracticeBtn" class="icon-btn" aria-label="연습문제 닫기">✕</button></div>
+    <label for="practiceCategory">공부할 주제</label>
     <select id="practiceCategory"><option value="">주제를 선택하세요</option></select>
     <section id="practiceQuestion" aria-live="polite">공부하고 싶은 주제를 선택해 주세요.</section>
     <div class="practice-actions"><button type="button" id="copyPracticeBtn" class="toss-chip-btn" disabled>문제 복사</button><span id="practiceCopyStatus" role="status"></span><button type="button" id="nextPracticeBtn" class="toss-chip-btn" disabled>다른 문제</button></div>
   </dialog>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.119.2/dist/umd/supabase.js" integrity="sha384-A97u3Qnt9GZHURO9YJZRe7VQgGUeFzcv6I1oIGnUTxQrCxnpQMwR0/G8F2zt9abZ" crossorigin="anonymous"></script>
 
-  <script src="js/data.js?v=e525842bb097"></script>
+  <script src="js/data.js?v=01efd6bd105e"></script>
   <script src="js/ui5-data.js?v=fa64b5a1a556"></script>
-  <script src="js/class-notes.js?v=c35c69519bbe"></script>
+  <script src="js/class-notes.js?v=f1f6c880b65f"></script>
   <script src="js/lesson-days.js?v=ec7035c94e00"></script>
   <script src="js/example-notes.js?v=f4e52d7236ca"></script>
-  <script src="js/learning-tools.js?v=7c06a8493ef2"></script>
-  <script src="js/profile.js?v=8656479ddf78"></script>
+  <script src="js/learning-tools.js?v=acdbc030d4ff"></script>
+  <script src="js/profile.js?v=0d4ca61b9624"></script>
   <script src="js/birthdays.js?v=a206e20bf51d"></script>
   <script src="js/progress.js?v=5daa2cd3faf4"></script>
   <script src="js/visualizers.js?v=dbbc291349e3"></script>
-  <script src="js/schedule-data.js?v=7a907468c4cd"></script>
+  <script src="js/schedule-data.js?v=03cf62a15b32"></script>
   <script src="js/schedule.js?v=1f8871091c42"></script>
-  <script src="js/app.js?v=d517c29818d0"></script>
-  <script src="js/admin.js?v=fa529e2d1ef0"></script>
-  <script src="js/admin-members.js?v=deec93dd0db8"></script>
-  <script src="js/presence.js?v=945d605e473f"></script>
-  <script type="application/json" id="studyEditorSource" data-src="js/study-editor.js?v=b54522cdee01"></script>
-  <script src="js/study-store.js?v=d06196e4f21c"></script>
-  <script src="js/study-folders.js?v=8554c9be03cc"></script>
-  <script src="js/study.js?v=611548f86f5d"></script>
-  <script src="js/mentoring-store.js?v=2d2c77ead568"></script>
+  <script src="js/app.js?v=54c57767a049"></script>
+  <script src="js/admin.js?v=33de64df6bf9"></script>
+  <script src="js/admin-members.js?v=c80e9b862569"></script>
+  <script src="js/presence.js?v=6b384308085a"></script>
+  <script type="application/json" id="studyEditorSource" data-src="js/study-editor.js?v=ac7ac071cd33"></script>
+  <script src="js/study-store.js?v=7c70935feef8"></script>
+  <script src="js/study-folders.js?v=84831bf06507"></script>
+  <script src="js/study.js?v=1903ee365e94"></script>
+  <script src="js/mentoring-store.js?v=0b8910c8572b"></script>
   <script src="js/mentoring-model.js?v=3f46447603d3"></script>
-  <script src="js/mentoring-team-store.js?v=3957d155a0d4"></script>
-  <script src="js/mentoring.js?v=15165e6a9b79"></script>
-  <script src="js/auth.js?v=efadd89f3d18"></script>
-  <script src="js/board.js?v=91a98e33a9ab"></script>
+  <script src="js/mentoring-team-store.js?v=f20fa7c77f61"></script>
+  <script src="js/mentoring.js?v=a166b227c434"></script>
+  <script src="js/secure-auth.js?v=6e74af8808a6"></script>
+  <script src="js/auth.js?v=183f1003a082"></script>
+  <script src="js/board.js?v=45084ea1ac7b"></script>
   <script src="js/practice.js?v=f1c393395841"></script>
   <script src="js/practice-ui.js?v=9b9d96b845b5"></script>
   <script type="application/json" id="objectGameBankSource" data-src="js/object-game-bank.js?v=09f9192ee9cf"></script>

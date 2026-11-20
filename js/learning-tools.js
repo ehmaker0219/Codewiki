@@ -58,5 +58,86 @@
     const dates = documents.filter(d => d.isDailyLesson && (doc.lessonDates || []).includes(d.id.replace('lesson-','')));
     return {concepts, dates};
   }
-  window.CodeWikiLearning = {escape, plain, indexDocuments, search, highlight, relatedGroups};
+  async function rpcWithTimeout(requestFactory, timeoutMs = 15000) {
+    if (typeof AbortController !== 'function' || typeof setTimeout !== 'function') {
+      return await requestFactory(undefined);
+    }
+    const controller = new AbortController();
+    let timer;
+    try {
+      const timeout = new Promise((_, reject) => {
+        timer = setTimeout(() => {
+          reject(Object.assign(new Error('request-timeout'), {code:'TIMEOUT'}));
+          controller.abort();
+        }, timeoutMs);
+      });
+      const request = requestFactory(controller.signal);
+      return await Promise.race([
+        typeof request?.abortSignal === 'function' ? request.abortSignal(controller.signal) : request,
+        timeout
+      ]);
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+  function renderStudyNode(node) {
+    if (!node || typeof node !== 'object') return '';
+    const kids = () => (node.content || []).map(renderStudyNode);
+    if (node.type === 'text') {
+      let text = String(node.text || '');
+      for (const mark of node.marks || []) {
+        if (mark?.type === 'code') text = '`' + text + '`';
+        else if (mark?.type === 'bold') text = '**' + text + '**';
+        else if (mark?.type === 'italic') text = '*' + text + '*';
+        else if (mark?.type === 'strike') text = '~~' + text + '~~';
+        else if (mark?.type === 'highlight') text = '==' + text + '==';
+      }
+      return text;
+    }
+    if (node.type === 'hardBreak') return '\n';
+    if (node.type === 'paragraph') return kids().join('');
+    if (node.type === 'heading') {
+      const level = Math.min(6, Math.max(1, Number(node.attrs?.level) || 1));
+      return '#'.repeat(level) + ' ' + kids().join('');
+    }
+    if (node.type === 'blockquote') {
+      return kids().join('\n\n').split('\n').map(line => '> ' + line).join('\n');
+    }
+    if (node.type === 'bulletList') {
+      return (node.content || []).map(item => '- ' + renderStudyNode(item).replace(/\n/g, '\n  ')).join('\n');
+    }
+    if (node.type === 'orderedList') {
+      const start = Number(node.attrs?.start) || 1;
+      return (node.content || []).map((item, i) => `${start + i}. ` + renderStudyNode(item).replace(/\n/g, '\n   ')).join('\n');
+    }
+    if (node.type === 'listItem') return kids().join('\n');
+    if (node.type === 'codeBlock') {
+      const lang = node.attrs?.language ? String(node.attrs.language) : '';
+      return '```' + lang + '\n' + kids().join('') + '\n```';
+    }
+    if (node.type === 'table') {
+      const rows = (node.content || []).map(row =>
+        (row.content || []).map(cell => renderStudyNode(cell).replace(/\n+/g, ' / ').replace(/\|/g, '\\|').trim())
+      ).filter(row => row.length);
+      if (!rows.length) return '';
+      const width = Math.max(...rows.map(r => r.length));
+      const pad = row => Array.from({length: width}, (_, i) => row[i] || '');
+      const lines = rows.map(row => '| ' + pad(row).join(' | ') + ' |');
+      lines.splice(1, 0, '| ' + Array(width).fill('---').join(' | ') + ' |');
+      return lines.join('\n');
+    }
+    if (node.type === 'tableCell' || node.type === 'tableHeader') return kids().join('\n');
+    return kids().join('\n');
+  }
+  function stripStudyRichBlocks(markdown) {
+    return String(markdown ?? '').replace(/(^|\n)(`{3,})codewiki-(?:rich|table)-v1[ \t]*\r?\n([\s\S]*?)\r?\n\2(?=\r?\n|$)/g, (match, prefix, _fence, payload) => {
+      try {
+        const rendered = renderStudyNode(JSON.parse(payload));
+        return rendered ? prefix + rendered : match;
+      } catch {
+        return match;
+      }
+    });
+  }
+  window.CodeWikiLearning = {escape, plain, indexDocuments, search, highlight, relatedGroups, rpcWithTimeout, stripStudyRichBlocks};
 })();

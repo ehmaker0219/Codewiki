@@ -7,11 +7,13 @@
  */
 (function () {
   const TRACK_SESSION_KEY = "codewiki_selected_track_v1";
-  if (sessionStorage.getItem(TRACK_SESSION_KEY) === "ui5") {
-    sessionStorage.setItem(TRACK_SESSION_KEY, "abap");
-  }
+  try {
+    if (sessionStorage.getItem(TRACK_SESSION_KEY) === "ui5") {
+      sessionStorage.setItem(TRACK_SESSION_KEY, "abap");
+    }
+  } catch {}
   let currentTrack = "abap";
-  let currentDocId = currentTrack === "ui5" ? "welcome-ui5" : "welcome-abap";
+  let currentDocId = "welcome-abap";
   let navigationView = 'topic';
   try { navigationView = localStorage.getItem('codewiki_nav_view') === 'date' ? 'date' : 'topic'; } catch {}
   const expandedCategories = new Set();
@@ -140,18 +142,20 @@
     out = out.replace(/<(a|code|pre)\b[^>]*>[\s\S]*?<\/\1>/gi, stash);
     out = out.replace(/<[^>]+>/g, stash);
 
+    const esc = window.CodeWikiLearning.escape;
+
     // 1) 수동 명시 링크 [[문서ID|표시이름]] 보호 및 변환
     out = out.replace(/\[\[([^\]|]+)(?:\|([^\]]+))?\]\]/g, (_, targetId, label) => {
       const id = targetId.trim();
       const targetDoc = window.WIKI_DOCS[id];
       const textLabel = label ? label.trim() : targetDoc ? targetDoc.title : id;
-      if (targetDoc?.track === "ui5" || id === sourceDocId) return stash(textLabel);
+      if (targetDoc?.track === "ui5" || id === sourceDocId) return stash(esc(textLabel));
       if (!targetDoc) {
         return stash(
-          `<a href="#missing/${id}" class="wiki-link missing-wiki-link" data-missing-doc="${textLabel}" title="아직 미작성된 문서입니다. 클릭하여 추가 건의하기">${textLabel}</a>`
+          `<a href="#missing/${esc(id)}" class="wiki-link missing-wiki-link" data-missing-doc="${esc(textLabel)}" title="아직 미작성된 문서입니다. 클릭하여 추가 건의하기">${esc(textLabel)}</a>`
         );
       }
-      return stash(`<a href="#doc/${id}" class="wiki-link" data-doc="${id}">${textLabel}</a>`);
+      return stash(`<a href="#doc/${esc(id)}" class="wiki-link" data-doc="${esc(id)}">${esc(textLabel)}</a>`);
     });
 
     // 2) 암기 모드 빈칸 토큰 {{키워드}} 보호
@@ -162,19 +166,20 @@
     // 3) 인라인 코드 `코드` 변환 (만약 등록된 T-Code/개념 키워드라면 링크도 함께 연결!)
     out = out.replace(/`([^`]+)`/g, (_, codeStr) => {
       const matchedDocId = findDocIdByExactAlias(codeStr);
+      const safeCode = esc(codeStr);
       if (matchedDocId && matchedDocId !== sourceDocId) {
         return stash(
-          `<a href="#doc/${matchedDocId}" class="wiki-link code-wiki-link" data-doc="${matchedDocId}"><code>${codeStr}</code></a>`
+          `<a href="#doc/${esc(matchedDocId)}" class="wiki-link code-wiki-link" data-doc="${esc(matchedDocId)}"><code>${safeCode}</code></a>`
         );
       }
-      return stash(`<code>${codeStr}</code>`);
+      return stash(`<code>${safeCode}</code>`);
     });
 
     // 4) 평문 속 등록 키워드(aliases) 자동 감지 → 하이퍼링크 연결 (현재 보고 있는 자기 자신 문서는 제외)
     for (const entry of aliases) {
       if (entry.docId === sourceDocId) continue;
       out = out.replace(entry.regex, matchedText =>
-        stash(`<a href="#doc/${entry.docId}" class="wiki-link" data-doc="${entry.docId}">${matchedText}</a>`)
+        stash(`<a href="#doc/${esc(entry.docId)}" class="wiki-link" data-doc="${esc(entry.docId)}">${matchedText}</a>`)
       );
     }
 
@@ -237,14 +242,16 @@
   }
 
   function renderDateNavigation(allDocs, readSet) {
+    const esc = window.CodeWikiLearning?.escape || (v => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])));
     return (window.WIKI_LESSON_DAYS || []).filter(day => day.track === currentTrack).map(day =>
-      '<a href="#doc/' + day.docId + '" class="nav-doc-link ' + (day.docId === currentDocId ? 'active' : '') + '" data-doc="' + day.docId + '"><span>' + day.title + '</span>' +
+      '<a href="#doc/' + esc(day.docId) + '" class="nav-doc-link ' + (day.docId === currentDocId ? 'active' : '') + '" data-doc="' + esc(day.docId) + '"><span>' + esc(day.title) + '</span>' +
       (readSet.has(day.docId) ? '<span class="read-check-mark" title="완료">✓</span>' : '') + '</a>'
     ).join('');
   }
 
   // 좌측 고정 사이드바 렌더링 (불필요한 빈 요소 자동 숨김)
   function renderNavigation() {
+    const esc = window.CodeWikiLearning.escape;
     document.getElementById('sbScheduleItem')?.classList.toggle('active', currentDocId === 'education-schedule');
     syncTrackChrome();
 
@@ -282,9 +289,9 @@
         const docsInCat = allDocs.filter(d => d.categoryId === cat.id);
         if (cat.id === "abap-curriculum") {
           return `<div class="curriculum-flat-list">${docsInCat.map(d => `
-            <a href="#doc/${d.id}" class="nav-doc-link ${d.id === currentDocId ? "active" : ""}" data-doc="${d.id}">
-              ${d.stepNum ? `<span class="step-num-badge">${d.stepNum}</span>` : ""}
-              <span class="nav-doc-title-text">${d.title}${isDocumentPending(d) ? ' <small class="pending-doc-badge">준비 중</small>' : ""}</span>
+            <a href="#doc/${esc(d.id)}" class="nav-doc-link ${d.id === currentDocId ? "active" : ""}" data-doc="${esc(d.id)}">
+              ${d.stepNum ? `<span class="step-num-badge">${esc(d.stepNum)}</span>` : ""}
+              <span class="nav-doc-title-text">${esc(d.title)}${isDocumentPending(d) ? ' <small class="pending-doc-badge">준비 중</small>' : ""}</span>
               ${readSet.has(d.id) ? `<span class="read-check-mark" title="완료">✓</span>` : ""}
             </a>`).join("")}</div>`;
         }
@@ -293,11 +300,11 @@
 
         return `
           <div class="sb-folder-group ${isOpen ? "open" : ""}">
-            <button type="button" class="sb-folder-row ${hasActiveChild ? "has-active" : ""}" data-toggle-cat="${cat.id}">
+            <button type="button" class="sb-folder-row ${hasActiveChild ? "has-active" : ""}" data-toggle-cat="${esc(cat.id)}">
               <svg class="sb-folder-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
               </svg>
-              <span class="sb-folder-name">${cat.name}</span>
+              <span class="sb-folder-name">${esc(cat.name)}</span>
               ${
                 docsInCat.length > 0
                   ? `<svg class="sb-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
@@ -313,9 +320,9 @@
                 ${docsInCat
                   .map(
                     d => `
-                  <a href="#doc/${d.id}" class="nav-doc-link ${d.id === currentDocId ? "active" : ""}" data-doc="${d.id}">
-                    ${d.stepNum ? `<span class="step-num-badge">${d.stepNum}</span>` : ""}
-                    <span class="nav-doc-title-text">${d.title}${isDocumentPending(d) ? ' <small class="pending-doc-badge">준비 중</small>' : ""}</span>
+                  <a href="#doc/${esc(d.id)}" class="nav-doc-link ${d.id === currentDocId ? "active" : ""}" data-doc="${esc(d.id)}">
+                    ${d.stepNum ? `<span class="step-num-badge">${esc(d.stepNum)}</span>` : ""}
+                    <span class="nav-doc-title-text">${esc(d.title)}${isDocumentPending(d) ? ' <small class="pending-doc-badge">준비 중</small>' : ""}</span>
                     ${readSet.has(d.id) ? `<span class="read-check-mark" title="완료">✓</span>` : ""}
                   </a>
                 `
@@ -466,7 +473,7 @@
         return `
           <div class="block-code-wrap">
             <div class="code-top-bar">
-              <span>${block.label || "ABAP Code"}</span>
+              <span>${window.CodeWikiLearning.escape(block.label || "ABAP Code")}</span>
               <button class="copy-code-btn" data-code="${encodeURIComponent(block.code || "")}">복사</button>
             </div>
             ${block.example ? '<div class="code-example-meta"><span>' + window.CodeWikiLearning.escape(block.example.kind) + '</span><span>' + window.CodeWikiLearning.escape(block.example.verification) + '</span></div>' : ''}
@@ -547,9 +554,11 @@
 
     if (targetDoc.track && targetDoc.track !== currentTrack) {
       currentTrack = targetDoc.track;
-      if (sessionStorage.getItem(TRACK_SESSION_KEY)) {
-        sessionStorage.setItem(TRACK_SESSION_KEY, currentTrack);
-      }
+      try {
+        if (sessionStorage.getItem(TRACK_SESSION_KEY)) {
+          sessionStorage.setItem(TRACK_SESSION_KEY, currentTrack);
+        }
+      } catch {}
     }
 
     const doc = targetDoc;
@@ -568,9 +577,7 @@
     }
 
     const isRead = getReadDocs().includes(doc.id);
-
-    const trackLabel = currentTrack === "ui5" ? "UI5 / Fiori" : "ABAP";
-    const catName = doc.categoryId ? getCategoryName(doc.categoryId) : `${trackLabel} · HOME`;
+    const esc = window.CodeWikiLearning.escape;
 
     let widgetCounter = 0;
     const sections = doc.sections || [];
@@ -585,17 +592,17 @@
           ? `
         <div class="article-top-meta">
           <div style="display:flex; align-items:center; gap:8px;">
-            ${doc.categoryId ? `<span class="category-crumb">${getCategoryName(doc.categoryId)}</span>` : ""}
-            ${doc.stepNum ? `<span class="tcode-pill-badge">${doc.stepNum}</span>` : ""}
+            ${doc.categoryId ? `<span class="category-crumb">${esc(getCategoryName(doc.categoryId))}</span>` : ""}
+            ${doc.stepNum ? `<span class="tcode-pill-badge">${esc(doc.stepNum)}</span>` : ""}
           </div>
           <div class="tcode-badge-row">
             ${(doc.tcodes || [])
               .map(tc => {
                 const tcDocId = findDocIdByExactAlias(tc);
                 if (tcDocId && tcDocId !== doc.id) {
-                  return `<a href="#doc/${tcDocId}" class="tcode-pill-badge wiki-link" data-doc="${tcDocId}" style="text-decoration:none;">${tc}</a>`;
+                  return `<a href="#doc/${esc(tcDocId)}" class="tcode-pill-badge wiki-link" data-doc="${esc(tcDocId)}" style="text-decoration:none;">${esc(tc)}</a>`;
                 }
-                return `<span class="tcode-pill-badge">${tc}</span>`;
+                return `<span class="tcode-pill-badge">${esc(tc)}</span>`;
               })
               .join("")}
           </div>
@@ -604,8 +611,8 @@
           : ""
       }
 
-      <h1 class="article-main-title">${doc.title}</h1>
-      ${doc.subtitle ? `<div class="article-subtitle">${doc.subtitle}</div>` : `<div style="margin-bottom:20px;"></div>`}
+      <h1 class="article-main-title">${esc(doc.title)}</h1>
+      ${doc.subtitle ? `<div class="article-subtitle">${esc(doc.subtitle)}</div>` : `<div style="margin-bottom:20px;"></div>`}
 
       ${
         doc.summary
@@ -633,7 +640,7 @@
           <section class="doc-section" id="sec-${sIdx + 1}">
             <h2 class="doc-sec-title">
               <span class="doc-sec-num">${sIdx + 1}.</span>
-              <span>${sec.title}</span>
+              <span>${esc(sec.title)}</span>
             </h2>
             ${!(sec.blocks || []).length ? '<p class="pending-section-note">준비 중 · 본문을 작성하고 있습니다.</p>' : ""}
             ${(sec.blocks || [])
@@ -700,11 +707,12 @@
     articleContainer.querySelectorAll(".copy-code-btn").forEach(btn => {
       btn.addEventListener("click", () => {
         const raw = decodeURIComponent(btn.getAttribute("data-code"));
-        navigator.clipboard.writeText(raw);
-        btn.textContent = "복사됨 ✓";
-        setTimeout(() => {
-          btn.textContent = "복사";
-        }, 1400);
+        const reset = label => {
+          btn.textContent = label;
+          setTimeout(() => { btn.textContent = "복사"; }, 1400);
+        };
+        if (!navigator.clipboard?.writeText) { reset("복사 불가"); return; }
+        navigator.clipboard.writeText(raw).then(() => reset("복사됨 ✓")).catch(() => reset("복사 실패"));
       });
     });
 
@@ -742,7 +750,7 @@
         .map(
           (sec, sIdx) => `
           <a href="#sec-${sIdx + 1}" class="toc-link" data-target="sec-${sIdx + 1}">
-            ${sIdx + 1}. ${sec.title}
+            ${sIdx + 1}. ${esc(sec.title)}
           </a>
         `
         )
@@ -762,7 +770,7 @@
         .map(
           ([k, v]) => `
           <div class="spec-row">
-            <span class="spec-key">${k}</span>
+            <span class="spec-key">${esc(k)}</span>
             <span class="spec-val">${parseInline(String(v))}</span>
           </div>
         `
@@ -771,7 +779,6 @@
     }
 
     if (hasBacklinks) {
-      const esc = window.CodeWikiLearning.escape;
       const link = b => '<a href="#doc/' + esc(b.id) + '" class="backlink-pill wiki-link" data-doc="' + esc(b.id) + '">' + esc(b.title) + '</a>';
       const group = (title, items) => !items.length ? '' : '<div class="related-group"><h3>' + title + '</h3>' + items.slice(0,5).map(link).join('') +
         (items.length > 5 ? '<details><summary>더 보기 (' + (items.length-5) + ')</summary>' + items.slice(5).map(link).join('') + '</details>' : '') + '</div>';
@@ -791,11 +798,10 @@
 
   function selectTrack(track) {
     if (track === "ui5") return;
-    const nextTrack = track === "ui5" ? "ui5" : "abap";
-    currentTrack = nextTrack;
-    sessionStorage.setItem(TRACK_SESSION_KEY, nextTrack);
+    currentTrack = "abap";
+    try { sessionStorage.setItem(TRACK_SESSION_KEY, currentTrack); } catch {}
     if (window.CodeWikiBoard) window.CodeWikiBoard.closeIfActive();
-    const homeId = getHomeDocId(nextTrack);
+    const homeId = getHomeDocId(currentTrack);
     window.location.hash = `#doc/${homeId}`;
     renderDocument(homeId);
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -805,8 +811,8 @@
     openDoc: navigateTo,
     getCurrentDocId: () => currentDocId,
     getTrack: () => currentTrack,
-    hasSelectedTrack: () => Boolean(sessionStorage.getItem(TRACK_SESSION_KEY)),
-    resetTrackChoice: () => sessionStorage.removeItem(TRACK_SESSION_KEY),
+    hasSelectedTrack: () => { try { return Boolean(sessionStorage.getItem(TRACK_SESSION_KEY)); } catch { return false; } },
+    resetTrackChoice: () => { try { sessionStorage.removeItem(TRACK_SESSION_KEY); } catch {} },
     selectTrack
   };
 
@@ -826,10 +832,11 @@
       if (!link || link.contains(e.relatedTarget)) return;
       const targetDoc = window.WIKI_DOCS[link.getAttribute('data-doc')];
       if (!targetDoc) return;
+      const esc = window.CodeWikiLearning?.escape || (v => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])));
       hoverPreviewCard.innerHTML = `
-        <span class="preview-cat-badge">${getCategoryName(targetDoc.categoryId)}</span>
-        <div class="preview-doc-title">${targetDoc.title}</div>
-        <div class="preview-doc-summary">${(targetDoc.summary || '').replace(/~~.+?~~/g, '').replace(/\{\{(.+?)\}\}/g, '$1')}</div>
+        <span class="preview-cat-badge">${esc(getCategoryName(targetDoc.categoryId))}</span>
+        <div class="preview-doc-title">${esc(targetDoc.title)}</div>
+        <div class="preview-doc-summary">${esc((targetDoc.summary || '').replace(/~~.+?~~/g, '').replace(/\{\{(.+?)\}\}/g, '$1'))}</div>
       `;
       hoverPreviewCard.classList.remove('hidden');
       movePreviewCard(e);
@@ -857,7 +864,7 @@
     const searchDropdown = document.getElementById("searchDropdown");
 
     window.addEventListener("keydown", e => {
-      if (e.key === "/" && document.activeElement !== searchInput && !document.activeElement.isContentEditable && !["INPUT", "TEXTAREA"].includes(document.activeElement.tagName)) {
+      if (e.key === "/" && document.activeElement !== searchInput && !document.activeElement?.isContentEditable && !["INPUT", "TEXTAREA"].includes(document.activeElement?.tagName)) {
         e.preventDefault();
         searchInput.focus();
       } else if (e.key === "Escape") {
@@ -937,7 +944,8 @@
       const h = window.location.hash;
       if (h.startsWith("#doc/")) {
         const target = h.replace("#doc/", "");
-        if ((window.WIKI_DOCS[target] || target === "erp-setup") && (target !== currentDocId || appShell?.classList.contains('object-game-hidden') || appShell?.classList.contains('mentoring-hidden') || window.CodeWikiAuth?.getCurrentUser()?.role === 'admin')) {
+        const appHidden = appShell?.classList.contains('object-game-hidden') || appShell?.classList.contains('mentoring-hidden') || appShell?.classList.contains('study-hidden') || appShell?.classList.contains('members-hidden') || appShell?.classList.contains('board-mode-shell');
+        if ((window.WIKI_DOCS[target] || target === "erp-setup") && (target !== currentDocId || appHidden)) {
           if (window.CodeWikiBoard) window.CodeWikiBoard.closeIfActive();
           renderDocument(target);
           window.scrollTo({ top: 0, behavior: "smooth" });

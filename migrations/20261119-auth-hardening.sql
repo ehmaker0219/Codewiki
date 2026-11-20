@@ -173,5 +173,17 @@ $acl$;
 grant execute on function public.cw_login(text,text),public.cw_signup(text,text,text,text,text),
  public.cw_signup_with_birthday(text,text,text,text,text,date,boolean),
  public.cw_signup_with_roster(text,text,text,text,text,date,boolean,integer) to anon, authenticated;
+-- Reapplying an old hardening migration must not reopen plaintext endpoints.
+do $transport_guard$
+declare f record;
+begin
+  if to_regprocedure('public.cw_secure_auth(text,jsonb,uuid,timestamptz)') is not null then
+    for f in select p.oid::regprocedure as signature from pg_proc p join pg_namespace n on n.oid=p.pronamespace
+      where n.nspname='public' and p.proname in ('cw_login','cw_signup','cw_signup_with_birthday','cw_signup_with_roster') loop
+      execute format('revoke all on function %s from public,anon,authenticated',f.signature);
+    end loop;
+  end if;
+end;
+$transport_guard$;
 notify pgrst,'reload schema';
 commit;

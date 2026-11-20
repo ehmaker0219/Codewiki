@@ -47,7 +47,7 @@
   }
   function renderList(){
     const query=$('mentoringSearch').value.trim().toLowerCase();
-    $('mentoringList').innerHTML=state.activities.filter(a=>a.title.toLowerCase().includes(query)).map(a=>`<button type="button" class="mentoring-record${a.id===selected?' active':''}" data-select="${a.id}" aria-pressed="${a.id===selected}"><strong>${esc(a.title)}</strong><span>${esc(a.date)} · ${states[a.status]}</span></button>`).join('')||'<p class="mentoring-help">등록된 활동이 없습니다.</p>';
+    $('mentoringList').innerHTML=state.activities.filter(a=>a.title.toLowerCase().includes(query)).map(a=>`<button type="button" class="mentoring-record${a.id===selected?' active':''}" data-select="${esc(a.id)}" aria-pressed="${a.id===selected}"><strong>${esc(a.title)}</strong><span>${esc(a.date)} · ${esc(states[a.status])}</span></button>`).join('')||'<p class="mentoring-help">등록된 활동이 없습니다.</p>';
   }
   function field(scope,name,label,value,kind='textarea'){
     const attrs=`data-scope="${scope}" data-field="${name}"`;
@@ -55,7 +55,7 @@
   }
   function textBlock(label,value,code=false){return `<section class="mentoring-text-block"><h3>${label}</h3><${code?'pre':'div'} class="mentoring-report-text">${esc(value||'아직 작성하지 않았습니다.')}</${code?'pre':'div'}></section>`;}
   function attachments(items,owner,editable=false){
-    return items.map(f=>`<div class="mentoring-attachment"><span>${esc(f.name)} <small>${Math.max(1,Math.ceil(f.size/1024))} KB</small></span><button type="button" data-download="${f.id}" data-owner="${owner}">내려받기</button>${editable?`<button type="button" data-remove="${f.id}">제거</button>`:''}</div>`).join('');
+    return items.map(f=>`<div class="mentoring-attachment"><span>${esc(f.name)} <small>${Math.max(1,Math.ceil(f.size/1024))} KB</small></span><button type="button" data-download="${esc(f.id)}" data-owner="${esc(owner)}">내려받기</button>${editable?`<button type="button" data-remove="${esc(f.id)}">제거</button>`:''}</div>`).join('');
   }
   function archive(){
     const subs=Object.values(state.submissions).filter(v=>v.activity===selected),comments=state.comments.filter(c=>c.activity===selected);
@@ -107,7 +107,7 @@
   async function remove(){if(!confirm('이 활동과 첨부파일, 보관된 이전 기록을 삭제할까요?'))return;await execute({type:'delete',id:selected,revision:editing.activity.revision});selected=state.activities[0]?.id||null;resetEditing();render();}
   function addFiles(files){
     const a=editing?.activity;if(!a)return;const skipped=[];
-    for(const f of files){if(f.size>5*1024*1024||a.attachments.length>=10||a.attachments.reduce((n,f)=>n+f.size,0)+f.size>20*1024*1024){skipped.push(f.name);continue;}const id=crypto.randomUUID();uploads.set(id,f);a.attachments.push({id,name:f.name.slice(0,255),type:f.type,size:f.size});dirty.add('activity');}
+    for(const f of files){if(f.size>5*1024*1024||a.attachments.length>=10||a.attachments.reduce((n,f)=>n+f.size,0)+f.size>20*1024*1024){skipped.push(f.name);continue;}const id=crypto.randomUUID();uploads.set(id,f);a.attachments.push({id,name:f.name.slice(0,255),type:String(f.type||'').slice(0,120),size:f.size});dirty.add('activity');}
     $('mentoringOwnFiles').innerHTML=attachments(a.attachments,actor.id,true);status(skipped.length?'제외된 파일: '+skipped.join(', '):'파일을 추가했습니다. 저장해 주세요.');
   }
   async function download(owner,id){
@@ -132,7 +132,7 @@
   async function print(){await report();const ticket=version;if(!preview)return;await Promise.all([...$('mentoringReport').querySelectorAll('img')].map(img=>img.decode().catch(()=>{})));if(ticket!==version||!visible())return;document.body.classList.add('mentoring-print');try{window.print();}finally{document.body.classList.remove('mentoring-print');}}
   async function rpc(name,args,s){
     const controller=new AbortController();let timeout;
-    try{return await Promise.race([Promise.resolve().then(()=>{const req=window.CodeWikiAuth.getSupabaseClient().rpc(name,{p_token:s.token,...args});return typeof req.abortSignal==='function'?req.abortSignal(controller.signal):req;}).then(r=>{if(r.error)throw r.error;return r.data;}),new Promise((_,reject)=>{timeout=setTimeout(()=>{controller.abort();reject(Error('timeout'));},15000);})]);}finally{clearTimeout(timeout);}
+    try{return await Promise.race([Promise.resolve().then(()=>{const client=window.CodeWikiAuth?.getSupabaseClient();if(!client)throw Error('no-client');const req=client.rpc(name,{p_token:s.token,...args});return typeof req.abortSignal==='function'?req.abortSignal(controller.signal):req;}).then(r=>{if(r.error)throw r.error;return r.data;}),new Promise((_,reject)=>{timeout=setTimeout(()=>{controller.abort();reject(Error('timeout'));},15000);})]);}finally{clearTimeout(timeout);}
   }
   let importItems=[],importMode='study';
   async function openImport(mode){
@@ -150,8 +150,9 @@
     try{
       const note=importMode==='legacy'?n:await rpc('cw_get_study_note',{p_id:n.id},session);
       if(ticket!==version||request!==importVersion||id!==selected||!$('mentoringImport').open)return;
-      const text=importMode==='legacy'?[note.goals,note.activity,note.code,note.result,note.reflection,note.feedback,note.nextPlan].filter(Boolean).join('\n\n'):note.body;
-      if(typeof text!=='string')throw Error('invalid');
+      const rawText=importMode==='legacy'?[note.goals,note.activity,note.code,note.result,note.reflection,note.feedback,note.nextPlan].filter(Boolean).join('\n\n'):note.body;
+      if(typeof rawText!=='string')throw Error('invalid');
+      const text=importMode==='legacy'||!window.CodeWikiLearning?.stripStudyRichBlocks?rawText:window.CodeWikiLearning.stripStudyRichBlocks(rawText);
       const scope='activity',field='task';
       const value=[editing[scope][field],`[${note.title}]\n${text}`].filter(Boolean).join('\n\n');if(value.length>100000)throw Error('invalid');
       editing[scope][field]=value;dirty.add(scope);$('mentoringImport').close();render();status('내용을 가져왔습니다. 저장해 주세요.');

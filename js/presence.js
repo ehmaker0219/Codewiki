@@ -11,7 +11,9 @@
     s.busy=true;s.at=now;if(list)s.listAt=now;
     const controller=new AbortController();s.controller=controller;let deadline;
     try{
-      const request=window.CodeWikiAuth.getSupabaseClient().rpc('cw_presence_heartbeat',{p_token:s.token,p_list:list});
+      const client=window.CodeWikiAuth?.getSupabaseClient();
+      if(!client)throw Error('no-client');
+      const request=client.rpc('cw_presence_heartbeat',{p_token:s.token,p_list:list});
       const timeout=new Promise((_,reject)=>{deadline=setTimeout(()=>{controller.abort();reject(Error('timeout'));},15000);});
       const result=await Promise.race([typeof request?.abortSignal==='function'?request.abortSignal(controller.signal):request,timeout]);
       if(result.error)throw result.error;

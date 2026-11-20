@@ -3,14 +3,14 @@
   let opening;
   function database(){
     if(!opening)opening=new Promise((resolve,reject)=>{
-      const request=indexedDB.open('codewiki-mentoring-v1',1);
+      const request=indexedDB.open('codewiki-mentoring-v1',1);let rejected=false;
       request.onupgradeneeded=()=>{
         request.result.createObjectStore('reports',{keyPath:['owner','id']});
         request.result.createObjectStore('files',{keyPath:['owner','report','id']});
       };
       request.onerror=()=>reject(request.error);
-      request.onblocked=()=>reject(new Error('storage-blocked'));
-      request.onsuccess=()=>{const db=request.result;db.onversionchange=()=>{db.close();opening=null;};resolve(db);};
+      request.onblocked=()=>{rejected=true;reject(new Error('storage-blocked'));};
+      request.onsuccess=()=>{const db=request.result;if(rejected){db.close();return;}db.onversionchange=()=>{db.close();opening=null;};resolve(db);};
     }).catch(error=>{opening=null;throw error;});
     return opening;
   }
@@ -23,7 +23,8 @@
         tx.oncomplete=()=>resolve(result);
         tx.onabort=()=>reject(error||tx.error||new Error('storage-aborted'));
         tx.onerror=()=>{};
-        work(tx, value=>{result=value;},cause=>{error=cause;tx.abort();});
+        const fail=cause=>{error=cause;tx.abort();};
+        try{work(tx, value=>{result=value;},fail);}catch(e){fail(e);}
       });
     }
     return {

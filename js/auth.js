@@ -22,13 +22,24 @@
     });
   }
 
-  const DEMO_USERS_KEY = "codewiki_custom_users_v1";
-  const DEMO_SESSION_KEY = "codewiki_custom_session_v1";
+  // Remove old local demo credentials without reading or displaying their contents.
+  try {
+    localStorage.removeItem('codewiki_custom_users_v1');
+    localStorage.removeItem('codewiki_custom_session_v1');
+  } catch { /* Storage can be unavailable; never enable a local login fallback. */ }
+  const secureAuth = window.CodeWikiSecureAuth?.create({url:SUPABASE_URL, apiKey:SUPABASE_ANON_KEY});
+  const credentialOperations = new Set(['cw_login','cw_signup_with_roster','cw_admin_reset_student_password']);
   const SUPA_TOKEN_KEY = "codewiki_supa_token_v1";
 
   // Bound both fetch and adapters that ignore abort. A late response must never
   // resume a timed-out submission; timers are released on every outcome.
   async function authRpc(name, args) {
+    const start = signal => credentialOperations.has(name)
+      ? secureAuth ? secureAuth.request(name, args, {signal}) : Promise.reject(Error('secure-auth-unavailable'))
+      : supabaseClient ? supabaseClient.rpc(name, args) : Promise.reject(Error('supabase-unavailable'));
+    if (typeof AbortController !== 'function' || typeof setTimeout !== 'function') {
+      return await start(undefined);
+    }
     const controller = new AbortController();
     let timer;
     try {
@@ -38,7 +49,7 @@
           controller.abort();
         }, 15000);
       });
-      const request = supabaseClient.rpc(name, args);
+      const request = start(controller.signal);
       return await Promise.race([
         typeof request?.abortSignal === 'function' ? request.abortSignal(controller.signal) : request,
         timeout
@@ -46,63 +57,28 @@
     } finally { clearTimeout(timer); }
   }
 
-  // Demo mode never provisions a privileged account with a shared password.
-  const defaultDemoUsers = [];
-
-  function getDemoUsers() {
-    try {
-      const raw = localStorage.getItem(DEMO_USERS_KEY);
-      if (!raw) {
-        localStorage.setItem(DEMO_USERS_KEY, JSON.stringify(defaultDemoUsers));
-        return defaultDemoUsers;
-      }
-      return JSON.parse(raw);
-    } catch (e) {
-      return defaultDemoUsers;
-    }
-  }
-
-  function saveDemoUsers(list) {
-    localStorage.setItem(DEMO_USERS_KEY, JSON.stringify(list));
-  }
-
-  function getCurrentDemoUser() {
-    const savedId = localStorage.getItem(DEMO_SESSION_KEY);
-    if (!savedId || savedId === "logged-out") return null;
-    const users = getDemoUsers();
-    return users.find(u => u.id === savedId) || null;
-  }
-
-  function setDemoSession(userId) {
-    window.CodeWikiApp?.resetTrackChoice();
-    localStorage.setItem(DEMO_SESSION_KEY, userId || "logged-out");
-    renderAuthState();
-  }
-
   function getSupaToken() {
-    return localStorage.getItem(SUPA_TOKEN_KEY) || "";
+    try { return localStorage.getItem(SUPA_TOKEN_KEY) || ""; } catch { return ""; }
   }
 
   function setSupaToken(token) {
-    if (token) {
-      localStorage.setItem(SUPA_TOKEN_KEY, token);
-    } else {
-      localStorage.removeItem(SUPA_TOKEN_KEY);
-    }
+    try {
+      if (token) {
+        localStorage.setItem(SUPA_TOKEN_KEY, token);
+      } else {
+        localStorage.removeItem(SUPA_TOKEN_KEY);
+      }
+    } catch {}
   }
 
   let logoutPending = false;
   async function logout() {
     if (logoutPending) return;
-    if (!isSupabaseConfigured) {
-      setDemoSession("logged-out");
-      return;
-    }
     logoutPending = true;
     try {
       const token = getSupaToken();
       if (token) {
-        const { error } = await supabaseClient.rpc("cw_logout", { p_token: token });
+        const { error } = await authRpc("cw_logout", { p_token: token });
         if (error) throw error;
       }
       if (getSupaToken() !== token) {
@@ -126,11 +102,9 @@
   }
 
   function escapeHtml(str) {
-    return String(str || "")
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;")
-      .replace(/"/g, "&quot;");
+    if (window.CodeWikiLearning?.escape) return window.CodeWikiLearning.escape(str ?? "");
+    return String(str ?? "")
+      .replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
   }
 
   const authGateOverlay = document.getElementById("authGateOverlay");
@@ -145,8 +119,7 @@
   let authStateVersion = 0;
   const adminApproval = window.CodeWikiAdmin?.create({
     modal: adminModal, getToken: getSupaToken, getUser: () => activeUserCache,
-    client: supabaseClient, isRemote: isSupabaseConfigured,
-    getDemoUsers, saveDemoUsers, onChange: renderAuthState
+    client: supabaseClient, onChange: renderAuthState
   });
 
   // Authentication owns session propagation; feature modules don't control each other.
@@ -161,6 +134,13 @@
     }
     const learningContents = document.getElementById('learningContentsGroup');
     if (learningContents) learningContents.hidden = user?.role !== 'student' || user.status !== 'approved';
+    if (!user) {
+      if (adminSidebarSlot) adminSidebarSlot.innerHTML = "";
+      if (sidebarProfileSlot) sidebarProfileSlot.innerHTML = "";
+      const studySidebarSlot = document.getElementById('studySidebarSlot');
+      if (studySidebarSlot) studySidebarSlot.innerHTML = "";
+    }
+    window.CodeWikiBoard?.setUser?.(user);
     window.CodeWikiProfile?.setUser(user);
     window.CodeWikiProgress?.setUser(user);
     window.CodeWikiBirthdays?.setUser(user);
@@ -180,6 +160,10 @@
     isSupabaseConfigured: () => isSupabaseConfigured,
     getSupabaseClient: () => supabaseClient,
     logout,
+    credentialRequest: (name,args) => {
+      if (!credentialOperations.has(name)) return Promise.reject(Error('unsupported-auth-operation'));
+      return authRpc(name,args);
+    },
     applyProfile: profile => {
       if (!activeUserCache || activeUserCache.id !== profile.id) return;
       activeUserCache = {...activeUserCache, full_name:profile.full_name, mbti:profile.mbti};
@@ -250,27 +234,13 @@
 
   async function renderAuthState() {
     const version = ++authStateVersion;
-    // 1) 로컬 모드 (Supabase 연결 전)
-    if (!isSupabaseConfigured) {
-      const user = getCurrentDemoUser();
-      activeUserCache = user;
-      syncUserFeatures(user);
-      const allUsers = getDemoUsers();
-      const pendingCount = allUsers.filter(u => u.role !== "admin" && u.status === "pending").length;
-
-      if (!user) {
-        document.body.classList.remove("authenticated", "track-selecting");
-        trackSelectOverlay?.classList.add("hidden");
-        authGateOverlay.classList.remove("hidden");
-        renderPreLoginLanding();
-      } else if (user.status !== "approved" && user.role !== "admin") {
-        document.body.classList.remove("authenticated", "track-selecting");
-        trackSelectOverlay?.classList.add("hidden");
-        authGateOverlay.classList.remove("hidden");
-        renderPendingGate(user);
-      } else {
-        showApprovedWorkspaceOrTrackGate(user, pendingCount);
-      }
+    if (!isSupabaseConfigured || !supabaseClient) {
+      activeUserCache = null;
+      syncUserFeatures(null);
+      document.body.classList.remove('authenticated', 'track-selecting');
+      trackSelectOverlay?.classList.add('hidden');
+      authGateOverlay.classList.remove('hidden');
+      authGateOverlay.innerHTML = '<div class="auth-container"><div class="auth-card"><h2>로그인 서버에 연결할 수 없습니다.</h2><p>연결을 확인한 뒤 새로고침해 주세요.</p></div></div>';
       return;
     }
 
@@ -532,15 +502,6 @@
           }
         </div>
 
-        ${
-          !isSupabaseConfigured
-            ? `
-          <div style="margin-top:20px;">
-            <button type="button" class="quick-link-btn" data-demo-login="admin-1">관리자 바로 입장 (로컬 모드)</button>
-          </div>
-        `
-            : ""
-        }
       </div>
     `;
 
@@ -567,12 +528,6 @@
     document.getElementById("forgotPwLinkBtn")?.addEventListener("click", () => {
       authMessage = "";
       renderPreLoginLanding("관리자에게 문의하세요.");
-    });
-
-    authGateOverlay.querySelectorAll("[data-demo-login]").forEach(btn => {
-      btn.addEventListener("click", () => {
-        setDemoSession(btn.getAttribute("data-demo-login"));
-      });
     });
 
     // 소속 반(1~7반) & MBTI 4글자 토글 스위치 동작 (블루 톤 유지)
@@ -704,57 +659,7 @@
       }
 
       if (username.length < 2) {
-        authMessage = "아이디는 2자 이상 입력해 주세요.";
-        renderPreLoginLanding();
-        return;
-      }
-
-      // 1) 로컬 모드 동작
-      if (!isSupabaseConfigured) {
-        if (isSignup && className === "6반") {
-          authMessage = "6반 가입은 서버에서 출석부 확인이 필요합니다.";
-          renderPreLoginLanding();
-          return;
-        }
-        const users = getDemoUsers();
-        if (isSignup) {
-          if (users.some(u => u.username.toLowerCase() === username)) {
-            authMessage = "이미 사용 중인 아이디입니다.";
-            renderPreLoginLanding();
-            return;
-          }
-          const now = new Date();
-          const timeStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(
-            now.getDate()
-          ).padStart(2, "0")} ${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
-
-          const newUser = {
-            id: "stu-" + Date.now(),
-            username,
-            password,
-            full_name: fullName || username,
-            class_name: className,
-            mbti,
-            role: "student",
-            status: "pending",
-            created_at: timeStr
-          };
-          users.unshift(newUser);
-          saveDemoUsers(users);
-          authMessage = "";
-          setDemoSession(newUser.id);
-        } else {
-          const found = users.find(
-            u => u.username.toLowerCase() === username && u.password === password
-          );
-          if (found) {
-            authMessage = "";
-            setDemoSession(found.id);
-          } else {
-            authMessage = "아이디 또는 비밀번호를 확인해 주세요.";
-            renderPreLoginLanding();
-          }
-        }
+        showSubmitError("아이디는 2자 이상 입력해 주세요.");
         return;
       }
 

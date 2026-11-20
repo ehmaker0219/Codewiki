@@ -115,6 +115,7 @@ const parser = new MarkdownParser(schema, tokenizer, {
   tr:{block:'tableRow'},th:{block:'tableHeader'},td:{block:'tableCell'},
 });
 const defaults = defaultMarkdownSerializer;
+const serializedTables = new WeakMap();
 const serializer = new MarkdownSerializer({
   blockquote:defaults.nodes.blockquote, paragraph:defaults.nodes.paragraph,
   heading:defaults.nodes.heading, text:defaults.nodes.text,
@@ -124,19 +125,27 @@ const serializer = new MarkdownSerializer({
     // Use ordinary Markdown tables whenever it can preserve the exact content.
     // Multiline cells, lists or merged cells use a versioned data block instead
     // of silently discarding their structure on save/reload.
-    const rows=[];
-    node.forEach(row=>{
-      const cells=[];
-      row.forEach(cell=>cells.push(serializer.serialize(schema.nodes.doc.create(null,cell.content)).replace(/\|/g,'\\|')));
-      rows.push('| '+cells.join(' | ')+' |');
-    });
-    rows.splice(1,0,'| '+Array(node.firstChild.childCount).fill('---').join(' | ')+' |');
-    const markdown=rows.join('\n');
-    const candidate=parser.parse(markdown);
-    if(candidate.childCount===1&&candidate.firstChild.eq(node))state.text(markdown,false);
+    // Cache per immutable ProseMirror table node so edits elsewhere skip re-parsing.
+    let cached=serializedTables.get(node);
+    if(!cached){
+      const rows=[];
+      node.forEach(row=>{
+        const cells=[];
+        row.forEach(cell=>cells.push(serializer.serialize(schema.nodes.doc.create(null,cell.content)).replace(/\|/g,'\\|')));
+        rows.push('| '+cells.join(' | ')+' |');
+      });
+      rows.splice(1,0,'| '+Array(node.firstChild.childCount).fill('---').join(' | ')+' |');
+      const markdown=rows.join('\n');
+      const candidate=parser.parse(markdown);
+      cached=candidate.childCount===1&&candidate.firstChild.eq(node)
+        ? {markdown}
+        : {json:JSON.stringify(node.toJSON())};
+      serializedTables.set(node,cached);
+    }
+    if(cached.markdown!==undefined)state.text(cached.markdown,false);
     else {
       state.write('```codewiki-table-v1\n');
-      state.text(JSON.stringify(node.toJSON()),false);
+      state.text(cached.json,false);
       state.ensureNewLine();state.write('```');
     }
     state.closeBlock(node);

@@ -4,7 +4,7 @@
     const isConflict=error=>error?.code==='PT409'||error?.code==='40001';
     const key='codewiki_study_draft_v1:'+owner;
     const conflictMessage='서버에 다른 버전이 있습니다. 현재 글로 저장하면 서버 글을 바꿉니다.';
-    let current=null,dirty=false,alive=true,pending=null,saving=false,conflicted=false,sequence=0,status='',cacheFailed=false;
+    let current=null,dirty=false,alive=true,pending=null,saving=false,conflicted=false,sequence=0,inFlightSeq=-1,queued=false,status='',cacheFailed=false;
     const emit=()=>{if(alive)onChange();};
     const persist=()=>{
       try {if(current&&dirty)storage.setItem(key,JSON.stringify({...current,saveConflict:conflicted}));else storage.removeItem(key);cacheFailed=false;}
@@ -30,36 +30,43 @@
     function edit(title,body) {if(!alive||!current||(current.title===title&&current.body===body&&current.revision>0))return;current={...current,title,body};sequence++;dirty=true;status=conflicted?conflictMessage:'저장 대기';persist();emit();}
     function select(note) {if(saving)return false;current=note?{...note}:null;dirty=false;conflicted=false;sequence++;status='';persist();emit();return true;}
     async function drain() {
-      if(alive&&dirty&&current) {
-        const snapshot={...current}, seq=sequence;
-        status='저장 중…';emit();
-        try {
-          const title=snapshot.title.trim()||'제목 없는 노트';
-          let data;
-          try {data=await call('cw_save_study_note',{p_id:snapshot.id,p_title:title,p_body:snapshot.body,p_revision:snapshot.revision});}
-          catch(error){
-            // A timed-out response may have committed. Accept only an exact,
-            // owner-scoped readback; never overwrite a different server revision.
-            if(!isConflict(error))throw error;
-            try {data=await call('cw_get_study_note',{p_id:snapshot.id});}
-            catch {throw error;}
-            if(!data||data.title!==title||data.body!==snapshot.body||!Number.isInteger(data.revision)||data.revision<=snapshot.revision)throw error;
+      do {
+        queued=false;
+        if(alive&&dirty&&current) {
+          const snapshot={...current}, seq=sequence;
+          inFlightSeq=seq;
+          status='저장 중…';emit();
+          try {
+            const title=snapshot.title.trim()||'제목 없는 노트';
+            let data;
+            try {data=await call('cw_save_study_note',{p_id:snapshot.id,p_title:title,p_body:snapshot.body,p_revision:snapshot.revision});}
+            catch(error){
+              // A timed-out response may have committed. Accept only an exact,
+              // owner-scoped readback; never overwrite a different server revision.
+              if(!isConflict(error))throw error;
+              try {data=await call('cw_get_study_note',{p_id:snapshot.id});}
+              catch {throw error;}
+              if(!data||data.title!==title||data.body!==snapshot.body||!Number.isInteger(data.revision)||data.revision<=snapshot.revision)throw error;
+            }
+            if(!alive)return false;
+            if(!data||!Number.isInteger(data.revision)||data.revision<=snapshot.revision)throw Object.assign(new Error('invalid-save-response'),{code:'INVALID_RESPONSE'});
+            current={...current,revision:data.revision,updated_at:data.updated_at||current.updated_at};
+            if(sequence===seq){current.title=data.title;dirty=false;status='저장됨';}
+            else status='저장 대기';
+            persist();emit();
+          } catch(error) {
+            if(alive){conflicted=isConflict(error);status=conflicted?conflictMessage:error.code==='TIMEOUT'?'저장 응답이 지연됩니다. 작성 내용은 유지됩니다. 다시 저장해 주세요.':error.code==='42501'?'로그인이 만료되었습니다. 다시 로그인하면 임시 필기를 복원합니다.':error.code==='22023'?'제목은 120자, 본문은 20만 자까지 저장할 수 있습니다.':error.code==='INVALID_RESPONSE'?'저장 결과를 확인하지 못했습니다. 작성 내용은 유지됩니다.':'저장하지 못했습니다. 작성 내용은 유지됩니다. 다시 시도해 주세요.';persist();emit();}
+            return false;
           }
-          if(!alive)return false;
-          if(!data||!Number.isInteger(data.revision)||data.revision<=snapshot.revision)throw Object.assign(new Error('invalid-save-response'),{code:'INVALID_RESPONSE'});
-          current={...current,revision:data.revision,updated_at:data.updated_at||current.updated_at};
-          if(sequence===seq){current.title=data.title;dirty=false;status='저장됨';}
-          else status='저장 대기';
-          persist();emit();
-        } catch(error) {
-          if(alive){conflicted=isConflict(error);status=conflicted?conflictMessage:error.code==='TIMEOUT'?'저장 응답이 지연됩니다. 작성 내용은 유지됩니다. 다시 저장해 주세요.':error.code==='42501'?'로그인이 만료되었습니다. 다시 로그인하면 임시 필기를 복원합니다.':error.code==='22023'?'제목은 120자, 본문은 20만 자까지 저장할 수 있습니다.':error.code==='INVALID_RESPONSE'?'저장 결과를 확인하지 못했습니다. 작성 내용은 유지됩니다.':'저장하지 못했습니다. 작성 내용은 유지됩니다. 다시 시도해 주세요.';persist();emit();}
-          return false;
         }
-      }
+      } while(queued&&alive&&dirty&&current&&!conflicted);
       return alive&&!dirty;
     }
     function save({resolveConflict=false}={}) {
-      if(pending)return pending;
+      if(pending){
+        if(alive&&!conflicted&&dirty&&sequence!==inFlightSeq)queued=true;
+        return pending;
+      }
       if(!alive)return Promise.resolve(false);
       if(conflicted&&!resolveConflict)return Promise.resolve(false);
       if(!dirty||!current)return Promise.resolve(true);
@@ -80,7 +87,7 @@
           }
         }
         return drain();
-      })().finally(()=>{pending=null;saving=false;emit();});return pending;
+      })().finally(()=>{pending=null;saving=false;queued=false;inFlightSeq=-1;emit();});return pending;
     }
     restore();
     return {get current(){return current;},get dirty(){return dirty;},get busy(){return saving;},

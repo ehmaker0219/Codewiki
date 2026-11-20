@@ -15,7 +15,10 @@
   const fileKey=(activity,owner,id)=>`${activity}:${owner}:${id}`;
   function references(state){
     const refs=new Set();
-    for(const a of state.activities)for(const f of a.attachments||[])refs.add(fileKey(a.id,model.members[0].id,f.id));
+    for(const a of state.activities)for(const f of a.attachments||[]){
+      if(f.owner)refs.add(fileKey(a.id,f.owner,f.id));
+      else for(const m of model.members)refs.add(fileKey(a.id,m.id,f.id));
+    }
     for(const collection of [state.drafts,state.submissions])for(const item of Object.values(collection))for(const f of item.attachments)refs.add(fileKey(item.activity,item.owner,f.id));
     return refs;
   }
