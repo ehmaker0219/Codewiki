@@ -6,7 +6,7 @@
   const CLUSTER_SPECS = [
     {
       id: 'system', step: '01', title: '시스템과 개발',
-      subtitle: 'SAP 구조 · 패키지 · 전송',
+      subtitle: 'SAP 구조 · Package · 전송',
       x: 330, y: 290, angles: [-145, -35, 90],
       docs: ['sap-architecture', 'abap-development', 'abap-program-types']
     },

@@ -44,7 +44,7 @@
       if (block.type !== 'code') continue;
       const full = /^\s*REPORT\s/im.test(block.code || '');
       block.example = {kind:full ? 'SE38 리포트 전체 코드' : '리포트에 넣는 일부 코드',
-        placement:full ? 'SE38에서 실행 가능 프로그램을 만들고 REPORT 이름을 프로그램 이름에 맞춘 뒤 활성화·실행하세요.' : 'REPORT 선언이 있는 실행 가능 프로그램의 실행부에 넣으세요. 아래 추가 조건이 있으면 그 위치를 우선합니다.',
+        placement:full ? 'SE38에서 실행 가능 Program을 만들고 REPORT 이름을 Program 이름에 맞춘 뒤 활성화·실행하세요.' : 'REPORT 선언이 있는 실행 가능 Program의 실행부에 넣으세요. 아래 추가 조건이 있으면 그 위치를 우선합니다.',
         verification:'SAP 실행 미확인', ...notes[block.label]};
     }
   }

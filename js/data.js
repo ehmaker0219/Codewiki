@@ -127,7 +127,7 @@ window.WIKI_DOCS = {
             ["Ctrl + S", "저장", "현재 소스 저장"],
             ["Ctrl + F2", "문법 검사", "활성화 전에 구문 오류 확인"],
             ["Ctrl + F3", "활성화 · Activate", "변경한 소스를 활성 버전으로 반영"],
-            ["F8", "실행", "프로그램 시작·실행"],
+            ["F8", "실행", "Program 시작·실행"],
             ["Shift + F1", "Pretty Printer", "들여쓰기와 코드 형식 정리"],
             ["Ctrl + ,", "주석 처리", "선택한 코드 줄을 주석으로 전환"],
             ["Ctrl + .", "주석 해제", "선택한 코드 줄의 주석 해제"],
@@ -239,12 +239,12 @@ window.WIKI_DOCS = {
     ]],
     ["데이터와 개발 객체 탐색", [
       ["SE16", "Data Browser", "테이블 이름과 조회 조건을 입력하여 저장된 데이터 조회"],
-      ["SE84", "Repository Information System", "프로그램 등 저장소의 개발 객체를 조건별로 검색"],
-      ["SE80", "Object Navigator", "패키지·프로그램·함수 그룹·클래스 등 개발 객체를 통합 탐색"],
+      ["SE84", "Repository Information System", "Program 등 저장소의 개발 객체를 조건별로 검색"],
+      ["SE80", "Object Navigator", "Package·Program·함수 그룹·클래스 등 개발 객체를 통합 탐색"],
       ["SE11", "ABAP Dictionary", "테이블·구조·데이터 요소 등 데이터 사전 객체 정의와 유지보수"]
     ]],
-    ["프로그램과 화면 개발", [
-      ["SE38", "ABAP Editor", "ABAP 프로그램 생성·소스 편집·검사·활성화·실행"],
+    ["Program과 화면 개발", [
+      ["SE38", "ABAP Editor", "ABAP Program 생성·소스 편집·검사·활성화·실행"],
       ["SE37", "Function Builder", "함수 모듈 생성·유지보수·테스트"],
       ["SE24", "Class Builder", "글로벌 클래스와 인터페이스 등 객체지향 개발 객체 관리"],
       ["SE41", "Menu Painter", "메뉴·툴바·기능 키를 구성하는 GUI 상태와 제목 관리"],

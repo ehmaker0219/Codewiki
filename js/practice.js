@@ -16,7 +16,7 @@ window.WIKI_PRACTICE = [
       },
       {
         "title": "초기값 관찰",
-        "body": "정수, 고정 길이 문자, 숫자 문자, string 변수를 선언하고 CLEAR 전후를 비교하는 프로그램을 작성하세요.",
+        "body": "정수, 고정 길이 문자, 숫자 문자, string 변수를 선언하고 CLEAR 전후를 비교하는 Program을 작성하세요.",
         "conditions": [
           "각 변수에 값을 지정한 뒤 CLEAR를 실행하세요.",
           "IS INITIAL 조건으로 초기화 여부를 출력하세요.",
@@ -225,7 +225,7 @@ window.WIKI_PRACTICE = [
       },
       {
         "title": "EXIT와 CONTINUE 실험",
-        "body": "1부터 10까지 반복하면서 3은 건너뛰고 8에서 종료하는 프로그램을 작성하세요.",
+        "body": "1부터 10까지 반복하면서 3은 건너뛰고 8에서 종료하는 Program을 작성하세요.",
         "conditions": [
           "3일 때 CONTINUE, 8일 때 EXIT를 사용하세요.",
           "실행 전에 예상 출력값을 적어 보세요.",
@@ -305,7 +305,7 @@ window.WIKI_PRACTICE = [
     "questions": [
       {
         "title": "누적값 추적",
-        "body": "1부터 5까지 합산하는 프로그램을 만들고 디버거에서 값의 변화를 관찰하세요.",
+        "body": "1부터 5까지 합산하는 Program을 만들고 디버거에서 값의 변화를 관찰하세요.",
         "conditions": [
           "합계를 계산하는 줄에 중단점을 설정하세요.",
           "F5로 실행하며 sy-index와 누적값을 확인하세요.",
@@ -362,7 +362,7 @@ window.WIKI_PRACTICE = [
       },
       {
         "title": "반복 횟수 확인",
-        "body": "DO 3 TIMES 안에서 문구를 출력하는 프로그램을 작성하세요.",
+        "body": "DO 3 TIMES 안에서 문구를 출력하는 Program을 작성하세요.",
         "conditions": [
           "반복문 안에 중단점을 설정하세요.",
           "매번 멈출 때 sy-index를 기록하세요."
