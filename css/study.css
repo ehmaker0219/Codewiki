@@ -7,9 +7,29 @@
 .study-header p {font-size:13px;color:var(--text-sub);margin:0;}
 .study-private {font-size:11px;color:var(--text-sub);border:1px solid var(--border-hairline);padding:7px 12px;border-radius:20px;white-space:nowrap;}
 .study-layout {display:grid;grid-template-columns:230px minmax(0,1fr);border:1px solid var(--border-hairline);border-radius:10px;background:var(--bg-card,#fff);min-height:620px;overflow:clip;}
-.study-library {position:sticky;top:56px;align-self:start;max-height:calc(100dvh - 72px);overflow-y:auto;overscroll-behavior-y:contain;padding:18px 14px;border-right:1px solid var(--border-hairline);background:var(--bg-subtle,#f7f9fc);min-width:0;}
-.study-library-heading {display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;}
-.study-library h2 {font-size:14px;margin:0;}
+.study-library {--study-scroll-thumb:#bac8da;--study-scroll-hover:#829cbe;position:sticky;top:56px;align-self:start;display:flex;flex-direction:column;max-height:calc(100dvh - 72px);overflow:hidden;border-right:1px solid var(--border-hairline);background:var(--bg-subtle,#f7f9fc);min-width:0;}
+:root[data-theme="dark"] .study-library {--study-scroll-thumb:#4c607c;--study-scroll-hover:#7893b7;}
+.study-library-heading {display:flex;align-items:center;justify-content:space-between;gap:8px;flex-shrink:0;padding:14px 12px 12px;}
+.study-library h2 {font-size:14px;margin:0;white-space:nowrap;}
+.study-library-actions {display:flex;align-items:center;gap:5px;}
+.study-library #studyNew {margin:0;padding:7px 9px;font-size:11px;}
+.study-library-toggle {display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;width:28px;height:28px;padding:0;border:1px solid var(--border-subtle);border-radius:5px;background:transparent;color:var(--text-sub);}
+.study-library-toggle:hover {border-color:var(--text-muted);color:var(--text-strong);}
+.study-library-content {min-height:0;overflow-y:auto;overscroll-behavior-y:contain;padding:4px 12px 18px;scrollbar-gutter:stable;}
+.study-library :is(.study-library-content,.study-list,.study-folders nav) {scrollbar-width:thin;scrollbar-color:var(--study-scroll-thumb) transparent;}
+@supports selector(::-webkit-scrollbar){
+  .study-library :is(.study-library-content,.study-list,.study-folders nav) {scrollbar-width:auto;scrollbar-color:auto;}
+  .study-library ::-webkit-scrollbar {width:8px;height:8px;}
+  .study-library ::-webkit-scrollbar-track {background:transparent;}
+  .study-library ::-webkit-scrollbar-thumb {background:var(--study-scroll-thumb);border:2px solid transparent;border-radius:20px;background-clip:padding-box;}
+  .study-library ::-webkit-scrollbar-thumb:hover {background-color:var(--study-scroll-hover);}
+  .study-library ::-webkit-scrollbar-button {display:none;width:0;height:0;}
+}
+.study-layout.library-collapsed {grid-template-columns:44px minmax(0,1fr);}
+.library-collapsed .study-library {background:var(--bg-card,#fff);border-right-color:transparent;}
+.library-collapsed .study-library-heading {justify-content:center;padding:24px 6px;}
+.library-collapsed .study-library-heading h2,.library-collapsed #studyNew {display:none;}
+.library-collapsed .study-library-toggle svg {transform:rotate(180deg);}
 .study-workspace button,.study-workspace input,.study-workspace textarea {font-family:inherit;}
 .study-workspace button {cursor:pointer;}
 .study-workspace button:disabled {cursor:wait;opacity:.6;}
@@ -51,21 +71,24 @@
 .study-empty>span {font-size:36px;color:#7295c0;}
 .study-empty h2 {font-size:19px;margin:16px 0 8px;}
 .study-empty p {font-size:13px;color:var(--text-muted);}
-.study-note-heading {display:flex;align-items:center;gap:12px;padding:20px 24px 8px;}
-.study-title {display:block;flex:1;min-width:0;width:100%;border:0;background:transparent;color:var(--text-strong);font-size:22px;font-weight:700;line-height:1.5;padding:0;outline-offset:3px;}
+.study-note-heading {display:flex;align-items:center;flex-wrap:wrap;gap:16px;padding:20px 24px 12px;}
+.study-title {display:block;flex:1 1 220px;min-width:0;width:100%;border:0;background:transparent;color:var(--text-strong);font-size:22px;font-weight:700;line-height:1.5;padding:0;outline-offset:3px;}
+.study-note-actions {display:flex;align-items:center;gap:6px;flex-shrink:0;margin-left:auto;}
+.study-action-divider {width:1px;height:20px;margin:0 5px;background:var(--border-subtle);}
 .study-workspace .study-action-icon {display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;width:36px;height:36px;min-height:36px;margin:0;padding:0;border:0;border-radius:6px;}
+.study-note-actions .study-action-icon:not(.toss-primary-btn) {border:1px solid var(--border-subtle);background:transparent;}
+.study-note-actions #studyDownload:hover {background:var(--bg-subtle);}
 .study-action-icon svg,.study-save-symbol {display:block;}
 .study-action-icon:focus-visible {outline:2px solid var(--toss-blue);outline-offset:3px;}
 .study-delete-icon {background:transparent;color:var(--text-muted);}
-.study-delete-icon:hover {background:#b14a5114;color:#b14a51;}
+.study-note-actions .study-delete-icon:hover {border-color:#b14a5166;background:#b14a5114;color:#b14a51;}
 .study-save-spinner {display:none;width:17px;height:17px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;}
 #studySave[aria-busy=true] .study-save-symbol {display:none;}
 #studySave[aria-busy=true] .study-save-spinner {display:block;animation:study-save-spin .75s linear infinite;}
 @keyframes study-save-spin {to {transform:rotate(360deg);}}
 @media(prefers-reduced-motion:reduce){#studySave[aria-busy=true] .study-save-spinner {animation:none;}}
-.study-editor-meta {display:flex;align-items:center;justify-content:space-between;gap:12px;padding:8px 14px;min-height:48px;flex-wrap:wrap;}
+.study-editor-meta {padding:4px 24px 16px;}
 .study-editor-meta>span {font-size:11px;color:var(--text-muted);line-height:1.6;}
-.study-editor-meta>div {display:flex;gap:6px;flex-shrink:0;}
 .study-editor-tools {position:sticky;top:56px;z-index:80;background:var(--bg-card,#fff);box-shadow:0 3px 6px rgba(20,45,78,.05);}
 .study-toolbar {display:flex;align-items:center;gap:3px;flex-wrap:wrap;padding:9px 12px;border-block:1px solid var(--border-hairline);background:var(--bg-subtle,#f7f9fc);}
 .study-toolbar button,.study-note-footer button {border:0;background:transparent;color:var(--text-sub);font-size:12px;padding:7px 9px;border-radius:4px;}
@@ -141,4 +164,4 @@
 .study-markdown>:last-child,.study-markdown :is(blockquote,li,td,th,ul,ol)>:last-child {margin-bottom:0;}
 .study-note-footer {display:flex;align-items:center;justify-content:space-between;gap:10px;border-top:1px solid var(--border-hairline);padding:12px 20px;font-size:11px;color:var(--text-muted);}
 @media(max-width:1150px){.study-layout {grid-template-columns:190px minmax(0,1fr);}.study-rich-input {padding:22px;}}
-@media(max-width:680px){.study-workspace {padding:20px 12px;}.study-layout {grid-template-columns:1fr;}.study-library {position:static;max-height:none;overflow:visible;border-right:0;border-bottom:1px solid var(--border-hairline);}.study-list {max-height:150px;overflow-y:auto;overscroll-behavior-y:contain;}.study-folders nav {max-height:240px;overflow-y:auto;overscroll-behavior-y:contain;}.study-header h1 {font-size:20px;}.study-header {align-items:flex-start;}.study-private {font-size:10px;}.study-editor-meta {flex-wrap:wrap;}.study-note-heading {padding:18px 18px 10px;}.study-title {font-size:20px;}.study-note-footer {flex-wrap:wrap;}}
+@media(max-width:680px){.study-workspace {padding:20px 12px;}.study-layout,.study-layout.library-collapsed {grid-template-columns:1fr;}.study-library {position:static;max-height:none;overflow:visible;border-right:0;border-bottom:1px solid var(--border-hairline);}.study-library-content {overflow:visible;scrollbar-gutter:auto;}.library-collapsed .study-library-heading {justify-content:space-between;padding:14px 12px;}.library-collapsed .study-library-heading h2 {display:block;}.study-list {max-height:150px;overflow-y:auto;overscroll-behavior-y:contain;}.study-folders nav {max-height:240px;overflow-y:auto;overscroll-behavior-y:contain;}.study-header h1 {font-size:20px;}.study-header {align-items:flex-start;}.study-private {font-size:10px;}.study-editor-meta {padding:4px 18px 16px;}.study-note-heading {padding:18px 18px 12px;flex-wrap:wrap;gap:12px;}.study-note-actions {margin-left:auto;}.study-title {flex-basis:100%;font-size:20px;}.study-folder-move {padding:0 18px 8px;}.study-note-footer {flex-wrap:wrap;}}

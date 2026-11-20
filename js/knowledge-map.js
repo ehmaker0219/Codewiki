@@ -1,7 +1,7 @@
 /* Prezi-style minimalist zoomable Knowledge Map for ABAP concepts. */
 (() => {
   const WORLD_W = 1800;
-  const WORLD_H = 1060;
+  const WORLD_H = 1200;
 
   const CLUSTER_SPECS = [
     {
@@ -25,19 +25,19 @@
     {
       id: 'data', step: '04', title: '데이터 처리',
       subtitle: 'DDIC · 내부 테이블 · Open SQL',
-      x: 900, y: 790, angles: [-145, -35, 90],
+      x: 900, y: 930, angles: [-145, -35, 90],
       docs: ['abap-dictionary', 'abap-data-report', 'abap-open-sql']
     },
     {
       id: 'reference', step: '05', title: '실전 참고',
       subtitle: 'T-Code · 단축키 · 문법 모음',
-      x: 330, y: 770, angles: [-145, -35, 90],
+      x: 330, y: 910, angles: [-145, -35, 90],
       docs: ['sap-tcode-reference', 'sap-gui-shortcuts', 'abap-useful-syntax']
     },
     {
       id: 'erp', step: '06', title: 'ERP 업무 모듈',
       subtitle: 'FI · CO · MM · SD · PP',
-      x: 1470, y: 770, upcoming: true, angles: [-144, -72, 0, 72, 144],
+      x: 1470, y: 910, upcoming: true, angles: [-144, -72, 0, 72, 144],
       docs: ['erp-fi', 'erp-co', 'erp-mm', 'erp-sd', 'erp-pp']
     }
   ];
@@ -169,7 +169,7 @@
 
   function computeFitZoom() {
     const { vw, vh } = viewportSize();
-    return Math.max(0.32, Math.min(1.15, Math.min((vw - 56) / 1620, (vh - 110) / 940)));
+    return Math.max(0.12, Math.min(1.15, Math.min((vw - 56) / 1620, (vh - 110) / 1080)));
   }
 
   function computeClusterZoom() {
@@ -184,7 +184,28 @@
     const tx = vw / 2 - camera.cx * camera.zoom;
     const ty = vh / 2 - camera.cy * camera.zoom;
     world.classList.toggle('is-instant', instant);
-    world.style.transform = `translate3d(${tx.toFixed(1)}px, ${ty.toFixed(1)}px, 0) scale(${camera.zoom.toFixed(4)})`;
+    host.querySelector('.kmap-stage')?.classList.toggle('is-compact', vw < 600);
+    // Scale only vector edges. Project nodes into screen coordinates so labels
+    // retain their native font size instead of rasterizing a scaled text layer.
+    const edges = host.querySelector('.kmap-edges');
+    if (edges) edges.style.transform = `translate(${tx.toFixed(1)}px, ${ty.toFixed(1)}px) scale(${camera.zoom.toFixed(4)})`;
+    const place = (element, node) => {
+      element.style.left = `${Math.round(tx + node.x * camera.zoom)}px`;
+      element.style.top = `${Math.round(ty + node.y * camera.zoom)}px`;
+    };
+    host.querySelectorAll('.kmap-cluster').forEach(element => {
+      const node = graph?.clusterById.get(element.dataset.kmapCluster);
+      if (!node) return;
+      place(element, node);
+      const open = node.id === selectedClusterId;
+      const size = open && vw < 600 ? 104
+        : Math.min(244, Math.max(open ? 104 : vw < 600 ? 92 : 148, (open ? 146 : 244) * camera.zoom));
+      element.style.width = element.style.height = `${Math.round(size / 2) * 2}px`;
+    });
+    host.querySelectorAll('.kmap-topic').forEach(element => {
+      const node = graph?.topicById.get(element.dataset.kmapTopic);
+      if (node) place(element, node);
+    });
     const zoomLabel = host.querySelector('#kmapZoomLabel');
     if (zoomLabel) {
       const pct = Math.round((camera.zoom / Math.max(0.1, baseFitZoom)) * 100);
@@ -249,7 +270,7 @@
     const vh = rect.height || 680;
     const px = clientX !== undefined ? clientX - rect.left : vw / 2;
     const py = clientY !== undefined ? clientY - rect.top : vh / 2;
-    const minZoom = Math.max(0.28, baseFitZoom * 0.72);
+    const minZoom = baseFitZoom;
     const maxZoom = 2.5;
     const nextZoom = Math.max(minZoom, Math.min(maxZoom, camera.zoom * factor));
     if (Math.abs(nextZoom - camera.zoom) < 0.0005) return;
@@ -398,14 +419,10 @@
           ? `${c.doneCount}/${c.topics.length} 완료`
           : `${c.topics.length}개 주제`;
       const isAllDone = !c.upcoming && c.topics.length > 0 && c.doneCount === c.topics.length;
-      const dots = c.topics.map(t => `<span class="kmap-mini-dot${t.done ? ' is-done' : !t.pending ? ' is-ready' : ''}"></span>`).join('');
       return `
         <button type="button" class="kmap-cluster${c.upcoming ? ' is-upcoming' : ''}" data-kmap-cluster="${esc(c.id)}" style="left:${c.x}px;top:${c.y}px;">
-          <span class="kmap-cluster-step">${esc(c.step)}</span>
           <span class="kmap-cluster-title">${esc(c.title)}</span>
-          <span class="kmap-cluster-sub">${esc(c.subtitle)}</span>
           <span class="kmap-cluster-meta${isAllDone ? ' is-complete' : ''}">${esc(metaText)}</span>
-          <span class="kmap-cluster-dots" aria-hidden="true">${dots}</span>
         </button>
       `;
     }).join('');
