@@ -7,6 +7,15 @@
 .members-online-names {display:flex;flex-wrap:wrap;gap:8px;margin-top:12px;}
 .members-online-names span {padding:5px 9px;border-radius:4px;background:var(--bg-card);font-size:12px;}
 .members-heading p,.members-count {margin:0;color:var(--text-muted);font-size:12px;}
+.members-tabs {display:flex;align-items:center;gap:6px;margin-bottom:16px;border-bottom:1px solid var(--border-subtle);}
+.members-tab {padding:9px 14px;border:0;border-bottom:2px solid transparent;margin-bottom:-1px;background:transparent;color:var(--text-sub);font:inherit;font-size:13px;font-weight:600;cursor:pointer;transition:color 0.14s,border-color 0.14s;}
+.members-tab:hover {color:var(--text-strong);}
+.members-tab[aria-selected="true"] {color:var(--toss-blue);border-bottom-color:var(--toss-blue);}
+.members-tab:focus-visible {outline:2px solid var(--toss-blue);outline-offset:2px;border-radius:3px;}
+.members-login-link {padding:0;border:0;background:transparent;color:var(--toss-blue);font:inherit;text-align:left;cursor:pointer;white-space:nowrap;font-variant-numeric:tabular-nums;}
+.members-login-link:hover {text-decoration:underline;}
+.members-login-link small {color:var(--text-muted);font-weight:500;}
+.members-time-cell {white-space:nowrap;font-variant-numeric:tabular-nums;}
 .members-filters {display:flex;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:16px;}
 .members-filters label {display:flex;align-items:center;gap:8px;font-size:12px;}
 .members-filters input,.members-filters select {min-height:36px;padding:7px 10px;font:inherit;color:var(--text-body);background:var(--bg-card);border:1px solid var(--border-subtle);border-radius:4px;}

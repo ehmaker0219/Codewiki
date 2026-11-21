@@ -31,6 +31,8 @@ const student={id:'s',role:'student',status:'approved'},admin={id:'a',role:'admi
  // Entering the admin page during an ordinary heartbeat fetches the list once it finishes.
  window.location.hash='#doc/example';api.setUser(admin);const pending=requests.shift();assert.equal(pending.args.p_list,false);
  window.location.hash='#admin/students';wevents.hashchange();pending.resolve({data:null});await flush();assert.equal(requests.length,1);assert.equal(requests[0].args.p_list,true);
+ requests.shift().resolve({data:[]});await flush();
+ now+=61000;window.location.hash='#admin/logins';wevents.hashchange();assert.equal(requests.length,1);assert.equal(requests[0].args.p_list,true);
  requests.shift().resolve({data:[]});await flush();api.setUser(null);
  console.log('PASS: visible-only presence, one-minute throttle, coalescing, role revocation, timeout, logout isolation and admin-only polling');
 })().catch(e=>{console.error(e);process.exitCode=1;});

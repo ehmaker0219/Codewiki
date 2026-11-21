@@ -1,7 +1,7 @@
 /* One bounded heartbeat per minute while visible; no activity-history collection. */
 (() => {
   let session=null,timer=null;
-  const listing=s=>s?.role==='admin'&&window.location.hash==='#admin/students';
+  const listing=s=>s?.role==='admin'&&(window.location.hash==='#admin/students'||window.location.hash==='#admin/logins');
   const publish=value=>window.CodeWikiAdminMembers?.setPresence(value);
   function schedule(s){clearTimeout(timer);if(session===s&&!document.hidden)timer=setTimeout(()=>void tick(),60000);}
   async function tick(){

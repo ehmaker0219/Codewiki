@@ -76,6 +76,11 @@ const read = file => fs.readFileSync(path.join(root,file),'utf8');
     await db.exec(read('tests/security-review-hardening.sql'));
     await db.exec(read('tests/encrypted-auth.sql'));
     await db.exec(read('tests/learning-progress.sql'));
-    console.log('PASS: PostgreSQL auth hardening, unsafe setup rerun blocked, session/admin authorization, study ownership/revisions and private folder regressions');
+    await db.exec(read('migrations/20261121-login-history.sql'));
+    await db.exec(read('migrations/20261121-login-history.sql'));
+    await db.exec(read('tests/login-history.sql'));
+    await db.exec(read('tests/encrypted-auth.sql'));
+    await db.exec(read('tests/security-review-hardening.sql'));
+    console.log('PASS: PostgreSQL auth hardening, unsafe setup rerun blocked, session/admin authorization, login history, study ownership/revisions and private folder regressions');
   } finally { await db.close(); }
 })().catch(error => { console.error(error.message); process.exitCode=1; });
