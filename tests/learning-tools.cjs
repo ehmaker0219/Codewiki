@@ -44,9 +44,13 @@ assert.ok(!daily('17').sections.some(s=>s.title==='로컬 클래스의 정의와
 assert.ok(!JSON.stringify(daily('18')).includes('codewiki-rich-v1'));
 assert.ok(tools.search(index,'MOVE-CORRESPONDING').some(r=>r.doc.id==='abap-types'));
 assert.ok(tools.search(index,'OCCURS').some(r=>r.doc.id==='abap-data-report'));
+assert.ok(tools.search(index,'Ctrl + Y').some(r=>r.doc.id==='sap-gui-shortcuts'));
 assert.equal(docs['abap-thinking-flow'].categoryId,'학습 가이드');
 assert.equal(docs['abap-thinking-flow'].title,'ABAP 사고 흐름');
-assert.ok(tools.search(index,'빵집').some(r=>r.doc.id==='abap-thinking-flow'));
+assert.equal(docs['abap-thinking-flow'].hideSectionNumbers,true);
+assert.equal(docs['abap-thinking-flow'].hideToc,true);
+assert.equal(Object.keys(docs['abap-thinking-flow'].specs).length,0);
+assert.ok(tools.search(index,'트레이').some(r=>r.doc.id==='abap-thinking-flow'));
 assert.ok(tools.search(index,'계산용 테이블').some(r=>r.doc.id==='abap-thinking-flow'));
 assert.ok(tools.search(index,'ABAP 사고 흐름')[0].doc.id==='abap-thinking-flow');
 const indexHtml=fs.readFileSync('index.html','utf8');
@@ -55,6 +59,34 @@ const flowAt=indexHtml.indexOf('id="sbThinkingFlowItem"');
 const toolsAt=indexHtml.indexOf('id="learningToolsGroup"');
 assert.ok(mapAt!==-1&&mapAt<flowAt&&flowAt<toolsAt);
 assert.ok(JSON.stringify(docs['abap-thinking-flow']).includes("sy-datum(4) && '0101'"));
+vm.runInNewContext(fs.readFileSync('js/visualizers.js','utf8'),ctx);
+const ovenDocument={activeElement:null};
+const ovenFocus=[];
+const ovenSlot={innerHTML:'',onclick:null,ownerDocument:ovenDocument,
+  querySelector(selector){
+    const button={focus(options){ovenDocument.activeElement=button;ovenFocus.push({selector,options});}};
+    return button;
+  }
+};
+function selectOvenStep(step,focused=true){
+  const button={getAttribute:()=>step};
+  ovenDocument.activeElement=focused?button:null;
+  ovenSlot.onclick({target:{closest:()=>button}});
+}
+ctx.window.WIKI_WIDGETS['abap-oven-diagram'](ovenSlot);
+assert.ok(ovenSlot.innerHTML.includes('DATA ELEMENT')&&ovenSlot.innerHTML.includes('DATA TYPE')&&ovenSlot.innerHTML.includes('오븐 트레이'));
+selectOvenStep('clear');
+assert.ok(ovenSlot.innerHTML.includes('ts_data / gs_data')&&ovenSlot.innerHTML.includes('sbook-customid'));
+assert.ok(ovenSlot.innerHTML.includes('<span>00000002</span><span>Air Berlin</span><span>0</span>'));
+assert.ok(ovenSlot.innerHTML.includes('고객 정보는 유지됩니다'));
+assert.equal(ovenFocus.at(-1).selector,'[data-oven-step="clear"]');
+assert.equal(ovenFocus.at(-1).options.preventScroll,true);
+selectOvenStep('fill');
+assert.ok(ovenSlot.innerHTML.includes('ts_output / gs_output')&&ovenSlot.innerHTML.includes('15'));
+assert.equal(ovenFocus.at(-1).selector,'[data-oven-step="fill"]');
+selectOvenStep('modify',false);
+assert.ok(ovenSlot.innerHTML.includes('data-oven-mode="inserted"')&&ovenSlot.innerHTML.includes('is-saved'));
+assert.equal(ovenFocus.length,2,'pointer actions without focus must not steal it');
 const groups=tools.relatedGroups(docs['abap-modularization'],[daily('13'),docs['abap-objects']],Object.values(docs));
 assert.ok(groups.concepts.every(d=>!d.isDailyLesson));
 assert.deepEqual(Array.from(groups.dates.map(d=>d.id)),['lesson-2026-11-16','lesson-2026-11-17']);

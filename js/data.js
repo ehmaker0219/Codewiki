@@ -108,14 +108,15 @@ window.WIKI_DOCS = {
         ]
       },
       {
-        title: "화면 이동과 도움말",
+        title: "화면 이동 · 도움말 · 복사",
         blocks: [
           { type: "table", headers: ["단축키", "기능", "사용 위치"], rows: [
-            ["Ctrl + N", "새 SAP GUI 세션 열기", "SAP GUI 창 기준"],
-            ["Alt + F4", "현재 창 닫기", "현재 활성화된 창 기준"],
+            ["Ctrl + N", "새 SAP GUI 세션 열기", "SAP GUI 창 기준 (`/o` 세션 목록에서도 생성 가능)"],
+            ["Alt + F4", "현재 창 닫기", "현재 활성화된 창 기준 (`/i`와 동일 역할)"],
             ["F3", "뒤로 가기", "SAP GUI 화면"],
-            ["F1", "선택한 항목의 자세한 도움말", "필드 또는 ABAP 키워드에 커서를 놓고 실행"],
-            ["F4", "입력 도움말 · 가능한 값 표시", "Search Help가 제공되는 입력 필드"],
+            ["F1", "선택한 항목의 자세한 도움말", "필드 또는 ABAP 키워드를 클릭한 뒤 실행"],
+            ["F4", "Search Help · 가능한 값(Possible Entries) 표시", "Search Help가 제공되는 입력 필드를 클릭한 뒤 실행"],
+            ["Ctrl + Y", "마우스로 긁어서 복사 (영역 선택 모드)", "SAP GUI 화면에서 `Ctrl + Y` 후 드래그하여 `Ctrl + C`로 복사"],
             ["Shift + F12", "전체화면 전환", "수업에서 사용하는 ABAP Editor 기준"]
           ] }
         ]
@@ -139,7 +140,7 @@ window.WIKI_DOCS = {
       {
         title: "자주 쓰는 개발 순서",
         blocks: [
-          { type: "text", paragraphs: ["코드 작성 → Shift + F1(정렬) → Ctrl + S(저장) → Ctrl + F2(문법 검사) → Ctrl + F3(활성화) → F8(실행)", "문법 오류가 있으면 먼저 수정하고 다시 검사합니다. 저장과 활성화는 서로 다른 단계이므로, 변경한 내용을 실행하기 전에 활성화 여부를 확인하세요."] }
+          { type: "text", paragraphs: ["코드 작성 → `Shift + F1`(Pretty Printer) → (`Ctrl + S` 저장 · `Ctrl + F2` 문법 검사) → `Ctrl + F3`(Activate) → `F8`(실행)", "문법 오류가 있으면 먼저 수정하고 다시 검사합니다. 저장과 활성화는 서로 다른 단계이므로, 변경한 내용을 실행하기 전에 Activate 여부를 확인하세요."] }
         ]
       }
     ]

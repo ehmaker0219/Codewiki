@@ -34,7 +34,7 @@ begin
   begin perform public.cw_update_my_profile(current_setting('test.profile_pending')::uuid,'X','',null,false);raise exception 'pending write';exception when insufficient_privilege then null;end;
   begin perform public.cw_update_my_profile(a,'','',null,false);raise exception 'empty name accepted';exception when invalid_parameter_value then null;end;
   begin perform public.cw_update_my_profile(a,'Bad edit','NOPE',null,false);raise exception 'invalid mbti accepted';exception when invalid_parameter_value then null;end;
-  begin perform public.cw_update_my_profile(a,'Bad edit','ISTJ',current_date+1,false);raise exception 'future date accepted';exception when invalid_parameter_value then null;end;
+  begin perform public.cw_update_my_profile(a,'Bad edit','ISTJ',(now() at time zone 'Asia/Seoul')::date+1,false);raise exception 'future date accepted';exception when invalid_parameter_value then null;end;
   p:=public.cw_get_my_profile(a);
   if p->>'full_name'<>'Updated A' or p->>'mbti'<>'ENFP' or p->>'birth_date'<>'2000-02-29' or (p->>'share_with_class')::boolean is not true then raise exception 'partial save on failure';end if;
   perform public.cw_update_my_profile(a,'Updated A','',null,false);

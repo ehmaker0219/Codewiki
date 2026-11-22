@@ -22,7 +22,7 @@
     'Header Line과 테이블 본문 구분': {input:'Header Line에 SCARR 행(LH / Lufthansa)을 담아 한 행 추가', expected:'1, 0이 순서대로 출력됩니다. 첫 CLEAR는 Header Line만, 두 번째 CLEAR는 본문을 비웁니다.', requirements:'SCARR 교육용 테이블이 있고 Header Line을 허용하는 클래식 실행 가능 리포트에서 기존 문법 학습용으로만 사용하세요. 클래스 내부나 ABAP Cloud용 예제가 아닙니다.'},
     'SELECT-OPTIONS와 cl_demo_output 출력': sqlExample('so_carr에 항공사 범위 입력 또는 비워 두기', '선택 조건에 맞는 SPFLI 노선 목록이 cl_demo_output 화면에 표 형태로 출력됩니다. 조건을 비워 두면 전체 노선이 출력됩니다.'),
     'Classic ABAP Report 이벤트 흐름': sqlExample('Selection Screen 초기값 LH 그대로 실행하거나 다른 항공사 범위 입력', '초기 화면에 LH가 미리 채워지며, 조건을 모두 비우고 실행하면 오류 메시지가 표시됩니다. 유효한 조건으로 실행하면 SPFLI 노선 목록이 cl_demo_output으로 출력됩니다.'),
-    '고객별 예약 건수 조회 리포트 사고 흐름 전체 예제': {input:'so_id에 고객 ID 범위 입력(또는 비워 두기), so_date에 예약일 범위 입력', expected:'SCUSTOM 고객 목록에 기간 내 SBOOK 예약 건수(bookcnt)와 10건 초과 여부 등급(P/G)이 합쳐져 cl_demo_output 표로 출력됩니다.', requirements:'Standard ABAP 7.52 기준입니다. SCUSTOM·SBOOK 교육용 테이블이 있는 시스템에서 실행하세요. 실제 출력은 현재 클라이언트의 데이터와 예약일 범위에 따라 달라집니다.'},
+    '고객별 예약 건수 조회 리포트 사고 흐름 전체 예제': {input:'so_id에 고객 ID 범위 입력(또는 비워 두기), so_date에 예약일 범위 입력(초기값: 올해 1월 1일~오늘)', expected:'so_date를 비우고 실행하면 AT SELECTION-SCREEN에서 오류 메시지가 표시됩니다. 유효한 기간으로 실행하면 SCUSTOM 고객 목록에 기간 내 SBOOK 예약 건수(bookcnt)와 등급(10건 초과 P, 5~10건 G, 4건 이하 S)이 합쳐져 cl_demo_output 표로 출력됩니다.', requirements:'Standard ABAP 7.52 기준입니다. SCUSTOM·SBOOK 교육용 테이블이 있는 시스템에서 실행하세요. 실제 출력은 현재 클라이언트의 데이터와 예약일 범위에 따라 달라집니다.'},
     'TYPE · LIKE · VALUE · CLEAR': {input:'별도 입력 없음', expected:'0, 17, 20이 각각 한 줄씩 출력됩니다.'},
     '선택 화면에서 숫자 입력받기': {input:'p_count = 3', expected:'입력: 3 / 두 배: 6', requirements:'인라인 DATA 선언을 지원하는 Standard ABAP 환경에서 실행하세요.'},
     '문자와 숫자의 초기값': {input:'코드의 초기값 그대로', expected:'정수 초기값은 0 / 0000이 출력됩니다. lv_text는 공백 5자리로 초기화됩니다.'},

@@ -1059,6 +1059,12 @@ code, pre, .mono {
 .block-p code,
 .callout-body code,
 .compare-point-list code,
+.flow-step-desc code,
+.nested-title code,
+.nested-desc code,
+.nested-leaf-name code,
+.nested-leaf-sub code,
+.nested-leaf-sequence code,
 .practice-step-body code,
 .toss-table td code {
   font-size: 12.5px;
@@ -1366,8 +1372,8 @@ body.quiz-mode .quiz-token.revealed {
 }
 
 .nested-box {
-  border-radius: 22px;
-  padding: 20px 22px;
+  border-radius: 20px;
+  padding: 15px 18px;
   transition: transform 0.18s var(--tds-spring), box-shadow 0.18s var(--tds-spring);
 }
 
@@ -1380,16 +1386,33 @@ body.quiz-mode .quiz-token.revealed {
   background: var(--bg-card);
   border: 1.5px solid var(--border-subtle);
   box-shadow: var(--shadow-card);
-  margin-top: 14px;
-  border-radius: 18px;
+  margin-top: 10px;
+  border-radius: 16px;
+  padding: 14px 16px;
 }
 
 .nested-box.depth-2 {
   background: var(--bg-subtle);
-  border: 1px solid var(--border-hairline);
-  margin-top: 12px;
+  border: 1.5px solid var(--border-subtle);
+  margin-top: 10px;
   border-radius: 14px;
-  padding: 14px 16px;
+  padding: 13px 15px;
+}
+
+.nested-box.depth-3 {
+  background: var(--toss-green-soft);
+  border: 1.5px dashed rgba(0, 180, 147, 0.45);
+  margin-top: 10px;
+  border-radius: 12px;
+  padding: 12px 14px;
+}
+
+.nested-box.depth-4 {
+  background: var(--toss-amber-soft);
+  border: 1.5px solid rgba(245, 159, 0, 0.45);
+  margin-top: 10px;
+  border-radius: 10px;
+  padding: 11px 14px;
 }
 
 .nested-header {
@@ -1403,7 +1426,10 @@ body.quiz-mode .quiz-token.revealed {
 .nested-title-group {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 8px;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .nested-badge {
@@ -1415,14 +1441,24 @@ body.quiz-mode .quiz-token.revealed {
   color: #fff;
 }
 
-.nested-box.depth-1 .nested-badge {
+.nested-box.depth-1 > .nested-header .nested-badge {
   background: var(--toss-green-soft);
   color: var(--toss-green);
 }
 
-.nested-box.depth-2 .nested-badge {
+.nested-box.depth-2 > .nested-header .nested-badge {
   background: var(--bg-chip);
   color: var(--text-sub);
+}
+
+.nested-box.depth-3 > .nested-header .nested-badge {
+  background: var(--toss-green);
+  color: #fff;
+}
+
+.nested-box.depth-4 > .nested-header .nested-badge {
+  background: var(--toss-amber);
+  color: #fff;
 }
 
 .nested-title {
@@ -1439,24 +1475,34 @@ body.quiz-mode .quiz-token.revealed {
 
 .nested-items-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(170px, 100%), 1fr));
   gap: 10px;
-  margin-top: 14px;
+  margin-top: 12px;
+}
+
+.nested-items-grid.layout-wide {
+  grid-template-columns: repeat(auto-fit, minmax(min(310px, 100%), 1fr));
+}
+
+.nested-items-grid.layout-stack {
+  grid-template-columns: 1fr;
 }
 
 .nested-leaf-chip {
-  background: var(--bg-subtle);
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
   border-radius: 12px;
-  padding: 12px 14px;
+  padding: 11px 13px;
   display: flex;
   flex-direction: column;
-  gap: 3px;
-  transition: transform 0.14s var(--tds-spring), background 0.14s;
+  gap: 5px;
+  min-width: 0;
+  transition: transform 0.14s var(--tds-spring), background 0.14s, border-color 0.14s;
 }
 
 .nested-leaf-chip:hover {
-  transform: translateY(-2px);
-  background: var(--toss-blue-soft);
+  transform: translateY(-1px);
+  border-color: rgba(49, 130, 246, 0.35);
 }
 
 .nested-leaf-name {
@@ -1468,6 +1514,69 @@ body.quiz-mode .quiz-token.revealed {
 .nested-leaf-sub {
   font-size: 11.5px;
   color: var(--text-muted);
+}
+
+.nested-leaf-sequence {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 2px 0;
+  padding: 0;
+  list-style: none;
+  font-size: 12px;
+}
+
+.nested-leaf-sequence li {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.nested-leaf-sequence li + li::before {
+  content: '→';
+  color: var(--text-sub);
+}
+
+.nested-leaf-sequence code {
+  font-size: 12px;
+  padding: 2px 5px;
+  white-space: nowrap;
+}
+
+.nested-abap-pre {
+  margin: 7px 0 0;
+  padding: 7px 10px;
+  background: #ffffff;
+  color: #141414;
+  border: 1px solid #9aafbf;
+  border-radius: 5px;
+  overflow-x: auto;
+  box-shadow: inset 1px 1px #fff;
+}
+
+.nested-abap-pre code {
+  display: block;
+  min-width: max-content;
+  font: 11.5px/1.52 'Consolas', 'JetBrains Mono', 'Courier New', monospace;
+  background: transparent;
+  color: inherit;
+  padding: 0;
+  white-space: pre;
+}
+
+.nested-abap-pre .sap-code-line {
+  display: block;
+  min-width: max-content;
+}
+
+.nested-abap-pre .sap-code-source {
+  padding-right: 4px;
+  white-space: pre;
+}
+
+.nested-title code,
+.nested-leaf-name code {
+  white-space: nowrap;
 }
 
 /* 블록 7: 위키독스 스타일 '실습 따라하기 (practice)' 스텝 블록 */
@@ -2556,5 +2665,778 @@ body.track-selecting .app-layout {
   }
   .docked-sidebar {
     box-shadow: var(--shadow-float);
+  }
+}
+
+/* ==========================================================================
+   ABAP Deck Oven Visualizer (오븐 · 트레이 · Data Element · Data Type · Data)
+   ========================================================================== */
+.block-widget-slot:has(.oven-wrap) {
+  background: transparent;
+  padding: 0;
+  margin: 14px 0 20px;
+}
+
+.oven-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.oven-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.oven-step-btn {
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-subtle);
+  color: var(--text-sub);
+  border-radius: 999px;
+  padding: 6px 13px;
+  font-size: 12.5px;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.16s var(--tds-spring);
+}
+
+.oven-step-btn:hover {
+  background: var(--toss-blue-soft);
+  color: var(--toss-blue);
+  border-color: rgba(49, 130, 246, 0.35);
+}
+
+.oven-step-btn.active {
+  background: var(--toss-blue);
+  color: #fff;
+  border-color: var(--toss-blue);
+}
+
+.oven-stage {
+  perspective: 1200px;
+  padding: 6px 4px 10px;
+}
+
+.oven-shell {
+  position: relative;
+  background:
+    repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.018) 0 2px, transparent 2px 5px),
+    linear-gradient(180deg, #434c5c 0%, #2a313e 14%, #1f2530 78%, #171b24 100%);
+  border: 2px solid #525d70;
+  border-top-color: #778399;
+  border-bottom: 8px solid #10141c;
+  border-radius: 22px 22px 18px 18px;
+  padding: 14px 18px 16px;
+  box-shadow:
+    0 24px 44px -14px rgba(10, 15, 28, 0.42),
+    0 6px 14px rgba(10, 15, 28, 0.25),
+    inset 0 2px 1px rgba(255, 255, 255, 0.26),
+    inset 0 -3px 6px rgba(0, 0, 0, 0.45);
+  color: #f2f4f6;
+}
+
+.oven-panel {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 4px 6px 13px;
+  border-bottom: 1.5px solid rgba(0, 0, 0, 0.45);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.12);
+}
+
+.oven-panel-left {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.oven-panel-title {
+  font-size: 14.5px;
+  font-weight: 800;
+  color: #fff;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.45);
+}
+
+.oven-code-chip {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.34);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #e5e8eb;
+}
+
+.oven-code-chip.dark {
+  background: rgba(25, 31, 40, 0.08);
+  border-color: rgba(25, 31, 40, 0.1);
+  color: #333d4b;
+}
+
+:root[data-theme="dark"] .oven-code-chip.dark {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.14);
+  color: #d1d6db;
+}
+
+.oven-panel-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.oven-vents {
+  display: inline-flex;
+  gap: 3px;
+  margin-right: 2px;
+}
+
+.oven-vents i {
+  display: block;
+  width: 3px;
+  height: 15px;
+  border-radius: 2px;
+  background: #12161e;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.9), 0 1px 0 rgba(255, 255, 255, 0.14);
+}
+
+.oven-led {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  color: #ffcf70;
+  background: linear-gradient(180deg, #0d1016 0%, #171c26 100%);
+  border: 1.5px solid #0a0d12;
+  border-bottom-color: rgba(255, 255, 255, 0.18);
+  border-radius: 7px;
+  padding: 4px 10px;
+  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.85), 0 0 10px rgba(255, 176, 32, 0.14);
+}
+
+.oven-led-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #ffb020;
+  box-shadow: 0 0 8px #ffb020, 0 0 14px rgba(255, 140, 0, 0.8);
+}
+
+.oven-knob {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 32% 28%, #8b97ab 0%, #4b5566 42%, #232934 100%);
+  border: 2px solid #161b24;
+  box-shadow:
+    0 4px 6px rgba(0, 0, 0, 0.55),
+    inset 0 1.5px 1px rgba(255, 255, 255, 0.4),
+    0 0 0 2px rgba(255, 255, 255, 0.08);
+  position: relative;
+  display: inline-block;
+}
+
+.oven-knob::after {
+  content: "";
+  position: absolute;
+  top: 3px;
+  left: 50%;
+  width: 2.5px;
+  height: 8px;
+  background: #ffcf70;
+  box-shadow: 0 0 4px rgba(255, 176, 32, 0.8);
+  transform: translateX(-50%) rotate(32deg);
+  transform-origin: bottom center;
+  border-radius: 2px;
+}
+
+.oven-knob.knob-temp::after {
+  transform: translateX(-50%) rotate(-40deg);
+}
+
+.oven-window-frame {
+  margin-top: 13px;
+  padding: 8px;
+  border-radius: 16px;
+  background: linear-gradient(180deg, #13171f 0%, #262d3a 100%);
+  border: 1.5px solid rgba(255, 255, 255, 0.1);
+  box-shadow:
+    inset 0 4px 10px rgba(0, 0, 0, 0.75),
+    0 2px 0 rgba(255, 255, 255, 0.08);
+}
+
+.oven-cavity {
+  position: relative;
+  overflow: visible;
+  background:
+    radial-gradient(ellipse 85% 42% at 50% 0%, rgba(255, 128, 36, 0.42) 0%, rgba(255, 176, 32, 0.14) 40%, transparent 72%),
+    linear-gradient(90deg, rgba(0, 0, 0, 0.62) 0%, rgba(26, 20, 16, 0.25) 10%, rgba(30, 23, 18, 0.12) 50%, rgba(26, 20, 16, 0.25) 90%, rgba(0, 0, 0, 0.62) 100%),
+    linear-gradient(180deg, #271b14 0%, #191518 65%, #111319 100%);
+  border: 2px solid #0d1017;
+  border-radius: 11px;
+  padding: 20px 16px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 11px;
+  box-shadow:
+    inset 0 22px 34px rgba(0, 0, 0, 0.7),
+    inset 16px 0 24px rgba(0, 0, 0, 0.5),
+    inset -16px 0 24px rgba(0, 0, 0, 0.5),
+    inset 0 -14px 24px rgba(0, 0, 0, 0.65);
+}
+
+/* 3D 오븐 상단 열선 (발열 코일) */
+.oven-heater {
+  position: absolute;
+  top: 5px;
+  left: 16%;
+  right: 16%;
+  height: 9px;
+  display: flex;
+  gap: 14px;
+  pointer-events: none;
+}
+
+.oven-heater span {
+  flex: 1;
+  height: 4px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #7c2d12, #ff6b2b 25%, #ffd180 50%, #ff6b2b 75%, #7c2d12);
+  box-shadow: 0 0 12px rgba(255, 107, 43, 0.85), 0 4px 18px rgba(255, 160, 40, 0.5);
+}
+
+/* 오븐 유리 반사광 */
+.oven-glass-glare {
+  position: absolute;
+  inset: 0;
+  border-radius: 9px;
+  background: linear-gradient(122deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 26%, transparent 27%, transparent 100%);
+  pointer-events: none;
+}
+
+.oven-rack {
+  position: relative;
+}
+
+/* 안쪽 선반(1단·3단) — 원근감 있게 약간 축소 + 철망 랙 레일 표현 */
+.oven-rack-dim {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 12px;
+  margin: 0 10px;
+  border-radius: 8px;
+  background:
+    repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.07) 0 1px, transparent 1px 22px),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.07) 0%, rgba(0, 0, 0, 0.32) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-bottom: 4px solid #495264;
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.45);
+  transform: perspective(900px) rotateX(8deg) scale(0.97);
+  opacity: 0.72;
+}
+
+.oven-rack-num {
+  font-size: 11px;
+  font-weight: 800;
+  padding: 2px 7px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.14);
+  color: #e5e8eb;
+  flex-shrink: 0;
+}
+
+.oven-rack-num.active {
+  background: linear-gradient(180deg, #ffca57 0%, #f59f00 100%);
+  color: #191f28;
+  box-shadow: 0 2px 6px rgba(245, 159, 0, 0.45);
+}
+
+.oven-rack-line {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  flex: 1;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 12px;
+  color: #e5e8eb;
+}
+
+.oven-rack-active {
+  background: linear-gradient(180deg, rgba(255, 176, 32, 0.12) 0%, rgba(0, 0, 0, 0.28) 100%);
+  border: 1px dashed rgba(255, 190, 80, 0.5);
+  border-left: 4px solid #6b7684;
+  border-right: 4px solid #6b7684;
+  border-radius: 13px;
+  padding: 10px 12px 14px;
+  box-shadow: inset 0 6px 14px rgba(0, 0, 0, 0.4);
+}
+
+.oven-rack-slot-head {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.oven-rack-status {
+  font-size: 12px;
+  font-weight: 700;
+  color: #ffd584;
+}
+
+.oven-rack-live {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 11px;
+  color: #e5e8eb;
+  background: rgba(0, 0, 0, 0.45);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 7px;
+  padding: 3px 9px;
+  box-shadow: inset 0 1px 4px rgba(0, 0, 0, 0.6);
+}
+
+.oven-rack-live span.is-saved {
+  color: #5eead4;
+  font-weight: 800;
+  text-shadow: 0 0 8px rgba(94, 234, 212, 0.5);
+}
+
+.oven-tray-deck {
+  perspective: 960px;
+  padding: 2px 10px 4px;
+}
+
+/* 3D 금속 오븐 트레이 — 실제 두께(앞면 립), 양쪽 손잡이, Z축 돌출 그림자 */
+.oven-tray {
+  position: relative;
+  background: linear-gradient(180deg, #f3f6fa 0%, #e1e6ee 52%, #cfd6e2 100%);
+  color: #191f28;
+  border: 2px solid #9aa4b2;
+  border-top-color: #ffffff;
+  border-bottom: 8px solid #6e7888;
+  border-radius: 13px 13px 11px 11px;
+  padding: 12px 14px 13px;
+  box-shadow:
+    0 24px 34px -8px rgba(0, 0, 0, 0.68),
+    0 10px 18px rgba(0, 0, 0, 0.35),
+    inset 0 2px 1px rgba(255, 255, 255, 0.9),
+    inset 0 -2px 4px rgba(78, 89, 104, 0.28);
+  transform-style: preserve-3d;
+  transform: rotateX(3.5deg) translateY(3px) scale(1.03);
+  transition: transform 0.38s var(--tds-spring), box-shadow 0.38s var(--tds-spring), border-color 0.24s;
+}
+
+:root[data-theme="dark"] .oven-tray {
+  background: linear-gradient(180deg, #2d3442 0%, #232936 55%, #1c212c 100%);
+  color: var(--text-strong);
+  border-color: #556075;
+  border-top-color: #77849c;
+  border-bottom-color: #12161f;
+  box-shadow:
+    0 24px 36px -8px rgba(0, 0, 0, 0.78),
+    inset 0 1.5px 1px rgba(255, 255, 255, 0.18),
+    inset 0 -2px 4px rgba(0, 0, 0, 0.45);
+}
+
+/* 양쪽 3D 트레이 손잡이 */
+.oven-tray-grip {
+  position: absolute;
+  top: 50%;
+  width: 10px;
+  height: 44px;
+  transform: translateY(-50%);
+  background: linear-gradient(180deg, #d8dee8 0%, #8b95a6 55%, #5b6575 100%);
+  border: 1.5px solid #4e5968;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.7);
+}
+
+.oven-tray-grip.grip-left {
+  left: -10px;
+  border-radius: 6px 0 0 6px;
+  border-right: none;
+}
+
+.oven-tray-grip.grip-right {
+  right: -10px;
+  border-radius: 0 6px 6px 0;
+  border-left: none;
+}
+
+/* MODIFY 시 오븐 안쪽 2단으로 쏙 밀려 들어가는 3D 전환 */
+.oven-wrap[data-oven-mode="inserted"] .oven-tray {
+  transform: rotateX(0deg) translateY(-2px) scale(0.965);
+  border-color: var(--toss-green);
+  border-bottom-color: #00826a;
+  box-shadow:
+    0 0 0 3px rgba(0, 180, 147, 0.38),
+    0 8px 14px rgba(0, 0, 0, 0.35),
+    inset 0 1px 1px rgba(255, 255, 255, 0.5);
+}
+
+.oven-tray-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 11px;
+}
+
+.oven-tray-title-group {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+
+.oven-tray-title {
+  font-size: 14px;
+  font-weight: 800;
+  color: inherit;
+}
+
+.oven-tray-state {
+  font-size: 11.5px;
+  font-weight: 800;
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: var(--toss-blue-soft);
+  color: var(--toss-blue);
+}
+
+.oven-wrap[data-oven-mode="inserted"] .oven-tray-state {
+  background: var(--toss-green-soft);
+  color: var(--toss-green);
+}
+
+.oven-wrap[data-oven-mode="cleared"] .oven-tray-state {
+  background: rgba(107, 118, 132, 0.16);
+  color: var(--text-sub);
+}
+
+.oven-molds {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 9px;
+}
+
+/* 트레이에 움푹 패인 3D 몰드 칸 (DATA ELEMENT) */
+.oven-mold {
+  background: linear-gradient(180deg, #dde3ec 0%, #eef2f7 100%);
+  border: 1.5px solid #aeb8c7;
+  border-top-color: #8b95a5;
+  border-radius: 12px;
+  padding: 9px;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  box-shadow:
+    inset 0 4px 9px rgba(25, 31, 40, 0.16),
+    0 1px 0 rgba(255, 255, 255, 0.85);
+  transition: border-color 0.2s, box-shadow 0.2s, transform 0.2s;
+}
+
+:root[data-theme="dark"] .oven-mold {
+  background: linear-gradient(180deg, #171b24 0%, #1e2430 100%);
+  border-color: #3a4354;
+  border-top-color: #10141c;
+  box-shadow:
+    inset 0 5px 10px rgba(0, 0, 0, 0.55),
+    0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.oven-mold.is-updated {
+  border-color: var(--toss-green);
+  box-shadow:
+    inset 0 3px 7px rgba(0, 180, 147, 0.2),
+    0 0 0 2.5px rgba(0, 180, 147, 0.28);
+}
+
+.oven-mold-el {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.oven-mold-el strong {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 13px;
+  color: var(--text-strong);
+}
+
+/* 몰드 내부 형틀 (DATA TYPE) */
+.oven-mold-type {
+  background: var(--toss-green-soft);
+  border: 1.5px dashed rgba(0, 180, 147, 0.58);
+  border-radius: 9px;
+  padding: 7px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  box-shadow: inset 0 2px 5px rgba(0, 120, 96, 0.12);
+}
+
+.oven-type-name {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--text-body);
+}
+
+/* 3D 볼록하게 구워진 재료/반죽 덩어리 (DATA) */
+.oven-mold-data {
+  background: linear-gradient(180deg, #fff3c4 0%, #ffd670 65%, #f5b42a 100%);
+  border: 1px solid #d98a00;
+  border-top-color: #fff9e6;
+  border-bottom: 3.5px solid #b86e00;
+  border-radius: 9px;
+  padding: 6px 7px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  box-shadow:
+    0 4px 8px rgba(184, 110, 0, 0.28),
+    inset 0 1.5px 1px rgba(255, 255, 255, 0.78);
+  transition: all 0.24s var(--tds-spring);
+}
+
+:root[data-theme="dark"] .oven-mold-data {
+  background: linear-gradient(180deg, #754e0e 0%, #5c3b08 70%, #442b05 100%);
+  border-color: #d99116;
+  border-top-color: #f6b94c;
+  border-bottom-color: #2b1a02;
+  box-shadow:
+    0 4px 10px rgba(0, 0, 0, 0.45),
+    inset 0 1px 1px rgba(255, 224, 150, 0.25);
+}
+
+/* CLEAR 시 텅 비워진 오목한 빈 틀 */
+.oven-mold.is-empty .oven-mold-data {
+  background: var(--bg-card);
+  border: 1.5px dotted var(--border-subtle);
+  border-bottom-width: 1.5px;
+  box-shadow: inset 0 3px 6px rgba(0, 0, 0, 0.12);
+  opacity: 0.72;
+}
+
+.oven-data-val {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 12.5px;
+  font-weight: 800;
+  color: #3d2400;
+}
+
+:root[data-theme="dark"] .oven-data-val {
+  color: #fff3c4;
+}
+
+.oven-mold.is-empty .oven-data-val {
+  color: var(--text-muted);
+}
+
+.oven-badge,
+.oven-mini-tag {
+  display: inline-block;
+  width: fit-content;
+  font-weight: 800;
+  border-radius: 999px;
+  line-height: 1.2;
+}
+
+.oven-badge {
+  font-size: 10.5px;
+  padding: 3px 8px;
+}
+
+.oven-mini-tag {
+  font-size: 9.5px;
+  padding: 2px 6px;
+  letter-spacing: 0.02em;
+}
+
+.badge-table {
+  background: var(--toss-blue);
+  color: #fff;
+  box-shadow: 0 2px 6px rgba(49, 130, 246, 0.4);
+}
+
+.badge-struct {
+  background: #333d4b;
+  color: #fff;
+}
+
+:root[data-theme="dark"] .badge-struct {
+  background: #4e5968;
+}
+
+.tag-el {
+  background: var(--bg-chip);
+  color: var(--text-sub);
+}
+
+.tag-type {
+  background: var(--toss-green);
+  color: #fff;
+}
+
+.tag-data {
+  background: #c26f00;
+  color: #fff;
+}
+
+/* 3D 오븐 도어 크롬 손잡이 + 양쪽 마운트 브래킷 */
+.oven-door-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding-top: 14px;
+}
+
+.oven-handle-mount {
+  width: 12px;
+  height: 14px;
+  border-radius: 3px;
+  background: linear-gradient(180deg, #5d6778 0%, #242a35 100%);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.55);
+}
+
+.oven-handle {
+  width: min(260px, 60%);
+  height: 10px;
+  margin: 0 -2px;
+  border-radius: 999px;
+  background: linear-gradient(180deg, #f3f6fa 0%, #c0c8d4 42%, #768091 75%, #464f5e 100%);
+  box-shadow:
+    0 6px 12px rgba(0, 0, 0, 0.55),
+    inset 0 1.5px 1px rgba(255, 255, 255, 0.9);
+  position: relative;
+  z-index: 1;
+}
+
+/* 3D 오븐 받침 발 + 바닥 그림자 */
+.oven-feet {
+  display: flex;
+  justify-content: space-between;
+  padding: 0 36px;
+}
+
+.oven-feet span {
+  width: 34px;
+  height: 9px;
+  border-radius: 0 0 8px 8px;
+  background: linear-gradient(180deg, #252b36 0%, #0e1118 100%);
+  box-shadow: 0 6px 10px rgba(0, 0, 0, 0.35);
+}
+
+.oven-caption {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-body);
+  background: var(--bg-subtle);
+  border-radius: 10px;
+  padding: 10px 13px;
+  line-height: 1.55;
+}
+
+.oven-legend {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-sub);
+}
+
+.oven-legend > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.oven-legend-sep {
+  color: var(--text-muted);
+  font-weight: 800;
+}
+
+@media (max-width: 720px) {
+  .oven-shell {
+    padding: 12px 10px;
+  }
+  .oven-window-frame {
+    padding: 5px;
+  }
+  .oven-cavity {
+    padding: 18px 8px 10px;
+  }
+  .oven-rack-dim {
+    margin: 0 2px;
+    padding: 6px 7px;
+  }
+  .oven-rack-active {
+    border-left-width: 2px;
+    border-right-width: 2px;
+    padding: 8px 6px 10px;
+  }
+  .oven-tray-deck {
+    padding: 2px 0 4px;
+  }
+  .oven-tray {
+    padding: 10px 8px;
+    transform: rotateX(3.5deg) translateY(3px);
+  }
+  .oven-molds {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .oven-mold,
+  .oven-mold-type,
+  .oven-mold-data,
+  .oven-rack-line,
+  .oven-panel-left,
+  .oven-tray-title-group {
+    min-width: 0;
+  }
+  .oven-code-chip,
+  .oven-mold-el strong,
+  .oven-type-name,
+  .oven-data-val,
+  .oven-rack-line > span {
+    max-width: 100%;
+    overflow-wrap: anywhere;
+  }
+  .oven-rack-live,
+  .oven-legend > span {
+    flex-wrap: wrap;
+    max-width: 100%;
+    min-width: 0;
+  }
+  .oven-rack-line {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    font-size: 11px;
+  }
+  .oven-tray-grip {
+    display: none;
+  }
+}
+
+@media (max-width: 520px) {
+  .oven-molds {
+    grid-template-columns: minmax(0, 1fr);
   }
 }

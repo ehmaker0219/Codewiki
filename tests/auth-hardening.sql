@@ -35,7 +35,7 @@ begin
   assert public.cw_get_my_birthday((r->>'session_token')::uuid)->>'birth_date'='2000-01-01','birthday missing';
   r:=public.cw_signup_with_roster('valid-roster','Long test phrase 42','테스트학생','6반','',null,false,1);
   assert r->>'status'='pending','valid class roster failed';
-  r:=public.cw_signup_with_roster('invalid-birthday','Long test phrase 42','Test','2반','',current_date+1,false,null);
+  r:=public.cw_signup_with_roster('invalid-birthday','Long test phrase 42','Test','2반','',(now() at time zone 'Asia/Seoul')::date+1,false,null);
   assert r->>'code'='CW_INVALID_INPUT','future birthday accepted';
   r:=public.cw_signup('legacy-roster-bypass','Long test phrase 42','테스트학생','6반','');
   assert r->>'code'='CW_INVALID_INPUT','legacy bypassed roster';

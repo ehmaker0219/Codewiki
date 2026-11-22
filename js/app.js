@@ -211,7 +211,7 @@
       const walk = block => {
         if (!block || typeof block !== "object" || block.type === "code") return;
         for (const [key, value] of Object.entries(block)) {
-          if (["type", "title", "id", "widget", "widgetId", "code", "label"].includes(key)) continue;
+          if (["type", "title", "id", "widget", "widgetId", "code", "snippet", "label", "layout"].includes(key)) continue;
           if (typeof value === "string") values.push(value);
           else if (Array.isArray(value)) value.forEach(item => {
             if (typeof item === "string") values.push(item);
@@ -359,9 +359,9 @@
 
   }
 
-  function renderEditorCode(raw, abap = true) {
+  function renderEditorCode(raw, abap = true, numbered = true) {
     const escape = value => value.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-    const keywords = new Set(('REPORT DATA TYPES TYPE LIKE VALUE CONSTANTS CLEAR WRITE PARAMETERS SELECT-OPTIONS FOR IN INITIALIZATION TABLES START-OF-SELECTION AT SELECTION-SCREEN IF ELSE ELSEIF ENDIF DO TIMES ENDDO WHILE ENDWHILE LOOP AT ENDLOOP EXIT CONTINUE MOD DIV IS NOT INITIAL AND OR BETWEEN CA CS NE EQ CONCATENATE INTO SEPARATED BY FORM ENDFORM PERFORM USING CHANGING SELECT FROM WHERE ENDSELECT CALL FUNCTION METHOD CLASS DEFINITION IMPLEMENTATION PUBLIC PRIVATE PROTECTED SECTION METHODS CLASS-METHODS ENDMETHOD ENDCLASS CREATE OBJECT REF TO IMPORTING EXPORTING RETURNING EXCEPTIONS TRY CATCH ENDTRY MESSAGE WITH LENGTH DECIMALS DEFAULT MOVE TRANSLATE CONDENSE ULINE').split(' '));
+    const keywords = new Set(('REPORT DATA TYPES TYPE LIKE VALUE CONSTANTS CLEAR WRITE PARAMETERS SELECT-OPTIONS FOR IN INITIALIZATION TABLES START-OF-SELECTION END-OF-SELECTION AT SELECTION-SCREEN OUTPUT BEGIN OF END TABLE LINE STANDARD SORTED HASHED KEY UNIQUE NON-UNIQUE APPEND INSERT READ MODIFY DELETE SORT ASCENDING DESCENDING CORRESPONDING FIELDS GROUP AS COUNT SUM AVG MIN MAX ORDER HAVING JOIN LEFT OUTER INNER ON IF ELSE ELSEIF ENDIF DO TIMES ENDDO WHILE ENDWHILE LOOP AT ENDLOOP EXIT CONTINUE MOD DIV IS NOT INITIAL AND OR BETWEEN CA CS NE EQ CONCATENATE INTO SEPARATED BY FORM ENDFORM PERFORM USING CHANGING SELECT FROM WHERE ENDSELECT CALL FUNCTION METHOD CLASS DEFINITION IMPLEMENTATION PUBLIC PRIVATE PROTECTED SECTION METHODS CLASS-METHODS ENDMETHOD ENDCLASS CREATE OBJECT REF TO IMPORTING EXPORTING RETURNING EXCEPTIONS TRY CATCH ENDTRY MESSAGE WITH LENGTH DECIMALS DEFAULT MOVE TRANSLATE CONDENSE ULINE').split(' '));
     return String(raw).split('\n').map((line,i) => {
       let body = escape(line);
       if (abap) {
@@ -371,7 +371,9 @@
           return kind ? '<span class="sap-code-' + kind + '">' + escape(token) + '</span>' : escape(token);
         });
       }
-      return '<span class="sap-code-line"><span class="sap-code-number" aria-hidden="true">' + (i+1) + '</span><span class="sap-code-source">' + body + '</span></span>';
+      return numbered
+        ? '<span class="sap-code-line"><span class="sap-code-number" aria-hidden="true">' + (i+1) + '</span><span class="sap-code-source">' + body + '</span></span>'
+        : '<span class="sap-code-line"><span class="sap-code-source">' + body + '</span></span>';
     }).join('\n');
   }
 
@@ -499,25 +501,28 @@
         const renderLayer = (node, depth) => {
           if (!node) return "";
           return `
-            <div class="nested-box depth-${Math.min(depth, 2)}">
+            <div class="nested-box depth-${Math.min(depth, 4)}">
               <div class="nested-header">
                 <div class="nested-title-group">
                   ${node.badge ? `<span class="nested-badge">${parseInline(node.badge)}</span>` : ""}
                   <span class="nested-title">${parseInline(node.title)}</span>
                 </div>
-                ${node.code ? `<span class="tcode-pill-badge">${node.code}</span>` : ""}
+                ${node.code ? `<span class="tcode-pill-badge">${window.CodeWikiLearning.escape(node.code)}</span>` : ""}
               </div>
               ${node.desc ? `<div class="nested-desc">${parseInline(node.desc)}</div>` : ""}
+              ${node.snippet ? `<pre class="nested-abap-pre"><code>${renderEditorCode(node.snippet, true, false)}</code></pre>` : ""}
               ${
                 node.items && node.items.length > 0
                   ? `
-                <div class="nested-items-grid">
+                <div class="nested-items-grid${node.layout === "stack" ? " layout-stack" : node.layout === "wide" ? " layout-wide" : ""}">
                   ${node.items
                     .map(
                       it => `
                     <div class="nested-leaf-chip">
                       <span class="nested-leaf-name">${parseInline(it.name)}</span>
+                      ${it.sequence?.length ? `<ol class="nested-leaf-sequence" aria-label="선언 순서">${it.sequence.map(value => `<li><code>${window.CodeWikiLearning.escape(value)}</code></li>`).join("")}</ol>` : ""}
                       ${it.sub ? `<span class="nested-leaf-sub">${parseInline(it.sub)}</span>` : ""}
+                      ${it.snippet ? `<pre class="nested-abap-pre"><code>${renderEditorCode(it.snippet, true, false)}</code></pre>` : ""}
                     </div>
                   `
                     )
@@ -649,7 +654,7 @@
                   (sec, sIdx) => `
           <section class="doc-section" id="sec-${sIdx + 1}">
             <h2 class="doc-sec-title">
-              <span class="doc-sec-num">${sIdx + 1}.</span>
+              ${doc.hideSectionNumbers ? "" : `<span class="doc-sec-num">${sIdx + 1}.</span>`}
               <span>${esc(sec.title)}</span>
             </h2>
             ${!(sec.blocks || []).length ? '<p class="pending-section-note">준비 중 · 본문을 작성하고 있습니다.</p>' : ""}
@@ -739,7 +744,7 @@
     });
 
     // 우측 보조 카드: 실제 내용이 있는 카드만 표시하고, 하나도 없으면 우측 컬럼 전체 숨김!
-    const hasToc = sections.length >= 2;
+    const hasToc = !doc.hideToc && sections.length >= 2;
     const specEntries = Object.entries(doc.specs || {});
     const hasSpecs = specEntries.length > 0;
     const backlinks = computeBacklinks(doc.id);
@@ -760,7 +765,7 @@
         .map(
           (sec, sIdx) => `
           <a href="#sec-${sIdx + 1}" class="toc-link" data-target="sec-${sIdx + 1}">
-            ${sIdx + 1}. ${esc(sec.title)}
+            ${doc.hideSectionNumbers ? "" : `${sIdx + 1}. `}${esc(sec.title)}
           </a>
         `
         )
