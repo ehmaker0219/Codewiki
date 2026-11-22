@@ -299,6 +299,7 @@ code, pre, .mono {
 }
 .admin-workspace #brandTrackToggle,
 .admin-workspace #sbHomeItem,
+.admin-workspace #sbThinkingFlowItem,
 .admin-workspace #mealMenuGroup,
 .admin-workspace #openPracticeBtn { display:none; }
 .admin-workspace #workspaceNavigation { gap:24px; }
@@ -1055,7 +1056,11 @@ code, pre, .mono {
   line-height: 1.72;
 }
 
-.block-p code {
+.block-p code,
+.callout-body code,
+.compare-point-list code,
+.practice-step-body code,
+.toss-table td code {
   font-size: 12.5px;
   background: var(--bg-chip);
   color: var(--toss-blue);

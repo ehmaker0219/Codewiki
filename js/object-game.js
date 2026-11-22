@@ -96,7 +96,7 @@
     host.hidden=!open;shell.classList.toggle('object-game-hidden',open);trigger.classList.toggle('active',open);
     if(!open){epoch++;return;}
     window.CodeWikiBoard?.closeIfActive();
-    document.querySelectorAll('#sbHomeItem.active,#sbScheduleItem.active,.nav-doc-link.active').forEach(el=>el.classList.remove('active'));
+    document.querySelectorAll('#sbHomeItem.active,#sbScheduleItem.active,#sbThinkingFlowItem.active,.nav-doc-link.active').forEach(el=>el.classList.remove('active'));
     if(entering)window.scrollTo({top:0,behavior:'instant'});
     return prepare();
   }

@@ -44,6 +44,17 @@ assert.ok(!daily('17').sections.some(s=>s.title==='로컬 클래스의 정의와
 assert.ok(!JSON.stringify(daily('18')).includes('codewiki-rich-v1'));
 assert.ok(tools.search(index,'MOVE-CORRESPONDING').some(r=>r.doc.id==='abap-types'));
 assert.ok(tools.search(index,'OCCURS').some(r=>r.doc.id==='abap-data-report'));
+assert.equal(docs['abap-thinking-flow'].categoryId,'학습 가이드');
+assert.equal(docs['abap-thinking-flow'].title,'ABAP 사고 흐름');
+assert.ok(tools.search(index,'빵집').some(r=>r.doc.id==='abap-thinking-flow'));
+assert.ok(tools.search(index,'계산용 테이블').some(r=>r.doc.id==='abap-thinking-flow'));
+assert.ok(tools.search(index,'ABAP 사고 흐름')[0].doc.id==='abap-thinking-flow');
+const indexHtml=fs.readFileSync('index.html','utf8');
+const mapAt=indexHtml.indexOf('id="openKnowledgeMapBtn"');
+const flowAt=indexHtml.indexOf('id="sbThinkingFlowItem"');
+const toolsAt=indexHtml.indexOf('id="learningToolsGroup"');
+assert.ok(mapAt!==-1&&mapAt<flowAt&&flowAt<toolsAt);
+assert.ok(JSON.stringify(docs['abap-thinking-flow']).includes("sy-datum(4) && '0101'"));
 const groups=tools.relatedGroups(docs['abap-modularization'],[daily('13'),docs['abap-objects']],Object.values(docs));
 assert.ok(groups.concepts.every(d=>!d.isDailyLesson));
 assert.deepEqual(Array.from(groups.dates.map(d=>d.id)),['lesson-2026-11-16','lesson-2026-11-17']);

@@ -91,6 +91,7 @@
     const isCurrent = () => version === viewVersion && isBoardViewActive && token === window.CodeWikiAuth?.getSessionToken();
     articleContainer.classList.remove('calendar-article');
     document.getElementById('sbScheduleItem')?.classList.remove('active');
+    document.getElementById('sbThinkingFlowItem')?.classList.remove('active');
     isBoardViewActive = true;
     if (openBoardBtn) openBoardBtn.classList.add("active");
     if (sidebarRight) sidebarRight.classList.add("hidden");

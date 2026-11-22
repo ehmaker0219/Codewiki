@@ -129,6 +129,8 @@
     const operationsLabel = document.getElementById('adminOperationsLabel');
     if (operationsLabel) operationsLabel.hidden = !isAdmin;
     const isApprovedStudent = user?.role === 'student' && user.status === 'approved';
+    const thinkingFlow = document.getElementById('sbThinkingFlowItem');
+    if (thinkingFlow) thinkingFlow.hidden = !isApprovedStudent;
     const learningContents = document.getElementById('learningContentsGroup');
     if (learningContents) learningContents.hidden = !isApprovedStudent;
     const learningTools = document.getElementById('learningToolsGroup');

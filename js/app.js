@@ -260,6 +260,7 @@
   function renderNavigation() {
     const esc = window.CodeWikiLearning.escape;
     document.getElementById('sbScheduleItem')?.classList.toggle('active', currentDocId === 'education-schedule');
+    document.getElementById('sbThinkingFlowItem')?.classList.toggle('active', currentDocId === 'abap-thinking-flow');
     syncTrackChrome();
 
     const allDocs = Object.values(window.WIKI_DOCS).filter(

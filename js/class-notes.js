@@ -636,6 +636,301 @@ ENDIF.`), text('SELECT 열에 키를 빼면 원래 서로 다른 행이 같은 �
     ['데이터 처리', '[[abap-types|구조체와 자료형]] · [[abap-data-report|내부 테이블 · Report]] · [[abap-open-sql|Open SQL]]'],
     ['이후 학습', '[[abap-dictionary|데이터 사전]] · [[learning-roadmap|ERP 모듈 목차]]']
   ])];
+  docs['abap-thinking-flow'] = {
+    id: 'abap-thinking-flow',
+    track: 'abap',
+    stepNum: '',
+    categoryId: '학습 가이드',
+    title: 'ABAP 사고 흐름',
+    subtitle: '전체적인 그림 · Process 개념 · Report 작성 사고 순서 7단계',
+    aliases: ['ABAP 사고 흐름', '사고 흐름', 'ABAP 사고법', '빵집 비유', '출력용 테이블', '계산용 테이블'],
+    tcodes: [],
+    specs: {
+      '전체 그림': 'Table(빵집) · Structure(오븐) · Element · Type(틀 모양) · Data(재료)',
+      'Process 4단계': '파라미터 받기 → 변수·Type 선언 → Data 삽입 → Manipulate',
+      '예제 테이블': 'SCUSTOM (고객별) · SBOOK (예약별)',
+      '핵심 패턴': '출력용 + 계산용 테이블 → LOOP · READ TABLE · MODIFY → cl_demo_output'
+    },
+    summary: 'ABAP 프로그램을 작성할 때 무엇부터 생각하고 어떤 순서로 코드를 채워야 하는지 전체 사고 흐름을 정리했습니다. 데이터 구조의 전체 그림(빵집 비유), 4단계 Process, 그리고 SCUSTOM·SBOOK 예제로 따라가는 7단계 사고 순서를 한눈에 확인해 보세요.',
+    sections: [
+      section(
+        '전체적인 그림 — 빵집 비유',
+        {
+          type: 'nested',
+          caption: '데이터 구조의 큰 그림 — 전체 공간(Table)에서 실제 값(Data)까지',
+          root: {
+            badge: 'TABLE',
+            title: 'Table = 빵집',
+            desc: '여러 행(Row)의 데이터를 한꺼번에 보관하는 전체 공간 (예: DB 테이블 SCUSTOM·SBOOK, 내부 테이블 gt_output)',
+            children: [
+              {
+                badge: 'STRUCTURE',
+                title: 'Structure = 오븐',
+                desc: '한 행 단위로 여러 항목을 묶어 넣고 꺼내 쓰는 틀 (설계도인 구조 타입 ts_output과 실제 한 행을 담는 워크 에어리어 변수 gs_output으로 구분)',
+                children: [
+                  {
+                    badge: 'ELEMENT · TYPE · DATA',
+                    title: '오븐 안을 채우는 세부 요소',
+                    items: [
+                      { name: 'Element', sub: '한 행을 이루는 개별 필드 요소 (의미·속성 단위)' },
+                      { name: 'Type = 틀 모양', sub: '값의 자료형과 크기 모양을 정하는 설계도 (TYPES)' },
+                      { name: 'Data = 재료', sub: '틀에 실제로 담겨 가공·출력되는 값 (DATA)' }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        table(['개념', '비유', '프로그램에서의 역할'], [
+          ['Table', '{{빵집}}', '여러 행을 저장하는 전체 공간 (DB 테이블 `SCUSTOM`·`SBOOK`, 내부 테이블 `gt_...`)'],
+          ['Structure', '{{오븐}}', '한 행을 이루는 필드 묶음 (구조 타입 `ts_...` / 워크 에어리어 변수 `gs_...`)'],
+          ['Element', '개별 항목', '구조 안의 각 필드를 이루는 요소(Data Element / 컴포넌트)'],
+          ['Type', '{{틀 모양}}', '어떤 형식과 크기로 담을지 정하는 설계도 (`TYPES`)'],
+          ['Data', '{{재료}}', '설계도대로 메모리에 만들어 실제 값을 담는 데이터 (`DATA`)']
+        ])
+      ),
+      section(
+        'Process에 대한 개념',
+        text('ABAP 리포트의 처리 흐름은 크게 4단계 Process로 생각하면 단순해집니다. 검색 조건을 받고, 필요한 그릇을 선언한 뒤, 데이터를 채워 넣고, 원하는 결과로 가공합니다.', '사고 순서는 "무슨 조건을 받을까?"부터 떠올리지만, 실제 코드에서 `SELECT-OPTIONS ... FOR 변수`를 쓸 때는 참조할 변수(`DATA` 또는 `TABLES`)가 먼저 선언되어 있어야 합니다.'),
+        {
+          type: 'flow',
+          caption: 'ABAP 프로그램의 기본 Process 4단계',
+          steps: [
+            { badge: '1', title: '파라미터 받기', desc: '사용자 검색 조건 입력 (PARAMETERS, SELECT-OPTIONS)' },
+            { badge: '2', title: '변수 생성 및 Type 선언', desc: 'local structure(ts_), 테이블(gt_), 워크 에어리어(gs_) 선언' },
+            { badge: '3', title: 'Data 삽입', desc: 'DB 테이블에서 조건에 맞는 데이터를 내부 테이블로 조회·적재' },
+            { badge: '4', title: 'Manipulate', desc: 'INSERT, READ TABLE, MODIFY, MOVE-CORRESPONDING 등으로 가공' }
+          ]
+        }
+      ),
+      section(
+        '어떻게 사고해야 하는가 — 7단계 흐름 요약',
+        text('요구사항을 받으면 문법부터 떠올리기보다 아래 7단계 순서대로 머릿속 그림을 먼저 잡고 코드로 옮깁니다.'),
+        {
+          type: 'flow',
+          caption: '요구사항 분석부터 화면 출력까지 7단계 사고 순서',
+          steps: [
+            { badge: 'STEP 1', title: '테이블 · 관계 파악', desc: '출력 기준(SCUSTOM)과 계산 대상(SBOOK) 결정' },
+            { badge: 'STEP 2', title: '선언부 설계', desc: '출력용 → 계산용 → 검색조건(SELECT-OPTIONS)' },
+            { badge: 'STEP 3', title: 'INITIALIZATION', desc: '처음 화면에 띄워 줄 초기값 세팅' },
+            { badge: 'STEP 4', title: '출력용 뼈대 SELECT', desc: 'START-OF-SELECTION에서 기준 데이터 채우기' },
+            { badge: 'STEP 5', title: '계산용 SELECT', desc: '조건에 맞는 집계 데이터를 계산용 테이블에 채우기' },
+            { badge: 'STEP 6', title: 'LOOP로 합치기', desc: 'CLEAR → READ TABLE → 대입·IF → MODIFY' },
+            { badge: 'STEP 7', title: '화면 출력', desc: 'cl_demo_output=>display로 최종 테이블 표시' }
+          ]
+        }
+      ),
+      section(
+        '1단계 · 테이블 및 관계 파악',
+        {
+          type: 'compare',
+          items: [
+            {
+              tag: '베이스 · 출력용 테이블 결정',
+              title: 'SCUSTOM (고객별 정보)',
+              points: [
+                '고객 한 명당 한 행의 고객별 정보가 담겨 있음',
+                '최종 결과를 "고객별"로 보여 줘야 하므로 출력용 테이블의 베이스로 결정'
+              ]
+            },
+            {
+              tag: '집계 · 계산용 테이블 결정',
+              title: 'SBOOK (예약별 정보)',
+              points: [
+                '예약 한 건당 한 행의 예약별 정보가 담겨 있음',
+                '검색한 날짜에 예약한 건수를 알아야 하므로(SELECT 절 결정), 고객별로 예약 건수를 계산해 계산용 테이블에 담아 결합'
+              ]
+            }
+          ]
+        },
+        {
+          type: 'callout',
+          style: 'point',
+          title: '핵심 사고: "무엇을 베이스로 두고, 무엇을 계산해서 붙일까?"',
+          body: 'SBOOK에는 예약별 정보가 담겨 있고, SCUSTOM에는 고객별 정보가 담겨 있습니다.\n고객별로 검색한 날짜에 예약한 건수를 알아야 하므로 고객(SCUSTOM)을 베이스(출력용 테이블)로 잡고, 예약(SBOOK)을 계산(계산용 테이블)해서 조인·결합해 주겠다는 구조를 가장 먼저 결정합니다.'
+        }
+      ),
+      section(
+        '2단계 · 선언부 — 어떤 변수들을 선언해 줘야 하지?',
+        text('선언부는 한 번에 다 떠올리려 하지 말고 **출력용 테이블 → 계산용 테이블 → 검색조건** 세 덩어리로 나눠 차례대로 만듭니다.'),
+        {
+          type: 'practice',
+          title: '2-1. 일단 표시해 줘야 하는 테이블(출력용)부터 만들자',
+          steps: [
+            { step: '1', action: 'Local Structure 만들기 (`TYPES: BEGIN OF ts_output, ... END OF ts_output.`)', detail: '화면에 최종 표시할 컬럼들(고객 ID, 고객 이름, 예약 건수, 등급 등)을 묶어 틀 모양을 먼저 정의합니다.' },
+            { step: '2', action: '만든 Local Structure로 `gt_` 테이블 만들기 (`DATA gt_output TYPE TABLE OF ts_output.`)', detail: '여러 고객 행을 담을 출력용 내부 테이블을 선언합니다.' },
+            { step: '3', action: '그 테이블로 `gs_` 워크 에어리어 만들기 (`DATA gs_output LIKE LINE OF gt_output.`)', detail: '한 행씩 꺼내서 작업할 워크 에어리어를 선언합니다. 여기까지 하면 표시할 테이블 준비 끝!' }
+          ]
+        },
+        {
+          type: 'practice',
+          title: '2-2. 이제 계산용 테이블을 만들자',
+          steps: [
+            { step: '1', action: '워크 에어리어에 뭐 넣어야 하지? → 알아야 하는 정보만 추리기', detail: '"ID 1번이 10개" 같은 형태만 있으면 되므로 고객 ID(`customid`)와 예약 개수(`bookcnt`)만 들어가면 됩니다.' },
+            { step: '2', action: '2-1과 같은 3단 세트로 선언 (`ts_data` → `gt_data` → `gs_data`)', detail: '`TYPES: BEGIN OF ts_data` → `DATA gt_data TYPE TABLE OF ts_data.` → `DATA gs_data LIKE LINE OF gt_data.` 여기까지 하면 계산용 테이블도 준비 끝!' }
+          ]
+        },
+        {
+          type: 'practice',
+          title: '2-3. 이제 검색조건을 받자',
+          steps: [
+            { step: '1', action: '필요한 입력 조건 정리', detail: '고객 아이디 범위와 검색할 날짜 범위를 입력받아야 합니다.' },
+            { step: '2', action: '`SELECT-OPTIONS` 선언 (`SELECT-OPTIONS: so_id FOR ..., so_date FOR ...`)', detail: '범위·복수 조건을 받을 수 있도록 `so_` 접두어로 Selection Table을 선언합니다.' }
+          ]
+        },
+        {
+          type: 'callout',
+          style: 'tip',
+          title: '문법 주의 — SELECT-OPTIONS의 FOR 뒤에는 "선언된 변수"를 적습니다',
+          body: '사고할 때는 "아이디 타입, 날짜 타입으로 받자"라고 떠올리지만, 실제 ABAP 문법에서 `SELECT-OPTIONS so_... FOR` 뒤에는 타입 이름 자체가 아니라 이미 선언된 데이터 객체(예: `gs_output-id`, `gv_order_date`)나 `TABLES` 선언 필드를 지정해야 합니다.'
+        }
+      ),
+      section(
+        '3단계 · INITIALIZATION — 처음에 값 어떻게 띄워 주지?',
+        text('`INITIALIZATION`은 Selection Screen이 화면에 나타나기 직전에 실행됩니다. 사용자가 매번 조건을 입력하지 않도록 기본 날짜 범위 등을 미리 채워 둘 때 사용합니다.'),
+        {
+          type: 'callout',
+          style: 'tip',
+          title: 'SELECT-OPTIONS 초기값 넣기',
+          body: '`so_date-sign = \'I\'.` (포함), `so_date-option = \'BT\'.` (구간), `so_date-low`, `so_date-high`를 채운 뒤 `APPEND so_date.`를 실행하면 초기 화면에 기본 기간이 미리 입력된 상태로 열립니다.'
+        }
+      ),
+      section(
+        '4~5단계 · START-OF-SELECTION — 검색 조건에 따라 데이터 채우기',
+        text('실행(F8) 후 본격적으로 DB에서 데이터를 읽어 오는 구간입니다. 먼저 출력용 뼈대 테이블을 채우고, 같은 흐름으로 계산용 테이블도 채웁니다.'),
+        {
+          type: 'compare',
+          items: [
+            {
+              tag: '4단계 · 출력용 뼈대 잡기',
+              title: '출력용 테이블(`gt_output`) 채우기',
+              points: [
+                '`SELECT` 표시할 컬럼들 (`id, name`)',
+                '`FROM` 베이스 테이블 (`scustom`)',
+                '`WHERE` 검색된 조건에 적합한 데이터 (`id IN @so_id`)',
+                '`INTO CORRESPONDING FIELDS OF TABLE` 출력용 테이블 (`@gt_output`)'
+              ]
+            },
+            {
+              tag: '5단계 · 계산값 채우기 (전과 동일 패턴)',
+              title: '계산용 테이블(`gt_data`) 채우기',
+              points: [
+                '`SELECT` 연결 키 + 예약 건수 (`customid, COUNT( * ) AS bookcnt`)',
+                '`FROM` 예약 테이블 (`sbook`)',
+                '`WHERE` 고객 ID·예약일 범위 조건 (`customid IN @so_id AND order_date IN @so_date`)',
+                '`GROUP BY customid` + `INTO CORRESPONDING FIELDS OF TABLE @gt_data`'
+              ]
+            }
+          ]
+        },
+        {
+          type: 'callout',
+          style: 'point',
+          title: '최신 문법(Strict Mode) · 집계 규칙 체크',
+          body: '`INTO` 절을 `SELECT` 맨 뒤에 두거나 `,`·`@` 등 최신 Open SQL 문법을 쓰면 Strict Mode가 적용되어 모든 컬럼을 쉼표(`,`)로 구분하고 ABAP 변수(`@so_id`, `@so_date`, `@gt_output`, `@gt_data`) 앞에 모두 `@`를 붙여야 합니다.\n또한 `INTO CORRESPONDING FIELDS`로 받을 집계 컬럼에는 구조체 필드명과 일치하는 별칭(`COUNT( * ) AS bookcnt`)이, 비집계 컬럼(`customid`)에는 `GROUP BY`가 필수입니다. (취소 예약을 제외해야 하는 요구사항이라면 `SBOOK` 조회의 `WHERE` 절에 `AND cancelled <> \'X\'`를 추가하세요.)'
+        }
+      ),
+      section(
+        '6~7단계 · LOOP로 합치고 화면에 띄우기',
+        {
+          type: 'practice',
+          title: '6. 이제 계산용 테이블을 출력용 테이블에 넣어 주자',
+          steps: [
+            { step: '1', action: '`LOOP AT gt_output INTO gs_output.` ~ `ENDLOOP.`', detail: '출력용 테이블을 한 행씩 꺼내면서 Structure(`gs_output`)를 계속 채워 나갑니다.' },
+            { step: '2', action: '일단 계산용 워크 에어리어 비워 주기 (`CLEAR gs_data.`)', detail: '이전 반복에서 읽어 둔 값이 남지 않도록 매 행마다 `gs_data`를 먼저 초기화합니다.' },
+            { step: '3', action: '계산용 테이블에서 조건에 맞는 행 읽기 (`READ TABLE gt_data INTO gs_data WITH KEY ...`)', detail: '현재 고객 ID(`gs_output-id`)와 같은 `customid` 행을 찾아 `gs_data` 워크 에어리어에 저장합니다.' },
+            { step: '4', action: '값 대입과 조건 분기 적용 (`gs_output-bookcnt = gs_data-bookcnt.` / `IF ...`)', detail: '조회된 행이 있으면(`IF sy-subrc = 0.`) 예약 건수를 대입하고, `IF gs_output-bookcnt > 10.`이면 등급 `\'P\'` 부여 같은 비즈니스 조건을 적용합니다.' },
+            { step: '5', action: '작업한 워크 에어리어를 출력용 테이블에 반영 (`MODIFY gt_output FROM gs_output.`)', detail: '원래 `MODIFY` 뒤에는 몇 번째 행을 바꿀지 `INDEX`가 들어가지만, `LOOP AT gt_output` 안에서는 루프 자체가 현재 순회 행 위치를 기억하므로 `INDEX`를 생략해도 그 자리에 바로 반영됩니다. (주의: 직전 `READ TABLE gt_data`가 `sy-tabix`를 덮어쓰므로 `INDEX sy-tabix`처럼 직접 적으면 잘못된 행이 수정됩니다.)' },
+            { step: '6', action: '`ENDLOOP.`', detail: '모든 고객 행의 계산값·등급 반영을 마칩니다.' }
+          ]
+        },
+        {
+          type: 'practice',
+          title: '7. 다 했으면 화면에 띄워 주자',
+          steps: [
+            { step: '1', action: '`CALL METHOD cl_demo_output=>display EXPORTING data = gt_output.`', detail: '완성된 출력용 테이블을 표 형태로 띄워 결과를 바로 확인합니다. (단축 호출: `cl_demo_output=>display( gt_output ).`)' }
+          ]
+        }
+      ),
+      section(
+        '전체 흐름을 한 코드로 합쳐 보기',
+        text('위 1~7단계 사고 흐름을 그대로 하나의 실행 가능 ABAP Report로 옮긴 전체 코드입니다. 주석의 단계 번호를 위의 사고 순서와 나란히 대조해 보세요.'),
+        code('고객별 예약 건수 조회 리포트 사고 흐름 전체 예제', `REPORT zabap_f##_##.
+
+" 2-1. 출력용 테이블 선언 (표시할 뼈대)
+TYPES: BEGIN OF ts_output,
+         id      TYPE scustom-id,
+         name    TYPE scustom-name,
+         bookcnt TYPE i,
+         grade   TYPE c LENGTH 1,
+       END OF ts_output.
+DATA gt_output TYPE TABLE OF ts_output.
+DATA gs_output LIKE LINE OF gt_output.
+
+" 2-2. 계산용 테이블 선언 (고객 ID별 예약 건수)
+TYPES: BEGIN OF ts_data,
+         customid TYPE sbook-customid,
+         bookcnt  TYPE i,
+       END OF ts_data.
+DATA gt_data TYPE TABLE OF ts_data.
+DATA gs_data LIKE LINE OF gt_data.
+
+" 2-3. 검색조건 선언 (FOR 뒤에는 선언된 변수 지정)
+DATA gv_order_date TYPE sbook-order_date.
+SELECT-OPTIONS: so_id   FOR gs_output-id,
+                so_date FOR gv_order_date.
+
+" 3. INITIALIZATION : 처음 화면에 띄울 초기 검색 기간 설정 (올해 1월 1일 ~ 오늘)
+INITIALIZATION.
+  so_date-sign   = 'I'.
+  so_date-option = 'BT'.
+  so_date-low    = sy-datum(4) && '0101'.
+  so_date-high   = sy-datum.
+  APPEND so_date.
+
+" 4~5. START-OF-SELECTION : 검색 조건에 따라 데이터 채우기
+START-OF-SELECTION.
+  " 4. 출력용 뼈대 테이블 채우기 (SCUSTOM 기준)
+  SELECT id, name
+    FROM scustom
+    WHERE id IN @so_id
+    INTO CORRESPONDING FIELDS OF TABLE @gt_output.
+
+  " 5. 계산용 테이블 채우기 (SBOOK 조건별 예약 건수 집계)
+  SELECT customid, COUNT( * ) AS bookcnt
+    FROM sbook
+    WHERE customid   IN @so_id
+      AND order_date IN @so_date
+    GROUP BY customid
+    INTO CORRESPONDING FIELDS OF TABLE @gt_data.
+
+  " 6. 계산용 테이블을 출력용 테이블에 합치기
+  LOOP AT gt_output INTO gs_output.
+    CLEAR gs_data.
+    READ TABLE gt_data INTO gs_data WITH KEY customid = gs_output-id.
+    IF sy-subrc = 0.
+      gs_output-bookcnt = gs_data-bookcnt.
+    ENDIF.
+
+    IF gs_output-bookcnt > 10.
+      gs_output-grade = 'P'.
+    ELSE.
+      gs_output-grade = 'G'.
+    ENDIF.
+
+    " LOOP 안에서는 현재 순회 행을 기억하므로 INDEX 생략 가능
+    MODIFY gt_output FROM gs_output.
+  ENDLOOP.
+
+  " 7. 완성된 출력용 테이블 띄우기
+  CALL METHOD cl_demo_output=>display
+    EXPORTING
+      data = gt_output.`)
+      ),
+      related(['abap-types', 'abap-data-report', 'abap-open-sql', 'abap-loops'])
+    ]
+  };
   const sortedIds = ['welcome-abap', 'learning-roadmap', ...order];
   const sorted = Object.fromEntries([...sortedIds, ...Object.keys(docs).filter(id => !sortedIds.includes(id))].map(id => [id, docs[id]]));
   window.WIKI_DOCS = sorted;
