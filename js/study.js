@@ -49,7 +49,7 @@
     const open=visible();
     host.hidden=!open;shell.classList.toggle('study-hidden',open);
     document.getElementById('openStudyBtn')?.classList.toggle('active',open);
-    if(open){window.CodeWikiBoard?.closeIfActive();document.getElementById('sbHomeItem')?.classList.remove('active');document.getElementById('sbScheduleItem')?.classList.remove('active');document.getElementById('sbThinkingFlowItem')?.classList.remove('active');document.querySelectorAll('.nav-doc-link.active').forEach(el=>el.classList.remove('active'));if(!window.CodeWikiStudyEditor){loadEditor();return;}if(!mounted)mount();else void folders?.load();void list();}
+    if(open){window.CodeWikiBoard?.closeIfActive();document.getElementById('quizModeBtn')?.classList.add('hidden');document.getElementById('sbHomeItem')?.classList.remove('active');document.getElementById('sbScheduleItem')?.classList.remove('active');document.getElementById('sbThinkingFlowItem')?.classList.remove('active');document.querySelectorAll('.nav-doc-link.active').forEach(el=>el.classList.remove('active'));if(!window.CodeWikiStudyEditor){loadEditor();return;}if(!mounted)mount();else void folders?.load();void list();}
   }
   function loadEditor() {
     if(editorLoad)return;
@@ -181,7 +181,7 @@
       return;
     }
     if(!(e.ctrlKey||e.metaKey))return;
-    if(e.key.toLowerCase()==='s'){e.preventDefault();void store?.save();}
+    if(e.key.toLowerCase()==='s'){e.preventDefault();if(!transition)void store?.save();}
   }
   function closeToolMenus(except=null){
     host.querySelectorAll('.study-table-menu[open],.study-color-menu[open]').forEach(menu=>{if(menu!==except)menu.open=false;});
@@ -218,11 +218,14 @@
     saveButton.setAttribute('aria-busy',String(store.busy));
     saveButton.setAttribute('aria-label',saveLabel);
     saveButton.title=saveLabel+' ('+(/Mac|iPhone|iPad/.test(window.navigator?.platform||'')?'⌘':'Ctrl')+'+S)';
-    if(store.current&&!store.dirty&&store.current.revision){
+    if(store.current&&store.current.revision){
       const titleInput=byId('studyTitle');
-      if(titleInput&&titleInput.value!==store.current.title)titleInput.value=store.current.title;
-      const note={...store.current,body:undefined},index=notes.findIndex(n=>n.id===note.id);
+      if(!store.dirty&&titleInput&&titleInput.value!==store.current.title)titleInput.value=store.current.title;
+      // Server-confirmed metadata (revision/timestamp) also updates the list while
+      // the user keeps typing during a save; the unsaved title stays in the editor.
+      const index=notes.findIndex(n=>n.id===store.current.id);
       const previous=notes[index];
+      const note={...store.current,body:undefined,title:store.dirty?(previous?.title??store.current.title):store.current.title};
       if(previous&&previous.title===note.title&&previous.updated_at===note.updated_at&&previous.revision===note.revision)return;
       // Selection and save timestamps never affect title-based list ordering.
       if(index<0)notes.unshift(note);else notes[index]=note;
@@ -328,7 +331,7 @@
     const s=store,n=s?.current;if(!n||transition||s.busy)return;
     if(!window.confirm('이 노트를 삭제할까요? 삭제한 노트는 복구할 수 없습니다.'))return;
     lock(true);
-    try {if(n.revision)await s.call('cw_delete_study_note',{p_id:n.id,p_revision:n.revision});if(store!==s)return;s.select(null);notes=notes.filter(item=>item.id!==n.id);listChanges?.set(n.id,null);fill();}
+    try {if(n.revision)await s.call('cw_delete_study_note',{p_id:n.id,p_revision:n.revision});if(store!==s)return;notes=notes.filter(item=>item.id!==n.id);listChanges?.set(n.id,null);if(!s.select(null)){renderList();window.alert('저장이 끝난 뒤 다시 확인해 주세요. 노트는 삭제되었습니다.');return;}fill();}
     catch {if(store===s)window.alert('삭제하지 못했습니다. 서버 글을 다시 확인해 주세요.');}
     finally {if(store===s)lock(false);}
   }

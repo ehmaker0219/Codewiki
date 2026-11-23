@@ -100,6 +100,7 @@
     if(!open){epoch++;return;}
     window.CodeWikiBoard?.closeIfActive();
     document.querySelectorAll('#sbHomeItem.active,#sbScheduleItem.active,#sbThinkingFlowItem.active,.nav-doc-link.active').forEach(el=>el.classList.remove('active'));
+    document.getElementById('quizModeBtn')?.classList.add('hidden');
     if(entering)window.scrollTo({top:0,behavior:'instant'});
     return prepare();
   }

@@ -43,6 +43,17 @@ async function readBody(request) {
 
 // JWE gives confidentiality/integrity, not user identity. Database password/session
 // checks remain mandatory, even for envelopes made with our public key.
+// Per-client rate limiting uses the platform-set connecting IP (cf-connecting-ip
+// on hosted Supabase). Only a one-way hash leaves this function; the raw IP is
+// never stored or logged. A missing/malformed header falls back to global limits.
+const ipPattern = /^[0-9A-Fa-f:.]{2,45}$/;
+export async function clientKey(request) {
+  const ip = (request.headers.get('cf-connecting-ip') || '').trim();
+  if (!ipPattern.test(ip)) return null;
+  const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode('codewiki-client-v1:' + ip.toLowerCase()));
+  return [...new Uint8Array(digest)].map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
 export async function createHandler({privateKeys, origins, rpc, clock=Date.now}) {
   if (!Array.isArray(privateKeys) || !privateKeys.length || privateKeys.length > 2 || !origins?.length || origins.includes('*')) throw Error('invalid-config');
   const keys=new Map();
@@ -84,7 +95,10 @@ export async function createHandler({privateKeys, origins, rpc, clock=Date.now})
         payload.exp-payload.iat>60||!uuid.test(payload.jti)||!validArgs(payload.operation,payload.args))throw Error('invalid-payload');
     }catch{return reply({code:'CW_ENVELOPE_INVALID'},400);}
     try{
-      const result=await rpc({p_operation:payload.operation,p_args:payload.args,p_request_id:payload.jti,p_expires_at:new Date(payload.exp*1000).toISOString()});
+      const args={p_operation:payload.operation,p_args:payload.args,p_request_id:payload.jti,p_expires_at:new Date(payload.exp*1000).toISOString()};
+      const client=await clientKey(request);
+      if(client)args.p_client=client;
+      const result=await rpc(args);
       if(result?.code){const status=Object.hasOwn(errorStatuses,result.code)?errorStatuses[result.code]:null;return reply({code:status?result.code:'CW_AUTH_UNAVAILABLE'},status||503);}
       if(payload.operation==='cw_admin_reset_student_password'){
         if(result?.ok!==true||result.user_id!==payload.args.p_target_id)throw Error('invalid-response');

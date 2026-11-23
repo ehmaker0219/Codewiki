@@ -300,8 +300,7 @@ code, pre, .mono {
 .admin-workspace #brandTrackToggle,
 .admin-workspace #sbHomeItem,
 .admin-workspace #sbThinkingFlowItem,
-.admin-workspace #mealMenuGroup,
-.admin-workspace #openPracticeBtn { display:none; }
+.admin-workspace #mealMenuGroup { display:none; }
 .admin-workspace #workspaceNavigation { gap:24px; }
 .admin-workspace #adminSidebarSlot,
 .admin-workspace #primaryNavSection,
@@ -314,6 +313,7 @@ code, pre, .mono {
   border:0;
 }
 .admin-workspace #campusNavSection { order:1; }
+.admin-workspace #openPracticeBtn { order:1; }
 .admin-workspace #primaryNavSection { order:2; }
 .admin-workspace #workspaceNavigation .sb-group-label { margin-bottom:8px; }
 .admin-workspace #workspaceNavigation .sb-menu-item {
@@ -984,9 +984,15 @@ code, pre, .mono {
 
 body.quiz-mode .quiz-token {
   color: transparent;
-  background: var(--tds-grey-300);
+  background: var(--bg-chip-hover);
+  box-shadow: inset 0 0 0 1px var(--border-subtle);
   cursor: pointer;
   user-select: none;
+}
+
+.quiz-token:focus-visible {
+  outline: 2px solid var(--toss-blue);
+  outline-offset: 2px;
 }
 
 body.quiz-mode .quiz-token.revealed {

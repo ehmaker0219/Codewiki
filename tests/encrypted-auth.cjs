@@ -30,6 +30,21 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('nod
   }
   assert.equal(keyCalls,1,'public key cache');
   assert.equal(new Set(seen.map(r=>r.p_request_id)).size,3,'request IDs not unique');
+  assert.ok(seen.every(r=>!('p_client' in r)),'no client key without a platform IP header');
+  // Per-client limits: only a one-way hash of the platform IP reaches the database.
+  const {clientKey}=await import('../supabase/functions/secure-auth/handler.mjs');
+  const withIp=(ip)=>new Request(endpoint,{headers:{'cf-connecting-ip':ip}});
+  const k1=await clientKey(withIp('203.0.113.7')),k2=await clientKey(withIp('203.0.113.8'));
+  assert.match(k1,/^[0-9a-f]{64}$/);assert.notEqual(k1,k2);assert.equal(k1,await clientKey(withIp(' 203.0.113.7 ')));
+  assert.equal(await clientKey(withIp('2001:DB8::1')),await clientKey(withIp('2001:db8::1')));
+  for(const bad of ['', 'not-an-ip', '1.2.3.4, 5.6.7.8', 'x'.repeat(60)])assert.equal(await clientKey(withIp(bad)),null,'malformed IP header ignored');
+  const ipEnvelope=await (async()=>{const now=Math.floor(Date.now()/1000);
+    return new EncryptJWT({operation:'cw_login',args:cases[0][1],iat:now,exp:now+60,jti:crypto.randomUUID(),iss:'codewiki-browser',aud:'codewiki-secure-auth'})
+      .setProtectedHeader({alg:'RSA-OAEP-256',enc:'A256GCM',kid:'test-key',typ:'JWT'}).encrypt(publicKey);})();
+  result={session_token:crypto.randomUUID()};
+  await handler(new Request(endpoint,{method:'POST',headers:{Origin:origin,'Content-Type':'application/json','cf-connecting-ip':'203.0.113.7'},body:JSON.stringify({envelope:ipEnvelope})}));
+  assert.equal(seen.at(-1).p_client,k1,'hashed client key forwarded');
+  assert.ok(!JSON.stringify(seen.at(-1)).includes('203.0.113.7'),'raw IP never forwarded');
   const response=await handler(new Request(endpoint,{headers:{Origin:origin}}));
   const keyResponse=await response.json();assert.deepEqual(Object.keys(keyResponse.jwk).sort(),['alg','e','kid','kty','n','use']);
   assert.equal(response.headers.get('cache-control'),'no-store');

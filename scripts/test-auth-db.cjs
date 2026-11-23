@@ -7,7 +7,11 @@ const modulePath = process.env.CODEWIKI_PGLITE_PATH || '@electric-sql/pglite';
 const {PGlite} = require(modulePath);
 const {pgcrypto} = require(path.isAbsolute(modulePath) ? path.join(modulePath,'dist/contrib/pgcrypto.cjs') : '@electric-sql/pglite/contrib/pgcrypto');
 const root = path.resolve(__dirname,'..');
-const read = file => fs.readFileSync(path.join(root,file),'utf8');
+const appliedMigrations = new Set();
+const read = file => {
+  if (/^migrations\/[^/]+\.sql$/.test(file)) appliedMigrations.add(file.slice('migrations/'.length));
+  return fs.readFileSync(path.join(root,file),'utf8');
+};
 (async () => {
   const db = new PGlite({extensions:{pgcrypto}});
   try {
@@ -81,6 +85,16 @@ const read = file => fs.readFileSync(path.join(root,file),'utf8');
     await db.exec(read('tests/login-history.sql'));
     await db.exec(read('tests/encrypted-auth.sql'));
     await db.exec(read('tests/security-review-hardening.sql'));
-    console.log('PASS: PostgreSQL auth hardening, unsafe setup rerun blocked, session/admin authorization, login history, study ownership/revisions and private folder regressions');
+    await db.exec(read('migrations/20261123-auth-review-hardening.sql'));
+    await db.exec(read('migrations/20261123-auth-review-hardening.sql'));
+    await db.exec(read('tests/auth-review-hardening.sql'));
+    await db.exec(read('tests/login-history.sql'));
+    await db.exec(read('tests/encrypted-auth.sql'));
+    await db.exec(read('tests/security-review-hardening.sql'));
+    // A new migration file must also be exercised here, not silently skipped.
+    const onDisk = fs.readdirSync(path.join(root,'migrations')).filter(file=>file.endsWith('.sql')).sort();
+    const missing = onDisk.filter(file=>!appliedMigrations.has(file));
+    assert.deepEqual(missing,[],'migrations not exercised by test-auth-db: '+missing.join(', '));
+    console.log('PASS: PostgreSQL auth hardening, unsafe setup rerun blocked, session/admin authorization, login history, username-enumeration/MBTI hardening, study ownership/revisions and private folder regressions');
   } finally { await db.close(); }
 })().catch(error => { console.error(error.message); process.exitCode=1; });

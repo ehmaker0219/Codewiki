@@ -17,7 +17,8 @@
   let navigationView = 'topic';
   try { navigationView = localStorage.getItem('codewiki_nav_view') === 'date' ? 'date' : 'topic'; } catch {}
   const expandedCategories = new Set();
-  // 문서 데이터는 data.js와 ui5-data.js에서 앱 시작 전에 로드됩니다.
+  // 문서 데이터는 data.js 등에서 앱 시작 전에 로드됩니다. UI5 트랙(ui5-data.js)은
+  // 준비 중이라 시작 시 로드하지 않습니다.
   const documents = Object.values(window.WIKI_DOCS || {});
   const aliases = [];
   const exactAliases = new Map();
@@ -162,7 +163,7 @@
 
     // 2) 암기 모드 빈칸 토큰 {{키워드}} 보호
     out = out.replace(/\{\{(.+?)\}\}/g, (_, inner) =>
-      stash(`<span class="quiz-token" title="클릭하여 정답 확인">${inner}</span>`)
+      stash(`<span class="quiz-token" title="클릭하여 정답 확인" tabindex="0" role="button">${inner}</span>`)
     );
 
     // 3) 인라인 코드 `코드` 변환 (만약 등록된 T-Code/개념 키워드라면 링크도 함께 연결!)
@@ -788,6 +789,12 @@
       token.addEventListener("click", () => {
         token.classList.toggle("revealed");
       });
+      // Keyboard users reveal blanks with Enter/Space, like the mouse click.
+      token.addEventListener("keydown", e => {
+        if (e.key !== "Enter" && e.key !== " ") return;
+        e.preventDefault();
+        token.classList.toggle("revealed");
+      });
     });
 
     // 우측 보조 카드: 실제 내용이 있는 카드만 표시하고, 하나도 없으면 우측 컬럼 전체 숨김!
@@ -850,23 +857,31 @@
     renderNavigation();
   }
 
-  function navigateTo(docId) {
-    if (!window.WIKI_DOCS[docId]) return;
+  // When the hash changes, render once from the hashchange handler (after every
+  // other view has routed away) instead of rendering here and again there.
+  let pendingNavigation = null;
+  function showDocument(docId) {
     if (window.CodeWikiBoard) window.CodeWikiBoard.closeIfActive();
-    window.location.hash = `#doc/${docId}`;
+    const hash = `#doc/${docId}`;
+    if (window.location.hash !== hash) {
+      pendingNavigation = docId;
+      window.location.hash = hash;
+      return;
+    }
     renderDocument(docId);
     window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  function navigateTo(docId) {
+    if (!window.WIKI_DOCS[docId]) return;
+    showDocument(docId);
   }
 
   function selectTrack(track) {
     if (track === "ui5") return;
     currentTrack = "abap";
     try { sessionStorage.setItem(TRACK_SESSION_KEY, currentTrack); } catch {}
-    if (window.CodeWikiBoard) window.CodeWikiBoard.closeIfActive();
-    const homeId = getHomeDocId(currentTrack);
-    window.location.hash = `#doc/${homeId}`;
-    renderDocument(homeId);
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    showDocument(getHomeDocId(currentTrack));
   }
 
   window.CodeWikiApp = {
@@ -904,6 +919,7 @@
       movePreviewCard(e);
     });
     document.addEventListener('mousemove', e => {
+      if (hoverPreviewCard.classList.contains('hidden')) return;
       if (e.target.closest?.('.wiki-link[data-doc]')) movePreviewCard(e);
     });
     document.addEventListener('mouseout', e => {
@@ -939,7 +955,10 @@
       if (searchDropdown.classList.contains('hidden') || !items.length) return;
       const at = items.indexOf(document.activeElement);
       if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
-        e.preventDefault(); items[(at + (e.key === 'ArrowDown' ? 1 : -1) + items.length) % items.length].focus();
+        e.preventDefault();
+        const down = e.key === 'ArrowDown';
+        const next = at < 0 ? (down ? 0 : items.length - 1) : (at + (down ? 1 : -1) + items.length) % items.length;
+        items[next].focus();
       } else if (e.key === 'Enter' && document.activeElement === searchInput) { e.preventDefault(); items[0].click(); }
     });
     searchInput.addEventListener("input", () => {
@@ -1004,10 +1023,12 @@
 
     window.addEventListener("hashchange", () => {
       const h = window.location.hash;
+      const requested = pendingNavigation;
+      pendingNavigation = null;
       if (h.startsWith("#doc/")) {
         const target = h.replace("#doc/", "");
         const appHidden = appShell?.classList.contains('object-game-hidden') || appShell?.classList.contains('mentoring-hidden') || appShell?.classList.contains('study-hidden') || appShell?.classList.contains('members-hidden') || appShell?.classList.contains('board-mode-shell') || appShell?.classList.contains('map-hidden');
-        if ((window.WIKI_DOCS[target] || target === "erp-setup") && (target !== currentDocId || appHidden)) {
+        if ((window.WIKI_DOCS[target] || target === "erp-setup") && (target !== currentDocId || appHidden || requested === target)) {
           if (window.CodeWikiBoard) window.CodeWikiBoard.closeIfActive();
           renderDocument(target);
           window.scrollTo({ top: 0, behavior: "smooth" });
@@ -1015,9 +1036,22 @@
       }
     });
 
+    const setSidebarCollapsed = collapsed => {
+      appLayout?.classList[collapsed ? "add" : "remove"]("sidebar-collapsed");
+      if (!toggleBtn) return;
+      toggleBtn.title = collapsed ? "사이드바 펼치기" : "사이드바 접기";
+      toggleBtn.setAttribute("aria-expanded", String(!collapsed));
+    };
+    // On narrow screens the fixed sidebar overlays the page: start collapsed and
+    // close it after choosing a destination.
+    const narrow = window.matchMedia?.("(max-width: 820px)");
+    setSidebarCollapsed(Boolean(narrow?.matches));
     toggleBtn?.addEventListener("click", () => {
-      const isCollapsed = appLayout?.classList.toggle("sidebar-collapsed");
-      toggleBtn.title = isCollapsed ? "사이드바 펼치기" : "사이드바 접기";
+      setSidebarCollapsed(!appLayout?.classList.contains("sidebar-collapsed"));
+    });
+    sidebar?.addEventListener("click", e => {
+      if (!narrow?.matches) return;
+      if (e.target.closest?.("a[href], button[id^='open'], [data-doc], #openBoardBtn")) setSidebarCollapsed(true);
     });
 
     const quizModeBtn = document.getElementById("quizModeBtn");

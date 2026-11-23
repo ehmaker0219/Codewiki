@@ -92,6 +92,15 @@
       '필드의 의미·레이블을 정하는 객체인지, 공통 기술 속성을 제공하는 객체인지 보세요.',
       '이 맥락의 '+name+'는 Domain입니다. 같은 이름의 Data Element와는 별개이며, Data Element가 이 기술 속성을 참조합니다.');
   }
+  // ZDO_ is a teaching convention for these custom objects, not an SAP-wide rule.
+  for(const [name,type,length] of [
+    ['ZDO_CARRID','CHAR',3],['ZDO_CONNID','NUMC',4],['ZDO_FLDATE','DATS',8],
+    ['ZDO_CURRENCY','CUKY',5],['ZDO_BOOKID','NUMC',8],['ZDO_SEATCLASS','CHAR',1]
+  ]) {
+    add('domain',name,'학습용 SE11 정의\nDATA TYPE: '+type+' · 길이: '+length+'\nData Element에서 참조하는 공통 기술 속성 정의',
+      'ZDO_는 이 문제에서 사용하는 Domain 명명 관례입니다. 실제 객체 종류는 SE11 정의로 확인하세요.',
+      name+'는 항공 실습용으로 가정한 커스텀 Domain입니다. Data Type·길이 등의 기술 속성을 정의하며, 필드의 의미와 레이블을 정하는 Data Element와 구분합니다.');
+  }
   for(const name of ['SCARR','SPFLI','SFLIGHT','SBOOK','SCUSTOM','SAPLANE','SAIRPORT']) {
     add('databaseTable',name,'SELECT * FROM '+name.toLowerCase()+' INTO TABLE @DATA(lt_result).',
       'FROM 뒤의 조회 원본과 INTO TABLE 뒤의 결과 변수를 구분하세요.',
@@ -140,6 +149,19 @@
       'DATA 뒤의 대상이며 TABLE OF 없이 한 행의 구조로 선언되었습니다.',
       name+'는 한 행을 담는 Structure Variable, 즉 Work Area입니다. TYPE 뒤의 '+base.toUpperCase()+'는 그 행 구조의 기준입니다.');
   }
+  const workAreas = [
+    ['wa_flight','DATA wa_flight TYPE bc400_s_flight.'],
+    ['wa_carrier','DATA wa_carrier TYPE scarr.'],
+    ['wa_connection','DATA wa_connection TYPE spfli.'],
+    ['wa_booking','DATA wa_booking TYPE sbook.'],
+    ['wa_customer','DATA wa_customer TYPE scustom.'],
+    ['wa_airplane','DATA wa_airplane TYPE saplane.'],
+    ['wa_result','DATA gt_flights TYPE STANDARD TABLE OF sflight WITH DEFAULT KEY.\nDATA wa_result LIKE LINE OF gt_flights.'],
+    ['wa_output','TYPES tt_flights TYPE STANDARD TABLE OF sflight WITH DEFAULT KEY.\nDATA wa_output TYPE LINE OF tt_flights.']
+  ];
+  for(const [name,prompt] of workAreas) add('structureVariable',name,prompt,
+    'wa_는 Work Area에 자주 쓰는 명명 관례입니다. 선언에서 한 행을 담는지, 여러 행을 담는지 확인하세요.',
+    name+'는 한 행의 값을 담는 Work Area, 즉 Structure Variable입니다. TYPE LINE OF는 테이블 타입의 행 타입, LIKE LINE OF는 내부 테이블 변수의 행 구조를 기준으로 선언합니다.');
   for(const [name,base] of [['gt_flights','sflight'],['lt_flights','sflight'],['gt_carriers','scarr'],['lt_carriers','scarr'],['gt_connections','spfli'],['lt_connections','spfli']]) {
     add('tableVariable',name,'DATA '+name+' TYPE STANDARD TABLE OF '+base+' WITH DEFAULT KEY.',
       'DATA로 선언했고 TABLE OF가 있으므로 실제 여러 행을 담습니다.',

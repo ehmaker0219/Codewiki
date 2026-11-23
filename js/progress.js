@@ -15,6 +15,11 @@
     try { localStorage.setItem(s.key, JSON.stringify({values:s.values, pending:s.pending})); s.storageError = false; }
     catch { s.storageError = true; }
   }
+  // Bound each request so a stalled connection cannot leave sync running forever.
+  const rpc = (client, name, args) => {
+    const timed = window.CodeWikiLearning?.rpcWithTimeout;
+    return timed ? timed(() => client.rpc(name, args)) : client.rpc(name, args);
+  };
   async function sync() {
     const s = state;
     if (!s || s.running) return;
@@ -23,7 +28,7 @@
     if (!client || !s.token) { s.status = 'local'; emit(); return; }
     s.running = true; s.status = 'syncing'; emit();
     try {
-      const result = await client.rpc('cw_get_progress', {p_token:s.token});
+      const result = await rpc(client, 'cw_get_progress', {p_token:s.token});
       if (state !== s) return;
       if (result.error) throw result.error;
       const remote = {};
@@ -32,7 +37,7 @@
       save(s); emit();
       while (state === s && Object.keys(s.pending).length) {
         const [id, value] = Object.entries(s.pending)[0];
-        const response = await client.rpc('cw_set_progress', {p_token:s.token, p_doc_id:id, p_completed:value});
+        const response = await rpc(client, 'cw_set_progress', {p_token:s.token, p_doc_id:id, p_completed:value});
         if (state !== s) return;
         if (response.error) throw response.error;
         // A click during the request may have replaced this pending edit.

@@ -11,6 +11,11 @@
     const notify=()=>{if(alive){refresh();onChange();}};
     function refresh(){
       if(!alive)return;
+      // Keep the typed folder name and focus when a background list/save refresh
+      // re-renders the form; the name is otherwise only captured on submit.
+      const input=editing?element.querySelector?.('#studyFolderName'):null;
+      const hadFocus=Boolean(input)&&input===globalThis.document?.activeElement;
+      if(input&&typeof input.value==='string')editing={...editing,name:input.value};
       const notes=getNotes(),counts=new Map();
       notes.forEach(n=>counts.set(folderOf(n.id),(counts.get(folderOf(n.id))||0)+1));
       const disabled=!ready||pending||Boolean(loading),selected=folders.find(f=>f.id===filter);
@@ -21,7 +26,10 @@
         ${editing?`<form class="study-folder-form"><label for="studyFolderName">${editing.revision?'폴더 이름 변경':'새 폴더 이름'}</label><input id="studyFolderName" maxlength="60" required value="${esc(editing.name)}" ${pending?'disabled':''}><div><button type="submit" ${pending?'disabled':''}>${pending?'저장 중…':'확인'}</button><button type="button" data-folder-action="cancel" ${pending?'disabled':''}>취소</button></div></form>`:''}
         <p class="study-folder-status" role="status">${esc(loading?'폴더 불러오는 중…':message)}</p>
         ${message?`<button type="button" data-folder-action="reload" ${pending||loading?'disabled':''}>폴더 다시 불러오기</button>`:''}`;
-      if(markup!==html){element.innerHTML=html;markup=html;}
+      if(markup!==html){
+        element.innerHTML=html;markup=html;
+        if(hadFocus){const next=element.querySelector?.('#studyFolderName');next?.focus();try{next?.setSelectionRange?.(next.value.length,next.value.length);}catch{}}
+      }
       const note=getNote();
       const move=`<label for="studyMoveFolder">폴더</label><select id="studyMoveFolder" aria-label="메모를 폴더로 이동" ${disabled||!note?.revision?'disabled':''} title="${note?.revision?'선택한 폴더로 이동':'노트를 저장한 뒤 폴더를 선택하세요'}"><option value="">미분류</option>${[...folders].sort((a,b)=>collator.compare(a.name,b.name)).map(f=>`<option value="${esc(f.id)}" ${folderOf(note?.id)===f.id?'selected':''}>${esc(f.name)}</option>`).join('')}</select>`;
       if(move!==moveMarkup){moveElement.innerHTML=move;moveMarkup=move;}

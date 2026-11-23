@@ -153,6 +153,7 @@
   let mounted = false;
   let selectedClusterId = null;
   let selectedTopicId = null;
+  let pendingTopicId = null;
   let camera = { cx: WORLD_W / 2, cy: WORLD_H / 2, zoom: 0.72 };
   let baseFitZoom = 0.72;
   let dragState = null;
@@ -582,6 +583,12 @@
     } else {
       refreshGraph(true);
     }
+    // A topic requested before the map was visible is focused once it is laid out.
+    if (pendingTopicId) {
+      const topicId = pendingTopicId;
+      pendingTopicId = null;
+      focusTopic(topicId);
+    }
     window.scrollTo?.({ top: 0, behavior: 'instant' });
   }
 
@@ -676,8 +683,12 @@
     setUser,
     open(topicId) {
       if (!allowed) return;
-      if (window.location.hash !== '#map') window.location.hash = '#map';
-      else route();
+      if (window.location.hash !== '#map') {
+        pendingTopicId = topicId || null;
+        window.location.hash = '#map';
+        return;
+      }
+      route();
       if (topicId) focusTopic(topicId);
     },
     leave() {

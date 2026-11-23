@@ -165,7 +165,7 @@
       const rawText=importMode==='legacy'?[note.goals,note.activity,note.code,note.result,note.reflection,note.feedback,note.nextPlan].filter(Boolean).join('\n\n'):note.body;
       if(typeof rawText!=='string')throw Error('invalid');
       const text=importMode==='legacy'||!window.CodeWikiLearning?.stripStudyRichBlocks?rawText:window.CodeWikiLearning.stripStudyRichBlocks(rawText);
-      const value=[editing.activity.task,`[${note.title}]\n${text}`].filter(Boolean).join('\n\n');if(value.length>100000)throw Error('invalid');
+      const value=[editing.activity.task,`[${note.title||'제목 없는 기록'}]\n${text}`].filter(Boolean).join('\n\n');if(value.length>100000)throw Error('invalid');
       editing.activity.task=value;dirty=true;$('mentoringImport').close();render();status('내용을 가져왔습니다. 저장해 주세요.');
     }catch{if(ticket===version&&request===importVersion)$('mentoringImportList').textContent='가져오지 못했습니다. 내용 길이를 확인한 뒤 다시 시도해 주세요.';}
   }
@@ -173,7 +173,7 @@
   function route(){
     const open=visible(),entering=open&&host.hidden;host.hidden=!open;shell.classList.toggle('mentoring-hidden',open);trigger.classList.toggle('active',open);
     if(!open){$('mentoringImport')?.close();importVersion++;return;}
-    window.CodeWikiBoard?.closeIfActive();document.querySelectorAll('#sbHomeItem.active,#sbScheduleItem.active,#sbThinkingFlowItem.active,.nav-doc-link.active').forEach(el=>el.classList.remove('active'));
+    window.CodeWikiBoard?.closeIfActive();document.querySelectorAll('#sbHomeItem.active,#sbScheduleItem.active,#sbThinkingFlowItem.active,.nav-doc-link.active').forEach(el=>el.classList.remove('active'));document.getElementById('quizModeBtn')?.classList.add('hidden');
     if(entering)window.scrollTo({top:0,behavior:'instant'});if(!loaded&&!busy){frame();void run(load);}
   }
   host.addEventListener('input',e=>{
@@ -201,7 +201,9 @@
     if(e.repeat||busy||$('mentoringImport')?.open)return;
     void run(save);
   });
-  channel?.addEventListener('message',()=>{if(visible()&&loaded)$('mentoringUpdates').hidden=false;});
+  // Note another tab's save even while this tab shows a different view; the
+  // banner is visible as soon as the user returns to #mentoring.
+  channel?.addEventListener('message',()=>{if(loaded&&$('mentoringUpdates'))$('mentoringUpdates').hidden=false;});
   window.addEventListener('hashchange',route);
   window.addEventListener('beforeunload',e=>{if(dirty){e.preventDefault();e.returnValue='';}});
   trigger.addEventListener('click',()=>{if(session){location.hash='#mentoring';route();}});

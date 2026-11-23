@@ -5,9 +5,32 @@
     const key='codewiki_study_draft_v1:'+owner;
     const conflictMessage='서버에 다른 버전이 있습니다. 현재 글로 저장하면 서버 글을 바꿉니다.';
     let current=null,dirty=false,alive=true,pending=null,saving=false,conflicted=false,sequence=0,inFlightSeq=-1,queued=false,status='',cacheFailed=false;
+    // Drafts are stored per note in one owner-scoped slot. A tab only removes the
+    // draft it wrote itself, so opening or saving a note in another tab never
+    // deletes or overwrites a different tab's unsaved draft.
+    let ownedId=null;
     const emit=()=>{if(alive)onChange();};
+    const validDraft=d=>d&&/^[a-f0-9-]{36}$/i.test(d.id)&&typeof d.title==='string'&&d.title.length<=120&&typeof d.body==='string'&&d.body.length<=200000&&Number.isInteger(d.revision)&&d.revision>=0;
+    function readDrafts() {
+      let raw=null;
+      try {raw=JSON.parse(storage.getItem(key)||'null');} catch {return {};}
+      if(!raw||typeof raw!=='object')return {};
+      if(raw.v===2&&raw.drafts&&typeof raw.drafts==='object')return {...raw.drafts};
+      return validDraft(raw)?{[raw.id]:raw}:{}; // legacy single-draft format
+    }
     const persist=()=>{
-      try {if(current&&dirty)storage.setItem(key,JSON.stringify({...current,saveConflict:conflicted}));else storage.removeItem(key);cacheFailed=false;}
+      try {
+        const drafts=readDrafts();
+        if(current&&dirty){
+          if(ownedId&&ownedId!==current.id)delete drafts[ownedId];
+          drafts[current.id]={...current,saveConflict:conflicted,savedAt:Date.now()};
+          ownedId=current.id;
+        } else if(ownedId){
+          delete drafts[ownedId];ownedId=null;
+        } else {cacheFailed=false;return;}
+        if(Object.keys(drafts).length)storage.setItem(key,JSON.stringify({v:2,drafts}));else storage.removeItem(key);
+        cacheFailed=false;
+      }
       catch {cacheFailed=true;}
     };
     async function call(name,args={}) {
@@ -23,8 +46,12 @@
     }
     function restore() {
       try {
-        const d=JSON.parse(storage.getItem(key)||'null');
-        if(d&&/^[a-f0-9-]{36}$/i.test(d.id)&&typeof d.title==='string'&&d.title.length<=120&&typeof d.body==='string'&&d.body.length<=200000&&Number.isInteger(d.revision)&&d.revision>=0){conflicted=d.saveConflict===true;delete d.saveConflict;current=d;dirty=true;status=conflicted?conflictMessage:'이 브라우저의 미저장 필기를 복원했습니다.';}
+        const drafts=Object.values(readDrafts()).filter(validDraft);
+        if(!drafts.length)return;
+        const d={...drafts.reduce((a,b)=>(Number(b.savedAt)||0)>(Number(a.savedAt)||0)?b:a)};
+        conflicted=d.saveConflict===true;delete d.saveConflict;delete d.savedAt;
+        current=d;dirty=true;ownedId=d.id;
+        status=conflicted?conflictMessage:'이 브라우저의 미저장 필기를 복원했습니다.';
       } catch {status='임시 필기를 복원하지 못했습니다.';}
     }
     function edit(title,body) {if(!alive||!current||(current.title===title&&current.body===body&&current.revision>0))return;current={...current,title,body};sequence++;dirty=true;status=conflicted?conflictMessage:'저장 대기';persist();emit();}

@@ -29,6 +29,7 @@ Supabase SQL Editor에서 파일 전체를 아래 순서대로 실행합니다. 
 17. `migrations/20261120-encrypted-auth.sql` — 암호화 게이트웨이 전용 RPC 및 평문 인증 API 차단
 18. `migrations/20261120-security-review-hardening.sql` — 반려 시 즉시 세션 폐기, `session_token` 유니크 인덱스, `pg_temp` 고정 및 권한 정리
 19. `migrations/20261121-login-history.sql` — 관리자 전용 학생 로그인 내역 기록(`cw_auth_private.login_logs`) 및 조회 RPC(`cw_admin_login_history`) 추가
+20. **`migrations/20261123-auth-review-hardening.sql` — 반드시 마지막에 적용.** 존재하지 않는 아이디도 같은 횟수 제한·bcrypt 비용을 거쳐 아이디 존재 여부 추측 차단, 가입 MBTI 서버 검증, `lower(username)` 인덱스 추가, 접속 IP(해시)별 요청 제한(로그인 5분 120회, 가입 1시간 60회, 비밀번호 재설정 5분 60회)과 전체 상한 상향. DB를 먼저 적용한 뒤 `secure-auth` Edge Function을 재배포합니다. 기존 4개 인자 게이트웨이는 그대로 동작하므로 순서 사이에도 로그인은 유지됩니다. 이후 `20261119-auth-hardening.sql`이나 `20261120-encrypted-auth.sql`을 다시 실행했다면 이 파일을 다시 적용합니다.
 
 관리자 공부방을 폐기하는 기존 DB에서는 먼저 DB 소유자가 이전 대상 두 계정을 확인합니다. 단일 트랜잭션 안에서 `codewiki.transfer_from`과 `codewiki.transfer_to`를 해당 UUID로 설정하고 `scripts/transfer-study-owner.sql`을 실행한 뒤, `20261119-student-only-study.sql`의 내용을 적용합니다. 실제 계정 UUID·토큰이나 필기 백업은 공개 저장소에 넣지 않습니다. 이전은 본문·저장 시간·수정 버전·폴더 분류를 유지하며, 폴더 이름 충돌이나 소유권 불일치가 있으면 중단합니다. 관리자 계정 자체와 회원 관리 기능은 유지합니다. 브라우저에만 있는 미저장 초안은 이 DB 이전에 포함되지 않습니다.
 

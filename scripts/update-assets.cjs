@@ -50,7 +50,7 @@ function updateAssets(check = false) {
   const indexPath = path.join(root,'index.html');
   const html = fs.readFileSync(indexPath,'utf8');
   validateAssets(html);
-  const versioned = html.replace(/((?:src|href)=")(js\/[^"?]+\.js|css\/[^"?]+\.css)(?:\?v=[^"&]*)?(")/g, (_,prefix,file,quote) => {
+  const versioned = html.replace(/((?:data-src|src|href)=")(js\/[^"?]+\.js|css\/[^"?]+\.css|assets\/[^"?]+\.svg)(?:\?v=[^"&]*)?(")/g, (_,prefix,file,quote) => {
     const content = fs.readFileSync(path.join(root,file),'utf8').replace(/\r\n/g,'\n');
     const hash = crypto.createHash('sha256').update(content).digest('hex').slice(0,12);
     return `${prefix}${file}?v=${hash}${quote}`;

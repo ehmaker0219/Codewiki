@@ -40,7 +40,11 @@
     if (!token) return [];
     if (pendingRead?.token === token) return pendingRead.promise;
     const request = {token};
-    request.promise = Promise.resolve().then(() => client.rpc("cw_list_posts", {p_token:token}))
+    // Bound the read so a stalled request never pins every later badge/board load.
+    const timed = window.CodeWikiLearning?.rpcWithTimeout;
+    request.promise = Promise.resolve().then(() => timed
+        ? timed(() => client.rpc("cw_list_posts", {p_token:token}))
+        : client.rpc("cw_list_posts", {p_token:token}))
       .then(({data, error}) => { if (error) throw error; return data || []; })
       .finally(() => { if (pendingRead === request) pendingRead = null; });
     pendingRead = request;
@@ -588,15 +592,31 @@
     }
   }
 
+  let boardUserKey = null;
+  // Reset on logout, account switch (including another tab) and loss of approval,
+  // so no previous user's posts, admin controls or unsent drafts stay in the DOM.
   function setUser(user) {
-    if (!user) {
-      pendingRead = null;
-      ++badgeVersion;
-      if (boardOpenCountBadge) {
-        boardOpenCountBadge.textContent = "0";
-        boardOpenCountBadge.classList.add("hidden");
-      }
-      closeIfActive();
+    const approved = Boolean(user && (user.status === "approved" || user.role === "admin"));
+    const nextKey = approved ? `${user.id}:${user.role}` : null;
+    if (nextKey === boardUserKey) return;
+    boardUserKey = nextKey;
+    pendingRead = null;
+    ++badgeVersion;
+    ++modalVersion;
+    if (boardOpenCountBadge) {
+      boardOpenCountBadge.textContent = "0";
+      boardOpenCountBadge.classList.add("hidden");
+    }
+    if (writeModal) {
+      writeModal.classList.add("hidden");
+      writeModal.innerHTML = "";
+    }
+    const wasActive = isBoardViewActive;
+    closeIfActive();
+    if (wasActive) {
+      if (articleContainer) articleContainer.innerHTML = "";
+      const app = window.CodeWikiApp;
+      app?.openDoc?.(app.getCurrentDocId?.() || "welcome-abap");
     }
   }
 

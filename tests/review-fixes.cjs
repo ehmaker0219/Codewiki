@@ -1,0 +1,69 @@
+const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const vm = require('node:vm');
+const read = name => fs.readFileSync(name, 'utf8');
+
+// 1. Board state never survives an account switch, logout or loss of approval.
+(() => {
+  const elements = new Map();
+  const element = () => {
+    const classes = new Set();
+    return {innerHTML:'', textContent:'', classList:{add:c=>classes.add(c), remove:c=>classes.delete(c), contains:c=>classes.has(c)},
+      addEventListener(){}, querySelectorAll(){return [];}, querySelector(){return null;}};
+  };
+  const get = id => elements.get(id) || (elements.set(id, element()), elements.get(id));
+  const opened = [];
+  const context = {window:{CodeWikiAuth:{isSupabaseConfigured:()=>true, getSessionToken:()=>'t', getCurrentUser:()=>null,
+      getSupabaseClient:()=>({rpc:async()=>({data:[]})})},
+    CodeWikiApp:{openDoc:id=>opened.push(id), getCurrentDocId:()=>'abap-basics'}},
+    document:{getElementById:get, querySelector:get, querySelectorAll:()=>[]}, console};
+  vm.runInNewContext(read('js/board.js'), context);
+  const board = context.window.CodeWikiBoard;
+  const admin = {id:'a', role:'admin', status:'approved'}, student = {id:'s', role:'student', status:'approved'};
+  board.setUser(admin);
+  get('boardWriteModal').innerHTML = 'unsent admin reply';
+  board.setUser({...admin});
+  assert.equal(get('boardWriteModal').innerHTML, 'unsent admin reply', 'refreshing the same user keeps the modal');
+  board.setUser(student);
+  assert.equal(get('boardWriteModal').innerHTML, '', 'switching account clears the hidden modal');
+  get('boardWriteModal').innerHTML = 'student draft';
+  board.setUser({...student, status:'pending'});
+  assert.equal(get('boardWriteModal').innerHTML, '', 'losing approval resets board state');
+  board.setUser(student);
+  return board.openBoardView().then(() => {
+    get('articleContainer').innerHTML = '<button>admin action</button>';
+    board.setUser(null);
+    assert.equal(get('articleContainer').innerHTML, '', 'logout removes the rendered board');
+    assert.deepEqual(opened, ['abap-basics'], 'the current document is rendered again');
+  });
+})().then(() => {
+  // 2. Admin-only practice is reachable for admins.
+  const css = read('css/style.css');
+  const hiddenForAdmin = css.match(/((?:\.admin-workspace #[\w-]+,\s*)*\.admin-workspace #[\w-]+)\s*\{\s*display:none;\s*\}/g) || [];
+  assert.ok(hiddenForAdmin.length > 0 && hiddenForAdmin.every(rule => !rule.includes('#openPracticeBtn')), 'admin CSS must not hide the practice button');
+
+  // 3. The disabled UI5 track is not loaded on startup.
+  assert.ok(!/src="js\/ui5-data\.js/.test(read('index.html')), 'ui5-data.js must not load at startup');
+
+  // 4. Navigation renders once: a hash change defers to the hashchange handler.
+  const app = read('js/app.js');
+  const slice = app.slice(app.indexOf('  // When the hash changes, render once'), app.indexOf('  window.CodeWikiApp = {'));
+  const renders = [];
+  const nav = {window:{location:{hash:'#study'}, WIKI_DOCS:{'abap-basics':{}}, scrollTo(){}}, getHomeDocId:()=>'welcome-abap',
+    renderDocument:id=>renders.push(id), sessionStorage:{setItem(){}}, TRACK_SESSION_KEY:'k', currentTrack:'abap'};
+  vm.runInNewContext(slice + '\nwindow.navigateTo = navigateTo; window.pending = () => pendingNavigation;', nav);
+  nav.window.navigateTo('abap-basics');
+  assert.equal(nav.window.location.hash, '#doc/abap-basics');
+  assert.deepEqual(renders, [], 'a hash change must not also render synchronously');
+  assert.equal(nav.window.pending(), 'abap-basics');
+  nav.window.navigateTo('abap-basics');
+  assert.deepEqual(renders, ['abap-basics'], 'same-hash navigation renders immediately');
+
+  // 5. Legacy mentoring records without updatedAt can still be listed.
+  const store = read('js/mentoring-store.js');
+  assert.match(store, /String\(b\?\.updatedAt\|\|''\)\.localeCompare\(String\(a\?\.updatedAt\|\|''\)\)/);
+
+  // 6. Quiz blanks are keyboard operable.
+  assert.match(app, /class="quiz-token"[^>]*tabindex="0" role="button"/);
+  console.log('PASS: board account-switch reset, admin practice access, no UI5 startup load, single navigation render, legacy sort and keyboard quiz blanks');
+}).catch(error => { console.error(error); process.exitCode = 1; });

@@ -22,7 +22,7 @@
         return new Promise((resolve,reject)=>{
           const tx=db.transaction('reports','readonly');
           const request=tx.objectStore('reports').getAll(IDBKeyRange.bound([owner,''],[owner,'\uffff']));
-          tx.oncomplete=()=>resolve(request.result.sort((a,b)=>b.updatedAt.localeCompare(a.updatedAt)));
+          tx.oncomplete=()=>resolve(request.result.sort((a,b)=>String(b?.updatedAt||'').localeCompare(String(a?.updatedAt||''))));
           tx.onabort=()=>reject(tx.error||new Error('storage-aborted'));
           tx.onerror=()=>{};
         });
