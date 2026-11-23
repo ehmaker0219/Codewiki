@@ -688,15 +688,36 @@ ENDIF.`), text('SELECT 열에 키를 빼면 원래 서로 다른 행이 같은 �
         '전체적인 그림',
         {
           type: 'nested',
+          caption: 'SBOOK의 CONNID 필드를 예로 든 타입 참조 관계입니다. (Domain 사용)',
           root: {
             title: 'TABLE',
+            code: 'gt_bookings',
+            desc: 'Internal Table 예시: `DATA gt_bookings TYPE TABLE OF sbook.`',
             children: [
               {
                 title: 'STRUCTURE · WORK AREA',
-                items: [
-                  { name: 'DATA ELEMENT' },
-                  { name: 'DATA TYPE' },
-                  { name: 'DATA' }
+                code: 'SBOOK · gs_booking',
+                desc: 'SBOOK의 행 타입을 기준으로 한 Work Area: `DATA gs_booking LIKE LINE OF gt_bookings.`',
+                children: [
+                  {
+                    title: 'DATA ELEMENT',
+                    code: 'S_CONN_ID',
+                    desc: 'CONNID 필드의 의미(항공편 연결 번호) · 레이블을 정의하고, 기술 속성은 Domain을 참조합니다.',
+                    children: [
+                      {
+                        title: 'Domain',
+                        badge: '참조',
+                        code: 'S_CONN_ID',
+                        desc: '위 Data Element와 이름이 같은 별도 객체입니다. 여러 DATA ELEMENT가 같은 Domain을 공유할 수 있습니다.',
+                        items: [
+                          { name: 'DATA TYPE', example: 'NUMC', sub: '숫자 문자형' },
+                          { name: '길이 · 소수 자릿수', example: '4자리 · 소수 없음' },
+                          { name: '값 범위', example: '0000–9999', sub: 'NUMC 4자리의 표현 범위 · 실제 운항편 존재 여부와는 별개' }
+                        ]
+                      }
+                    ]
+                  },
+                  { title: 'DATA', code: "'0400'", desc: '변수에 담긴 실제 값의 예: `gs_booking-connid = \'0400\'.`' }
                 ]
               }
             ]

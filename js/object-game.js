@@ -9,6 +9,8 @@
     if(bank.questions.length<2 || categories.size<4 || categories.size!==bank.categories.length)throw new Error('Invalid question bank');
     for(const q of bank.questions){
       if(ids.has(q.id)||!q.name||!q.hint||!q.explanation||!categories.has(q.answer))throw new Error('Invalid question');
+      if(q.prompt!==undefined && (typeof q.prompt!=='string'||!q.prompt.trim()))throw new Error('Invalid question prompt');
+      if(q.distractors!==undefined && (!Array.isArray(q.distractors)||q.distractors.length>3||new Set(q.distractors).size!==q.distractors.length||q.distractors.some(id=>id===q.answer||!categories.has(id))))throw new Error('Invalid question distractors');
       ids.add(q.id);
     }
     let deck=[],previous=null,current=null,round=0,seen=0,answered=0,correct=0,choice=null;
@@ -19,10 +21,11 @@
           if(deck.at(-1).id===previous)[deck[0],deck[deck.length-1]]=[deck.at(-1),deck[0]];
         }
         const question=deck.pop();previous=question.id;seen++;choice=null;
-        const alternatives=bank.categories.filter(c=>c.id!==question.answer);
+        const preferred=question.distractors||[];
+        const alternatives=bank.categories.filter(c=>c.id!==question.answer&&!preferred.includes(c.id));
         const near=shuffle(alternatives.filter(c=>c.family===question.family),random);
         const far=shuffle(alternatives.filter(c=>c.family!==question.family),random);
-        const options=shuffle([bank.categories.find(c=>c.id===question.answer),...[...near,...far].slice(0,3)],random);
+        const options=shuffle([bank.categories.find(c=>c.id===question.answer),...preferred.map(id=>bank.categories.find(c=>c.id===id)),...[...near,...far].slice(0,3-preferred.length)],random);
         current={question,options,round,seen,total:bank.questions.length};return current;
       },
       answer(id){
@@ -35,11 +38,11 @@
   const byId=id=>document.getElementById(id);
   const trigger=byId('openObjectGameBtn'),host=byId('objectGamePage'),shell=byId('appShell'),output=byId('objectGameContent');
   const next=byId('objectGameNext'),status=byId('objectGameScore');
-  let userId=null,game=null,current=null,bankPromise=null,epoch=0;
+  let userId=null,game=null,bankPromise=null,epoch=0;
   const visible=()=>Boolean(userId)&&window.location.hash==='#data-game';
   function setUser(user){
     const id=user?.role==='student'&&user.status==='approved'?user.id:null;
-    if(id!==userId){epoch++;game=null;current=null;output.replaceChildren();status.textContent='';next.disabled=true;}
+    if(id!==userId){epoch++;game=null;output.replaceChildren();status.textContent='';next.disabled=true;}
     userId=id;trigger.hidden=!id;
     route();
   }
@@ -61,7 +64,7 @@
   function element(tag,className,text){const el=document.createElement(tag);el.className=className;if(text!==undefined)el.textContent=text;return el;}
   function draw(){
     if(!visible()||!game)return;
-    current=game.next();const {question,options}=current;
+    const {question,options}=game.next();
     output.replaceChildren();
     const name=element('h3','object-game-name',question.name);name.tabIndex=-1;
     const choices=element('div','object-game-options');choices.setAttribute('role','group');choices.setAttribute('aria-label','요소 종류 선택');
@@ -81,7 +84,9 @@
       button.dataset.answer=option.id;choices.append(button);
     });
     const hint=element('details','object-game-hint');hint.append(element('summary','','힌트 보기'),element('p','',question.hint));
-    output.append(name,choices,hint,feedback);next.disabled=false;next.textContent='다음 문제 →';name.focus();
+    output.append(name);
+    if(question.prompt)output.append(element('pre','object-game-prompt',question.prompt));
+    output.append(choices,hint,feedback);next.disabled=false;next.textContent='다음 문제 →';name.focus();
   }
   async function prepare(){
     if(!visible()||game)return;

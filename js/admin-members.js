@@ -67,7 +67,7 @@
     host.innerHTML=`<header class="members-heading"><div><h1>${title}</h1><p>${desc}</p></div><button type="button" class="toss-chip-btn" data-members-refresh ${busy?'disabled':''}>새로고침</button></header><section id="membersPresence" class="members-presence" aria-label="현재 접속자"></section>
       <div class="members-tabs" role="tablist" aria-label="학생 관리 보기"><button type="button" class="members-tab" role="tab" aria-selected="${tab==='students'}" data-members-tab="students">학생 목록</button><button type="button" class="members-tab" role="tab" aria-selected="${tab==='logins'}" data-members-tab="logins">로그인 내역</button></div>
       <div class="members-filters"><label>검색<input id="membersSearch" type="search" placeholder="이름 또는 아이디" value="${esc(query)}"></label><label>반<select id="membersClass"><option value="">전체 반</option>${classes.map(c=>`<option value="${esc(c)}" ${classFilter===c?'selected':''}>${esc(c)}</option>`).join('')}</select></label><label>상태<select id="membersStatus"><option value="">전체 상태</option>${Object.entries(statuses).map(([id,name])=>`<option value="${id}" ${statusFilter===id?'selected':''}>${name}</option>`).join('')}</select></label><span class="members-count" id="membersCount"></span></div>
-      <p id="membersMessage" role="status">${esc(statusText)}</p><div class="members-table-wrap" id="membersTable"></div>`;
+      <p id="membersMessage" role="status"></p><div class="members-table-wrap" id="membersTable"></div>`;
     const msg=host.querySelector('#membersMessage');if(msg)msg.textContent=statusText;
     renderPresence();renderRows();
   }

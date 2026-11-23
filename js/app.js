@@ -572,7 +572,7 @@
                     .map(
                       it => `
                     <div class="nested-leaf-chip">
-                      <span class="nested-leaf-name">${parseInline(it.name)}</span>
+                      <span class="nested-leaf-name">${parseInline(it.name)}${it.example ? ` <code>${window.CodeWikiLearning.escape(it.example)}</code>` : ""}</span>
                       ${it.sequence?.length ? `<ol class="nested-leaf-sequence" aria-label="선언 순서">${it.sequence.map(value => `<li><code>${window.CodeWikiLearning.escape(value)}</code></li>`).join("")}</ol>` : ""}
                       ${it.sub ? `<span class="nested-leaf-sub">${parseInline(it.sub)}</span>` : ""}
                       ${it.snippet ? `<pre class="nested-abap-pre"><code>${renderEditorCode(it.snippet, true, false)}</code></pre>` : ""}
@@ -729,9 +729,6 @@
         showFooter
           ? `
         <div class="wikidocs-pager-wrap">
-          ${
-            !doc.isHome
-              ? `
             <div class="read-complete-bar" style="justify-content:space-between; flex-wrap:wrap; gap:10px;">
               <button id="suggestDocEditBtn" class="toss-chip-btn">
                 <span>수정 건의</span>
@@ -741,10 +738,6 @@
                 <span>${isRead ? "✓ 완료됨" : "학습 완료"}</span>
               </button>
             </div>
-          `
-              : ""
-          }
-
         </div>
       `
           : ""
