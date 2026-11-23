@@ -1,6 +1,6 @@
 const fs=require('node:fs'), vm=require('node:vm'), assert=require('node:assert/strict');
 const ctx={window:{}};
-for(const name of ['data','ui5-data','class-notes','lesson-days','example-notes','learning-tools']) vm.runInNewContext(fs.readFileSync(`js/${name}.js`,'utf8'),ctx);
+for(const name of ['data','ui5-data','class-notes','lesson-days','textbook','example-notes','learning-tools']) vm.runInNewContext(fs.readFileSync(`js/${name}.js`,'utf8'),ctx);
 const docs=ctx.window.WIKI_DOCS, tools=ctx.window.CodeWikiLearning;
 const index=tools.indexDocuments(Object.values(docs));
 for(const term of ['CHANGING','sy-subrc','lv_double','LZDEMOTOP']) assert.ok(tools.search(index,term).some(r=>r.snippet.toLowerCase().includes(term.toLowerCase())),term);
@@ -59,34 +59,11 @@ const flowAt=indexHtml.indexOf('id="sbThinkingFlowItem"');
 const toolsAt=indexHtml.indexOf('id="learningToolsGroup"');
 assert.ok(mapAt!==-1&&mapAt<flowAt&&flowAt<toolsAt);
 assert.ok(JSON.stringify(docs['abap-thinking-flow']).includes("sy-datum(4) && '0101'"));
-vm.runInNewContext(fs.readFileSync('js/visualizers.js','utf8'),ctx);
-const ovenDocument={activeElement:null};
-const ovenFocus=[];
-const ovenSlot={innerHTML:'',onclick:null,ownerDocument:ovenDocument,
-  querySelector(selector){
-    const button={focus(options){ovenDocument.activeElement=button;ovenFocus.push({selector,options});}};
-    return button;
-  }
-};
-function selectOvenStep(step,focused=true){
-  const button={getAttribute:()=>step};
-  ovenDocument.activeElement=focused?button:null;
-  ovenSlot.onclick({target:{closest:()=>button}});
-}
-ctx.window.WIKI_WIDGETS['abap-oven-diagram'](ovenSlot);
-assert.ok(ovenSlot.innerHTML.includes('DATA ELEMENT')&&ovenSlot.innerHTML.includes('DATA TYPE')&&ovenSlot.innerHTML.includes('오븐 트레이'));
-selectOvenStep('clear');
-assert.ok(ovenSlot.innerHTML.includes('ts_data / gs_data')&&ovenSlot.innerHTML.includes('sbook-customid'));
-assert.ok(ovenSlot.innerHTML.includes('<span>00000002</span><span>Air Berlin</span><span>0</span>'));
-assert.ok(ovenSlot.innerHTML.includes('고객 정보는 유지됩니다'));
-assert.equal(ovenFocus.at(-1).selector,'[data-oven-step="clear"]');
-assert.equal(ovenFocus.at(-1).options.preventScroll,true);
-selectOvenStep('fill');
-assert.ok(ovenSlot.innerHTML.includes('ts_output / gs_output')&&ovenSlot.innerHTML.includes('15'));
-assert.equal(ovenFocus.at(-1).selector,'[data-oven-step="fill"]');
-selectOvenStep('modify',false);
-assert.ok(ovenSlot.innerHTML.includes('data-oven-mode="inserted"')&&ovenSlot.innerHTML.includes('is-saved'));
-assert.equal(ovenFocus.length,2,'pointer actions without focus must not steal it');
+const overview=docs['abap-thinking-flow'].sections[0].blocks[0];
+assert.equal(overview.type,'nested');
+assert.equal(overview.root.title,'TABLE');
+assert.equal(overview.root.children[0].title,'STRUCTURE · WORK AREA');
+assert.deepEqual(Array.from(overview.root.children[0].items,item=>item.name),['DATA ELEMENT','DATA TYPE','DATA']);
 const groups=tools.relatedGroups(docs['abap-modularization'],[daily('13'),docs['abap-objects']],Object.values(docs));
 assert.ok(groups.concepts.every(d=>!d.isDailyLesson));
 assert.deepEqual(Array.from(groups.dates.map(d=>d.id)),['lesson-2026-11-16','lesson-2026-11-17']);

@@ -16,6 +16,7 @@
     '로컬 클래스의 정적 메서드': {input:'iv_number = 5', expected:'10이 출력됩니다.'},
     '구조 타입과 구조 변수': {input:'carrid = LH, carrname = Lufthansa', expected:'LH Lufthansa / Lufthansa가 출력됩니다.', requirements:'SCARR 교육용 테이블이 있는 시스템에서 실행하세요.'},
     '같은 이름의 필드만 복사': {input:'원본 gs_spfli(LH / 0400 / FRANKFURT), 대상 gs_flight-seatsocc = 320', expected:'LH 0400 320이 출력됩니다. seatsocc는 원본에 같은 이름의 필드가 없어 유지되고, cityfrom은 대상에 없어 복사되지 않습니다.', requirements:'SPFLI·SFLIGHT 교육용 테이블이 있는 시스템에서 실행하세요.'},
+    '비교 예제의 로컬 타입 선언': {input:'별도 입력 없음', expected:'로컬 structure ts_flight와 로컬 table type tt_flights가 정의됩니다. 타입만 정의하므로 데이터 변수나 테이블 행은 생성되지 않으며 출력문도 없습니다.', placement:'REPORT 선언 아래, 이어지는 표의 DATA 선언보다 먼저 넣으세요.', requirements:'BC400_S_FLIGHT와 S_CARR_ID·S_CONN_ID·S_DATE·S_SEATSMAX·S_SEATSOCC 데이터 요소가 있는 수업 실습 시스템 기준입니다.'},
     '행 타입과 세 가지 테이블 선언': {input:'별도 입력 없음', expected:'SPFLI 필드 기반의 빈 내부 테이블 3개와 초기값의 작업 영역 gs_spfli가 선언됩니다. 출력문은 없습니다.', requirements:'SPFLI 교육용 테이블이 있는 시스템에서 실행하세요.'},
     '내부 테이블 조작 전체 예제': {input:'LH 0400 (FRANKFURT, 545분) / AA 0017 (NEW YORK, 361분)', expected:'LH 0400 FRANKFURT 560만 출력됩니다. LH 0400의 비행시간(fltime)을 수정하고 AA 0017을 삭제한 결과입니다.', requirements:'SPFLI 교육용 테이블이 있는 시스템에서 실행하세요.'},
     '비행시간 내림차순·항공사 오름차순': {input:'gt_spfli에 비행시간(fltime)과 항공사 코드(carrid)가 있는 여러 행', expected:'비행시간 내림차순, 동점이면 항공사 코드 오름차순으로 행 순서가 바뀝니다. 출력문은 없습니다.', requirements:'내부 테이블 조작 전체 예제의 gt_spfli 선언과 데이터 추가 뒤에 넣고 디버거에서 확인하세요.'},

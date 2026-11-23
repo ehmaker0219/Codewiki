@@ -7,7 +7,7 @@
   <link rel="icon" type="image/svg+xml" href="assets/logo-symbol.svg?v=32baec3f0703" />
   <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/style.css?v=287391af4e68" />
+  <link rel="stylesheet" href="css/style.css?v=54e776083ba2" />
   <link rel="stylesheet" href="css/theme.css?v=2c4156347aea" />
   <link rel="stylesheet" href="css/profile.css?v=386bcc74d5e6" />
   <link rel="stylesheet" href="css/admin-members.css?v=ab38843025b8" />
@@ -15,7 +15,7 @@
   <link rel="stylesheet" href="css/schedule.css?v=7357dc7efd11" />
   <link rel="stylesheet" href="css/study.css?v=e1a678dc0bf3" />
   <link rel="stylesheet" href="css/mentoring.css?v=2496571647c0" />
-  <link rel="stylesheet" href="css/object-game.css?v=97180b09645e" />
+  <link rel="stylesheet" href="css/object-game.css?v=4502e4b89536" />
   <link rel="stylesheet" href="css/knowledge-map.css?v=36df37ddcc30" />
 </head>
 <body>
@@ -117,6 +117,10 @@
         <!-- 카테고리 폴더 섹션 -->
         <div class="sb-group" id="learningContentsGroup" hidden>
           <div class="sb-group-label">목차</div>
+          <a href="#doc/abap-textbook" id="sbTextbookItem" class="sb-menu-item nav-doc-link" data-doc="abap-textbook">
+            <svg class="sb-icon" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20M6.5 3H20v19H6.5A2.5 2.5 0 0 1 4 19.5v-14A2.5 2.5 0 0 1 6.5 3Z"/><path d="M8 7h8M8 11h6"/></svg>
+            <span>교재 목차</span>
+          </a>
           <div class="nav-view-switch" role="group" aria-label="목차 보기 방식">
             <button type="button" data-nav-view="topic" aria-pressed="true">주제별</button>
             <button type="button" data-nav-view="date" aria-pressed="false">수업일별</button>
@@ -176,7 +180,7 @@
       <section id="knowledgeMapPage" class="kmap-page" aria-label="ABAP 개념 지도" hidden></section>
       <section id="objectGamePage" class="object-game-page" hidden aria-labelledby="objectGameTitle" aria-describedby="objectGameIntro">
         <div class="object-game-header"><h1 id="objectGameTitle">DATA 미니게임</h1></div>
-        <p id="objectGameIntro" class="object-game-intro">이 이름은 어떤 종류일까요? 이름 규칙을 익히는 100문제입니다. 접두어는 명명 관례이며, 실제 객체 종류는 선언이나 저장소에서 확인하세요.</p>
+        <p id="objectGameIntro" class="object-game-intro">이 이름은 어떤 종류일까요? 다양한 문제로 이름 규칙을 익혀 보세요. 접두어는 명명 관례이며, 실제 객체 종류는 선언이나 저장소에서 확인하세요.</p>
         <div id="objectGameContent"></div>
         <div class="object-game-footer"><span id="objectGameScore"></span><button type="button" id="objectGameNext" class="toss-primary-btn" disabled>다음 문제 →</button></div>
       </section>
@@ -208,7 +212,7 @@
           </div>
         </aside>
       </div>
-      <footer class="site-footer">최근 업데이트 <time id="siteUpdatedAt" datetime="2026-11-22T15:55:26.081Z" data-version="8552e8388a2fe8a9">2026.11.23 00:55 (KST)</time></footer>
+      <footer class="site-footer">최근 업데이트 <time id="siteUpdatedAt" datetime="2026-11-23T01:59:40.513Z" data-version="6ebe241a88e49ab7">2026.11.23 10:59 (KST)</time></footer>
     </div>
   </div>
 
@@ -236,19 +240,20 @@
   </dialog>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.119.2/dist/umd/supabase.js" integrity="sha384-A97u3Qnt9GZHURO9YJZRe7VQgGUeFzcv6I1oIGnUTxQrCxnpQMwR0/G8F2zt9abZ" crossorigin="anonymous"></script>
 
-  <script src="js/data.js?v=c6f7d3cd380c"></script>
+  <script src="js/data.js?v=0706b395c571"></script>
   <script src="js/ui5-data.js?v=fa64b5a1a556"></script>
-  <script src="js/class-notes.js?v=baee431febeb"></script>
+  <script src="js/class-notes.js?v=875ef001bedd"></script>
   <script src="js/lesson-days.js?v=0e5ab03f49f8"></script>
-  <script src="js/example-notes.js?v=7f6bc4ba0a83"></script>
+  <script src="js/textbook.js?v=ccb75953be3d"></script>
+  <script src="js/example-notes.js?v=d77339a4e036"></script>
   <script src="js/learning-tools.js?v=acdbc030d4ff"></script>
   <script src="js/profile.js?v=0d4ca61b9624"></script>
   <script src="js/birthdays.js?v=a206e20bf51d"></script>
   <script src="js/progress.js?v=5daa2cd3faf4"></script>
-  <script src="js/visualizers.js?v=fd559376028d"></script>
+  <script src="js/visualizers.js?v=8d536050355f"></script>
   <script src="js/schedule-data.js?v=03cf62a15b32"></script>
   <script src="js/schedule.js?v=1f8871091c42"></script>
-  <script src="js/app.js?v=a3ff0a45c774"></script>
+  <script src="js/app.js?v=01588f59e6db"></script>
   <script src="js/admin.js?v=33de64df6bf9"></script>
   <script src="js/admin-members.js?v=0a5db69abb06"></script>
   <script src="js/presence.js?v=885eb16b7795"></script>
@@ -265,8 +270,8 @@
   <script src="js/board.js?v=e9448d39a7d1"></script>
   <script src="js/practice.js?v=ef663e2b54f1"></script>
   <script src="js/practice-ui.js?v=9b9d96b845b5"></script>
-  <script type="application/json" id="objectGameBankSource" data-src="js/object-game-bank.js?v=159fb21ceed9"></script>
-  <script src="js/object-game.js?v=0f2dc8054a89"></script>
+  <script type="application/json" id="objectGameBankSource" data-src="js/object-game-bank.js?v=c3954acecddc"></script>
+  <script src="js/object-game.js?v=9a6e400d51fd"></script>
   <script src="js/knowledge-map.js?v=2c89e8d0ff75"></script>
 </body>
 </html>

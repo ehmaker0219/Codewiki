@@ -50,7 +50,7 @@ START-OF-SELECTION.
          / '두 배:', lv_double.`), text('PARAMETERS는 리포트의 선택 화면 입력 필드를 정의합니다. WRITE는 클래식 리스트 출력을 만듭니다. 문자열 함수와 조건 표현은 [[abap-useful-syntax|유용한 함수 · 문법 모음]]으로 연결됩니다.'))
   ], '11/11 · 11/12');
 
-  put('abap-types', '자료형과 초기값', '문자형·숫자형·바이트형을 구분하고 길이와 소수 자릿수를 명시합니다.', ['자료형', '초기값', 'DECFLOAT16', 'DECFLOAT34', 'XSTRING'], [
+  put('abap-types', '자료형과 초기값', '문자형·숫자형·바이트형을 구분하고 길이와 소수 자릿수를 명시합니다.', ['자료형', 'DATA TYPE', '초기값', 'DECFLOAT16', 'DECFLOAT34', 'XSTRING'], [
     section('주요 기본 타입', table(['타입', '용도', '주의점'], [
       ['d / t', '날짜 YYYYMMDD / 시간 HHMMSS', '초기값은 각각 00000000 / 000000'], ['i / int8', '4바이트 / 8바이트 정수', 'i 범위는 -2,147,483,648 ~ 2,147,483,647'], ['f', '8바이트 이진 부동소수점', '십진 소수를 정확히 표현하지 못할 수 있음'], ['decfloat16 / decfloat34', '16자리 / 34자리 십진 부동소수점', '자리 수는 고정 소수점 이하 자릿수가 아니라 유효 숫자'], ['string / xstring', '가변 길이 문자열 / 바이트 문자열', '길이가 가변인 타입도 완전 타입일 수 있음']
     ])),
@@ -122,7 +122,7 @@ ENDFORM.`)),
     section('입출력과 오류 처리', text('BAPI는 화면 팝업 대신 RETURN 구조 또는 테이블로 성공·오류 메시지를 전달하도록 설계합니다. 호출자는 RETURN의 TYPE과 메시지 내용을 확인해야 합니다.', '원격 함수의 인터페이스는 RFC 지원 타입과 값 전달 제약을 따릅니다. 일반 로컬 함수의 모든 설정에 그대로 적용할 규칙으로 이해하지 마세요.', '변경 BAPI의 커밋·롤백 책임은 개별 BAPI 문서를 확인해야 합니다. 호출 성공 여부만 보고 저장 완료라고 판단하지 않습니다.'))
   ], '11/17', [['SAP Help · BAPI 반환 메시지', 'https://help.sap.com/saphelp_snc70/helpdata/en/a5/3ec9f74ac011d1894e0000e829fbbd/content.htm']]);
 
-  put('abap-objects', '클래스와 메서드', '클래스 자체의 정적 메서드와 객체의 인스턴스 메서드를 구분합니다.', ['Global class', 'Local class', '정적 메서드', '인스턴스 메서드', '참조 변수'], [
+  put('abap-objects', '클래스와 메서드', '클래스 자체의 정적 메서드와 객체의 인스턴스 메서드를 구분합니다.', ['Global class', 'Local class', '정적 메서드', '인스턴스 메서드', '참조 변수', 'TYPE REF TO'], [
     section('글로벌 클래스와 로컬 클래스', text('글로벌 클래스는 저장소 객체로 관리하며 SE24에서 확인할 수 있습니다. 로컬 클래스는 Program 안에 정의합니다. 클래스는 속성과 메서드를 함께 묶는 단위입니다.')),
     section('정적 호출과 인스턴스 호출', table(['종류', '표기', '특징'], [
       ['정적 메서드', '클래스명=>메서드명( )', '객체 생성 없이 클래스에 호출'], ['인스턴스 메서드', '참조변수->메서드명( )', '생성된 객체를 참조하여 호출']
@@ -221,6 +221,40 @@ WRITE: / gs_flight-carrid, gs_flight-connid, gs_flight-seatsocc.`)));
       ['행 관리', '추가된 순서, SORT로 정렬 가능', '키 순서로 자동 정렬', '키의 해시로 관리']
     ]), text("INDEX 2는 두 번째 행에 접근한다는 뜻입니다. 열 번호가 아닙니다. 키 접근은 carrid = 'LH'처럼 필드 값으로 행을 찾습니다. 보조 키는 이후 학습 범위로 남겨 둡니다.")),
     section('내부 테이블 타입과 변수 선언', text('먼저 [[abap-types|구조체]]로 행 타입을 만들고 TYPES로 재사용할 테이블 타입을 정의합니다. DATA에서 테이블 종류와 행 타입을 바로 지정할 수도 있습니다.'),
+      {
+        type: 'callout', style: 'point', title: '선언 방법별 비교',
+        body: '**타입을 기준으로 하면 TYPE**, **이미 선언한 변수를 기준으로 하면 LIKE**를 사용합니다. **TABLE OF**는 여러 행을 담을 테이블을 만들고, **LINE OF**는 테이블의 행 타입으로 Work area를 만듭니다.'
+      },
+      text('**먼저 준비할 로컬 타입**', '아래 표는 `bc400_t_flights`·`bc400_s_flight`와 S_* 데이터 요소가 있는 수업 실습 시스템을 기준으로 합니다. 로컬 타입 `ts_flight`와 `tt_flights`는 먼저 아래처럼 정의합니다.'),
+      code('비교 예제의 로컬 타입 선언', `*로컬 스트럭쳐 선언
+TYPES: BEGIN OF ts_flight,
+         carrid     TYPE s_carr_id,
+         connid     TYPE s_conn_id,
+         fldate     TYPE s_date,
+         seatsmax   TYPE s_seatsmax,
+         seatsocc   TYPE s_seatsocc,
+         percentage TYPE p LENGTH 3 DECIMALS 2,
+       END OF ts_flight.
+
+*structure를 이용한 로컬 table type 선언
+TYPES tt_flights TYPE TABLE OF bc400_s_flight
+                 WITH NON-UNIQUE KEY carrid connid fldate.`),
+      text('**1. Internal table 선언 · 4가지**', '표의 **글로벌 / 로컬은 참조하는 타입의 구분**입니다. 글로벌은 데이터 사전에 정의된 타입, 로컬은 이 Program에서 TYPES로 정의한 타입입니다. 아래 네 경우 모두 Internal table 변수를 만듭니다.'),
+      table(['기준', '글로벌', '로컬'], [
+        ['<span data-no-autolink>table type<br><strong>TYPE</strong></span>', '`DATA gt_flights TYPE bc400_t_flights.`', '`DATA lt_flights1 TYPE tt_flights.`'],
+        ['<span data-no-autolink>structure<br><strong>TYPE TABLE OF</strong></span>', '<code>DATA lt_flights2 TYPE <mark class="declaration-modifier">TABLE OF</mark> bc400_s_flight.</code>', '<code>DATA lt_flights3 TYPE <mark class="declaration-modifier">TABLE OF</mark> ts_flight.</code>']
+      ]),
+      text('**2. Work area 선언 · 타입 기준 4가지**', 'table type에서는 **TYPE LINE OF**로 행 타입을 참조하고, structure는 **TYPE**으로 바로 참조합니다. 아래 네 경우 모두 Work area 변수를 만듭니다.'),
+      table(['기준', '글로벌', '로컬'], [
+        ['<span data-no-autolink>table type<br><strong>TYPE LINE OF</strong></span>', '<code>DATA gs_itab3 TYPE <mark class="declaration-modifier">LINE OF</mark> bc400_t_flights.</code>', '<code>DATA gs_itab4 TYPE <mark class="declaration-modifier">LINE OF</mark> tt_flights.</code>'],
+        ['<span data-no-autolink>structure<br><strong>TYPE</strong></span>', '`DATA gs_itab1 TYPE bc400_s_flight.`', '`DATA gs_itab2 TYPE ts_flight.`']
+      ]),
+      text('**3. 변수를 기준으로 선언 · 2가지**', '위에서 만든 변수를 기준으로 할 때는 **LIKE**를 사용합니다. Internal table → Work area는 **LIKE LINE OF**, Work area → Internal table은 **LIKE TABLE OF**입니다.'),
+      table(['기준이 되는 변수', '선언 코드', '결과'], [
+        ['<span data-no-autolink>Internal table<br><code>gt_flights</code></span>', '<code>DATA gs_itab5 like <mark class="declaration-modifier">LINE OF</mark> gt_flights.</code>', '`gs_itab5`<br>Work area'],
+        ['<span data-no-autolink>Work area<br><code>gs_itab1</code></span>', '<code>DATA lt_flights4 LIKE <mark class="declaration-modifier">TABLE OF</mark> gs_itab1.</code>', '`lt_flights4`<br>Internal table']
+      ]),
+      text('위 선언들은 타입을 참조해 새 변수를 만듭니다. **기존 변수의 값이나 테이블의 행을 복사하는 문장이 아닙니다.** Internal table은 비어 있고 Work area는 초기값으로 만들어집니다.'),
       code('행 타입과 세 가지 테이블 선언', `TYPES: BEGIN OF ts_spfli,
          carrid   TYPE spfli-carrid,
          connid   TYPE spfli-connid,
@@ -652,7 +686,22 @@ ENDIF.`), text('SELECT 열에 키를 빼면 원래 서로 다른 행이 같은 �
     sections: [
       section(
         '전체적인 그림',
-        { type: 'widget', widgetId: 'abap-oven-diagram' }
+        {
+          type: 'nested',
+          root: {
+            title: 'TABLE',
+            children: [
+              {
+                title: 'STRUCTURE · WORK AREA',
+                items: [
+                  { name: 'DATA ELEMENT' },
+                  { name: 'DATA TYPE' },
+                  { name: 'DATA' }
+                ]
+              }
+            ]
+          }
+        }
       ),
       section(
         'Process',
@@ -660,7 +709,7 @@ ENDIF.`), text('SELECT 열에 키를 빼면 원래 서로 다른 행이 같은 �
           type: 'flow',
           steps: [
             { badge: '1', title: '파라미터 받기', desc: '검색 조건 입력 (`PARAMETERS`, `SELECT-OPTIONS`)' },
-            { badge: '2', title: '변수 · Type 선언', desc: '`ts_`로 구조를 정하고 `gs_`·`gt_` 그릇 준비 (`FOR` 참조 변수 먼저 선언)' },
+            { badge: '2', title: '변수 · Type 선언', desc: '`ts_`로 구조를 정하고 `gt_` 테이블 → `gs_` 워크에어리어 순서로 선언 (`FOR` 참조 변수 먼저 선언)' },
             { badge: '3', title: 'Data 삽입', desc: '조건에 맞는 DB 데이터 `SELECT`' },
             { badge: '4', title: 'Manipulate', desc: '`LOOP`, `READ TABLE`, `INSERT`, `MODIFY`, `MOVE-CORRESPONDING`' }
           ]
@@ -680,12 +729,12 @@ ENDIF.`), text('SELECT 열에 키를 빼면 원래 서로 다른 행이 같은 �
                 badge: '선언부',
                 title: '출력용 · 계산용 · 검색조건 선언',
                 code: 'TYPES · DATA · SELECT-OPTIONS',
-                desc: '어떤 오븐(`gt_`)·트레이(`gs_`)·검색조건(`so_`)이 필요한지 3덩어리로 준비',
+                desc: '어떤 오븐(`gt_`)·트레이(`gs_`)·검색조건(`so_`)이 필요한지 3덩어리로 준비. [[abap-data-report|다른 선언 방법 보기]] — 내부 테이블 타입과 변수 선언의 ‘선언 방법별 비교’',
                 layout: 'wide',
                 items: [
                   {
                     name: '출력용 테이블',
-                    sequence: ['ts_output', 'gs_output', 'gt_output'],
+                    sequence: ['ts_output', 'gt_output', 'gs_output'],
                     sub: '화면에 보여 줄 최종 뼈대 구조',
                     snippet: `TYPES: BEGIN OF ts_output,
          id      TYPE scustom-id,
@@ -693,19 +742,19 @@ ENDIF.`), text('SELECT 열에 키를 빼면 원래 서로 다른 행이 같은 �
          bookcnt TYPE i,
          grade   TYPE c LENGTH 1,
        END OF ts_output.
-DATA gs_output TYPE ts_output.
-DATA gt_output LIKE TABLE OF gs_output.`
+DATA gt_output TYPE TABLE OF ts_output.
+DATA gs_output LIKE LINE OF gt_output.`
                   },
                   {
                     name: '계산용 테이블',
-                    sequence: ['ts_data', 'gs_data', 'gt_data'],
+                    sequence: ['ts_data', 'gt_data', 'gs_data'],
                     sub: '연결 키와 집계값(`customid`, `bookcnt`)만 선언',
                     snippet: `TYPES: BEGIN OF ts_data,
          customid TYPE sbook-customid,
          bookcnt  TYPE i,
        END OF ts_data.
-DATA gs_data TYPE ts_data.
-DATA gt_data LIKE TABLE OF gs_data.`
+DATA gt_data TYPE TABLE OF ts_data.
+DATA gs_data LIKE LINE OF gt_data.`
                   },
                   {
                     name: '검색조건 (`so_id` · `so_date`)',
@@ -831,16 +880,16 @@ TYPES: BEGIN OF ts_output,
          bookcnt TYPE i,
          grade   TYPE c LENGTH 1,
        END OF ts_output.
-DATA gs_output TYPE ts_output.
-DATA gt_output LIKE TABLE OF gs_output.
+DATA gt_output TYPE TABLE OF ts_output.
+DATA gs_output LIKE LINE OF gt_output.
 
 " [선언부] 계산용 테이블 (고객 ID별 예약 건수)
 TYPES: BEGIN OF ts_data,
          customid TYPE sbook-customid,
          bookcnt  TYPE i,
        END OF ts_data.
-DATA gs_data TYPE ts_data.
-DATA gt_data LIKE TABLE OF gs_data.
+DATA gt_data TYPE TABLE OF ts_data.
+DATA gs_data LIKE LINE OF gt_data.
 
 " [선언부] 검색조건 (FOR 뒤에는 선언된 변수 지정)
 DATA gv_order_date TYPE sbook-order_date.

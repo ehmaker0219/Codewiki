@@ -140,6 +140,8 @@
     let out = String(text);
     // Existing HTML links and code are opaque; never link inside attributes.
     out = out.replace(/<(a|code|pre)\b[^>]*>[\s\S]*?<\/\1>/gi, stash);
+    // Static labels can opt out of automatic links without changing their typography.
+    out = out.replace(/<span data-no-autolink>[\s\S]*?<\/span>/gi, stash);
     out = out.replace(/<[^>]+>/g, stash);
 
     const esc = window.CodeWikiLearning.escape;
@@ -177,9 +179,10 @@
 
     // 4) 평문 속 등록 키워드(aliases) 자동 감지 → 하이퍼링크 연결 (현재 보고 있는 자기 자신 문서는 제외)
     for (const entry of aliases) {
-      if (entry.docId === sourceDocId) continue;
+      // Protect the whole term even on its own page, before shorter aliases run.
       out = out.replace(entry.regex, matchedText =>
-        stash(`<a href="#doc/${esc(entry.docId)}" class="wiki-link" data-doc="${esc(entry.docId)}">${matchedText}</a>`)
+        stash(entry.docId === sourceDocId ? esc(matchedText) :
+          `<a href="#doc/${esc(entry.docId)}" class="wiki-link" data-doc="${esc(entry.docId)}">${esc(matchedText)}</a>`)
       );
     }
 
@@ -207,17 +210,42 @@
     // Derive backlinks from the same inline renderer as the visible content.
     // Metadata, code samples and aliases inside external URLs are not references.
     const inlineValues = doc => {
-      const values = [doc.summary, ...Object.values(doc.specs || {})];
+      const values = [doc.summary, ...Object.values(doc.specs || {}).map(String)];
+      const walkNested = node => {
+        if (!node) return;
+        values.push(node.badge, node.title, node.desc);
+        (node.items || []).forEach(item => values.push(item.name, item.sub));
+        (node.children || []).forEach(walkNested);
+      };
       const walk = block => {
-        if (!block || typeof block !== "object" || block.type === "code") return;
-        for (const [key, value] of Object.entries(block)) {
-          if (["type", "title", "id", "widget", "widgetId", "code", "snippet", "label", "layout"].includes(key)) continue;
-          if (typeof value === "string") values.push(value);
-          else if (Array.isArray(value)) value.forEach(item => {
-            if (typeof item === "string") values.push(item);
-            else if (Array.isArray(item)) item.forEach(cell => values.push(String(cell)));
-            else walk(item);
-          });
+        if (!block || typeof block !== "object") return;
+        // Match only the fields passed to parseInline by renderBlock.
+        switch (block.type) {
+          case "text":
+            values.push(...(block.paragraphs || []));
+            break;
+          case "practice":
+            values.push(block.title);
+            (block.steps || []).forEach(step => values.push(step.action, step.detail));
+            break;
+          case "flow":
+            values.push(block.caption);
+            (block.steps || []).forEach(step => values.push(step.title, step.desc));
+            break;
+          case "compare":
+            (block.items || []).forEach(item => values.push(item.title, ...(item.points || [])));
+            break;
+          case "callout":
+            values.push(block.title, block.body);
+            break;
+          case "table":
+            values.push(...(block.headers || []));
+            (block.rows || []).forEach(row => values.push(...row));
+            break;
+          case "nested":
+            values.push(block.caption);
+            walkNested(block.root);
+            break;
         }
       };
       (doc.sections || []).forEach(section => (section.blocks || []).forEach(walk));
@@ -256,11 +284,36 @@
     }).join('');
   }
 
+  function textbookUnitLabel(doc) {
+    return doc.textbookParts?.length ? '교재 Unit ' + doc.textbookParts.map(part => part.unit).join(' · ') : '';
+  }
+
+  function renderTextbookNavLabel(doc) {
+    const label = textbookUnitLabel(doc);
+    return label ? `<small class="nav-textbook-label">${window.CodeWikiLearning.escape(label)}</small>` : '';
+  }
+
+  function renderTextbookReferences(doc) {
+    if (!doc.textbookParts?.length) return '';
+    const esc = window.CodeWikiLearning.escape;
+    return `<details class="textbook-references">
+      <summary>${esc(textbookUnitLabel(doc))}<span class="textbook-reference-hint">Lesson · 페이지 보기</span></summary>
+      <div class="textbook-reference-body">
+        ${doc.textbookParts.map(part => `<div class="textbook-reference-unit">
+          <h3>Unit ${esc(part.unit)}: ${esc(part.title)}</h3>
+          <ul>${part.entries.map(entry => `<li><span>${esc(entry.title)}</span><span class="textbook-page">p. ${esc(entry.page)}</span></li>`).join('')}</ul>
+        </div>`).join('')}
+        <a href="#doc/abap-textbook" class="wiki-link" data-doc="abap-textbook">전체 교재 목차 보기</a>
+      </div>
+    </details>`;
+  }
+
   // 좌측 고정 사이드바 렌더링 (불필요한 빈 요소 자동 숨김)
   function renderNavigation() {
     const esc = window.CodeWikiLearning.escape;
     document.getElementById('sbScheduleItem')?.classList.toggle('active', currentDocId === 'education-schedule');
     document.getElementById('sbThinkingFlowItem')?.classList.toggle('active', currentDocId === 'abap-thinking-flow');
+    document.getElementById('sbTextbookItem')?.classList.toggle('active', currentDocId === 'abap-textbook');
     syncTrackChrome();
 
     const allDocs = Object.values(window.WIKI_DOCS).filter(
@@ -299,7 +352,7 @@
           return `<div class="curriculum-flat-list">${docsInCat.map(d => `
             <a href="#doc/${esc(d.id)}" class="nav-doc-link ${d.id === currentDocId ? "active" : ""}" data-doc="${esc(d.id)}">
               ${d.stepNum ? `<span class="step-num-badge">${esc(d.stepNum)}</span>` : ""}
-              <span class="nav-doc-title-text">${esc(d.title)}${isDocumentPending(d) ? ' <small class="pending-doc-badge">준비 중</small>' : ""}</span>
+              <span class="nav-doc-title-text">${esc(d.title)}${isDocumentPending(d) ? ' <small class="pending-doc-badge">준비 중</small>' : ""}${renderTextbookNavLabel(d)}</span>
               ${readSet.has(d.id) ? `<span class="read-check-mark" title="완료">✓</span>` : ""}
             </a>`).join("")}</div>`;
         }
@@ -330,7 +383,7 @@
                     d => `
                   <a href="#doc/${esc(d.id)}" class="nav-doc-link ${d.id === currentDocId ? "active" : ""}" data-doc="${esc(d.id)}">
                     ${d.stepNum ? `<span class="step-num-badge">${esc(d.stepNum)}</span>` : ""}
-                    <span class="nav-doc-title-text">${esc(d.title)}${isDocumentPending(d) ? ' <small class="pending-doc-badge">준비 중</small>' : ""}</span>
+                    <span class="nav-doc-title-text">${esc(d.title)}${isDocumentPending(d) ? ' <small class="pending-doc-badge">준비 중</small>' : ""}${renderTextbookNavLabel(d)}</span>
                     ${readSet.has(d.id) ? `<span class="read-check-mark" title="완료">✓</span>` : ""}
                   </a>
                 `
@@ -628,6 +681,7 @@
 
       <h1 class="article-main-title">${esc(doc.title)}</h1>
       ${doc.subtitle ? `<div class="article-subtitle">${esc(doc.subtitle)}</div>` : `<div style="margin-bottom:20px;"></div>`}
+      ${renderTextbookReferences(doc)}
 
       ${
         doc.summary

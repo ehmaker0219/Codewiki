@@ -285,7 +285,7 @@ window.WIKI_DOCS = {
   const connections = {
     "erp-setup": [["SAP GUI", "Easy Access", "실습 환경"], ["sap-gui-shortcuts", "sap-tcode-reference", "abap-basics"]],
     "abap-basics": [["자료형", "변수", "상수", "조건식", "문자열"], ["abap-useful-syntax", "sap-gui-shortcuts", "abap-dictionary"]],
-    "abap-dictionary": [["ABAP Dictionary", "데이터 요소", "데이터베이스 테이블", "데이터 사전"], ["sap-tcode-reference", "abap-data-report"]],
+    "abap-dictionary": [["ABAP Dictionary", "DATA ELEMENT", "데이터 요소", "데이터베이스 테이블", "데이터 사전"], ["sap-tcode-reference", "abap-data-report"]],
     "abap-modularization": [["Function Module", "함수 모듈", "서브루틴", "FORM", "PERFORM", "Include 프로그램"], ["sap-tcode-reference", "abap-basics"]],
     "abap-data-report": [["Open SQL", "내부 테이블", "리포트 프로그램", "ALV"], ["abap-dictionary", "abap-useful-syntax", "abap-modularization"]],
     "erp-fi": [["FI", "재무회계", "총계정원장"], ["erp-co", "erp-mm", "erp-sd"]],
@@ -296,7 +296,7 @@ window.WIKI_DOCS = {
     "erp-resources": [[], ["learning-roadmap", "sap-tcode-reference", "sap-gui-shortcuts", "abap-useful-syntax"]],
     "abap-useful-syntax": [[], ["abap-basics", "abap-data-report", "sap-gui-shortcuts"]],
     "sap-gui-shortcuts": [["명령 필드", "Pretty Printer", "Activate"], ["sap-tcode-reference", "erp-setup", "abap-useful-syntax"]],
-    "sap-tcode-reference": [["T-Code", "ABAP Editor", "Function Builder"], ["abap-dictionary", "abap-modularization", "sap-gui-shortcuts"]]
+    "sap-tcode-reference": [["T-Code", "ABAP Editor", "Function Builder", "Data Browser"], ["abap-dictionary", "abap-modularization", "sap-gui-shortcuts"]]
   };
   for (const [id, [aliases, related]] of Object.entries(connections)) {
     const doc = window.WIKI_DOCS[id];

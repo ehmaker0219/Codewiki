@@ -6,7 +6,7 @@
   }
   function createGame(bank, random=Math.random) {
     const ids=new Set(),categories=new Set(bank.categories.map(c=>c.id));
-    if(bank.questions.length!==100 || categories.size!==bank.categories.length)throw new Error('Invalid question bank');
+    if(bank.questions.length<2 || categories.size<4 || categories.size!==bank.categories.length)throw new Error('Invalid question bank');
     for(const q of bank.questions){
       if(ids.has(q.id)||!q.name||!q.hint||!q.explanation||!categories.has(q.answer))throw new Error('Invalid question');
       ids.add(q.id);
@@ -61,10 +61,8 @@
   function element(tag,className,text){const el=document.createElement(tag);el.className=className;if(text!==undefined)el.textContent=text;return el;}
   function draw(){
     if(!visible()||!game)return;
-    current=game.next();const {question,options,round,seen,total}=current;
+    current=game.next();const {question,options}=current;
     output.replaceChildren();
-    const meta=element('p','object-game-meta',`${round}회차 · ${seen} / ${total}`);
-    const context=element('p','object-game-context',question.context);
     const name=element('h3','object-game-name',question.name);name.tabIndex=-1;
     const choices=element('div','object-game-options');choices.setAttribute('role','group');choices.setAttribute('aria-label','요소 종류 선택');
     const feedback=element('div','object-game-feedback');feedback.setAttribute('role','status');
@@ -83,7 +81,7 @@
       button.dataset.answer=option.id;choices.append(button);
     });
     const hint=element('details','object-game-hint');hint.append(element('summary','','힌트 보기'),element('p','',question.hint));
-    output.append(meta,context,name,choices,hint,feedback);next.disabled=false;next.textContent='다음 문제 →';name.focus();
+    output.append(name,choices,hint,feedback);next.disabled=false;next.textContent='다음 문제 →';name.focus();
   }
   async function prepare(){
     if(!visible()||game)return;
