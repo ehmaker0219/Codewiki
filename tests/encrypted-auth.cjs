@@ -31,19 +31,30 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('nod
   assert.equal(keyCalls,1,'public key cache');
   assert.equal(new Set(seen.map(r=>r.p_request_id)).size,3,'request IDs not unique');
   assert.ok(seen.every(r=>!('p_client' in r)),'no client key without a platform IP header');
-  // Per-client limits: only a one-way hash of the platform IP reaches the database.
-  const {clientKey}=await import('../supabase/functions/secure-auth/handler.mjs');
+  // Per-client limits: strict IPv4/IPv6(/64) canonicalization + server-keyed HMAC-SHA-256.
+  const {clientKey,normalizeClientIp}=await import('../supabase/functions/secure-auth/handler.mjs');
   const withIp=(ip)=>new Request(endpoint,{headers:{'cf-connecting-ip':ip}});
-  const k1=await clientKey(withIp('203.0.113.7')),k2=await clientKey(withIp('203.0.113.8'));
-  assert.match(k1,/^[0-9a-f]{64}$/);assert.notEqual(k1,k2);assert.equal(k1,await clientKey(withIp(' 203.0.113.7 ')));
-  assert.equal(await clientKey(withIp('2001:DB8::1')),await clientKey(withIp('2001:db8::1')));
-  for(const bad of ['', 'not-an-ip', '1.2.3.4, 5.6.7.8', 'x'.repeat(60)])assert.equal(await clientKey(withIp(bad)),null,'malformed IP header ignored');
+  const testSecret='codewiki-client-hmac-v2:'+jwk.d;
+  assert.equal(normalizeClientIp(' 203.0.113.7 '),'v4:203.0.113.7');
+  assert.equal(normalizeClientIp('::ffff:203.0.113.7'),'v4:203.0.113.7','IPv4-mapped IPv6 maps to IPv4');
+  assert.equal(normalizeClientIp('2001:DB8::1'),'v6:2001:0db8:0000:0000');
+  assert.equal(normalizeClientIp('2001:db8:0:0:aaaa:bbbb:cccc:dddd'),'v6:2001:0db8:0000:0000','IPv6 canonicalizes to /64 prefix');
+  for(const bad of ['', 'not-an-ip', '1.2.3.4, 5.6.7.8', '...', ':::', '999.999.999.999', '010.0.0.1', 'fe80::1%eth0', '2001:db8::1::2', 'x'.repeat(60)]){
+    assert.equal(normalizeClientIp(bad),null,'malformed IP rejected: '+bad);
+    assert.equal(await clientKey(withIp(bad),testSecret),null,'malformed IP header ignored');
+  }
+  const k1=await clientKey(withIp('203.0.113.7'),testSecret),k2=await clientKey(withIp('203.0.113.8'),testSecret);
+  const kOtherSecret=await clientKey(withIp('203.0.113.7'),'different-server-secret');
+  assert.match(k1,/^[0-9a-f]{64}$/);assert.notEqual(k1,k2);assert.notEqual(k1,kOtherSecret,'HMAC key must differentiate digests');
+  assert.equal(k1,await clientKey(withIp(' 203.0.113.7 '),testSecret));
+  assert.equal(k1,await clientKey(withIp('::ffff:203.0.113.7'),testSecret));
+  assert.equal(await clientKey(withIp('2001:DB8::1'),testSecret),await clientKey(withIp('2001:db8::9999:ffff'),testSecret),'same IPv6 /64 shares rate-limit key');
   const ipEnvelope=await (async()=>{const now=Math.floor(Date.now()/1000);
     return new EncryptJWT({operation:'cw_login',args:cases[0][1],iat:now,exp:now+60,jti:crypto.randomUUID(),iss:'codewiki-browser',aud:'codewiki-secure-auth'})
       .setProtectedHeader({alg:'RSA-OAEP-256',enc:'A256GCM',kid:'test-key',typ:'JWT'}).encrypt(publicKey);})();
   result={session_token:crypto.randomUUID()};
   await handler(new Request(endpoint,{method:'POST',headers:{Origin:origin,'Content-Type':'application/json','cf-connecting-ip':'203.0.113.7'},body:JSON.stringify({envelope:ipEnvelope})}));
-  assert.equal(seen.at(-1).p_client,k1,'hashed client key forwarded');
+  assert.equal(seen.at(-1).p_client,k1,'HMAC-keyed client key forwarded');
   assert.ok(!JSON.stringify(seen.at(-1)).includes('203.0.113.7'),'raw IP never forwarded');
   const response=await handler(new Request(endpoint,{headers:{Origin:origin}}));
   const keyResponse=await response.json();assert.deepEqual(Object.keys(keyResponse.jwk).sort(),['alg','e','kid','kty','n','use']);
@@ -82,7 +93,8 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('nod
   assert.equal(wire.filter(r=>r.method==='POST').length,previousPosts);
   // Browser bundle must be exactly reproducible and expose only the client API.
   const build=require('esbuild').buildSync({entryPoints:['auth/transport.mjs'],bundle:true,minify:true,format:'iife',platform:'browser',target:['es2022'],write:false,legalComments:'eof'});
-  assert.equal(fs.readFileSync('js/secure-auth.js','utf8'),build.outputFiles[0].text,'rebuild auth bundle');
+  const normalizeEol=s=>s.replace(/\r\n/g,'\n');
+  assert.equal(normalizeEol(fs.readFileSync('js/secure-auth.js','utf8')),normalizeEol(build.outputFiles[0].text),'rebuild auth bundle');
   const context={window:{},crypto,TextEncoder,TextDecoder,URL,fetch};vm.runInNewContext(build.outputFiles[0].text,context);
   assert.equal(typeof context.window.CodeWikiSecureAuth.create,'function');
   const auth=fs.readFileSync('js/auth.js','utf8');

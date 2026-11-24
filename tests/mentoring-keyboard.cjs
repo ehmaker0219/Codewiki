@@ -64,6 +64,8 @@ function hasUnsaved(){let prevented=false;events.beforeunload({preventDefault(){
   api.setUser(user);await flush();
   assert.equal(typeof events.keydown,'function','mentoring must register a save shortcut');
   assert.equal(host.hidden,false);
+  assert.ok(!node('mentoringEditor').innerHTML.includes('data-action="import"'),'study-note import button must be removed');
+  assert.ok(!node('mentoringEditor').innerHTML.includes('내 공부방 필기 가져오기'),'study-note import label must be removed');
   const field=input('Keyboard save body');holdNext=true;
   assert.equal(shortcut().defaultPrevented,true,'Ctrl+S must suppress the browser Save Page dialog');
   assert.equal(storeCalls,1);assert.equal(hasUnsaved(),true,'pending saves must retain the dirty state');
@@ -73,6 +75,9 @@ function hasUnsaved(){let prevented=false;events.beforeunload({preventDefault(){
   assert.equal(document.activeElement,field,'saving should return focus to the same input');
   assert.deepEqual([field.selectionStart,field.selectionEnd],[2,4],'saving should preserve the text selection');
   assert.match(node('mentoringStatus').textContent,/마지막 저장/);
+  // Trailing blur/change event with the already-saved value must NOT re-dirty the form.
+  host.events.change({target:field});
+  assert.equal(hasUnsaved(),false,'trailing change with identical value must not mark form dirty');
   const savedCalls=storeCalls;shortcut();await flush();assert.equal(storeCalls,savedCalls,'unchanged records should not write again');
 
   input('Command save body');shortcut({ctrlKey:false,metaKey:true,key:'S'});await flush();

@@ -393,6 +393,8 @@
       el.classList.toggle('is-selected', isSelected);
       el.classList.toggle('is-related', !inOpenCluster && isRelated);
       el.classList.toggle('is-dim', Boolean(selectedTopicId) && inOpenCluster && !isSelected && !isRelated);
+      el.tabIndex = inOpenCluster ? 0 : -1;
+      el.setAttribute?.('aria-hidden', String(!inOpenCluster));
     });
 
     renderCrossEdges();
@@ -430,7 +432,7 @@
     }).join('');
 
     const topicButtons = graph.topics.map(t => `
-      <button type="button" class="kmap-topic" data-kmap-topic="${esc(t.id)}" data-cluster="${esc(t.clusterId)}" style="left:${t.x}px;top:${t.y}px;">
+      <button type="button" class="kmap-topic" tabindex="-1" aria-hidden="true" data-kmap-topic="${esc(t.id)}" data-cluster="${esc(t.clusterId)}" style="left:${t.x}px;top:${t.y}px;">
         <span class="kmap-topic-head">
           ${t.stepNum ? `<span class="kmap-topic-step">${esc(t.stepNum)}</span>` : '<span class="kmap-topic-step">참고</span>'}
           ${t.done ? '<span class="kmap-topic-check" title="학습 완료">✓</span>' : t.pending ? '<span class="kmap-topic-pending">준비 중</span>' : ''}
@@ -523,8 +525,13 @@
         stepUp();
       }
     };
+    const cancelDrag = e => {
+      if (!dragState || e.pointerId !== dragState.pointerId) return;
+      dragState = null;
+      stage.classList.remove('is-dragging');
+    };
     stage.addEventListener('pointerup', endDrag);
-    stage.addEventListener('pointercancel', endDrag);
+    stage.addEventListener('pointercancel', cancelDrag);
     stage.addEventListener('dblclick', e => {
       if (!e.target.closest('button, .kmap-hud-top, .kmap-focus-card')) focusOverview();
     });
@@ -533,10 +540,11 @@
     if (typeof ResizeObserver === 'function') {
       resizeObserver = new ResizeObserver(() => {
         if (!visible()) return;
+        const prevFit = baseFitZoom;
         baseFitZoom = computeFitZoom();
-        if (!selectedClusterId) focusOverview(true);
-        else if (selectedTopicId) focusTopic(selectedTopicId, true);
-        else focusCluster(selectedClusterId, true);
+        if (Math.abs(camera.zoom - prevFit) < 0.005) camera.zoom = baseFitZoom;
+        else camera.zoom = Math.max(baseFitZoom, camera.zoom);
+        applyCamera(true);
       });
       resizeObserver.observe(stage);
     }
@@ -649,6 +657,7 @@
 
   window.addEventListener('keydown', e => {
     if (!visible()) return;
+    if (document.querySelector?.('dialog[open], .admin-modal-backdrop:not(.hidden)')) return;
     const active = document.activeElement;
     if (active && (active.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(active.tagName))) return;
     const searchOpen = document.getElementById('searchDropdown') && !document.getElementById('searchDropdown').classList.contains('hidden');

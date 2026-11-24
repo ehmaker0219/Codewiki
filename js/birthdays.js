@@ -8,10 +8,11 @@
     const d=new Date(value+'T12:00:00Z');
     return /^\d{4}-\d{2}-\d{2}$/.test(value) && !Number.isNaN(d.getTime()) && d.toISOString().slice(0,10)===value && value>='1900-01-01' && value<=today();
   }
-  function refresh() {
+  function refresh({ force = false } = {}) {
     const s=session;
     if(!s) return Promise.resolve();
-    if(pending)return pending;
+    if(pending && !force)return pending;
+    if(force) controller?.abort();
     const version=++requestVersion;
     rows=[];status='loading'; emit();
     const abort=new AbortController();controller=abort;
@@ -58,5 +59,5 @@
     getClasses:()=>classes.slice(),getClassName:()=>session?.role==='admin'?selectedClass:session?.className||'',
     setClass:name=>{if(session?.role==='admin'&&classes.includes(name)&&name!==selectedClass){selectedClass=name;emit();}},
     getStatus:()=>status};
-  window.addEventListener('storage',e=>{if(e.key==='codewiki_supa_token_v1'&&session&&e.newValue!==session.token)setUser(null);});
+  window.addEventListener('storage',e=>{if((e.key===null||e.key==='codewiki_supa_token_v1')&&session&&e.newValue!==session.token)setUser(null);});
 })();

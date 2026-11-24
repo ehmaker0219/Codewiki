@@ -180,8 +180,16 @@
       if(menu){e.preventDefault();closeToolMenus();menu.querySelector('summary').focus();}
       return;
     }
-    if(!(e.ctrlKey||e.metaKey))return;
-    if(e.key.toLowerCase()==='s'){e.preventDefault();if(!transition)void store?.save();}
+    if(e.defaultPrevented||e.isComposing||!(e.ctrlKey||e.metaKey)||e.altKey||e.shiftKey)return;
+    if(e.key.toLowerCase()==='s'){
+      e.preventDefault();
+      if(e.repeat||transition)return;
+      if(store?.conflicted){
+        if(window.confirm('서버에 다른 버전이 있습니다. 현재 글로 덮어써서 저장할까요?'))void store.save({resolveConflict:true});
+        return;
+      }
+      void store?.save();
+    }
   }
   function closeToolMenus(except=null){
     host.querySelectorAll('.study-table-menu[open],.study-color-menu[open]').forEach(menu=>{if(menu!==except)menu.open=false;});
@@ -199,8 +207,9 @@
       if(button.dataset.format!=='clear')button.setAttribute('aria-pressed',String(editor.active(button.dataset.format)));
       button.disabled=!editor.can(button.dataset.format);
     });
-    host.querySelectorAll('[data-size-step]').forEach(button=>button.disabled=editor.active('code'));
-    host.querySelectorAll('.study-color-menu').forEach(menu=>{menu.inert=editor.active('code');});
+    const inCode=editor.active('code');
+    host.querySelectorAll('[data-size-step]').forEach(button=>button.disabled=inCode);
+    host.querySelectorAll('.study-color-menu').forEach(menu=>{if(inCode)menu.open=false;menu.inert=inCode;});
     host.querySelectorAll('[data-color-kind]').forEach(button=>button.setAttribute('aria-pressed',String((editor.color?.(button.dataset.colorKind)||'')===button.dataset.color)));
     host.querySelectorAll('[data-history]').forEach(button=>button.disabled=!editor.can(button.dataset.history));
     host.querySelectorAll('[data-table]').forEach(button=>button.disabled=!editor.can(button.dataset.table));
@@ -248,8 +257,16 @@
     const items=notes.filter(n=>(!folders||folders.includesNote(n))&&n.title.toLocaleLowerCase().includes(q)).sort(compareTitles);
     const markup=items.map(n=>`<button type="button" class="study-note-link${store?.current?.id===n.id?' active':''}" data-note="${esc(n.id)}" draggable="true" title="폴더로 드래그하여 이동"><strong>${esc(n.title)}</strong><span>${esc(date(n.updated_at))}</span></button>`).join('')||(!loading?'<p class="study-list-empty">'+(q?'검색 결과가 없습니다.':'저장된 노트가 없습니다.')+'</p>':'');
     if(markup===listMarkup)return;
-    byId('studyList').innerHTML=markup;listMarkup=markup;
-    byId('studyList').querySelectorAll('[data-note]').forEach(b=>b.addEventListener('click',()=>void select(b.dataset.note)));
+    const listEl=byId('studyList');
+    const activeNoteId=document.activeElement?.closest?.('[data-note]')?.dataset?.note;
+    const scrollTop=listEl.scrollTop;
+    listEl.innerHTML=markup;listMarkup=markup;
+    listEl.scrollTop=scrollTop;
+    listEl.querySelectorAll('[data-note]').forEach(b=>b.addEventListener('click',()=>void select(b.dataset.note)));
+    if(activeNoteId&&listEl.contains?.(document.activeElement)===false){
+      const match=listEl.querySelector?.(`[data-note="${CSS.escape ? CSS.escape(activeNoteId) : activeNoteId}"]`);
+      if(match&&document.activeElement===document.body)match.focus({preventScroll:true});
+    }
   }
   async function list() {
     if(!store||loading)return;
@@ -273,7 +290,14 @@
   }
   async function select(id) {
     if(transition||store?.current?.id===id)return;lock(true);const s=store;
-    try {if(s.dirty){window.alert('현재 글을 저장한 뒤 다른 노트를 선택해 주세요.');return;}const n=await s.call('cw_get_study_note',{p_id:id});if(store!==s)return;if(!n)throw new Error();if(s.dirty){window.alert('현재 노트를 편집 중입니다. 저장 후 다시 선택해 주세요.');return;}if(!s.select(n))return;fill();}
+    try {
+      if(s.dirty){window.alert('현재 글을 저장한 뒤 다른 노트를 선택해 주세요.');return;}
+      const localDraft=s.getDraft?.(id);
+      if(localDraft&&window.confirm('이 노트에 저장되지 않은 로컬 임시 필기가 있습니다. 임시 필기를 불러올까요?')){
+        if(s.restoreDraft(id)){fill();return;}
+      }
+      const n=await s.call('cw_get_study_note',{p_id:id});if(store!==s)return;if(!n)throw new Error();if(s.dirty){window.alert('현재 노트를 편집 중입니다. 저장 후 다시 선택해 주세요.');return;}if(!s.select(n))return;fill();
+    }
     catch {if(store===s)window.alert('노트를 불러오지 못했습니다. 다시 시도해 주세요.');}
     finally {if(store===s)lock(false);}
   }

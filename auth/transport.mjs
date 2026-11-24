@@ -42,7 +42,7 @@ export function create({url, apiKey, fetcher = globalThis.fetch, clock = Date.no
           // Do not display arbitrary proxy/server messages that might include inputs.
           const messages = {
             CW_INVALID_CREDENTIALS:'아이디 또는 비밀번호를 확인해 주세요.',
-            CW_PASSWORD_POLICY:'비밀번호는 8자 이상이며 쉽게 추측할 수 없는 값이어야 합니다.',
+            CW_PASSWORD_POLICY:'비밀번호는 8자 이상, UTF-8 72바이트 이하이며 쉽게 추측할 수 없는 값이어야 합니다.',
             CW_INVALID_INPUT:'가입 정보를 확인해 주세요. 6반은 이름과 출석번호가 명단과 일치해야 합니다.',
             CW_SIGNUP_FAILED:'가입 신청을 처리하지 못했습니다. 입력 내용을 확인해 주세요.',
             CW_RATE_LIMIT:'시도 횟수를 초과했습니다. 잠시 후 다시 시도해 주세요.',

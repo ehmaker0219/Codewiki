@@ -155,6 +155,7 @@
     adminApproval?.setUser(user);
     window.CodeWikiAdminMembers?.setUser(user);
     window.CodeWikiPresence?.setUser(user);
+    window.CodeWikiApp?.syncAccess?.();
   }
   syncUserFeatures(null);
 
@@ -164,6 +165,7 @@
     isSupabaseConfigured: () => isSupabaseConfigured,
     getSupabaseClient: () => supabaseClient,
     logout,
+    refresh: () => renderAuthState(),
     credentialRequest: (name,args) => {
       if (!credentialOperations.has(name)) return Promise.reject(Error('unsupported-auth-operation'));
       return authRpc(name,args);
@@ -287,9 +289,17 @@
       authGateOverlay.innerHTML = `<div class="auth-container"><div class="auth-card">
         <h2 class="auth-status-title">로그인 상태를 확인하지 못했습니다</h2>
         <p class="auth-desc">연결을 확인한 뒤 다시 시도해 주세요.</p>
-        <button type="button" id="retrySessionBtn" class="toss-primary-btn">다시 시도</button>
+        <div style="display:flex;flex-direction:column;gap:8px;margin-top:16px;">
+          <button type="button" id="retrySessionBtn" class="toss-primary-btn">다시 시도</button>
+          <button type="button" id="resetSessionBtn" class="toss-chip-btn" style="width:100%;justify-content:center;height:44px;">다른 계정으로 로그인</button>
+        </div>
       </div></div>`;
       document.getElementById("retrySessionBtn").addEventListener("click", () => void renderAuthState());
+      document.getElementById("resetSessionBtn").addEventListener("click", () => {
+        setSupaToken("");
+        activeUserCache = null;
+        void renderAuthState();
+      });
       return;
     }
 
@@ -641,9 +651,13 @@
           button.textContent = isSignup ? "계정 만들기" : "로그인";
         }
       };
-      if (isSignup && Array.from(password).length < 8) {
-        showSubmitError("비밀번호는 8자 이상 입력해 주세요.");
-        return;
+      if (isSignup) {
+        const charCount = Array.from(password).length;
+        const byteCount = [...password].reduce((n, ch) => { const cp = ch.codePointAt(0); return n + (cp < 0x80 ? 1 : cp < 0x800 ? 2 : cp < 0x10000 ? 3 : 4); }, 0);
+        if (charCount < 8 || byteCount > 72) {
+          showSubmitError("비밀번호는 8자 이상, UTF-8 72바이트 이하로 입력해 주세요.");
+          return;
+        }
       }
       const fullName = document.getElementById("authFullName")?.value.trim() || "";
       const className = document.getElementById("authClassName")?.value.trim() || "기본반";
@@ -758,7 +772,7 @@
   }
 
   window.addEventListener?.('storage', event => {
-    if (event.key !== SUPA_TOKEN_KEY) return;
+    if (event.key !== null && event.key !== SUPA_TOKEN_KEY) return;
     activeUserCache = null;
     syncUserFeatures(null);
     window.CodeWikiBoard?.closeIfActive();

@@ -53,9 +53,28 @@
 
   let currentFilter = "all"; // 'all' | 'open' | 'done'
   let isBoardViewActive = false;
+  let loadedPosts = null;
   let viewVersion = 0;
   let badgeVersion = 0;
   let modalVersion = 0;
+
+  function formatPostTime(value) {
+    const raw = String(value ?? "");
+    if (!raw) return "";
+    if (/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}/.test(raw)) return raw.slice(0, 16);
+    const d = new Date(raw);
+    if (Number.isNaN(d.getTime())) return raw.slice(0, 16);
+    const parts = Object.fromEntries(new Intl.DateTimeFormat("en-CA", {
+      timeZone: "Asia/Seoul", year: "numeric", month: "2-digit", day: "2-digit",
+      hour: "2-digit", minute: "2-digit", hour12: false
+    }).formatToParts(d).map(p => [p.type, p.value]));
+    return `${parts.year}-${parts.month}-${parts.day} ${parts.hour === "24" ? "00" : parts.hour}:${parts.minute}`;
+  }
+
+  function runTimedRpc(client, name, args) {
+    const run = () => client.rpc(name, args);
+    return window.CodeWikiLearning?.rpcWithTimeout ? window.CodeWikiLearning.rpcWithTimeout(run) : run();
+  }
 
   const articleContainer = document.getElementById("articleContainer");
   const sidebarRight = document.querySelector(".sidebar-right");
@@ -105,6 +124,7 @@
     // 좌측 메뉴 활성 표시 잠시 해제
     document.querySelectorAll(".nav-doc-link.active").forEach(el => el.classList.remove("active"));
     document.getElementById("sbHomeItem")?.classList.remove("active");
+    document.getElementById("quizModeBtn")?.classList.add("hidden");
 
     let posts;
     try { posts = await fetchPosts(); }
@@ -116,8 +136,13 @@
       return;
     }
     if (!isCurrent()) return;
+    loadedPosts = posts;
     ++badgeVersion;
     updateBadge(posts);
+    renderBoardPosts(posts);
+  }
+
+  function renderBoardPosts(posts) {
     const currentUser = window.CodeWikiAuth?.getCurrentUser();
     const isAdmin = currentUser?.role === "admin";
 
@@ -182,7 +207,7 @@
                         }
                       </div>
                       <div class="board-post-meta">
-                        ${post.author_class ? `<span style="opacity:0.8;">[${escapeHtml(post.author_class)}]</span> ` : ""}${post.author_mbti ? `<span class="toss-badge-blue" style="font-size:10.5px; padding:1px 6px; margin-right:4px;">${escapeHtml(post.author_mbti)}</span>` : ""}<strong>${escapeHtml(post.author_name)}</strong> · ${escapeHtml(String(post.created_at).slice(0, 16))}
+                        ${post.author_class ? `<span style="opacity:0.8;">[${escapeHtml(post.author_class)}]</span> ` : ""}${post.author_mbti ? `<span class="toss-badge-blue" style="font-size:10.5px; padding:1px 6px; margin-right:4px;">${escapeHtml(post.author_mbti)}</span>` : ""}<strong>${escapeHtml(post.author_name)}</strong> · ${escapeHtml(formatPostTime(post.created_at))}
                       </div>
                     </div>
 
@@ -234,11 +259,11 @@
       </div>
     `;
 
-    // 필터 탭 이벤트
+    // 필터 탭 이벤트 (캐시된 목록으로 즉시 재렌더링)
     articleContainer.querySelectorAll("[data-filter]").forEach(btn => {
       btn.addEventListener("click", () => {
         currentFilter = btn.getAttribute("data-filter");
-        openBoardView();
+        renderBoardPosts(loadedPosts || posts);
       });
     });
 
@@ -272,7 +297,8 @@
         } (${post.target_doc_id || "신규"})\n- 건의 제목: ${post.title}\n- 상세 내용: ${post.content}\n\n위 건의 내용을 바탕으로 코드위키 문서를 알맞은 시각적 블록으로 업데이트해줘!`;
         const reset = label => {
           btn.textContent = label;
-          setTimeout(() => { btn.textContent = "📋 AI 수정 요청용 복사"; }, 2000);
+          clearTimeout(btn._copyTimer);
+          btn._copyTimer = setTimeout(() => { btn.textContent = "📋 AI 수정 요청용 복사"; }, 2000);
         };
         if (!navigator.clipboard?.writeText) { reset("복사 불가"); return; }
         navigator.clipboard.writeText(promptText).then(() => reset("✓ 복사됨! AI에게 붙여넣기 하세요")).catch(() => reset("복사 실패"));
@@ -307,6 +333,7 @@
     // 삭제 버튼
     articleContainer.querySelectorAll(".delete-post-btn").forEach(btn => {
       btn.addEventListener("click", async () => {
+        if (typeof window.confirm === "function" && !window.confirm("이 건의글을 삭제할까요?")) return;
         const pid = Number(btn.getAttribute("data-post-id"));
         await runPostAction(btn, () => changePost('cw_delete_post', {p_post_id:pid}, rows => rows.filter(p => p.id !== pid)));
 
@@ -318,7 +345,7 @@
     if (!window.CodeWikiAuth?.isSupabaseConfigured()) { saveLocalPosts(localChange(getLocalPosts())); return; }
     const client = window.CodeWikiAuth.getSupabaseClient();
     if (!client) throw new Error('서버 연결을 확인해 주세요.');
-    const {error} = await client.rpc(name, {p_token:window.CodeWikiAuth.getSessionToken(), ...args});
+    const {error} = await runTimedRpc(client, name, {p_token:window.CodeWikiAuth.getSessionToken(), ...args});
     if (error) throw error;
   }
 
@@ -341,6 +368,7 @@
 
   function openReplyModal(target, trigger) {
     const modalRequest = ++modalVersion;
+    writeModal._saving = false;
     writeModal.classList.remove("hidden");
     writeModal.innerHTML = `
       <div class="admin-modal-card toss-card" role="dialog" aria-modal="true" aria-labelledby="replyTitle" style="max-width:540px;">
@@ -352,7 +380,7 @@
         <form id="replyForm" class="auth-form">
           <div class="auth-field">
             <label for="replyNote">답변 내용</label>
-            <textarea id="replyNote" rows="5" placeholder="작성자에게 전달할 답변을 입력하세요."></textarea>
+            <textarea id="replyNote" class="toss-textarea" rows="5" placeholder="작성자에게 전달할 답변을 입력하세요."></textarea>
           </div>
           <label><input id="replyDone" type="checkbox" ${target.status === "done" ? "checked" : ""}> 반영 완료로 표시</label>
           <p id="replyError" role="alert" style="color:var(--toss-red, #c53030);"></p>
@@ -373,11 +401,13 @@
       trigger?.focus();
     };
     close.addEventListener("click", dismiss);
+    close.addEventListener("keydown", e => { if (e.key === "Escape") dismiss(); });
     form.addEventListener("keydown", e => { if (e.key === "Escape") dismiss(); });
     form.addEventListener("submit", async e => {
       e.preventDefault();
       if (saving) return;
       saving = true;
+      writeModal._saving = true;
       save.disabled = close.disabled = true;
       save.textContent = "저장 중…";
       const version = viewVersion, token = window.CodeWikiAuth?.getSessionToken();
@@ -390,10 +420,11 @@
         const client = window.CodeWikiAuth?.getSupabaseClient();
         if (isSupa) {
           if (!client) throw new Error("서버 연결을 확인한 뒤 다시 시도해 주세요.");
-          const { error } = await client.rpc("cw_update_post", {
+          const runRpc = () => client.rpc("cw_update_post", {
             p_token: window.CodeWikiAuth?.getSessionToken(),
             p_post_id: target.id, p_status: status, p_admin_note: note
           });
+          const { error } = await (window.CodeWikiLearning?.rpcWithTimeout ? window.CodeWikiLearning.rpcWithTimeout(runRpc) : runRpc());
           if (error) throw error;
         } else {
           saveLocalPosts(getLocalPosts().map(p => p.id === target.id ? { ...p, admin_note: note, status } : p));
@@ -406,9 +437,18 @@
         writeModal.classList.add("hidden");
         await refreshAfterChange(version,token);
       } catch (error) {
-        errorBox.textContent = `답변을 저장하지 못했습니다. ${error.message || "잠시 후 다시 시도해 주세요."}`;
+        const raw = String(error?.message || "");
+        const detail = raw === "TIMEOUT"
+          ? "응답 시간이 초과되었습니다. 잠시 후 다시 시도해 주세요."
+          : /권한/.test(raw)
+            ? "권한 오류가 발생했습니다. 다시 로그인한 뒤 시도해 주세요."
+            : /서버 연결/.test(raw)
+              ? raw
+              : "잠시 후 다시 시도해 주세요.";
+        errorBox.textContent = `답변을 저장하지 못했습니다. ${detail}`;
       } finally {
         saving = false;
+        writeModal._saving = false;
         save.disabled = close.disabled = false;
         save.textContent = "답변 저장";
       }
@@ -422,36 +462,42 @@
     document.querySelector(".app-shell")?.classList.remove("board-mode-shell");
 
     if (window.CodeWikiApp) {
-      window.CodeWikiApp.openDoc(targetDocId || window.CodeWikiApp.getCurrentDocId());
+      const normalized = targetDocId === "erp-setup" ? "sap-architecture" : targetDocId;
+      const docs = window.WIKI_DOCS || {};
+      const resolved = normalized && docs[normalized] ? normalized : (window.CodeWikiApp.getCurrentDocId() || "welcome-abap");
+      window.CodeWikiApp.openDoc(docs[resolved] ? resolved : "welcome-abap");
     }
   }
 
   // 건의글 작성 모달 열기 (특정 문서 하단에서 누르면 preselectedDocId가 자동 선택됨!)
-  function openWriteModal(preselectedDocId) {
+  function openWriteModal(preselectedDocId, missingTitle = "") {
     const modalRequest = ++modalVersion;
-    const docs = Object.values(window.WIKI_DOCS || {});
     const currentUser = window.CodeWikiAuth?.getCurrentUser();
+    const isAdmin = currentUser?.role === "admin";
+    const docs = Object.values(window.WIKI_DOCS || {}).filter(d => d.track !== "ui5" && !(d.studentOnly && isAdmin));
     const authorName = currentUser?.full_name || "익명 학생";
+    const normalizedPreselect = preselectedDocId === "erp-setup" ? "sap-architecture" : preselectedDocId;
 
+    writeModal._saving = false;
     writeModal.classList.remove("hidden");
     writeModal.innerHTML = `
-      <div class="admin-modal-card toss-card" style="max-width:540px;">
+      <div class="admin-modal-card toss-card" role="dialog" aria-modal="true" aria-labelledby="writeModalTitle" style="max-width:540px;">
         <div class="admin-modal-header">
           <div>
             <span class="toss-badge-blue">건의하기</span>
-            <h3 class="admin-modal-title">수정 · 업데이트 의견 남기기</h3>
+            <h3 id="writeModalTitle" class="admin-modal-title">수정 · 업데이트 의견 남기기</h3>
           </div>
-          <button id="closeWriteModalBtn" class="icon-btn">✕</button>
+          <button type="button" id="closeWriteModalBtn" class="icon-btn" aria-label="글쓰기 창 닫기">✕</button>
         </div>
 
         <form id="boardWriteForm" class="auth-form">
           <div class="auth-field">
-            <label>작성자</label>
-            <input type="text" value="${escapeHtml(authorName)}" disabled style="opacity:0.7;" />
+            <label for="postAuthorName">작성자</label>
+            <input id="postAuthorName" type="text" value="${escapeHtml(authorName)}" disabled style="opacity:0.7;" />
           </div>
 
           <div class="auth-field">
-            <label>건의 유형</label>
+            <label for="postCategory">건의 유형</label>
             <select id="postCategory" class="toss-select">
               <option value="내용 추가">➕ 내용 추가 요청 (수업 내용 보충)</option>
               <option value="수정 요청">✏️ 기존 내용 수정 요청</option>
@@ -461,13 +507,13 @@
           </div>
 
           <div class="auth-field">
-            <label>관련 문서 (선택)</label>
+            <label for="postTargetDoc">관련 문서 (선택)</label>
             <select id="postTargetDoc" class="toss-select">
               <option value="">전체 / 새로운 문서 주제 건의</option>
               ${docs
                 .map(
                   d => `
-                <option value="${escapeHtml(d.id)}" ${d.id === preselectedDocId ? "selected" : ""}>
+                <option value="${escapeHtml(d.id)}" ${d.id === normalizedPreselect ? "selected" : ""}>
                   ${d.stepNum ? `[${escapeHtml(d.stepNum)}] ` : ""}${escapeHtml(d.title)}
                 </option>
               `
@@ -477,33 +523,43 @@
           </div>
 
           <div class="auth-field">
-            <label>제목</label>
+            <label for="postTitle">제목</label>
             <input type="text" id="postTitle" placeholder="건의 제목을 입력하세요" required />
           </div>
 
           <div class="auth-field">
-            <label>상세 내용</label>
+            <label for="postContent">상세 내용</label>
             <textarea id="postContent" class="toss-textarea" rows="4" placeholder="수업에서 배운 내용이나 고쳐야 할 부분을 편하게 적어주세요." required></textarea>
           </div>
 
-          <p id="postError" role="alert"></p><button id="submitPostBtn" type="submit" class="toss-primary-btn">건의글 등록하기</button>
+          <p id="postError" role="alert" style="color:var(--toss-red, #c53030);"></p><button id="submitPostBtn" type="submit" class="toss-primary-btn">건의글 등록하기</button>
         </form>
       </div>
     `;
 
-    document.getElementById("closeWriteModalBtn").addEventListener("click", () => {
+    const closeBtn = document.getElementById("closeWriteModalBtn");
+    const form = document.getElementById("boardWriteForm");
+    const titleInput = document.getElementById("postTitle");
+    if (missingTitle && titleInput) titleInput.value = `${missingTitle} 문서 추가 건의`;
+    let saving = false;
+    const dismiss = () => {
+      if (saving) return;
       ++modalVersion;
       writeModal.classList.add("hidden");
-    });
+    };
+    closeBtn.addEventListener("click", dismiss);
+    closeBtn.addEventListener("keydown", e => { if (e.key === "Escape") dismiss(); });
+    form.addEventListener("keydown", e => { if (e.key === "Escape") dismiss(); });
+    titleInput?.focus?.();
 
-    let saving = false;
-    document.getElementById("boardWriteForm").addEventListener("submit", async e => {
+    form.addEventListener("submit", async e => {
       e.preventDefault();
       if (saving) return;
       saving = true;
+      writeModal._saving = true;
       const submit = document.getElementById('submitPostBtn'), errorBox = document.getElementById('postError');
       const version = viewVersion, token = window.CodeWikiAuth?.getSessionToken();
-      submit.disabled = true; errorBox.textContent = '';
+      submit.disabled = closeBtn.disabled = true; errorBox.textContent = '';
       try {
         const category = document.getElementById("postCategory").value;
         const targetDocId = document.getElementById("postTargetDoc").value;
@@ -520,10 +576,7 @@
         if (isSupa && !client) throw new Error("서버 연결을 확인해 주세요.");
         if (!isSupa) {
           const list = getLocalPosts();
-          const now = new Date();
-          const timeStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(
-            now.getDate()
-          ).padStart(2, "0")} ${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
+          const timeStr = formatPostTime(new Date().toISOString());
 
           list.unshift({
             id: Date.now(),
@@ -542,7 +595,7 @@
           });
           saveLocalPosts(list);
         } else {
-          const {error} = await client.rpc("cw_create_post", {
+          const {error} = await runTimedRpc(client, "cw_create_post", {
             p_token: window.CodeWikiAuth?.getSessionToken(),
             p_category: category,
             p_target_doc_id: targetDocId || null,
@@ -560,9 +613,11 @@
         }
         writeModal.classList.add("hidden");
         await refreshAfterChange(version,token,true);
-      } catch {
-        errorBox.textContent = '등록하지 못했습니다. 작성 내용은 유지됩니다. 다시 시도해 주세요.';
-      } finally { saving = false; submit.disabled = false; }
+      } catch (error) {
+        errorBox.textContent = error?.message === "TIMEOUT"
+          ? '응답 시간이 초과되었습니다. 작성 내용은 유지됩니다. 다시 시도해 주세요.'
+          : '등록하지 못했습니다. 작성 내용은 유지됩니다. 다시 시도해 주세요.';
+      } finally { saving = false; writeModal._saving = false; submit.disabled = closeBtn.disabled = false; }
     });
   }
 
@@ -573,7 +628,7 @@
   }
 
   writeModal?.addEventListener("click", e => {
-    if (e.target === writeModal) { ++modalVersion; writeModal.classList.add("hidden"); }
+    if (e.target === writeModal && !writeModal._saving) { ++modalVersion; writeModal.classList.add("hidden"); }
   });
 
   openBoardBtn?.addEventListener("click", () => {
@@ -602,8 +657,10 @@
     if (nextKey === boardUserKey) return;
     boardUserKey = nextKey;
     pendingRead = null;
+    loadedPosts = null;
     ++badgeVersion;
     ++modalVersion;
+    if (writeModal) writeModal._saving = false;
     if (boardOpenCountBadge) {
       boardOpenCountBadge.textContent = "0";
       boardOpenCountBadge.classList.add("hidden");

@@ -13,8 +13,13 @@
       if(!alive)return;
       // Keep the typed folder name and focus when a background list/save refresh
       // re-renders the form; the name is otherwise only captured on submit.
+      const activeEl=globalThis.document?.activeElement;
       const input=editing?element.querySelector?.('#studyFolderName'):null;
-      const hadFocus=Boolean(input)&&input===globalThis.document?.activeElement;
+      const hadFocus=Boolean(input)&&input===activeEl;
+      const selStart=hadFocus&&typeof input.selectionStart==='number'?input.selectionStart:null;
+      const selEnd=hadFocus&&typeof input.selectionEnd==='number'?input.selectionEnd:null;
+      const focusedFilter=!hadFocus&&activeEl?.dataset?.folderFilter!==undefined&&element.contains?.(activeEl)?activeEl.dataset.folderFilter:null;
+      const focusedMove=activeEl?.id==='studyMoveFolder'&&moveElement.contains?.(activeEl);
       if(input&&typeof input.value==='string')editing={...editing,name:input.value};
       const notes=getNotes(),counts=new Map();
       notes.forEach(n=>counts.set(folderOf(n.id),(counts.get(folderOf(n.id))||0)+1));
@@ -28,11 +33,21 @@
         ${message?`<button type="button" data-folder-action="reload" ${pending||loading?'disabled':''}>폴더 다시 불러오기</button>`:''}`;
       if(markup!==html){
         element.innerHTML=html;markup=html;
-        if(hadFocus){const next=element.querySelector?.('#studyFolderName');next?.focus();try{next?.setSelectionRange?.(next.value.length,next.value.length);}catch{}}
+        if(hadFocus){
+          const next=element.querySelector?.('#studyFolderName');
+          next?.focus();
+          try{const start=selStart??next.value.length,end=selEnd??next.value.length;next?.setSelectionRange?.(start,end);}catch{}
+        } else if(focusedFilter!==null){
+          const target=[...(element.querySelectorAll?.('[data-folder-filter]')||[])].find(el=>el.dataset?.folderFilter===focusedFilter);
+          target?.focus();
+        }
       }
       const note=getNote();
       const move=`<label for="studyMoveFolder">폴더</label><select id="studyMoveFolder" aria-label="메모를 폴더로 이동" ${disabled||!note?.revision?'disabled':''} title="${note?.revision?'선택한 폴더로 이동':'노트를 저장한 뒤 폴더를 선택하세요'}"><option value="">미분류</option>${[...folders].sort((a,b)=>collator.compare(a.name,b.name)).map(f=>`<option value="${esc(f.id)}" ${folderOf(note?.id)===f.id?'selected':''}>${esc(f.name)}</option>`).join('')}</select>`;
-      if(move!==moveMarkup){moveElement.innerHTML=move;moveMarkup=move;}
+      if(move!==moveMarkup){
+        moveElement.innerHTML=move;moveMarkup=move;
+        if(focusedMove)moveElement.querySelector?.('#studyMoveFolder')?.focus();
+      }
     }
     async function load(){
       if(!alive||pending)return;

@@ -119,8 +119,8 @@
 
   function buildAliasRegex(alias) {
     const escaped = escapeRegExp(alias);
-    const leftBound = /^[A-Za-z0-9_$]/.test(alias) ? "(?<![A-Za-z0-9_$])" : "";
-    const rightBound = /[A-Za-z0-9_]$/.test(alias) ? "(?![A-Za-z0-9_])" : "";
+    const leftBound = /^[A-Za-z0-9_$#]/.test(alias) ? "(?<![A-Za-z0-9_$#])" : "";
+    const rightBound = /[A-Za-z0-9_#]$/.test(alias) ? "(?![A-Za-z0-9_#])" : "";
     return new RegExp(`${leftBound}${escaped}${rightBound}`, "gi");
   }
 
@@ -143,7 +143,8 @@
     out = out.replace(/<(a|code|pre)\b[^>]*>[\s\S]*?<\/\1>/gi, stash);
     // Static labels can opt out of automatic links without changing their typography.
     out = out.replace(/<span data-no-autolink>[\s\S]*?<\/span>/gi, stash);
-    out = out.replace(/<[^>]+>/g, stash);
+    // Allowlist only known formatting tags; escape literal angle brackets (e.g. <>, <fs_row>).
+    out = out.replace(/<(?:br\s*\/?|\/?(?:strong|mark|span|small|em|del)\b[^>]*)>/gi, stash);
 
     const esc = window.CodeWikiLearning.escape;
 
@@ -163,7 +164,7 @@
 
     // 2) 암기 모드 빈칸 토큰 {{키워드}} 보호
     out = out.replace(/\{\{(.+?)\}\}/g, (_, inner) =>
-      stash(`<span class="quiz-token" title="클릭하여 정답 확인" tabindex="0" role="button">${inner}</span>`)
+      stash(`<span class="quiz-token" title="클릭하여 정답 확인" tabindex="0" role="button">${esc(inner)}</span>`)
     );
 
     // 3) 인라인 코드 `코드` 변환 (만약 등록된 T-Code/개념 키워드라면 링크도 함께 연결!)
@@ -178,12 +179,15 @@
       return stash(`<code>${safeCode}</code>`);
     });
 
+    // Escape remaining literal HTML characters before injecting generated markup.
+    out = esc(out);
+
     // 4) 평문 속 등록 키워드(aliases) 자동 감지 → 하이퍼링크 연결 (현재 보고 있는 자기 자신 문서는 제외)
     for (const entry of aliases) {
       // Protect the whole term even on its own page, before shorter aliases run.
       out = out.replace(entry.regex, matchedText =>
-        stash(entry.docId === sourceDocId ? esc(matchedText) :
-          `<a href="#doc/${esc(entry.docId)}" class="wiki-link" data-doc="${esc(entry.docId)}">${esc(matchedText)}</a>`)
+        stash(entry.docId === sourceDocId ? matchedText :
+          `<a href="#doc/${esc(entry.docId)}" class="wiki-link" data-doc="${esc(entry.docId)}">${matchedText}</a>`)
       );
     }
 
@@ -363,7 +367,7 @@
 
         return `
           <div class="sb-folder-group ${isOpen ? "open" : ""}">
-            <button type="button" class="sb-folder-row ${hasActiveChild ? "has-active" : ""}" data-toggle-cat="${esc(cat.id)}">
+            <button type="button" class="sb-folder-row ${hasActiveChild ? "has-active" : ""}" data-toggle-cat="${esc(cat.id)}" aria-expanded="${isOpen}">
               <svg class="sb-folder-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
               </svg>
@@ -409,6 +413,7 @@
           expandedCategories.add(catId);
         }
         renderNavigation();
+        categoryNav.querySelector(`[data-toggle-cat="${catId}"]`)?.focus({ preventScroll: true });
       });
     });
 
@@ -416,7 +421,7 @@
 
   function renderEditorCode(raw, abap = true, numbered = true) {
     const escape = value => value.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-    const keywords = new Set(('REPORT DATA TYPES TYPE LIKE VALUE CONSTANTS CLEAR WRITE PARAMETERS SELECT-OPTIONS FOR IN INITIALIZATION TABLES START-OF-SELECTION END-OF-SELECTION AT SELECTION-SCREEN OUTPUT BEGIN OF END INCLUDE TABLE LINE STANDARD SORTED HASHED KEY UNIQUE NON-UNIQUE APPEND INSERT READ MODIFY DELETE SORT ASCENDING DESCENDING CORRESPONDING FIELDS GROUP AS COUNT SUM AVG MIN MAX ORDER HAVING JOIN LEFT OUTER INNER ON IF ELSE ELSEIF ENDIF DO TIMES ENDDO WHILE ENDWHILE LOOP AT ENDLOOP EXIT CONTINUE MOD DIV IS NOT INITIAL AND OR BETWEEN CA CS NE EQ CONCATENATE INTO SEPARATED BY FORM ENDFORM PERFORM USING CHANGING SELECT FROM WHERE ENDSELECT CALL FUNCTION METHOD CLASS DEFINITION IMPLEMENTATION PUBLIC PRIVATE PROTECTED SECTION METHODS CLASS-METHODS ENDMETHOD ENDCLASS CREATE OBJECT REF TO IMPORTING EXPORTING RETURNING EXCEPTIONS TRY CATCH ENDTRY MESSAGE WITH LENGTH DECIMALS DEFAULT MOVE TRANSLATE CONDENSE ULINE').split(' '));
+    const keywords = new Set(('REPORT DATA TYPES TYPE LIKE VALUE CONSTANTS CLEAR WRITE PARAMETERS SELECT-OPTIONS FOR IN INITIALIZATION TABLES START-OF-SELECTION END-OF-SELECTION AT SELECTION-SCREEN OUTPUT BEGIN OF END INCLUDE TABLE LINE STANDARD SORTED HASHED KEY UNIQUE NON-UNIQUE APPEND INSERT READ MODIFY DELETE SORT ASCENDING DESCENDING CORRESPONDING FIELDS GROUP AS COUNT SUM AVG MIN MAX ORDER HAVING JOIN LEFT OUTER INNER ON IF ELSE ELSEIF ENDIF DO TIMES ENDDO WHILE ENDWHILE LOOP AT ENDLOOP EXIT CONTINUE MOD DIV IS NOT INITIAL AND OR BETWEEN CA CS NE EQ CONCATENATE INTO SEPARATED BY FORM ENDFORM PERFORM USING CHANGING SELECT SINGLE BYPASSING BUFFER FROM WHERE ENDSELECT CALL FUNCTION METHOD CLASS DEFINITION IMPLEMENTATION PUBLIC PRIVATE PROTECTED SECTION METHODS CLASS-METHODS ENDMETHOD ENDCLASS CREATE OBJECT REF TO IMPORTING EXPORTING RETURNING EXCEPTIONS TRY CATCH ENDTRY MESSAGE WITH LENGTH DECIMALS DEFAULT MOVE TRANSLATE CONDENSE ULINE').split(' '));
     return String(raw).split('\n').map((line,i) => {
       let body = escape(line);
       if (abap) {
@@ -434,6 +439,7 @@
 
   // 개별 블록(Block) 렌더러 (8종 블록 지원: practice 따라하기 블록 포함)
   function renderBlock(block, blockIdx) {
+    const esc = window.CodeWikiLearning.escape;
     switch (block.type) {
       case "text":
         return (block.paragraphs || [])
@@ -449,7 +455,7 @@
                 .map(
                   st => `
                 <div class="practice-step-row">
-                  <div class="practice-step-num">${st.step}</div>
+                  <div class="practice-step-num">${esc(st.step)}</div>
                   <div class="practice-step-body">
                     <div class="practice-step-action">${parseInline(st.action)}</div>
                     ${st.detail ? `<div class="practice-step-detail">${parseInline(st.detail)}</div>` : ""}
@@ -471,7 +477,7 @@
                 .map(
                   (st, i, arr) => `
                   <div class="flow-step-card">
-                    ${st.badge ? `<span class="flow-step-badge">${st.badge}</span>` : ""}
+                    ${st.badge ? `<span class="flow-step-badge">${esc(st.badge)}</span>` : ""}
                     <div class="flow-step-title">${parseInline(st.title)}</div>
                     <div class="flow-step-desc">${parseInline(st.desc)}</div>
                   </div>
@@ -490,7 +496,7 @@
               .map(
                 item => `
                 <div class="compare-card">
-                  ${item.tag ? `<div class="compare-card-tag">${item.tag}</div>` : ""}
+                  ${item.tag ? `<div class="compare-card-tag">${esc(item.tag)}</div>` : ""}
                   <div class="compare-card-title">${parseInline(item.title)}</div>
                   <ul class="compare-point-list">
                     ${(item.points || []).map(pt => `<li>${parseInline(pt)}</li>`).join("")}
@@ -502,13 +508,15 @@
           </div>
         `;
 
-      case "callout":
+      case "callout": {
+        const style = /^[a-z-]+$/.test(block.style || "") ? block.style : "tip";
         return `
-          <div class="block-callout type-${block.style || "tip"}">
+          <div class="block-callout type-${style}">
             <div class="callout-title">${parseInline(block.title)}</div>
             <div class="callout-body">${parseInline(block.body)}</div>
           </div>
         `;
+      }
 
       case "table":
         return `
@@ -550,7 +558,7 @@
         `;
 
       case "widget":
-        return `<div class="block-widget-slot" data-widget-id="${block.widgetId}" id="widget-slot-${blockIdx}"></div>`;
+        return `<div class="block-widget-slot" data-widget-id="${esc(block.widgetId)}" id="widget-slot-${blockIdx}"></div>`;
 
       case "nested": {
         const renderLayer = (node, depth) => {
@@ -607,12 +615,15 @@
   // 메인 문서 렌더링
   function renderDocument(docId) {
     if ((docId === 'welcome-abap' || docId === 'welcome-ui5') && window.CodeWikiAdminMembers?.openHome()) return;
-    window.CodeWikiAdminMembers?.leave();
-    window.CodeWikiKnowledgeMap?.leave?.();
     if (docId === "erp-setup") {
       docId = "sap-architecture";
       history.replaceState(null, "", "#doc/sap-architecture");
     }
+    if (window.WIKI_DOCS[docId]?.studentOnly && window.CodeWikiAuth?.getCurrentUser?.()?.role === "admin") {
+      if (window.CodeWikiAdminMembers?.openHome()) return;
+    }
+    window.CodeWikiAdminMembers?.leave();
+    window.CodeWikiKnowledgeMap?.leave?.();
     if (window.WIKI_DOCS[docId]?.track === "ui5") {
       docId = "welcome-abap";
       history.replaceState(null, "", "#doc/welcome-abap");
@@ -773,7 +784,8 @@
         const raw = decodeURIComponent(btn.getAttribute("data-code"));
         const reset = label => {
           btn.textContent = label;
-          setTimeout(() => { btn.textContent = "복사"; }, 1400);
+          clearTimeout(btn._copyTimer);
+          btn._copyTimer = setTimeout(() => { btn.textContent = "복사"; }, 1400);
         };
         if (!navigator.clipboard?.writeText) { reset("복사 불가"); return; }
         navigator.clipboard.writeText(raw).then(() => reset("복사됨 ✓")).catch(() => reset("복사 실패"));
@@ -802,8 +814,8 @@
     const hasToc = !doc.hideToc && sections.length >= 2;
     const specEntries = Object.entries(doc.specs || {});
     const hasSpecs = specEntries.length > 0;
-    const backlinks = computeBacklinks(doc.id);
-    const groups = window.CodeWikiLearning.relatedGroups(doc, backlinks, documents);
+    const backlinks = computeBacklinks(doc.id).filter(isDocAccessible);
+    const groups = window.CodeWikiLearning.relatedGroups(doc, backlinks, documents.filter(isDocAccessible));
     const hasBacklinks = groups.concepts.length + groups.dates.length > 0;
 
     tocCardWrap?.classList.toggle("hidden", !hasToc);
@@ -860,6 +872,12 @@
 
   // When the hash changes, render once from the hashchange handler (after every
   // other view has routed away) instead of rendering here and again there.
+  function isDocAccessible(doc) {
+    if (!doc || doc.track === "ui5") return false;
+    if (doc.studentOnly && window.CodeWikiAuth?.getCurrentUser?.()?.role === "admin") return false;
+    return true;
+  }
+
   let pendingNavigation = null;
   function showDocument(docId) {
     if (window.CodeWikiBoard) window.CodeWikiBoard.closeIfActive();
@@ -874,7 +892,12 @@
   }
 
   function navigateTo(docId) {
+    if (docId === "erp-setup") docId = "sap-architecture";
     if (!window.WIKI_DOCS[docId]) return;
+    if (!isDocAccessible(window.WIKI_DOCS[docId])) {
+      window.CodeWikiAdminMembers?.openHome?.();
+      return;
+    }
     showDocument(docId);
   }
 
@@ -882,6 +905,16 @@
     if (track === "ui5") return;
     currentTrack = "abap";
     try { sessionStorage.setItem(TRACK_SESSION_KEY, currentTrack); } catch {}
+    const h = window.location.hash;
+    if (h === "#map" || h === "#study" || h === "#mentoring" || h === "#data-game") return;
+    if (h.startsWith("#doc/")) {
+      const target = h.replace("#doc/", "");
+      const resolved = target === "erp-setup" ? "sap-architecture" : target;
+      if (isDocAccessible(window.WIKI_DOCS[resolved])) {
+        showDocument(resolved);
+        return;
+      }
+    }
     showDocument(getHomeDocId(currentTrack));
   }
 
@@ -891,7 +924,12 @@
     getTrack: () => currentTrack,
     hasSelectedTrack: () => { try { return Boolean(sessionStorage.getItem(TRACK_SESSION_KEY)); } catch { return false; } },
     resetTrackChoice: () => { try { sessionStorage.removeItem(TRACK_SESSION_KEY); } catch {} },
-    selectTrack
+    selectTrack,
+    syncAccess: () => {
+      if (window.WIKI_DOCS[currentDocId] && !isDocAccessible(window.WIKI_DOCS[currentDocId])) {
+        window.CodeWikiAdminMembers?.openHome?.();
+      }
+    }
   };
 
   function initWikiLinks() {
@@ -902,19 +940,23 @@
       if (!link) return;
       e.preventDefault();
       hoverPreviewCard.classList.add('hidden');
-      if (link.hasAttribute('data-missing-doc')) window.CodeWikiBoard?.openWriteModal('');
+      if (link.hasAttribute('data-missing-doc')) window.CodeWikiBoard?.openWriteModal('', link.getAttribute('data-missing-doc') || '');
       else navigateTo(link.getAttribute('data-doc'));
     });
     document.addEventListener('mouseover', e => {
       const link = e.target.closest?.('.wiki-link[data-doc]');
       if (!link || link.contains(e.relatedTarget)) return;
       const targetDoc = window.WIKI_DOCS[link.getAttribute('data-doc')];
-      if (!targetDoc) return;
+      if (!targetDoc || !isDocAccessible(targetDoc)) return;
       const esc = window.CodeWikiLearning?.escape || (v => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])));
+      const catLabel = getCategoryName(targetDoc.categoryId);
+      const summaryText = window.CodeWikiLearning?.plain
+        ? window.CodeWikiLearning.plain(targetDoc.summary || '')
+        : String(targetDoc.summary || '').replace(/~~.+?~~/g, '').replace(/\{\{(.+?)\}\}/g, '$1');
       hoverPreviewCard.innerHTML = `
-        <span class="preview-cat-badge">${esc(getCategoryName(targetDoc.categoryId))}</span>
+        ${catLabel ? `<span class="preview-cat-badge">${esc(catLabel)}</span>` : ''}
         <div class="preview-doc-title">${esc(targetDoc.title)}</div>
-        <div class="preview-doc-summary">${esc((targetDoc.summary || '').replace(/~~.+?~~/g, '').replace(/\{\{(.+?)\}\}/g, '$1'))}</div>
+        <div class="preview-doc-summary">${esc(summaryText)}</div>
       `;
       hoverPreviewCard.classList.remove('hidden');
       movePreviewCard(e);
@@ -930,10 +972,15 @@
   }
 
   function movePreviewCard(e) {
+    const rect = hoverPreviewCard.getBoundingClientRect?.() || { width: 320, height: 160 };
+    const width = rect.width || 320;
+    const height = rect.height || 160;
     let x = e.clientX + 16;
     let y = e.clientY + 16;
-    if (x + 320 > window.innerWidth) x = e.clientX - 326;
-    if (y + 160 > window.innerHeight) y = e.clientY - 150;
+    if (x + width + 8 > window.innerWidth) x = e.clientX - width - 16;
+    if (y + height + 8 > window.innerHeight) y = e.clientY - height - 16;
+    x = Math.max(8, Math.min(x, Math.max(8, window.innerWidth - width - 8)));
+    y = Math.max(8, Math.min(y, Math.max(8, window.innerHeight - height - 8)));
     hoverPreviewCard.style.left = `${x}px`;
     hoverPreviewCard.style.top = `${y}px`;
   }
@@ -943,7 +990,8 @@
     const searchDropdown = document.getElementById("searchDropdown");
 
     window.addEventListener("keydown", e => {
-      if (e.key === "/" && document.activeElement !== searchInput && !document.activeElement?.isContentEditable && !["INPUT", "TEXTAREA"].includes(document.activeElement?.tagName)) {
+      const modalOpen = Boolean(document.querySelector?.("dialog[open], .admin-modal-backdrop:not(.hidden)"));
+      if (e.key === "/" && !modalOpen && document.activeElement !== searchInput && !document.activeElement?.isContentEditable && !["INPUT", "TEXTAREA", "SELECT"].includes(document.activeElement?.tagName)) {
         e.preventDefault();
         searchInput.focus();
       } else if (e.key === "Escape") {
@@ -969,7 +1017,7 @@
         return;
       }
 
-      const results = window.CodeWikiLearning.search(searchIndex, q);
+      const results = window.CodeWikiLearning.search(searchIndex, q).filter(({doc: d}) => isDocAccessible(d));
       if (!results.length) {
         searchDropdown.innerHTML = '<div class="search-item">일치하는 문서가 없습니다.</div>';
       } else {
@@ -1009,6 +1057,7 @@
     const brandHomeLink = document.getElementById("brandHomeLink");
 
     brandHomeLink?.addEventListener("click", e => {
+      if (e.defaultPrevented || e.ctrlKey || e.metaKey || e.shiftKey || e.altKey) return;
       e.preventDefault();
       navigateTo(getHomeDocId(currentTrack));
     });
@@ -1026,14 +1075,17 @@
       const h = window.location.hash;
       const requested = pendingNavigation;
       pendingNavigation = null;
+      const appHidden = appShell?.classList.contains('object-game-hidden') || appShell?.classList.contains('mentoring-hidden') || appShell?.classList.contains('study-hidden') || appShell?.classList.contains('members-hidden') || appShell?.classList.contains('board-mode-shell') || appShell?.classList.contains('map-hidden');
       if (h.startsWith("#doc/")) {
         const target = h.replace("#doc/", "");
-        const appHidden = appShell?.classList.contains('object-game-hidden') || appShell?.classList.contains('mentoring-hidden') || appShell?.classList.contains('study-hidden') || appShell?.classList.contains('members-hidden') || appShell?.classList.contains('board-mode-shell') || appShell?.classList.contains('map-hidden');
         if ((window.WIKI_DOCS[target] || target === "erp-setup") && (target !== currentDocId || appHidden || requested === target)) {
           if (window.CodeWikiBoard) window.CodeWikiBoard.closeIfActive();
           renderDocument(target);
           window.scrollTo({ top: 0, behavior: "smooth" });
         }
+      } else if (!h) {
+        if (window.CodeWikiBoard) window.CodeWikiBoard.closeIfActive();
+        renderDocument(currentDocId);
       }
     });
 
@@ -1066,14 +1118,25 @@
       }
     });
 
+    const THEME_STORAGE_KEY = "codewiki_theme_v1";
     const themeToggleBtn = document.getElementById("themeToggleBtn");
-    themeToggleBtn.addEventListener("click", () => {
-      const root = document.documentElement;
-      const next = root.getAttribute("data-theme") === "light" ? "dark" : "light";
-      root.setAttribute("data-theme", next);
-      const label = next === "light" ? "다크 모드로 전환" : "라이트 모드로 전환";
-      themeToggleBtn.title = label;
-      themeToggleBtn.setAttribute("aria-label", label);
+    const applyTheme = next => {
+      const theme = next === "dark" ? "dark" : "light";
+      document.documentElement.setAttribute("data-theme", theme);
+      const label = theme === "light" ? "다크 모드로 전환" : "라이트 모드로 전환";
+      if (themeToggleBtn) {
+        themeToggleBtn.title = label;
+        themeToggleBtn.setAttribute("aria-label", label);
+      }
+    };
+    try {
+      const savedTheme = localStorage.getItem(THEME_STORAGE_KEY);
+      if (savedTheme === "dark" || savedTheme === "light") applyTheme(savedTheme);
+    } catch {}
+    themeToggleBtn?.addEventListener("click", () => {
+      const next = document.documentElement.getAttribute("data-theme") === "light" ? "dark" : "light";
+      applyTheme(next);
+      try { localStorage.setItem(THEME_STORAGE_KEY, next); } catch {}
     });
   }
 

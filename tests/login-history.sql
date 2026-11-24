@@ -29,7 +29,13 @@ begin
     assert not has_table_privilege(r, 'cw_auth_private.login_logs', 'SELECT'), 'client can read login_logs directly';
     assert not has_table_privilege(r, 'cw_auth_private.login_logs', 'INSERT'), 'client can insert login_logs directly';
     assert not has_function_privilege(r, 'cw_auth_private.cw_login(text,text)', 'EXECUTE'), 'client can call private cw_login';
-    assert has_function_privilege(r, 'public.cw_admin_login_history(uuid,integer)', 'EXECUTE');
+    assert (
+      (to_regprocedure('public.cw_admin_login_history(uuid,integer,uuid)') is not null
+        and has_function_privilege(r, 'public.cw_admin_login_history(uuid,integer,uuid)', 'EXECUTE'))
+      or
+      (to_regprocedure('public.cw_admin_login_history(uuid,integer)') is not null
+        and has_function_privilege(r, 'public.cw_admin_login_history(uuid,integer)', 'EXECUTE'))
+    ), 'client cannot call cw_admin_login_history';
   end loop;
 end;
 $acl$;

@@ -83,9 +83,10 @@ revoke all on all functions in schema cw_auth_private from public, anon, authent
 
 -- Idempotent backfill for students currently holding an active signup session with no login_logs yet.
 insert into cw_auth_private.login_logs (user_id, logged_in_at)
-select u.id, u.created_at
+select u.id, greatest(u.created_at, u.session_expires_at - interval '24 hours')
 from public.cw_users u
 where u.role = 'student'
+  and u.status <> 'rejected'
   and u.session_token is not null
   and u.session_expires_at > now()
   and not exists (

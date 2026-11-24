@@ -13,6 +13,8 @@
 .object-game-option:disabled{cursor:default;opacity:.65}
 .object-game-option.is-correct{border-color:#25855b;background:#eaf8ef;color:#185c3b;opacity:1}
 .object-game-option.is-wrong{border-color:#c95757;background:#fff0f0;color:#9a2929;opacity:1}
+:root[data-theme="dark"] .object-game-option.is-correct{border-color:#3aa978;background:#163327;color:#a8ebd0}
+:root[data-theme="dark"] .object-game-option.is-wrong{border-color:#e06c6c;background:#3a1c20;color:#f7b9b9}
 .object-game-hint{font-size:12px;color:var(--text-caption);margin-top:16px;line-height:1.7}
 .object-game-hint summary{cursor:pointer}
 .object-game-feedback{font-size:14px;line-height:1.7;margin:20px 0}

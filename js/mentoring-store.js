@@ -10,7 +10,7 @@
       };
       request.onerror=()=>reject(request.error);
       request.onblocked=()=>{rejected=true;reject(new Error('storage-blocked'));};
-      request.onsuccess=()=>{const db=request.result;if(rejected){db.close();return;}db.onversionchange=()=>{db.close();opening=null;};resolve(db);};
+      request.onsuccess=()=>{const db=request.result;if(rejected){db.close();return;}db.onversionchange=()=>{db.close();opening=null;};db.onclose=()=>{opening=null;};resolve(db);};
     }).catch(error=>{opening=null;throw error;});
     return opening;
   }

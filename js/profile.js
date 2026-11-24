@@ -31,7 +31,14 @@
         : client.rpc(name,args);
     };
     dialog.querySelector('[data-close-profile]').addEventListener('click',()=>dialog.close());
-    form.querySelector('#logoutBtn').addEventListener('click',()=>window.CodeWikiAuth.logout());
+    const logoutBtn=form.querySelector('#logoutBtn');
+    let loggingOut=false;
+    logoutBtn.addEventListener('click',async()=>{
+      if(loggingOut)return;
+      loggingOut=true;logoutBtn.disabled=true;save.disabled=true;message.textContent='로그아웃 중…';
+      try { await window.CodeWikiAuth.logout(); }
+      finally { loggingOut=false; if(current()){ logoutBtn.disabled=false; save.disabled=false; } }
+    });
     if(!dialog.open)dialog.showModal();
     try {
       const result=await rpcCall('cw_get_my_profile',{p_token:s.token});
@@ -43,7 +50,9 @@
       form.querySelector('#profileRole').textContent=p.role==='admin'?'관리자':'회원';
       name.value=p.full_name;mbti.value=p.mbti||'';date.value=p.birth_date||'';share.checked=Boolean(p.share_with_class);
       name.disabled=false;mbti.disabled=false;date.disabled=false;share.disabled=!date.value;save.disabled=false;message.textContent='';
-      date.addEventListener('input',()=>{share.disabled=!date.value;if(!date.value)share.checked=false;});
+      const syncDateShare=()=>{share.disabled=!date.value;if(!date.value)share.checked=false;};
+      date.addEventListener('input',syncDateShare);
+      date.addEventListener('change',syncDateShare);
     } catch {if(current())message.textContent='프로필을 불러오지 못했습니다. 창을 닫고 다시 시도해 주세요.';}
     form.addEventListener('submit',async e=>{
       e.preventDefault();if(!current()||save.disabled)return;
@@ -54,12 +63,12 @@
         const result=await rpcCall('cw_update_my_profile',{p_token:s.token,p_full_name:name.value.trim(),p_mbti:mbti.value,p_birth_date:date.value||null,p_share_with_class:Boolean(date.value&&share.checked)});
         if(session!==s)return;if(result.error)throw result.error;
         window.CodeWikiAuth.applyProfile(result.data);
-        void window.CodeWikiBirthdays.refresh();
+        void window.CodeWikiBirthdays.refresh({ force: true });
         if(current()){name.value=result.data.full_name;message.textContent='저장했습니다.';}
       } catch {if(current())message.textContent='저장하지 못했습니다. 입력한 내용은 유지됩니다. 다시 시도해 주세요.';}
       finally {if(current())save.disabled=false;}
     });
   }
   window.CodeWikiProfile={setUser,openSettings};
-  window.addEventListener('storage',e=>{if(e.key==='codewiki_supa_token_v1'&&session&&e.newValue!==session.token)setUser(null);});
+  window.addEventListener('storage',e=>{if((e.key===null||e.key==='codewiki_supa_token_v1')&&session&&e.newValue!==session.token)setUser(null);});
 })();

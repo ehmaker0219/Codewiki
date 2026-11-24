@@ -5,18 +5,18 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>코드위키</title>
   <link rel="icon" type="image/svg+xml" href="assets/logo-symbol.svg?v=32baec3f0703" />
-  <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
+  <link rel="stylesheet" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/style.css?v=76295eeb59f2" />
-  <link rel="stylesheet" href="css/theme.css?v=2c4156347aea" />
+  <link rel="stylesheet" href="css/style.css?v=4e27f14e7e13" />
+  <link rel="stylesheet" href="css/theme.css?v=362e15fb2acc" />
   <link rel="stylesheet" href="css/profile.css?v=386bcc74d5e6" />
   <link rel="stylesheet" href="css/admin-members.css?v=ab38843025b8" />
-  <link rel="stylesheet" href="css/birthdays.css?v=52caacd0ea90" />
-  <link rel="stylesheet" href="css/schedule.css?v=7357dc7efd11" />
-  <link rel="stylesheet" href="css/study.css?v=e1a678dc0bf3" />
-  <link rel="stylesheet" href="css/mentoring.css?v=f4fabc0af776" />
-  <link rel="stylesheet" href="css/object-game.css?v=929b876c8a7b" />
-  <link rel="stylesheet" href="css/knowledge-map.css?v=36df37ddcc30" />
+  <link rel="stylesheet" href="css/birthdays.css?v=af6aabee8ae3" />
+  <link rel="stylesheet" href="css/schedule.css?v=94e44bd6da32" />
+  <link rel="stylesheet" href="css/study.css?v=b7cd46ab191f" />
+  <link rel="stylesheet" href="css/mentoring.css?v=9043377e5546" />
+  <link rel="stylesheet" href="css/object-game.css?v=4971b0ec708f" />
+  <link rel="stylesheet" href="css/knowledge-map.css?v=bef6fb135a45" />
 </head>
 <body>
   <!-- 로그인 후 전체 레이아웃: 좌측 고정 일체형 사이드바 + 우측 워크스페이스 -->
@@ -33,7 +33,7 @@
       <!-- 상단 브랜드 로고 + 트랙 전환 토글 -->
       <div class="sidebar-top-brand">
         <a href="#doc/welcome-abap" class="brand-logo" id="brandHomeLink">
-          <span class="brand-symbol" aria-label="코드위키 심볼">
+          <span class="brand-symbol" aria-hidden="true">
             <svg width="19" height="19" viewBox="0 0 120 120" fill="currentColor">
               <path d="M12 12 H54 V54 H41 V40 H15 V28.5 H41 V23.5 H12 Z" />
               <path d="M66 12 H108 V25 H79 V41 H108 V54 H66 Z" />
@@ -155,6 +155,7 @@
               id="searchInput"
               class="search-input"
               placeholder="검색"
+              aria-label="문서 검색"
               autocomplete="off"
             />
             <div id="searchDropdown" class="search-dropdown hidden"></div>
@@ -216,7 +217,7 @@
           </div>
         </aside>
       </div>
-      <footer class="site-footer">최근 업데이트 <time id="siteUpdatedAt" datetime="2026-11-24T00:33:24.120Z" data-version="7ba912e4f983d5a2">2026.11.24 09:33 (KST)</time></footer>
+      <footer class="site-footer">최근 업데이트 <time id="siteUpdatedAt" datetime="2026-11-24T11:39:20.190Z" data-version="fe6f00626edd1ad3">2026.11.24 20:39 (KST)</time></footer>
     </div>
   </div>
 
@@ -244,37 +245,37 @@
   </dialog>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.119.2/dist/umd/supabase.js" integrity="sha384-A97u3Qnt9GZHURO9YJZRe7VQgGUeFzcv6I1oIGnUTxQrCxnpQMwR0/G8F2zt9abZ" crossorigin="anonymous"></script>
 
-  <script src="js/data.js?v=e866d650f997"></script>
-  <script src="js/class-notes.js?v=4edd7ba275c9"></script>
-  <script src="js/lesson-days.js?v=0f70b1b1b275"></script>
-  <script src="js/textbook.js?v=9ff0d31e407f"></script>
-  <script src="js/example-notes.js?v=a99af57c08c9"></script>
-  <script src="js/learning-tools.js?v=acdbc030d4ff"></script>
-  <script src="js/profile.js?v=0d4ca61b9624"></script>
-  <script src="js/birthdays.js?v=a206e20bf51d"></script>
-  <script src="js/progress.js?v=8447fced6a88"></script>
+  <script src="js/data.js?v=f0eaf2357fb1"></script>
+  <script src="js/class-notes.js?v=d5cf74cb7ee7"></script>
+  <script src="js/lesson-days.js?v=5334daeb7be6"></script>
+  <script src="js/textbook.js?v=edafb34768e8"></script>
+  <script src="js/example-notes.js?v=63235b8af140"></script>
+  <script src="js/learning-tools.js?v=f3e519d573ad"></script>
+  <script src="js/profile.js?v=46bd49e1c604"></script>
+  <script src="js/birthdays.js?v=6a0a2208af45"></script>
+  <script src="js/progress.js?v=b7f8969118e4"></script>
   <script src="js/visualizers.js?v=8d536050355f"></script>
   <script src="js/schedule-data.js?v=03cf62a15b32"></script>
-  <script src="js/schedule.js?v=1f8871091c42"></script>
-  <script src="js/app.js?v=c419b8e3b1cc"></script>
-  <script src="js/admin.js?v=33de64df6bf9"></script>
-  <script src="js/admin-members.js?v=52ed3a530d59"></script>
-  <script src="js/presence.js?v=885eb16b7795"></script>
+  <script src="js/schedule.js?v=c90d69ce0ad8"></script>
+  <script src="js/app.js?v=9303496bbe55"></script>
+  <script src="js/admin.js?v=6ab027a639df"></script>
+  <script src="js/admin-members.js?v=1c96da1de9e2"></script>
+  <script src="js/presence.js?v=7afc2c39cb85"></script>
   <script type="application/json" id="studyEditorSource" data-src="js/study-editor.js?v=ac7ac071cd33"></script>
-  <script src="js/study-store.js?v=2cac59b2c903"></script>
-  <script src="js/study-folders.js?v=7d665a098741"></script>
-  <script src="js/study.js?v=938f8f217819"></script>
-  <script src="js/mentoring-store.js?v=1e6629ea58cc"></script>
-  <script src="js/mentoring-model.js?v=3f46447603d3"></script>
-  <script src="js/mentoring-team-store.js?v=f20fa7c77f61"></script>
-  <script src="js/mentoring.js?v=210e9917515a"></script>
-  <script src="js/secure-auth.js?v=6e74af8808a6"></script>
-  <script src="js/auth.js?v=abf3794ec1c3"></script>
-  <script src="js/board.js?v=00c2d57a4862"></script>
+  <script src="js/study-store.js?v=095394bae9d4"></script>
+  <script src="js/study-folders.js?v=4b5ffbfc1a4b"></script>
+  <script src="js/study.js?v=b8b8b7372aac"></script>
+  <script src="js/mentoring-store.js?v=ce90f52eae26"></script>
+  <script src="js/mentoring-model.js?v=e1a983f7be08"></script>
+  <script src="js/mentoring-team-store.js?v=3764af62fb03"></script>
+  <script src="js/mentoring.js?v=41724693aefc"></script>
+  <script src="js/secure-auth.js?v=989ab8c4228a"></script>
+  <script src="js/auth.js?v=2dc0e76df817"></script>
+  <script src="js/board.js?v=7b3340e6acee"></script>
   <script src="js/practice.js?v=ef663e2b54f1"></script>
-  <script src="js/practice-ui.js?v=9b9d96b845b5"></script>
+  <script src="js/practice-ui.js?v=886e75991030"></script>
   <script type="application/json" id="objectGameBankSource" data-src="js/object-game-bank.js?v=8f3d42b19935"></script>
   <script src="js/object-game.js?v=65c1bf3f00d9"></script>
-  <script src="js/knowledge-map.js?v=18db9c0a63e7"></script>
+  <script src="js/knowledge-map.js?v=c7619b6cdd39"></script>
 </body>
 </html>

@@ -15,7 +15,7 @@ const context={window,document:{getElementById:node,querySelectorAll:()=>[],crea
  setTimeout:fn=>{const id=++timerId;timers.set(id,fn);return id;},clearTimeout:id=>timers.delete(id)};
 vm.runInNewContext(fs.readFileSync('js/admin-members.js','utf8'),context);
 const api=window.CodeWikiAdminMembers,host=node('adminMembersPage');
-const click=(kind,id)=>host.events.click({target:{closest:selector=>selector===kind?{dataset:{resetStudent:id,membersSort:id,membersTab:id,viewLogins:id}}:null}});
+const click=(kind,id,extra={})=>host.events.click({target:{closest:selector=>selector===kind?{dataset:{resetStudent:id,membersSort:id,membersTab:id,viewLogins:id,...extra}}:null}});
 const input=(id,value)=>host.events[id==='membersSearch'?'input':'change']({target:{id,value}});
 const submit=()=>node('form').events.submit({preventDefault(){}});
 const fixtures=[{id:'s1',username:'student-one',full_name:'<img onerror=alert(1)>',class_name:'1반',student_number:null,mbti:'INTJ',status:'approved',birth_date:'2000-01-02',created_at:'2026-11-19T00:00:00Z'},
@@ -80,5 +80,40 @@ const fixtures=[{id:'s1',username:'student-one',full_name:'<img onerror=alert(1)
  assert.match(node('membersMessage').textContent,/로그인 내역 기능이 아직 서버에 적용/);
  click('[data-members-refresh]');const lateLogins=requests.shift();api.setUser(null);lateLogins.resolve({data:loginFixtures});await flush();
  assert.equal(host.innerHTML,'');assert.equal(host.hidden,true);assert.equal(timers.size,0);
+ // Per-user drill-down race isolation, search focus preservation and invalidate() superseding in-flight reads.
+ window.location.hash='#admin/students';
+ token='admin-session-3';api.setUser({id:'a3',role:'admin'});
+ const staleDir=requests.shift();
+ api.invalidate();assert.equal(requests.length,1,'invalidate must supersede in-flight directory read');
+ const freshDir=requests.shift();
+ staleDir.resolve({data:[sortable[0]]});await flush();
+ assert.equal(node('membersTable').innerHTML.includes('user2'),false,'stale pre-invalidate response must not populate directory');
+ freshDir.resolve({data:sortable});await flush();
+ assert.equal(node('membersTable').innerHTML.includes('user2'),true);
+ // Uncached per-user drill-down sends p_user_id; editing search mid-flight supersedes it with global query and ignores stale response.
+ click('[data-view-logins]','user10',{viewLoginsId:'n1'});
+ assert.equal(requests.length,1);assert.equal(requests[0].name,'cw_admin_login_history');assert.equal(requests[0].args.p_user_id,'n1');
+ const staleUserReq=requests.shift();
+ const searchEl=node('membersSearch');searchEl.id='membersSearch';searchEl.selectionStart=1;searchEl.selectionEnd=1;
+ let searchFocused=false,caretRange=null;
+ searchEl.focus=()=>{searchFocused=true;};searchEl.setSelectionRange=(a,b)=>{caretRange=[a,b];};
+ host.contains=el=>el===searchEl;context.document.activeElement=searchEl;
+ input('membersSearch','u');
+ assert.equal(requests.length,1,'typing search during per-user load must supersede with global history request');
+ assert.equal(requests[0].args.p_user_id,undefined);
+ assert.equal(searchFocused,true,'search input focus preserved across re-render');
+ assert.deepEqual(caretRange,[1,1]);
+ const globalReq=requests.shift();
+ staleUserReq.resolve({data:[loginFixtures[0]]});await flush();
+ assert.equal(node('membersTable').innerHTML.includes('user10'),false,'stale per-user response must not poison global cache');
+ globalReq.resolve({data:loginFixtures});await flush();
+ assert.match(node('membersCount').textContent,/2건 \/ 전체 2건/);
+ // Switching tabs and triggering invalidate() while logins is active supersedes in-flight login fetch.
+ click('[data-members-refresh]');const staleLogins2=requests.shift();
+ api.invalidate();assert.equal(requests.length,1,'invalidate must supersede in-flight login read');
+ const freshLogins2=requests.shift();
+ staleLogins2.resolve({data:[loginFixtures[0]]});await flush();
+ freshLogins2.resolve({data:loginFixtures});await flush();
+ assert.match(node('membersCount').textContent,/2건 \/ 전체 2건/);
  console.log('PASS: admin-only directory, login history, escaped fields, local filters, bounded/coalesced reads, reauthentication reset, duplicate guard, credential clearing, timeout and session isolation');
 })().catch(e=>{console.error(e);process.exitCode=1;});

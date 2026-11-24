@@ -35,7 +35,7 @@ async function boardTest() {
 
 async function logoutTest() {
   const auth = source('js/auth.js');
-  assert.match(source('js/profile.js'), /querySelector\('#logoutBtn'\)\.addEventListener\('click',\(\)=>window.CodeWikiAuth.logout\(\)\)/);
+  assert.match(source('js/profile.js'), /#logoutBtn'\)[\s\S]*?addEventListener\('click'[\s\S]*?window\.CodeWikiAuth\.logout\(\)/);
   assert.match(auth, /getElementById\("pendingLogoutBtn"\)\.addEventListener\("click", logout\)/);
   for (const mode of ['success','rpc-error','throw','empty','replaced']) {
     const saved = new Map(mode === 'empty' ? [] : [['codewiki_supa_token_v1','test-token']]);

@@ -1,0 +1,92 @@
+const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict');
+
+// Verify IndexedDB team store: onclose reconnection, file cleanup, legacy null-attachments safety and role enforcement.
+const teamStore=new Map(),fileStore=new Map();
+let opens=0,lastDb=null;
+function makeDb(){
+  const db={
+    close(){this.onclose?.();},
+    transaction(stores,mode){
+      assert.deepEqual(Array.from(stores),['team','files']);
+      const tx={
+        error:null,
+        objectStore(name){
+          const map=name==='team'?teamStore:fileStore;
+          return {
+            get(k){
+              const req={result:undefined};
+              queueMicrotask(()=>{
+                if(tx._aborted)return;
+                req.result=map.has(k)?structuredClone(map.get(k)):undefined;
+                req.onsuccess?.();
+                queueMicrotask(()=>{if(!tx._aborted)tx.oncomplete?.();});
+              });
+              return req;
+            },
+            put(v,k){assert.equal(mode,'readwrite');map.set(k,v);},
+            delete(k){assert.equal(mode,'readwrite');map.delete(k);}
+          };
+        },
+        abort(){tx._aborted=true;queueMicrotask(()=>tx.onabort?.());}
+      };
+      return tx;
+    }
+  };
+  lastDb=db;
+  return db;
+}
+class FakeBlob {
+  constructor(text){this.size=Buffer.byteLength(text);this.text=text;}
+}
+const window={};
+const ctx=vm.createContext({
+  window,structuredClone,Blob:FakeBlob,Map,Set,Date,
+  indexedDB:{
+    open(name,version){
+      assert.equal(name,'codewiki-mentoring-team-v1');assert.equal(version,1);opens++;
+      const req={result:makeDb()};
+      queueMicrotask(()=>req.onsuccess());
+      return req;
+    }
+  }
+});
+vm.runInContext(fs.readFileSync('js/mentoring-model.js','utf8'),ctx);
+vm.runInContext(fs.readFileSync('js/mentoring-team-store.js','utf8'),ctx);
+
+(async()=>{
+  const model=window.CodeWikiMentoringModel;
+  const mentor=model.members[0].id;
+  const create=window.CodeWikiMentoringTeamStore.create;
+  assert.throws(()=>create('unknown-actor'),/forbidden/);
+  const store=create(mentor);
+
+  // Legacy submission with missing attachments array must not crash reference scanning.
+  const seeded=model.empty();
+  seeded.submissions['legacy-act:other']={activity:'legacy-act',owner:'other',body:'old'};
+  teamStore.set('group',seeded);
+
+  const created=await store.execute({type:'create',id:'act-1',date:'2026-11-24'});
+  assert.equal(created.activities.length,1);
+  assert.equal(opens,1);
+
+  const blob=new FakeBlob('hello');
+  const updated=await store.execute({
+    type:'activity',id:'act-1',revision:1,
+    value:{title:'멘토링',date:'2026-11-24',startTime:'14:00',endTime:'15:30',goals:'',task:'',result:'',code:'',summary:'',nextPlan:'',status:'active',
+      attachments:[{id:'f1',name:'note.txt',type:'text/plain',size:blob.size}]}
+  },[{id:'f1',blob}]);
+  assert.equal(updated.activities[0].attachments.length,1);
+  assert.equal((await store.file('act-1',mentor,'f1')).text,'hello');
+
+  // Unexpected db.onclose clears the cached connection so the next call reopens cleanly.
+  lastDb.onclose();
+  const afterClose=await store.read();
+  assert.equal(opens,2,'onclose must reset cached IndexedDB connection');
+  assert.equal(afterClose.activities[0].startTime,'14:00');
+  assert.equal(afterClose.activities[0].endTime,'15:30');
+
+  // Deleting the activity garbage-collects its stored file blobs.
+  await store.execute({type:'delete',id:'act-1',revision:2});
+  assert.equal(fileStore.size,0,'deleting activity removes orphaned blobs');
+  console.log('PASS: mentoring team store onclose reconnection, blob cleanup, legacy null-attachments safety and role enforcement');
+})().catch(e=>{console.error(e);process.exitCode=1;});

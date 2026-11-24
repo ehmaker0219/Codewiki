@@ -49,7 +49,7 @@
     finally { s.running = false; if (state === s) emit(); }
   }
   function setUser(user) {
-    const approved = user && (user.status === 'approved' || user.role === 'admin');
+    const approved = user && user.status === 'approved' && user.role !== 'admin';
     const token = approved ? window.CodeWikiAuth?.getSessionToken() || '' : '';
     if (!approved) { state = null; emit(); return; }
     if (state?.id === user.id && state.token === token) return;
@@ -68,7 +68,7 @@
     getReadDocs:() => state ? Object.keys(state.values).filter(id => state.values[id]) : [],
     getStatus:() => !state ? '로그인 후 기록됩니다.' : state.status === 'synced' ? '계정에 저장됨' : state.storageError ? '기기 저장 실패 · 동기화를 다시 시도하세요.' :
       state.status === 'syncing' ? '동기화 중…' : state.status === 'error' ? '기기에 저장됨 · 동기화 재시도 필요' : '이 기기에 저장됨',
-    needsRetry:() => state?.status === 'error'
+    needsRetry:() => Boolean(state && (state.status === 'error' || state.storageError))
   };
   window.addEventListener('online', () => void sync());
   document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') void sync(); });

@@ -15,10 +15,10 @@ description: >-
 ## 1. 원본 필기 파싱 및 보완 기준
 
 1. **날짜 · 원본 파일명 확인**: 파일명(예: `261123 월요일.md`, `261124TUE.txt`) 또는 본문에서 수업 날짜(`YYYY-MM-DD`)와 `source` 문자열(원본 파일명 그대로)을 확인한다. 날짜가 불명확하면 추측하지 말고 사용자에게 먼저 확인한다.
-2. **`codewiki-rich-v1` 블록 복원 및 제거**:
-   - CodeWiki `#study` 학습 노트 에디터에서 내보낸 `.md` 파일에는 ```` ```codewiki-rich-v1 ... ``` ```` JSON 블록과 마크다운 이스케이프(`1\.`, `\-`, `\_`, `\~`)가 포함될 수 있다.
-   - JSON 블록 내부의 문단·인용문·목록 텍스트와 빈칸으로 남겨 둔 순서 번호(`orderedList`의 빈 `listItem` 등)를 빠짐없이 해석한다.
-   - 최종 생성된 `window.WIKI_DOCS` 데이터에는 `codewiki-rich-v1` 원문이나 불필요한 백슬래시 이스케이프가 절대 남지 않아야 한다.
+2. **`codewiki-rich-v1` · `codewiki-table-v1` 블록 복원 및 제거**:
+   - CodeWiki `#study` 학습 노트 에디터에서 내보낸 `.md` 파일에는 ```` ```codewiki-rich-v1 ... ``` ```` · ```` ```codewiki-table-v1 ... ``` ```` JSON 블록과 마크다운 이스케이프(`1\.`, `\-`, `\_`, `\~`)가 포함될 수 있다.
+   - JSON 블록 내부의 문단·인용문·목록·복합 표 텍스트와 빈칸으로 남겨 둔 순서 번호(`orderedList`의 빈 `listItem` 등)를 빠짐없이 해석한다.
+   - 최종 생성된 `window.WIKI_DOCS` 데이터에는 `codewiki-rich-v1`·`codewiki-table-v1` 원문이나 불필요한 백슬래시 이스케이프가 절대 남지 않아야 한다.
 3. **빈칸 · 약칭 보완**:
    - 수업 중 필기 속도로 인해 번호만 적혀 비어 있는 항목(예: `SE11`의 4가지 View 중 2·3번 누락)이나 명백한 철자 오타는 SAP 공식 문서 기준(실습 시스템 Standard ABAP `7.5` / `7.52`)으로 정확히 보완하고, 보완한 항목임을 본문에 짧게 밝힌다.
 
@@ -61,7 +61,7 @@ description: >-
    - 날짜 목록(`day`), 총 날짜 링크 개수(`href=`), 주차 순서 단언을 새 날짜에 맞게 갱신한다.
    - 새 날짜가 새로운 주차(`2026-11-09` 월요일 1주차 기준)의 첫 수업일이면 `nav-week-divider` 개수도 함께 갱신한다.
 2. **`tests/learning-tools.cjs`**:
-   - `daily('<DD>')`의 `sourceFile`, `title`, 핵심 섹션 존재 여부, 각 주제 문서의 `lessonDates` 배열, 신규 키워드 검색 결과, `!JSON.stringify(daily('<DD>')).includes('codewiki-rich-v1')` 단언을 추가한다.
+   - `daily('<DD>')`의 `sourceFile`, `title`, 핵심 섹션 존재 여부, 각 주제 문서의 `lessonDates` 배열, 신규 키워드 검색 결과, `!JSON.stringify(daily('<DD>')).includes('codewiki-rich-v1')` 및 `!JSON.stringify(daily('<DD>')).includes('codewiki-table-v1')` 단언을 추가한다.
 3. **정적 에셋 동기화 및 통합 검사 실행**:
    - `node scripts/update-assets.cjs`
    - `node scripts/check.cjs`

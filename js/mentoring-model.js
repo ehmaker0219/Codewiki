@@ -10,6 +10,15 @@
   function fail(message){throw new Error(message);}
   function text(value,max=100000){if(typeof value!=='string'||value.length>max)fail('invalid');return value;}
   function date(value){if(typeof value!=='string'||!/^\d{4}-\d{2}-\d{2}$/.test(value)||!Number.isFinite(Date.parse(value+'T00:00:00Z'))||new Date(value+'T00:00:00Z').toISOString().slice(0,10)!==value)fail('invalid');return value;}
+  const startTimes=Object.freeze(Array.from({length:48},(_,i)=>`${String(Math.floor(i/2)).padStart(2,'0')}:${i%2?'30':'00'}`));
+  const endTimes=Object.freeze([...startTimes.slice(1),'24:00']);
+  function timeRange(startValue,endValue){
+    const start=startValue==null?'':startValue,end=endValue==null?'':endValue;
+    if(typeof start!=='string'||typeof end!=='string')fail('time');
+    if(!start&&!end)return {startTime:'',endTime:''};
+    if(!startTimes.includes(start)||!endTimes.includes(end)||start>=end)fail('time');
+    return {startTime:start,endTime:end};
+  }
   function revision(old,expected){if((old?.revision||0)!==expected)fail('conflict');}
   function files(items){
     if(!Array.isArray(items)||items.length>10)fail('files');
@@ -27,15 +36,16 @@
     const mentor=()=>{if(actor.role!=='mentor')fail('forbidden');};
     if(type==='create'){
       mentor();if(!/^[\w-]{1,80}$/.test(id)||activity)fail('invalid');
-      next.activities.unshift({id,title:'새 멘토링 활동',date:date(command.date),goals:'',task:'',result:'',code:'',attachments:[],summary:'',nextPlan:'',status:'active',revision:1,createdAt:now,updatedAt:now});
+      next.activities.unshift({id,title:'새 멘토링 활동',date:date(command.date),startTime:'',endTime:'',goals:'',task:'',result:'',code:'',attachments:[],summary:'',nextPlan:'',status:'active',revision:1,createdAt:now,updatedAt:now});
       return next;
     }
     if(!activity)fail('missing');
     if(type==='activity'){
       mentor();revision(activity,command.revision);
       const v=command.value;if(!Object.hasOwn(states,v.status))fail('invalid');date(v.date);
+      const times=timeRange(v.startTime,v.endTime);
       const title=text(v.title,120).trim();if(!title)fail('title');
-      Object.assign(activity,{title,date:v.date,status:v.status,goals:text(v.goals),task:text(v.task),result:text(v.result||''),code:text(v.code||''),attachments:files(v.attachments||[]),summary:text(v.summary),nextPlan:text(v.nextPlan),revision:activity.revision+1,updatedAt:now});
+      Object.assign(activity,{title,date:v.date,startTime:times.startTime,endTime:times.endTime,status:v.status,goals:text(v.goals),task:text(v.task),result:text(v.result||''),code:text(v.code||''),attachments:files(v.attachments||[]),summary:text(v.summary),nextPlan:text(v.nextPlan),revision:activity.revision+1,updatedAt:now});
     }else if(type==='delete'){
       mentor();revision(activity,command.revision);next.activities=next.activities.filter(a=>a.id!==id);
       for(const collection of [next.drafts,next.submissions,next.feedback])for(const k of Object.keys(collection))if(collection[k].activity===id)delete collection[k];
@@ -49,5 +59,5 @@
     next.drafts=Object.fromEntries(Object.entries(next.drafts).filter(([,d])=>d.owner===actorId));
     return next;
   }
-  window.CodeWikiMentoringModel={members,states,member,key,empty,apply,view};
+  window.CodeWikiMentoringModel={members,states,startTimes,endTimes,member,key,empty,apply,view};
 })();

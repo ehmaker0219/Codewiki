@@ -5,16 +5,17 @@
   const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const dateKey = date => `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`;
   const localDate = key => new Date(key+'T12:00:00');
-  const today = () => dateKey(new Date());
+  const today = () => new Intl.DateTimeFormat('sv-SE', { timeZone: 'Asia/Seoul' }).format(new Date());
   const weekdays = ['일','월','화','수','목','금','토'];
-  const months = [];
-  for (let date=localDate(data.start.slice(0,7)+'-01');dateKey(date).slice(0,7)<=data.end.slice(0,7);date.setMonth(date.getMonth()+1)) months.push(dateKey(date).slice(0,7));
+  const baseMonths = [];
+  for (let date=localDate(data.start.slice(0,7)+'-01');dateKey(date).slice(0,7)<=data.end.slice(0,7);date.setMonth(date.getMonth()+1)) baseMonths.push(dateKey(date).slice(0,7));
   const byDate = new Map(data.entries.map(entry=>[entry.date,entry]));
-  let month = months.includes(today().slice(0,7)) ? today().slice(0,7) : today()<data.start ? months[0] : months[months.length-1];
+  let month = baseMonths.includes(today().slice(0,7)) ? today().slice(0,7) : today()<data.start ? baseMonths[0] : baseMonths[baseMonths.length-1];
   let selected = today().startsWith(month) ? today() : month+'-01';
   let filter='all', view='calendar';
   let overviewOpen=true;
   let selectedBirthday='';
+  let birthdayDayPicked=false;
   let container;
   const birthdayKey = person => JSON.stringify([person.full_name,person.month,person.day]);
   const birthdayMembers = () => window.CodeWikiBirthdays?.getMembers?.()||[];
@@ -25,22 +26,23 @@
   const phaseFor = entry => data.phases.find(phase=>phase.id===entry?.phaseId);
   const fullDate = key => `${key.replaceAll('-','.')} (${weekdays[localDate(key).getDay()]})`;
   const monthTitle = key => `${key.slice(0,4)}년 ${Number(key.slice(5))}월`;
+  function viewMonths() {
+    const start=month<baseMonths[0]?month:baseMonths[0];
+    const end=month>baseMonths[baseMonths.length-1]?month:baseMonths[baseMonths.length-1];
+    const list=[];
+    for(let date=localDate(start+'-01');dateKey(date).slice(0,7)<=end;date.setMonth(date.getMonth()+1)) list.push(dateKey(date).slice(0,7));
+    return list;
+  }
   function birthdayDate(person) {
     const suffix=`${String(person.month).padStart(2,'0')}-${String(person.day).padStart(2,'0')}`;
     const valid=key=>dateKey(localDate(key))===key;
-    const candidates=months.filter(m=>Number(m.slice(5))===person.month).map(m=>`${m}-${String(person.day).padStart(2,'0')}`).filter(valid);
+    const candidates=baseMonths.filter(m=>Number(m.slice(5))===person.month).map(m=>`${m}-${String(person.day).padStart(2,'0')}`).filter(valid);
     const inRange=candidates.find(key=>key.slice(0,4)===month.slice(0,4))||candidates[0];
     if(inRange) return inRange;
     // Birthdays outside the course months remain reachable; leap days use the next leap year.
     let year=Number(month.slice(0,4));
     while(!valid(`${year}-${suffix}`)) year++;
     return `${year}-${suffix}`;
-  }
-  function includeMonth(target) {
-    const start=target<months[0]?target:months[0];
-    const end=target>months[months.length-1]?target:months[months.length-1];
-    months.length=0;
-    for(let date=localDate(start+'-01');dateKey(date).slice(0,7)<=end;date.setMonth(date.getMonth()+1)) months.push(dateKey(date).slice(0,7));
   }
   function monthCells(key) {
     const first=localDate(key+'-01');
@@ -79,24 +81,33 @@
   function birthdayDirectory() {
     const people=birthdayMembers();
     const person=people.find(p=>birthdayKey(p)===selectedBirthday);
+    const dayMatches=birthdayDayPicked?birthdaysFor(selected):[];
     const status=window.CodeWikiBirthdays?.getStatus();
     const classes=window.CodeWikiBirthdays?.getClasses?.()||[],className=window.CodeWikiBirthdays?.getClassName?.()||'';
+    const detailHtml=dayMatches.length>1
+      ? `<strong>${fullDate(selected)}</strong>${dayMatches.map(b=>`<p>🎂 ${esc(b.full_name)} · ${b.month}월 ${b.day}일</p>`).join('')}`
+      : person
+        ? `<strong>${esc(person.full_name)}</strong><p>🎂 ${person.month}월 ${person.day}일</p>`
+        : birthdayDayPicked
+          ? `<strong>${fullDate(selected)}</strong><p>이 날짜에 공개된 생일이 없습니다.</p>`
+          : people.length?'<p>이름을 선택하면 생일이 표시됩니다.</p>':'';
     return `<section class="schedule-detail birthday-directory" aria-labelledby="birthdayDirectoryTitle">
       <p class="schedule-eyebrow">가나다순 · ${people.length}명</p><h2 id="birthdayDirectoryTitle">우리 반 생일</h2>
       ${classes.length?`<label class="birthday-class-label">반 선택<select id="birthdayClass">${classes.map(name=>`<option value="${esc(name)}" ${name===className?'selected':''}>${esc(name)}</option>`).join('')}</select></label>`:''}
       ${people.length?`<div class="birthday-member-list" role="group" aria-label="반 회원 이름">${people.map((p,i)=>`<button type="button" data-birthday-member="${i}" aria-pressed="${birthdayKey(p)===selectedBirthday}" aria-controls="birthdayMemberDetail">${esc(p.full_name)}</button>`).join('')}</div>`:
         `<p class="birthday-directory-empty">${status==='loading'?'이름을 불러오는 중…':status==='error'?'이름을 불러오지 못했습니다. 아래의 다시 시도를 눌러 주세요.':'공개된 생일이 아직 없습니다.'}</p>`}
-      <div id="birthdayMemberDetail" class="birthday-member-detail" aria-live="polite">${person?`<strong>${esc(person.full_name)}</strong><p>🎂 ${person.month}월 ${person.day}일</p>`:people.length?'<p>이름을 선택하면 생일이 표시됩니다.</p>':''}</div>
+      <div id="birthdayMemberDetail" class="birthday-member-detail" aria-live="polite">${detailHtml}</div>
     </section>`;
   }
   function render() {
+    const months=viewMonths();
     const entries=monthEntries(), index=months.indexOf(month);
     const birthdayStatus=window.CodeWikiBirthdays?.getStatus();
     const birthdayMessage=birthdayStatus==='error'?'반 생일을 불러오지 못했습니다. <button type="button" id="retryBirthdays" class="toss-chip-btn">다시 시도</button>':birthdayStatus==='loading'?'반 생일을 불러오는 중…':'';
     const listDates=monthCells(month).filter(key=>key && (matches(byDate.get(key)) || birthdaysFor(key).length));
     const active=entries.filter(e=>e.kind!=='holiday').length, off=entries.filter(e=>e.kind==='holiday').length;
     container.innerHTML=`<header class="schedule-header"><div><p class="schedule-eyebrow">SAP CODE 아카데미 2기</p><h1 class="article-main-title">교육 일정</h1><p>${data.start.replaceAll('-','.')} – ${data.end.replaceAll('-','.')} <span>월–금 ${data.hours}</span></p></div><div class="schedule-header-actions"><span class="schedule-revision">${data.revision.replaceAll('-','.')} 기준</span><div class="schedule-header-tools"><button type="button" id="scheduleBirthdays" aria-pressed="${filter==='birthday'}" aria-controls="scheduleDetailPanel">${cakeIcon}<span>우리 반 생일</span></button><div class="schedule-view-controls" role="group" aria-label="일정 보기 방식"><button type="button" data-schedule-view="calendar" aria-pressed="${view==='calendar'}">달력</button><button type="button" data-schedule-view="list" aria-pressed="${view==='list'}">목록</button></div></div></div></header>
-      <div class="schedule-controls"><button type="button" id="scheduleToday" ${!months.includes(today().slice(0,7))?'disabled title="오늘은 교육기간 밖입니다."':''}>오늘</button><div class="schedule-month-controls"><button type="button" data-month-step="-1" aria-label="이전 달" ${index===0?'disabled':''}>‹</button><label class="visually-hidden" for="scheduleMonth">월 선택</label><select id="scheduleMonth">${months.map(m=>`<option value="${m}" ${m===month?'selected':''}>${monthTitle(m)}</option>`).join('')}</select><button type="button" data-month-step="1" aria-label="다음 달" ${index===months.length-1?'disabled':''}>›</button></div>
+      <div class="schedule-controls"><button type="button" id="scheduleToday" ${!baseMonths.includes(today().slice(0,7))?'disabled title="오늘은 교육기간 밖입니다."':''}>오늘</button><div class="schedule-month-controls"><button type="button" data-month-step="-1" aria-label="이전 달" ${index===0?'disabled':''}>‹</button><label class="visually-hidden" for="scheduleMonth">월 선택</label><select id="scheduleMonth">${months.map(m=>`<option value="${m}" ${m===month?'selected':''}>${monthTitle(m)}</option>`).join('')}</select><button type="button" data-month-step="1" aria-label="다음 달" ${index===months.length-1?'disabled':''}>›</button></div>
       <div class="schedule-view-controls"><label class="visually-hidden" for="scheduleFilter">일정 분류</label><select id="scheduleFilter"><option value="all">전체 일정</option>${Object.entries(labels).map(([key,label])=>`<option value="${key}" ${filter===key?'selected':''}>${label}</option>`).join('')}<option value="birthday" ${filter==='birthday'?'selected':''}>우리 반 생일</option></select></div></div>
       <div class="schedule-month-meta"><p id="scheduleMonthSummary" aria-live="polite">${monthTitle(month)} · 교육 ${active}일 · 휴강 ${off}일${filter!=='all'?' · '+(filter==='birthday'?'우리 반 생일':labels[filter]):''}</p><div class="schedule-legend" aria-label="일정 색상 범례">${Object.entries(labels).map(([key,label])=>`<span><i class="kind-${key}" aria-hidden="true"></i>${label}</span>`).join('')}</div></div>
       <div class="schedule-layout"><div class="schedule-main">
@@ -108,10 +119,11 @@
       ${birthdayMessage?`<p class="schedule-birthday-status">${birthdayMessage}</p>`:''}
       <footer class="schedule-footer"><p>${esc(data.note)}</p></footer>`;
     container.querySelector('.schedule-overview').addEventListener('toggle',e=>{if(e.target.isConnected)overviewOpen=e.target.open;});
-    container.querySelector('#retryBirthdays')?.addEventListener('click',()=>window.CodeWikiBirthdays?.refresh());
-    container.querySelector('#birthdayClass')?.addEventListener('change',e=>{selectedBirthday='';window.CodeWikiBirthdays?.setClass(e.target.value);container.querySelector('#birthdayClass')?.focus();});
+    container.querySelector('#retryBirthdays')?.addEventListener('click',()=>window.CodeWikiBirthdays?.refresh({ force: true }));
+    container.querySelector('#birthdayClass')?.addEventListener('change',e=>{selectedBirthday='';birthdayDayPicked=false;window.CodeWikiBirthdays?.setClass(e.target.value);container.querySelector('#birthdayClass')?.focus();});
     container.querySelector('#scheduleBirthdays').addEventListener('click',()=>{
       filter=filter==='birthday'?'all':'birthday';
+      birthdayDayPicked=false;
       selected=(filter==='birthday'?monthCells(month).find(key=>key&&birthdaysFor(key).length):monthEntries()[0]?.date)||month+'-01';
       render();container.querySelector('#scheduleBirthdays').focus();
       if(filter==='birthday'&&window.matchMedia?.('(max-width:1150px)').matches)container.querySelector('#scheduleDetailPanel')?.scrollIntoView?.({behavior:'smooth',block:'start'});
@@ -120,21 +132,36 @@
       const person=birthdayMembers()[Number(b.dataset.birthdayMember)];
       if(!person) return;
       selectedBirthday=birthdayKey(person);
-      selected=birthdayDate(person);month=selected.slice(0,7);includeMonth(month);view='calendar';render();
+      birthdayDayPicked=false;
+      selected=birthdayDate(person);month=selected.slice(0,7);view='calendar';render();
       const day=container.querySelector(`[data-calendar-day="${selected}"]`);
       day?.focus();day?.scrollIntoView?.({block:'nearest',inline:'nearest'});
     }));
     container.querySelectorAll('[data-month-step]').forEach(b=>b.addEventListener('click',()=>changeMonth(months[index+Number(b.dataset.monthStep)])));
     container.querySelector('#scheduleMonth').addEventListener('change',e=>changeMonth(e.target.value));
-    container.querySelector('#scheduleFilter').addEventListener('change',e=>{filter=e.target.value;selected=(filter==='birthday'?monthCells(month).find(key=>key&&birthdaysFor(key).length):monthEntries()[0]?.date)||month+'-01';render();container.querySelector('#scheduleFilter').focus();});
-    container.querySelector('#scheduleToday').addEventListener('click',()=>{month=today().slice(0,7);selected=today();filter='all';render();container.querySelector('#scheduleToday').focus();});
+    container.querySelector('#scheduleFilter').addEventListener('change',e=>{filter=e.target.value;birthdayDayPicked=false;selected=(filter==='birthday'?monthCells(month).find(key=>key&&birthdaysFor(key).length):monthEntries()[0]?.date)||month+'-01';render();container.querySelector('#scheduleFilter').focus();});
+    container.querySelector('#scheduleToday').addEventListener('click',()=>{month=today().slice(0,7);selected=today();filter='all';birthdayDayPicked=false;render();container.querySelector('#scheduleToday').focus();});
     container.querySelectorAll('[data-schedule-view]').forEach(b=>b.addEventListener('click',()=>{view=b.dataset.scheduleView;render();container.querySelector(`[data-schedule-view="${view}"]`).focus();}));
-    container.querySelectorAll('[data-calendar-day]').forEach(b=>b.addEventListener('click',()=>{selected=b.dataset.calendarDay;render();container.querySelector(`[data-calendar-day="${selected}"]`)?.focus();}));
-    container.querySelectorAll('[data-schedule-jump]').forEach(b=>b.addEventListener('click',()=>{month=b.dataset.scheduleJump.slice(0,7);selected=b.dataset.scheduleJump;filter='all';render();container.querySelector(`[data-calendar-day="${selected}"]`)?.focus();container.scrollIntoView({behavior:'smooth',block:'start'});}));
+    container.querySelectorAll('[data-calendar-day]').forEach(b=>b.addEventListener('click',()=>{
+      selected=b.dataset.calendarDay;
+      if(filter==='birthday'){
+        const onDay=birthdaysFor(selected);
+        birthdayDayPicked=true;
+        selectedBirthday=onDay[0]?birthdayKey(onDay[0]):'';
+      }
+      render();container.querySelector(`[data-calendar-day="${selected}"]`)?.focus();
+    }));
+    container.querySelectorAll('[data-schedule-jump]').forEach(b=>b.addEventListener('click',()=>{month=b.dataset.scheduleJump.slice(0,7);selected=b.dataset.scheduleJump;filter='all';birthdayDayPicked=false;render();container.querySelector(`[data-calendar-day="${selected}"]`)?.focus();container.scrollIntoView({behavior:'smooth',block:'start'});}));
     container.querySelectorAll('[data-schedule-doc]').forEach(a=>a.addEventListener('click',e=>{e.preventDefault();window.CodeWikiApp.openDoc(a.dataset.scheduleDoc);}));
   }
-  function changeMonth(next) { if(!months.includes(next))return;month=next;selected=monthEntries()[0]?.date||month+'-01';render();container.querySelector('#scheduleMonth').focus(); }
+  function changeMonth(next) {
+    if(!next || (!viewMonths().includes(next) && !baseMonths.includes(next))) return;
+    month=next;
+    birthdayDayPicked=false;
+    selected=(filter==='birthday'?monthCells(month).find(key=>key&&birthdaysFor(key).length):monthEntries()[0]?.date)||month+'-01';
+    render();container.querySelector('#scheduleMonth').focus();
+  }
   window.addEventListener('cw-birthdays-change',()=>{if(container?.querySelector('#scheduleMonth'))render();});
-  window.CodeWikiSchedule={render(target){container=target;render();},monthCells,months};
+  window.CodeWikiSchedule={render(target){container=target;render();},monthCells,months:baseMonths};
   window.WIKI_DOCS['education-schedule']={id:'education-schedule',track:'abap',title:'교육 일정',subtitle:data.period,summary:'수업·평가·프로젝트·휴강을 월별로 확인합니다.',aliases:['교육 일정','캘린더'],isCalendar:true,sections:[],tcodes:[],specs:{}};
 })();

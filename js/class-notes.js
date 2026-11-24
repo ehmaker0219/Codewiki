@@ -1,4 +1,4 @@
-/** 2026-11-11 ~ 23 수업 필기를 주제별로 정리한 문서. */
+/** 2026-11-11 ~ 24 수업 필기를 주제별로 정리한 문서. */
 (function () {
   const docs = window.WIKI_DOCS;
   const text = (...paragraphs) => ({ type: 'text', paragraphs });
@@ -278,7 +278,7 @@ TYPES tt_flights TYPE TABLE OF bc400_s_flight
       ]),
       text('**3. 변수를 기준으로 선언 · 2가지**', '위에서 만든 변수를 기준으로 할 때는 **LIKE**를 사용합니다. Internal table → Work area는 **LIKE LINE OF**, Work area → Internal table은 **LIKE TABLE OF**입니다.'),
       table(['기준이 되는 변수', '선언 코드', '결과'], [
-        ['<span data-no-autolink>Internal table<br><code>gt_flights</code></span>', '<code>DATA gs_itab5 like <mark class="declaration-modifier">LINE OF</mark> gt_flights.</code>', '`gs_itab5`<br>Work area'],
+        ['<span data-no-autolink>Internal table<br><code>gt_flights</code></span>', '<code>DATA gs_itab5 LIKE <mark class="declaration-modifier">LINE OF</mark> gt_flights.</code>', '`gs_itab5`<br>Work area'],
         ['<span data-no-autolink>Work area<br><code>gs_itab1</code></span>', '<code>DATA lt_flights4 LIKE <mark class="declaration-modifier">TABLE OF</mark> gs_itab1.</code>', '`lt_flights4`<br>Internal table']
       ]),
       text('위 선언들은 타입을 참조해 새 변수를 만듭니다. **기존 변수의 값이나 테이블의 행을 복사하는 문장이 아닙니다.** Internal table은 비어 있고 Work area는 초기값으로 만들어집니다.'),
@@ -656,14 +656,14 @@ ENDIF.`), text('SELECT 열에 키를 빼면 원래 서로 다른 행이 같은 �
       ]))
   ], '11/19 · 11/20');
 
-  put('abap-dictionary', 'ABAP Dictionary', 'SE11에서 관리하는 Type Definitions·DB Objects·Services와 Domain, Data Element, Structure, Table Type, View를 정리합니다.',
-    ['데이터 사전', 'DDIC', 'DATA ELEMENT', '데이터 요소', 'Domain', '도메인', '데이터베이스 테이블', 'Transparent Table', 'Technical Attribute', 'Semantic Attribute', 'Search Help', 'SET/GET Parameters', 'Flat structure', 'Simple structure', 'Nested structure', 'Deep structure', 'Table Type', 'Line Type', 'Database view', 'Projection view', 'Help view', 'Maintenance view'], [
+  put('abap-dictionary', 'ABAP Dictionary', 'SE11에서 관리하는 Type Definitions·DB Objects·Services와 Domain, Data Element, Structure, Table Type, View, Transparent Table, Index, Table Buffer, Input Checks(Fixed Values · Foreign Keys)를 정리합니다.',
+    ['데이터 사전', 'DDIC', 'DATA ELEMENT', '데이터 요소', 'Domain', '도메인', '데이터베이스 테이블', 'Transparent Table', 'Technical Attribute', 'Semantic Attribute', 'Search Help', 'SET/GET Parameters', 'Flat structure', 'Simple structure', 'Nested structure', 'Deep structure', 'Table Type', 'Line Type', 'Database view', 'Projection view', 'Help view', 'Maintenance view', 'Delivery Class', 'Technical Settings', 'Secondary Index', 'Table Buffer', 'Full Buffering', 'Generic Buffering', 'Single-Record Buffering', 'Synchronization Table', 'Input Checks', 'Fixed Values', 'Value Table', 'Check Table', 'Foreign Key', 'Cardinality', 'BYPASSING BUFFER'], [
     section('ABAP Dictionary의 역할과 3가지 기능', text(
       'ABAP Dictionary(SE11)는 시스템 전체의 Program과 화면이 공유하는 전역 타입, 데이터베이스 객체, 입력 도움말 서비스를 중앙에서 정의·관리하는 저장소입니다. 현재 수업 실습 시스템은 ABAP 7.5 기준입니다.'),
       table(['기능 구분', '포함 객체 · 역할'], [
         ['1. Type Definitions', 'Data Element(기본 타입), Structure(구조 타입), Table Type(내부 테이블 타입) 등 전역 타입 정의'],
         ['2. DB Objects', 'Transparent Table, View 등 실제 데이터베이스 객체 정의'],
-        ['3. Services', 'Search Help(F4 입력 도움말), Lock Object 등 화면·프로그램 지원 서비스']
+        ['3. Services', 'Search Help(F4 입력 도움말), Lock Object 등 화면·Program 지원 서비스']
       ])),
     section('View 4가지', text(
       'SE11에서 View를 생성할 때는 목적에 따라 네 가지 유형 중 하나를 선택합니다. 필기에서 비어 있던 2·3번 항목(Projection view, Help view)은 SE11의 표준 4가지 View 기준으로 보완했습니다.'),
@@ -864,8 +864,161 @@ START-OF-SELECTION.
 
   WRITE: / gs_carrier-carrid, gs_carrier-carrname,
          / '보유 노선 수:', lines( gs_carrier-routes ).`),
-      text('위 예제의 tt_routes처럼 내부 테이블 타입을 SE11에 전역 Table Type(예: BC400_T_FLIGHTS)으로 만들어 두면 여러 Program과 글로벌 Structure(Deep structure 컴포넌트)·함수/메서드 인터페이스에서 그대로 재사용할 수 있습니다.'))
-  ], '11/23', [
+      text('위 예제의 tt_routes처럼 내부 테이블 타입을 SE11에 전역 Table Type(예: BC400_T_FLIGHTS)으로 만들어 두면 여러 Program과 글로벌 Structure(Deep structure 컴포넌트)·함수/메서드 인터페이스에서 그대로 재사용할 수 있습니다.')),
+    section('Transparent Table 생성과 Technical Settings', text(
+      'SE11에서 Database Table(Transparent Table)을 생성할 때는 Delivery Class와 Data Browser(SE16) 유지보수 설정, Key·일반 Fields, Currency/Quantity 참조, Technical Settings를 순서대로 지정한 뒤 Activate합니다.'),
+      {
+        type: 'practice',
+        title: 'SE11에서 Transparent Table 생성 및 데이터 입력 절차',
+        steps: [
+          { step: '1', action: 'SE11 실행 후 Database Table 선택', detail: 'Database Table 라디오 버튼을 선택하고 테이블 이름(예: ZCARRIER_##)을 입력한 뒤 Create를 누릅니다.' },
+          { step: '2', action: 'Delivery Class 및 Data Browser(SE16) 설정', detail: 'Delivery and Maintenance 탭에서 테이블 용도(Delivery Class: A, C, L, G, E, S, W)와 SE16에서 조회/수정(Display/Maintenance) 허용 여부를 설정합니다.' },
+          { step: '3', action: 'Fields 탭 작성', detail: '클라이언트 종속 테이블이면 첫 필드에 MANDT(또는 Client)를 두고, 이어서 carrid·connid 등 필요한 필드를 작성합니다. Key 필드는 반드시 맨 위부터 빈틈(갭) 없이 연속 나열해야 합니다. Initial Values를 체크하면 NULL을 허용하지 않고 타입별 초기값으로 저장됩니다.' },
+          { step: '4', action: 'Currency/Quantity Fields 연결', detail: '금액(CURR)이나 수량(QUAN) 필드가 있으면 반드시 대응하는 단위 필드(CUKY, UNIT)를 지정해야 합니다. Currency/Quantity Fields 탭에서 Reference Table(단위 테이블)과 Ref. Field(단위 필드)를 기입합니다.' },
+          { step: '5', action: 'Technical Settings 작성 (4가지)', detail: '상단 Technical Settings 버튼에서 Data Class, Size Category, Logging, Table Buffer를 설정하고 저장합니다.' },
+          { step: '6', action: 'Activate 및 데이터 입력', detail: 'Activate(Ctrl + F3)로 테이블을 활성화한 뒤, 상단 메뉴 Utilities → Table Contents → Create Entries에서 실제 레코드를 입력합니다.' }
+        ]
+      },
+      table(['Delivery Class', '용도와 특징'], [
+        ['A', '마스터 테이블 (Application table: 마스터 데이터 및 트랜잭션 데이터)'],
+        ['C', '고객사용 커스터마이징 테이블 (Customizing table: 고객만 유지보수)'],
+        ['L', '로컬 데이터 (임시 데이터 저장용, 다른 시스템으로 전송되지 않음)'],
+        ['G', 'SAP 업데이트용 커스터마이징 테이블 (SAP 업그레이드 시 고객 데이터 보호, 신규 삽입만 허용)'],
+        ['E', '필드 컨트롤 테이블 (Control table: SAP와 고객이 별도 키 영역을 나누어 사용)'],
+        ['S', '시스템 테이블 — SAP용 (SAP만 유지보수, 고객 변경 시 수정으로 취급)'],
+        ['W', '시스템 테이블 — 자체 전송 객체로 별도 전송 가능한 개발·시스템 구성 테이블 (필기 빈칸 보완)']
+      ]),
+      {
+        type: 'callout', style: 'tip', title: 'KRW(원화) 금액 필드의 100 나눗셈 저장 주의',
+        body: 'SAP 내부에서 `CURR` 필드는 기본적으로 소수점 2자리 형식을 기준으로 저장됩니다. 소수 자릿수가 0인 `KRW` 단위로 금액을 입력하면 **RAW 데이터에는 100으로 나누어진 값**으로 저장됩니다(예: 10,000 KRW → RAW 100.00). ALV나 `WRITE ... CURRENCY`로 디스플레이할 때는 통화 설정(`TCURX`)에 따라 자동 보정되지만, RAW 데이터를 직접 읽거나 계산할 때는 100 나누어진 값임을 반드시 염두에 두어야 합니다.'
+      },
+      table(['Technical Settings 4가지', '의미와 설정 기준'], [
+        ['1. Data Class', 'In what physical area of the database should the table be stored — DB의 어느 물리 영역에서 관리할지 지정(`APPL0`, `APPL1`, `APPL2`, `DDIM`, `USER` 등). 일반적으로 마스터/업무 데이터는 `APPL0` 또는 `USER`를 사용합니다. (참고: `BW`는 Business Warehouse, 최근 Business Intelligence로 불리며 Data Analysis로 대시보드를 구성하는 영역)'],
+        ['2. Size Category', 'How many records will the table probably contain — 예상 데이터 건수 구간. 예: 항공사 코드(`SCARR`) 같은 Master Table은 작게, 예약 테이블(`SBOOK`)은 크게 잡습니다.'],
+        ['3. Logging', 'Log changes to the data records — 데이터 레코드의 수정 이력을 저장할지 여부.'],
+        ['4. Table Buffer', 'Should the table records be buffered? — Application Server 메모리 버퍼 사용 여부. 버퍼 유형은 `Full Buffering`, `Generic Buffering`, `Single-Record Buffering` 3가지가 있습니다(필기 빈 번호 보완).']
+      ])),
+    section('Database Access Using Index — Primary · Secondary Index', text(
+      'SELECT 절로 데이터를 조회할 때 Primary Key 조건으로 검색하면 Primary Key에 자동 등록된 Primary Index를 통해 Binary Search 방식으로 빠르게 찾습니다. 반면 Key가 아닌 필드(Secondary Key / Non-Key 필드) 조건만으로 조회하면 테이블을 처음부터 끝까지 하나씩 검토(Full Table Scan)하게 됩니다.',
+      '자주 검색하는 Non-Key 필드가 있다면 SE11의 Indexes 메뉴에서 Secondary Index를 추가할 수 있습니다. 예를 들어 학생 테이블에서 학번이 Primary Key지만 학생 이름으로 자주 검색한다면 Create Index로 MANDT + 이름 조합의 Secondary Index를 등록합니다. SAP 항공 모델에서도 SCUSTOM(Primary Key: MANDT, ID)을 고객 이름(NAME)으로 자주 조회할 때 MANDT + NAME으로 Secondary Index를 두는 것과 같은 원리입니다.'),
+      {
+        type: 'compare',
+        items: [
+          {
+            tag: '자동 생성',
+            title: 'Primary Index',
+            points: [
+              '테이블의 Primary Key 필드로 자동 생성되는 기본 색인',
+              'WHERE 절에 Primary Key 조건을 주면 Binary Search로 빠르게 탐색',
+              '테이블당 1개 존재하며 별도 생성 불필요'
+            ]
+          },
+          {
+            tag: 'SE11 Indexes에서 생성',
+            title: 'Secondary Index',
+            points: [
+              'Non-Key 필드 조건 조회의 순차 탐색 비용을 줄이기 위해 추가 등록',
+              'Create Index로 MANDT + [자주 조회하는 Secondary 필드] 구성',
+              '인덱스가 너무 많으면 INSERT/UPDATE/DELETE 시 인덱스 갱신 비용이 증가하므로 꼭 필요한 조건에만 생성'
+            ]
+          }
+        ]
+      }),
+    section('Database Access Using the Buffer — Table Buffer와 동기화', text(
+      'SAP에는 DB 접근 횟수를 줄여 조회 속도를 높이기 위한 Table Buffer 개념이 있습니다. Application Server마다 하나의 Table Buffer를 두며, SE11 → Technical Settings에서 활성화와 버퍼링 유형을 설정합니다.'),
+      table(['Table Buffer 3가지 종류', '적재 범위와 특징'], [
+        ['1. Full Buffering', '테이블의 모든 레코드를 한 번에 Application Server 버퍼에 적재합니다. 크기가 작고 전체 조회가 잦은 코드·설정 테이블에 적합합니다.'],
+        ['2. Generic Buffering', '앞쪽 일부 Key 필드를 `Generic Key`로 묶어 해당 키 영역만 버퍼에 적재합니다. `Number of Key Fields`는 `1`부터 `(Key Field 개수 - 1)`까지 지정할 수 있으며, 1번 Key 필드부터 지정한 개수만큼이 `Generic Key`가 됩니다.'],
+        ['3. Single-Record Buffering', 'Key Field 전체를 `Generic Key`로 삼은 것과 같은 개념입니다. `SELECT SINGLE *`처럼 한 건의 데이터만 읽어올 때 그 레코드만 버퍼에 올립니다.']
+      ]),
+      {
+        type: 'flow',
+        caption: 'Application Server 버퍼와 Synchronization Table 동기화 흐름',
+        steps: [
+          { badge: '1. 변경 기록', title: 'DB 변경 → Synch Table 기록', desc: '버퍼는 복사본 개념이라 다른 사용자가 원본 DB를 수정하면 즉시 반영되지 않습니다. 테이블 변경이 일어나면 Synchronization Table에 변경 사실을 기록합니다.' },
+          { badge: '2. 이벤트 확인', title: '접근 시 Synch Table 확인', desc: '변경된 테이블에 접근하는 동기화 이벤트가 발생하면 각 Application Server가 Synchronization Table을 읽어 변경 이력을 확인합니다.' },
+          { badge: '3. 재적재', title: '기존 버퍼 삭제 후 최신 DB 등록', desc: '기존에 복사해 둔 버퍼를 삭제(무효화) 처리하고, 업데이트된 최신 DB 데이터를 다시 버퍼에 적재합니다.' }
+        ]
+      },
+      {
+        type: 'callout', style: 'point', title: '실시간 정합성이 필수인 테이블은 버퍼링 금지',
+        body: '버퍼 동기화에는 시간차가 생기므로, **버퍼 데이터와 원본 DB 데이터가 실시간으로 정확히 일치해야 하는 테이블**(변경이 잦은 예약·전표·재고 테이블 등)에는 Table Buffer를 사용하면 안 됩니다. (참고: `SE11 Technical Settings`에서는 `Buffering` 허용 여부와 3가지 `Buffering Type` 중 접근 패턴에 맞는 방식을 선택해 적용합니다.)'
+      },
+      table(['Buffer 사용 Decision Tree 질문', '예 (YES)', '아니오 (NO)'], [
+        ['Q1. 동기화가 실시간이 아니어도 괜찮고, 주로 읽기 전용인가요?', 'Q2로 이동', '버퍼 사용 안 함 (Not Allowed)'],
+        ['Q2. 테이블 크기가 32 KB보다 작은가요?', 'Full Buffering', 'Q3로 이동'],
+        ['Q3. SELECT SINGLE로 한 건씩 불러오는 경우가 많나요?', 'Single-Record Buffering', 'Q4로 이동'],
+        ['Q4. 테이블 크기가 1 MB보다 큰가요? (약 1,000건 초과)', '레코드 수에 따라 Secondary Index vs Buffering 적용 여부 검토', 'Q5로 이동'],
+        ['Q5. WHERE 절에 주로 앞쪽 Key 필드가 오나요?', 'Generic Buffering', 'Full Buffering']
+      ]),
+      code('Table Buffer 조회와 BYPASSING BUFFER', `REPORT zabap_f##_##.
+
+DATA gs_scarr TYPE scarr.
+
+START-OF-SELECTION.
+  " 1) 일반적인 단일 레코드 조회 (버퍼가 활성화된 테이블이면 Table Buffer 활용)
+  SELECT SINGLE *
+    FROM scarr
+    WHERE carrid = 'LH'
+    INTO @gs_scarr.
+
+  IF sy-subrc = 0.
+    WRITE: / '버퍼/표준 조회:', gs_scarr-carrid, gs_scarr-carrname.
+  ENDIF.
+
+  " 2) 버퍼를 우회해 DB 원본에서 최신 값을 직접 읽어야 할 때
+  SELECT SINGLE *
+    FROM scarr
+    BYPASSING BUFFER
+    WHERE carrid = 'LH'
+    INTO @gs_scarr.
+
+  IF sy-subrc = 0.
+    WRITE: / 'DB 직접 조회 :', gs_scarr-carrid, gs_scarr-carrname.
+  ENDIF.`)),
+    section('Input Checks — Fixed Values와 Foreign Keys', text(
+      'ABAP Dictionary는 잘못된 데이터가 화면이나 테이블에 들어오는 것을 막기 위해 두 가지 대표적인 Input Checks(인풋 검사)를 제공합니다.'),
+      {
+        type: 'compare',
+        items: [
+          {
+            tag: 'Domain · Value Range',
+            title: '1. Creating Fixed Value',
+            points: [
+              'Domain의 Value Range 탭에서 정해진 값(Fixed Values / Intervals)만 입력되도록 제한',
+              '설정한 고정값 목록이 화면의 F4 Help에 자동으로 디스플레이됨',
+              '입력이 들어올 때만 검사하므로 이미 테이블에 들어가 있는 기존 데이터에는 소급 적용되지 않음'
+            ]
+          },
+          {
+            tag: 'Table · Check Table 연결',
+            title: '2. Defining Foreign Keys',
+            points: [
+              '데이터 적합성·일치성 측면에서 타 컬럼/테이블과의 연결성(참조 무결성)을 검사',
+              '예: 항공사 AA에 Counter 8이 없다면 입력 시 Check Table(예: SCOUNTER)에 존재 여부를 확인해 있으면 Confirm, 없으면 Reject',
+              'Domain의 Value Range에 Value Table을 미리 지정해 두면 Foreign Key 생성 시 제안(Proposal)으로 활용 가능'
+            ]
+          }
+        ]
+      },
+      text('**Foreign Key의 Cardinality(관계성)**', 'Check Table의 한 레코드와 Foreign Key Table의 레코드 간 대응 관계를 설정합니다.'),
+      table(['Cardinality', '의미 (Check Table : Foreign Key Table)'], [
+        ['1 : 1', '일대일 대응 (모든 값이 정확히 1건과 대응)'],
+        ['1 : N', '모든 값이 다수 값(1건 이상)을 가짐'],
+        ['1 : C', '일부 값이 일대일 대응됨 (0건 또는 1건)'],
+        ['1 : CN', '일부 값이 다수 값을 가짐 (0건, 1건, 또는 여러 건)']
+      ]),
+      {
+        type: 'practice',
+        title: 'SE11에서 Foreign Key 설정 방법',
+        steps: [
+          { step: '1', action: 'Change Table (Fields 탭) 열기', detail: 'SE11에서 대상 테이블을 Change 모드로 열고 Fields 탭으로 이동합니다.' },
+          { step: '2', action: '컬럼 선택 후 키 아이콘(Foreign Keys) 클릭', detail: '외래키 검사를 연결할 필드에 커서를 두고 상단 툴바의 Foreign Keys(열쇠 아이콘)를 누릅니다.' },
+          { step: '3', action: 'Check Table 입력 후 Create Proposal', detail: 'Check Table 이름을 기입하고 Create Proposal을 눌러 필드 매핑 제안을 생성합니다. (Domain → Value Range에 Value Table을 미리 등록해 두면(예: ZMAJOR_F##) 자동으로 제안됩니다.)' },
+          { step: '4', action: '필드 유형·Cardinality 선택 후 Copy', detail: 'Foreign Key Field Type(Key 필드인지, Key 필드가 아닌 Non-key field / Function field인지)과 Cardinality(1:1, 1:N, 1:C, 1:CN)를 선택한 뒤 Copy하고 Activate합니다.' }
+        ]
+      })
+  ], '11/23 · 11/24', [
     ['`ZABAP_F##_18`', 'ABAP Flat(Simple & Nested) Structure'],
     ['`ZABAP_F##_19`', 'ABAP Deep Structure'],
     ['`ZBC430S_DATA_ELEMENTS`', 'Program SAPBC430S_DATA_ELEMENTS'],
@@ -900,7 +1053,7 @@ START-OF-SELECTION.
   const owners = { 'SAP GUI': 'sap-architecture', '자료형': 'abap-types', 'Include 프로그램': 'abap-program-types', '리포트 프로그램': 'abap-program-types', 'Open SQL': 'abap-open-sql' };
   for (const doc of Object.values(docs)) doc.aliases = (doc.aliases || []).filter(alias => !owners[alias] || owners[alias] === doc.id);
   docs['learning-roadmap'].subtitle = '수업 필기 기반 ABAP 학습 순서';
-  docs['learning-roadmap'].summary = '11월 11~23일 필기를 주제별로 정리했습니다. 본문이 채워진 문서부터 읽고, 이후 과정은 준비된 목차로 확인하세요.';
+  docs['learning-roadmap'].summary = '11월 11~24일 필기를 주제별로 정리했습니다. 본문이 채워진 문서부터 읽고, 이후 과정은 준비된 목차로 확인하세요.';
   docs['learning-roadmap'].sections[0].blocks[0].rows = order.map(id => [docs[id].stepNum, `[[${id}|${docs[id].title}]]`, connections[id] ? '필기 정리 · 예제' : '목차 준비 · 본문 예정']);
   docs['welcome-abap'].topWidgetId = 'knowledge-map-entry';
   docs['welcome-abap'].sections[0].blocks = [text('[[learning-roadmap|전체 학습 목차]]에서 주제별 내용을 확인하세요. 수업 필기에서 다루지 않은 ERP 모듈은 목차로 남겨 두었습니다.'), table(['분야', '문서'], [
@@ -913,6 +1066,7 @@ START-OF-SELECTION.
   docs['abap-thinking-flow'] = {
     id: 'abap-thinking-flow',
     track: 'abap',
+    studentOnly: true,
     stepNum: '',
     categoryId: '학습 가이드',
     hideSectionNumbers: true,
@@ -1220,6 +1374,7 @@ END-OF-SELECTION.
   docs['sap-gui-programs'] = {
     id: 'sap-gui-programs',
     track: 'abap',
+    studentOnly: true,
     stepNum: '',
     categoryId: '학습 가이드',
     hideSectionNumbers: true,

@@ -98,6 +98,27 @@ const read = file => {
     await db.exec(read('tests/login-history.sql'));
     await db.exec(read('tests/encrypted-auth.sql'));
     await db.exec(read('tests/security-review-hardening.sql'));
+    await db.exec(read('migrations/20261124-review-hardening.sql'));
+    await db.exec(read('migrations/20261124-review-hardening.sql'));
+    // Re-running legacy hardening migrations after final migration must keep plaintext RPCs locked.
+    await db.exec(read('migrations/20261119-auth-hardening.sql'));
+    await db.exec(read('migrations/20261119-admin-members.sql'));
+    // Reapply final migration after legacy rerun (matches runbook) and exercise full regression suite on final schema.
+    await db.exec(read('migrations/20261124-review-hardening.sql'));
+    for (const file of [
+      'review-hardening-261124.sql',
+      'signup-login-log.sql',
+      'auth-review-hardening.sql',
+      'login-history.sql',
+      'encrypted-auth.sql',
+      'security-review-hardening.sql',
+      'student-only-study.sql',
+      'profile.sql',
+      'presence.sql',
+      'learning-progress.sql',
+      'admin-delete.sql',
+      'session-retention.sql'
+    ]) await db.exec(read(`tests/${file}`));
     // A new migration file must also be exercised here, not silently skipped.
     const onDisk = fs.readdirSync(path.join(root,'migrations')).filter(file=>file.endsWith('.sql')).sort();
     const missing = onDisk.filter(file=>!appliedMigrations.has(file));

@@ -7,8 +7,8 @@
   const collator=new Intl.Collator('ko',{numeric:true,sensitivity:'base'});
   let sortKey='full_name',sortDirection=1;
   let session=null,active=false,rows=[],rowsLoaded=false,version=0,loading=false,rowsMessage='';
-  let logins=[],loginsLoaded=false,loginsVersion=0,loginsLoading=false,loginsMessage='';
-  let query='',classFilter='',statusFilter='',dialog=null,resetBusy=false;
+  let logins=[],loginsLoaded=false,loginsVersion=0,loginsLoading=false,loginsMessage='',loginsUserId='';
+  let query='',classFilter='',statusFilter='',selectedUserId='',dialog=null,resetBusy=false;
   let online=null;
   const isAdminRoute=()=>window.location.hash==='#admin/students'||window.location.hash==='#admin/logins';
   const currentTab=()=>window.location.hash==='#admin/logins'?'logins':'students';
@@ -24,7 +24,7 @@
   function clear(){
     version++;loginsVersion++;
     rows=[];rowsLoaded=false;loading=false;rowsMessage='';
-    logins=[];loginsLoaded=false;loginsLoading=false;loginsMessage='';
+    logins=[];loginsLoaded=false;loginsLoading=false;loginsMessage='';loginsUserId='';selectedUserId='';
     closeReset();host.innerHTML='';host.hidden=true;active=false;
     shell.classList.remove('members-hidden');
     syncSidebarActive();
@@ -56,6 +56,10 @@
     }finally{clearTimeout(timer);}
   }
   function render(){
+    const activeEl=document.activeElement;
+    const keepSearch=activeEl?.id==='membersSearch'&&host.contains?.(activeEl);
+    const selStart=keepSearch&&typeof activeEl.selectionStart==='number'?activeEl.selectionStart:null;
+    const selEnd=keepSearch&&typeof activeEl.selectionEnd==='number'?activeEl.selectionEnd:null;
     const tab=currentTab();
     const busy=tab==='logins'?loginsLoading:loading;
     const source=tab==='logins'?logins:rows;
@@ -70,21 +74,26 @@
       <p id="membersMessage" role="status"></p><div class="members-table-wrap" id="membersTable"></div>`;
     const msg=host.querySelector('#membersMessage');if(msg)msg.textContent=statusText;
     renderPresence();renderRows();
+    if(keepSearch){
+      const search=host.querySelector('#membersSearch');
+      search?.focus?.({preventScroll:true});
+      if(selStart!==null&&selEnd!==null)try{search?.setSelectionRange?.(selStart,selEnd);}catch{}
+    }
   }
   function renderRows(){
     const q=query.trim().toLocaleLowerCase();
     const matches=u=>(!q||`${u.full_name||''} ${u.username||''}`.toLocaleLowerCase().includes(q))&&(!classFilter||(u.class_name||'기본반')===classFilter)&&(!statusFilter||u.status===statusFilter);
     if(currentTab()==='logins'){
-      const filtered=logins.filter(matches);
+      const filtered=logins.filter(e=>(!selectedUserId||e.user_id===selectedUserId)&&matches(e));
       host.querySelector('#membersCount').textContent=`${filtered.length}건 / 전체 ${logins.length}건`;
       host.querySelector('#membersTable').innerHTML=filtered.length
-        ? `<table class="members-table"><caption>최근 학생 로그인 내역 · 최대 100건 (한국 시간 기준)</caption><thead><tr><th scope="col">로그인 시각</th><th scope="col">번호</th><th scope="col">이름</th><th scope="col">반</th><th scope="col">아이디</th><th scope="col">가입 상태</th></tr></thead><tbody>${filtered.map(e=>`<tr><td class="members-time-cell">${esc(formatDateTime(e.logged_in_at))}</td><td>${esc(e.student_number??'—')}</td><td>${esc(e.full_name)}</td><td>${esc(e.class_name||'기본반')}</td><td>${esc(e.username)}</td><td>${esc(statuses[e.status]||e.status)}</td></tr>`).join('')}</tbody></table>`
+        ? `<table class="members-table"><caption>${selectedUserId?'선택한 학생 로그인 내역 · 최대 100건 (한국 시간 기준)':'최근 학생 로그인 내역 · 최대 100건 (한국 시간 기준)'}</caption><thead><tr><th scope="col">로그인 시각</th><th scope="col">번호</th><th scope="col">이름</th><th scope="col">반</th><th scope="col">아이디</th><th scope="col">가입 상태</th></tr></thead><tbody>${filtered.map(e=>`<tr><td class="members-time-cell">${esc(formatDateTime(e.logged_in_at))}</td><td>${esc(e.student_number??'—')}</td><td>${esc(e.full_name)}</td><td>${esc(e.class_name||'기본반')}</td><td>${esc(e.username)}</td><td>${esc(statuses[e.status]||e.status)}</td></tr>`).join('')}</tbody></table>`
         : loginsLoading||loginsMessage?'':`<p class="members-reset-note">${logins.length?'조건에 맞는 로그인 내역이 없습니다.':'기록된 학생 로그인 내역이 없습니다. 로그인 기록 적용 이후의 로그인이 여기에 표시됩니다.'}</p>`;
       return;
     }
     const filtered=rows.filter(matches).sort(compareRows);
     host.querySelector('#membersCount').textContent=`${filtered.length}명 / 전체 ${rows.length}명`;
-    host.querySelector('#membersTable').innerHTML=filtered.length?`<table class="members-table"><caption>학생 계정 목록 · 생년월일은 관리자 전용</caption><thead><tr>${columns.map(([key,label])=>`<th scope="col" aria-sort="${sortKey===key?(sortDirection===1?'ascending':'descending'):'none'}"><button type="button" class="members-sort" data-members-sort="${key}" aria-label="${label} ${sortKey===key&&sortDirection===1?'내림차순':'오름차순'} 정렬">${label}<span aria-hidden="true">${sortKey===key?(sortDirection===1?'↑':'↓'):'↕'}</span></button></th>`).join('')}<th scope="col">비밀번호</th></tr></thead><tbody>${filtered.map(u=>`<tr><td>${esc(u.student_number??'—')}</td><td>${esc(u.full_name)}</td><td>${esc(u.class_name||'기본반')}</td><td>${esc(u.username)}</td><td>${esc(u.birth_date||'미등록')}</td><td>${esc(u.mbti||'—')}</td><td>${esc(statuses[u.status]||u.status)}</td><td>${u.last_login_at?`<button type="button" class="members-login-link" data-view-logins="${esc(u.username)}" title="로그인 내역 보기">${esc(formatDateTime(u.last_login_at))}${Number(u.login_count)>0?` <small>(${esc(u.login_count)}회)</small>`:''}</button>`:'—'}</td><td>${esc(formatDate(u.created_at))}</td><td><button type="button" class="toss-chip-btn" data-reset-student="${esc(u.id)}">재설정</button></td></tr>`).join('')}</tbody></table>`:loading?'':'<p class="members-reset-note">표시할 학생이 없습니다.</p>';
+    host.querySelector('#membersTable').innerHTML=filtered.length?`<table class="members-table"><caption>학생 계정 목록 · 생년월일은 관리자 전용</caption><thead><tr>${columns.map(([key,label])=>`<th scope="col" aria-sort="${sortKey===key?(sortDirection===1?'ascending':'descending'):'none'}"><button type="button" class="members-sort" data-members-sort="${key}" aria-label="${label} ${sortKey===key&&sortDirection===1?'내림차순':'오름차순'} 정렬">${label}<span aria-hidden="true">${sortKey===key?(sortDirection===1?'↑':'↓'):'↕'}</span></button></th>`).join('')}<th scope="col">비밀번호</th></tr></thead><tbody>${filtered.map(u=>`<tr><td>${esc(u.student_number??'—')}</td><td>${esc(u.full_name)}</td><td>${esc(u.class_name||'기본반')}</td><td>${esc(u.username)}</td><td>${esc(u.birth_date||'미등록')}</td><td>${esc(u.mbti||'—')}</td><td>${esc(statuses[u.status]||u.status)}</td><td>${u.last_login_at?`<button type="button" class="members-login-link" data-view-logins="${esc(u.username)}" data-view-logins-id="${esc(u.id)}" title="로그인 내역 보기">${esc(formatDateTime(u.last_login_at))}${Number(u.login_count)>0?` <small>(${esc(u.login_count)}회)</small>`:''}</button>`:'—'}</td><td>${esc(formatDate(u.created_at))}</td><td><button type="button" class="toss-chip-btn" data-reset-student="${esc(u.id)}">재설정</button></td></tr>`).join('')}</tbody></table>`:loading||rowsMessage?'':'<p class="members-reset-note">표시할 학생이 없습니다.</p>';
   }
   function sortValue(row){
     const value=sortKey==='status'?statuses[row.status]:row[sortKey];
@@ -111,21 +120,32 @@
   }
   function formatDate(value){const d=new Date(value);return value&&!Number.isNaN(d.getTime())?d.toLocaleDateString('ko-KR',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'}):'—';}
   function formatDateTime(value){const d=new Date(value);return value&&!Number.isNaN(d.getTime())?d.toLocaleString('ko-KR',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'}):'—';}
-  async function load(){
-    if(!active||!session||loading)return;
+  async function load(force=false){
+    if(!active||!session||(loading&&!force))return;
     const s=session,v=++version;loading=true;rows=[];rowsLoaded=false;rowsMessage='';closeReset();render();
     try{const result=await call('cw_admin_student_directory',{},s);if(!current(s,v))return;if(!Array.isArray(result))throw Error();rows=result;rowsLoaded=true;loading=false;render();}
     catch(error){if(current(s,v)){loading=false;rowsMessage=error?.code==='PGRST202'?'학생 정보 기능이 아직 서버에 적용되지 않았습니다.':'학생 정보를 불러오지 못했습니다. 새로고침해 주세요.';render();}}
   }
-  async function loadLogins(){
-    if(!active||!session||loginsLoading)return;
-    const s=session,v=++loginsVersion;loginsLoading=true;logins=[];loginsLoaded=false;loginsMessage='';render();
-    try{const result=await call('cw_admin_login_history',{p_limit:100},s);if(!currentLogins(s,v))return;if(!Array.isArray(result))throw Error();logins=result;loginsLoaded=true;loginsLoading=false;render();}
-    catch(error){if(currentLogins(s,v)){loginsLoading=false;loginsMessage=error?.code==='PGRST202'?'로그인 내역 기능이 아직 서버에 적용되지 않았습니다.':'로그인 내역을 불러오지 못했습니다. 새로고침해 주세요.';render();}}
+  async function loadLogins(targetUserId=selectedUserId,force=false){
+    const uid=targetUserId||'';
+    if(!active||!session||(loginsLoading&&!force&&loginsUserId===uid))return;
+    const s=session,v=++loginsVersion;
+    loginsLoading=true;logins=[];loginsLoaded=false;loginsUserId=uid;loginsMessage='';render();
+    try{
+      const args=uid?{p_limit:100,p_user_id:uid}:{p_limit:100};
+      const result=await call('cw_admin_login_history',args,s);
+      if(!currentLogins(s,v))return;if(!Array.isArray(result))throw Error();
+      logins=result;loginsLoaded=true;loginsLoading=false;render();
+    }catch(error){if(currentLogins(s,v)){loginsLoading=false;loginsMessage=error?.code==='PGRST202'?'로그인 내역 기능이 아직 서버에 적용되지 않았습니다.':'로그인 내역을 불러오지 못했습니다. 새로고침해 주세요.';render();}}
   }
-  function switchTab(tab,presetQuery){
+  function switchTab(tab,presetQuery,presetUserId){
     if(!active||!session)return;
-    if(presetQuery!==undefined){query=presetQuery;classFilter='';statusFilter='';}
+    if(presetQuery!==undefined){
+      query=presetQuery;classFilter='';statusFilter='';
+      selectedUserId=presetUserId||rows.find(r=>r.username===presetQuery)?.id||'';
+    } else if(tab==='logins'){
+      if(selectedUserId){selectedUserId='';query='';}
+    }
     const target=tab==='logins'?'#admin/logins':'#admin/students';
     if(window.location.hash!==target)history.replaceState(null,'',target);
     route();
@@ -140,6 +160,7 @@
       window.CodeWikiMentoring?.leave();
       window.CodeWikiObjectGame?.leave();
       window.CodeWikiKnowledgeMap?.leave?.();
+      document.getElementById('quizModeBtn')?.classList.add('hidden');
       document.getElementById('sbHomeItem')?.classList.add('active');
       document.getElementById('sbScheduleItem')?.classList.remove('active');
       document.getElementById('sbThinkingFlowItem')?.classList.remove('active');
@@ -149,7 +170,11 @@
     }
     syncSidebarActive();
     if(currentTab()==='logins'){
-      if(!loginsLoaded&&!loginsLoading)void loadLogins();
+      // Reuse complete global cache (<100 rows) without an extra RPC; fetch exact
+      // per-user history whenever global history was truncated or uncached.
+      const canReuseGlobal=loginsLoaded&&!loginsUserId&&logins.length<100;
+      const canReuseSameUser=loginsLoaded&&loginsUserId===selectedUserId;
+      if((!loginsLoading||loginsUserId!==selectedUserId)&&!canReuseSameUser&&!(selectedUserId&&canReuseGlobal))void loadLogins(selectedUserId);
       else render();
     }else{
       if(!rowsLoaded&&!loading)void load();
@@ -177,21 +202,35 @@
         closeReset();rowsMessage=`${student.full_name}님의 비밀번호를 변경했습니다. 새 비밀번호로 다시 로그인할 수 있습니다.`;
         const msgEl=host.querySelector('#membersMessage');if(msgEl)msgEl.textContent=rowsMessage;
       }catch(error){if(current(s,v)&&dialog.open&&form.isConnected){
-        const messages={CW_ADMIN_REQUIRED:'관리자 로그인이 만료되었습니다. 다시 로그인해 주세요.',CW_ADMIN_PASSWORD:'관리자 비밀번호를 확인해 주세요.',CW_PASSWORD_POLICY:'새 비밀번호가 너무 단순하거나 길이 제한을 벗어납니다.',CW_RATE_LIMIT:'시도 횟수를 초과했습니다. 5분 후 다시 시도해 주세요.',CW_STUDENT_NOT_FOUND:'학생 계정을 찾을 수 없습니다.',PGRST202:'비밀번호 재설정 기능이 아직 서버에 적용되지 않았습니다.'};
+        const messages={CW_ADMIN_REQUIRED:'관리자 로그인이 만료되었습니다. 다시 로그인해 주세요.',CW_ADMIN_PASSWORD:'관리자 비밀번호를 확인해 주세요.',CW_PASSWORD_POLICY:'새 비밀번호가 너무 단순하거나 길이 제한을 벗어납니다.',CW_RATE_LIMIT:'시도 횟수를 초과했습니다. 5분 후 다시 시도해 주세요.',CW_STUDENT_NOT_FOUND:'학생 계정을 찾을 수 없습니다.',CW_ENVELOPE_INVALID:'보안 요청이 만료되었거나 유효하지 않습니다. 다시 시도해 주세요.',CW_REPLAY:'이미 처리된 요청입니다. 결과를 확인한 뒤 다시 시도해 주세요.',CW_AUTH_UNAVAILABLE:'보안 로그인 서버에 연결하지 못했습니다. 잠시 후 다시 시도해 주세요.',PGRST202:'비밀번호 재설정 기능이 아직 서버에 적용되지 않았습니다.'};
         message.textContent=messages[error?.code]||'변경 결과를 확인하지 못했습니다. 새 비밀번호로 로그인되는지 확인해 주세요.';
       }}finally{if(current(s,v)&&form.isConnected){resetBusy=false;form.querySelectorAll('input,button').forEach(el=>el.disabled=false);}}
     });
     dialog.showModal();admin.focus();
   }
   host.addEventListener('click',e=>{
-    if(e.target.closest('[data-members-refresh]')){if(currentTab()==='logins')void loadLogins();else void load();return;}
+    if(e.target.closest('[data-members-refresh]')){if(currentTab()==='logins')void loadLogins(selectedUserId);else void load();return;}
     const tab=e.target.closest('[data-members-tab]');if(tab){switchTab(tab.dataset.membersTab);return;}
-    const viewLogins=e.target.closest('[data-view-logins]');if(viewLogins){switchTab('logins',viewLogins.dataset.viewLogins);return;}
+    const viewLogins=e.target.closest('[data-view-logins]');if(viewLogins){switchTab('logins',viewLogins.dataset.viewLogins,viewLogins.dataset.viewLoginsId);return;}
     const sort=e.target.closest('[data-members-sort]');if(sort){sortBy(sort.dataset.membersSort);return;}
     const b=e.target.closest('[data-reset-student]');if(b)openReset(b.dataset.resetStudent);
   });
-  host.addEventListener('input',e=>{if(e.target.id==='membersSearch'){query=e.target.value;renderRows();}});
+  host.addEventListener('input',e=>{
+    if(e.target.id==='membersSearch'){
+      query=e.target.value;
+      if(selectedUserId){
+        selectedUserId='';
+        if(currentTab()==='logins'&&loginsUserId){void loadLogins('');return;}
+      }
+      renderRows();
+    }
+  });
   host.addEventListener('change',e=>{if(e.target.id==='membersClass')classFilter=e.target.value;else if(e.target.id==='membersStatus')statusFilter=e.target.value;else return;renderRows();});
   window.addEventListener('hashchange',route);
-  window.CodeWikiAdminMembers={setUser,openHome,setPresence(value){online=value;if(active)renderPresence();},leave(){if(active){if(isAdminRoute())history.replaceState(null,'','#doc/'+(window.CodeWikiApp?.getCurrentDocId()||'welcome-abap'));clear();}}};
+  function invalidate(){
+    version++;loginsVersion++;
+    rowsLoaded=false;loading=false;loginsLoaded=false;loginsLoading=false;
+    if(active&&session){if(currentTab()==='logins')void loadLogins(selectedUserId,true);else void load(true);}
+  }
+  window.CodeWikiAdminMembers={setUser,openHome,invalidate,setPresence(value){online=value;if(active)renderPresence();},leave(){if(active){if(isAdminRoute())history.replaceState(null,'','#doc/'+(window.CodeWikiApp?.getCurrentDocId()||'welcome-abap'));clear();}}};
 })();

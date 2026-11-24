@@ -111,6 +111,12 @@
       from('abap-dictionary', 'Structure — 종류(Flat · Deep)와 .INCLUDE'),
       from('abap-dictionary', 'Table Type — SE11 전역 내부 테이블 타입'),
       from('abap-dictionary', '필기와 참고 자료')
+    ]},
+    {date: '2026-11-24', source: '261124 화요일.md', sections: [
+      from('abap-dictionary', 'Transparent Table 생성과 Technical Settings'),
+      from('abap-dictionary', 'Database Access Using Index — Primary · Secondary Index'),
+      from('abap-dictionary', 'Database Access Using the Buffer — Table Buffer와 동기화'),
+      from('abap-dictionary', 'Input Checks — Fixed Values와 Foreign Keys')
     ]}
   ];
   // Dates are rebuilt from explicit source associations, including split topics.

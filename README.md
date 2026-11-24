@@ -18,15 +18,16 @@ node scripts/preview.cjs
 
 ## 로그인·가입 보안 보완
 
-`migrations/20261119-auth-hardening.sql`은 기본 설정·생일·출석부 가입 마이그레이션을 적용한 뒤 적용합니다. 기존 로그인/가입 구현은 외부 호출 권한이 없는 `cw_auth_private` 스키마로 옮기고, 공개 API는 공통 검사를 통과한 후 호출합니다. 과거 가입 API와 남은 오버로드도 우회 경로가 되지 않도록 권한을 제한합니다. 인증 보완 이후 기본 설정 SQL은 재실행을 차단합니다. 로그인·가입 함수를 변경하는 추가 마이그레이션을 적용했다면 인증 보완을 다시 적용하고, 암호화 인증을 사용하는 설치에서는 `migrations/20261120-encrypted-auth.sql`을 반드시 마지막에 적용합니다. 전체 순서는 [보안 업데이트 안내](SECURITY-UPDATE.md)를 따릅니다.
+`migrations/20261119-auth-hardening.sql`은 기본 설정·생일·출석부 가입 마이그레이션을 적용한 뒤 적용합니다. 기존 로그인/가입 구현은 외부 호출 권한이 없는 `cw_auth_private` 스키마로 옮기고, 공개 API는 공통 검사를 통과한 후 호출합니다. 과거 가입 API와 남은 오버로드도 우회 경로가 되지 않도록 권한을 제한합니다. 인증 보완 이후 기본 설정 SQL은 재실행을 차단합니다. 구 마이그레이션을 재실행했다면 **반드시 최신 최종 마이그레이션(`migrations/20261124-review-hardening.sql`)을 마지막에 적용**합니다. 전체 순서는 [보안 업데이트 안내](SECURITY-UPDATE.md)를 따릅니다.
 
 로그인·가입·관리자 비밀번호 재설정은 브라우저에서 JWE(RSA-OAEP-256 + A256GCM)로 암호화해 `secure-auth` Edge Function에 전송합니다. 개인키는 서버 비밀 설정에만 보관하고, 60초 만료·중복 요청 차단·기존 권한 검사를 적용합니다. 기존 평문 인증 RPC는 일반 클라이언트가 호출할 수 없습니다. 이 버전은 프런트엔드와 서버 함수·DB 마이그레이션을 함께 적용해야 하며, 암호화 실패 시 평문으로 우회하지 않습니다. `node scripts/build-auth.cjs`로 브라우저 번들을 재생성합니다. 데모 로그인과 평문 비밀번호 로컬 저장은 제거했습니다.
 
-- 로그인: 계정당 5분에 10회, 전체 5분에 300회. 성공·실패 요청 모두 계산합니다.
-- 가입: 같은 아이디당 15분에 3회, 모든 가입 API 합계 1시간에 60회.
-- 신규 비밀번호: 8자 이상, UTF-8 72바이트 이하. 일부 흔한 비밀번호와 한 글자 반복은 차단합니다. 비밀번호를 자르거나 공백을 제거하지 않습니다. 기존 회원의 비밀번호와 학생 24시간/관리자 12시간 세션은 유지합니다.
-- 실패 시 SQL 예외로 전체 트랜잭션을 취소하지 않고 오류 JSON과 HTTP 400/429를 반환하므로 횟수가 남습니다. 제한 응답에는 `Retry-After`를 포함합니다. 가입 본문은 별도 예외 블록에서 실행해 생일 저장 실패 시 계정도 함께 취소합니다.
-- 요청자가 보낸 IP 헤더는 신뢰하지 않습니다. 전체 상한은 아이디/IP 교체에도 DB의 비밀번호 연산·가입량을 제한하지만, 공격으로 전체 상한이 소진되면 정상 로그인·가입도 잠시 제한될 수 있습니다. 대규모 요청 자체를 DB 앞에서 차단하는 WAF/검증된 요청자별 제한을 대체하지는 않습니다. 로그인된 회원의 조회·메모 저장은 이 상한에 포함되지 않습니다.
+- 로그인: 계정당 5분에 10회, 클라이언트(서버 HMAC-SHA-256 해시 IP / IPv6 `/64`)당 5분에 120회, 전체 5분에 3,000회. 존재하지 않는 아이디도 같은 횟수 제한·고정 cost-10 bcrypt 연산을 거쳐 아이디 존재 여부 추측을 차단합니다.
+- 가입: 같은 아이디당 15분에 3회, 클라이언트당 1시간에 60회, 전체 1시간에 600회. IP 헤더 누락 시 폴백 버킷(`client:missing:*`)으로 제한합니다.
+- 비밀번호 재설정(관리자): 관리자당 5분에 10회, 클라이언트당 5분에 60회. 게이트웨이 전체 상한은 5분에 6,000회입니다.
+- 신규 비밀번호: 8자 이상, UTF-8 72바이트 이하, bcrypt cost 10(기존 cost-6 해시는 로그인 시 자동 상향). 일부 흔한 비밀번호와 한 글자 반복은 차단합니다. 비밀번호를 자르거나 공백을 제거하지 않습니다. 학생 24시간/관리자 12시간 세션은 유지합니다.
+- 실패 시 SQL 예외로 전체 트랜잭션을 취소하지 않고 오류 JSON과 안전 오류 코드(`CW_*`)를 반환하므로 횟수가 남습니다. 가입 본문은 별도 예외 블록에서 실행해 생일 저장 실패 시 계정도 함께 취소합니다.
+- 로그인된 회원의 조회·메모 저장은 인증 요청 상한에 포함되지 않습니다. `cw_auth_private.login_logs`는 최근 180일 기록을 유지하며 반려 계정은 제외합니다.
 
 `cw_auth_private`를 API 노출 스키마에 추가하지 않으며 PostgREST는 기본 COMMIT 방식과 클라이언트의 `Prefer: tx=rollback`을 허용하지 않는 설정을 유지합니다. 2026-11-19 기존 Supabase에 인증 보완 SQL을 적용하고 공개 함수·비공개 스키마 접근 권한을 확인했습니다. 운영 테스트 계정은 만들지 않았으며 기존 회원 데이터는 변경하지 않았습니다.
 
@@ -41,20 +42,26 @@ node scripts/preview.cjs
 - `index.html`: 화면 구조와 스크립트 로딩 순서
 - `css/style.css`, `css/theme.css`: 기본 스타일과 블루 위키 테마
 - `js/data.js`: 기본 문서·단축키·T-Code와 목차
-- `js/class-notes.js`: 11/11~17 필기 기반 문서와 최종 목차 구성
+- `js/class-notes.js`: 수업 필기 기반 주제별 커리큘럼 문서, `ABAP 사고 흐름`, `SAP GUI 프로그램 정리표`와 최종 목차 구성
 - `js/ui5-data.js`: UI5 자료 (화면 접근은 준비 중으로 비활성화)
 - `js/app.js`: 문서 렌더링·검색·링크·역링크
-- `js/lesson-days.js`: 원본 필기 5개에 근거한 수업일별 문서
+- `js/lesson-days.js`: 원본 수업 필기에 근거한 수업일별 문서
+- `js/textbook.js`: BC400 교재 Unit 1–13 목차 및 위키 문서 연결
 - `js/example-notes.js`: 예제 실행 위치·입력·예상 결과와 SAP 실행 확인 상태
 - `js/learning-tools.js`: 본문·코드 검색 및 연결 문서 분류
-- `js/practice.js`, `js/practice-ui.js`: 6개 주제 × 10문제, 회차별 중복 없는 출제와 문제 복사
+- `js/knowledge-map.js`, `js/visualizers.js`: ABAP 개념 지도 및 대문 진입 배너
+- `js/object-game.js`, `js/object-game-bank.js`: DATA 미니게임
+- `js/schedule.js`, `js/schedule-data.js`: 교육 일정 달력·목록
+- `js/practice.js`, `js/practice-ui.js`: 관리자 연습문제 (6개 주제 × 10문제, 회차별 중복 없는 출제와 복사)
 - `js/progress.js`: 계정별 학습 완료 저장·동기화
-- `js/auth.js`: 로그인·가입·세션 상태와 기능별 세션 전달
-- `js/admin.js`: 관리자 승인 목록·반별 필터·상태 변경
-- `js/study.js`, `js/study-store.js`, `editor/study-editor.js`: 회원별 개인 공부방·필기 저장·직접 서식 편집기
-- `js/board.js`: 게시판과 작성·답변 처리
+- `js/auth.js`, `auth/transport.mjs`, `js/secure-auth.js`: JWE 암호화 인증·세션 관리와 기능별 세션 전달
+- `js/admin.js`, `js/admin-members.js`, `js/presence.js`: 관리자 승인 관리·학생 목록/로그인 내역·비밀번호 재설정·접속 현황
+- `js/study.js`, `js/study-store.js`, `js/study-folders.js`, `editor/study-editor.js`: 학생 개인 공부방·폴더·리치 에디터
+- `js/mentoring.js`, `js/mentoring-model.js`, `js/mentoring-store.js`, `js/mentoring-team-store.js`: 멘토 전용 로컬 활동 기록·결과보고서
+- `js/board.js`: 건의 게시판과 작성·답변 처리
 - `js/profile.js`, `js/birthdays.js`: 내 프로필과 같은 반의 공개 생일
-- `supabase-setup.sql`, `SECURITY-UPDATE.md`: DB 구성·보안 업데이트 안내
+- `supabase/functions/secure-auth/`: 암호화 인증 Edge Function
+- `supabase-setup.sql`, `migrations/`, `SECURITY-UPDATE.md`: DB 구성·마이그레이션·보안 업데이트 안내
 
 원본 PPT·PDF·필기는 이 저장소에 포함하지 않았습니다. 위키에 정리한 내용은 포함되어 있습니다. 비밀번호 메모와 `.env` 파일은 커밋하지 마세요.
 
@@ -171,6 +178,6 @@ Tiptap/ProseMirror 편집기는 개인 공부방에 진입할 때만 로드됩�
 
 문서 링크 이벤트는 한 번 등록한 위임 방식으로 처리합니다. 학습 기록 동기화는 목차 전체를 다시 만들지 않고 완료 표시만 갱신합니다. UI를 추가할 때 같은 화면의 재렌더링마다 전역 이벤트나 네트워크 조회를 반복해서 등록하지 않도록 주의하세요.
 
-검증 명령은 외부 패키지 설치 없이 Node.js로 실행하며 운영 DB를 호출하지 않습니다. 개별 테스트는 `node tests/파일명.cjs`로 실행할 수 있습니다. `tests/async-views.cjs`는 지연 응답·중복 조회·저장 실패를, `tests/render-efficiency.cjs`는 불필요한 DOM 변경과 동적 링크 처리를 검증합니다.
+전체 검증(`node scripts/check.cjs`)은 `pnpm install --frozen-lockfile`로 개발 의존성(`esbuild`, `jose`, `@electric-sql/pglite`)을 설치한 뒤 Node.js로 실행하며 운영 DB를 호출하지 않습니다. 개별 순수 JS 테스트는 `node tests/파일명.cjs`로 실행할 수 있습니다. `tests/async-views.cjs`는 지연 응답·중복 조회·저장 실패를, `tests/render-efficiency.cjs`는 불필요한 DOM 변경과 동적 링크 처리를 검증합니다.
 
 사이트 하단의 최근 업데이트는 `node scripts/update-assets.cjs` 실행 시 HTML·JS·CSS 변경이 있을 때 갱신되는 사이트 파일 생성 시각입니다. 한국 시간(KST)으로 표시하며, 새로고침이나 같은 파일의 재검사로 바뀌지 않습니다. 게시글·프로필 등 DB 데이터의 수정 시각과는 별개입니다.

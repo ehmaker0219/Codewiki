@@ -8,7 +8,7 @@
       request.onupgradeneeded=()=>{request.result.createObjectStore('team');request.result.createObjectStore('files');};
       request.onerror=()=>reject(request.error);
       request.onblocked=()=>{rejected=true;reject(Error('storage-blocked'));};
-      request.onsuccess=()=>{const db=request.result;if(rejected){db.close();return;}db.onversionchange=()=>{db.close();opening=null;};resolve(db);};
+      request.onsuccess=()=>{const db=request.result;if(rejected){db.close();return;}db.onversionchange=()=>{db.close();opening=null;};db.onclose=()=>{opening=null;};resolve(db);};
     }).catch(error=>{opening=null;throw error;});
     return opening;
   }
@@ -19,7 +19,7 @@
       if(f.owner)refs.add(fileKey(a.id,f.owner,f.id));
       else for(const m of model.members)refs.add(fileKey(a.id,m.id,f.id));
     }
-    for(const collection of [state.drafts,state.submissions])for(const item of Object.values(collection))for(const f of item.attachments)refs.add(fileKey(item.activity,item.owner,f.id));
+    for(const collection of [state.drafts,state.submissions])for(const item of Object.values(collection))for(const f of item.attachments||[])refs.add(fileKey(item.activity,item.owner,f.id));
     return refs;
   }
   async function transaction(mode,work){

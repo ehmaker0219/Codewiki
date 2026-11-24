@@ -53,7 +53,7 @@
       [315, 'Lesson: Retrieving Multiple Database Records', ['abap-open-sql']],
       [317, 'Exercise 17: Implement a SELECT Loop', ['abap-open-sql']],
       [325, 'Exercise 18: Implement an Array Fetch (Optional Exercise)', ['abap-open-sql']],
-      [331, 'Lesson: Describing Other Aspects of Database Access', ['abap-open-sql']],
+      [331, 'Lesson: Describing Other Aspects of Database Access', ['abap-open-sql', 'abap-dictionary']],
       [342, 'Lesson: Implementing Authorization Checks'],
       [349, 'Exercise 19: Implement an Authorization Check']
     ]],

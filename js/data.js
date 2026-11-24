@@ -15,8 +15,6 @@ window.WIKI_CATEGORIES = [
   { id: "ui5-control", track: "ui5", name: "컨트롤 · API" }
 ];
 
-window.WIKI_TCODES = [];
-
 window.WIKI_DOCS = {
   "abap-useful-syntax": {
     id: "abap-useful-syntax", track: "abap", stepNum: "",
@@ -265,7 +263,6 @@ window.WIKI_DOCS = {
       ] }] }
     ]
   };
-  window.WIKI_TCODES.push(...entries.map(([code, label]) => ({ code, label, track: "abap", docId: "sap-tcode-reference" })));
 })();
 
 /** Topic names and editorial cross-references shared by the wiki renderer. */

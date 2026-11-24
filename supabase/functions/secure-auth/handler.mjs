@@ -44,17 +44,87 @@ async function readBody(request) {
 // JWE gives confidentiality/integrity, not user identity. Database password/session
 // checks remain mandatory, even for envelopes made with our public key.
 // Per-client rate limiting uses the platform-set connecting IP (cf-connecting-ip
-// on hosted Supabase). Only a one-way hash leaves this function; the raw IP is
-// never stored or logged. A missing/malformed header falls back to global limits.
-const ipPattern = /^[0-9A-Fa-f:.]{2,45}$/;
-export async function clientKey(request) {
-  const ip = (request.headers.get('cf-connecting-ip') || '').trim();
-  if (!ipPattern.test(ip)) return null;
-  const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode('codewiki-client-v1:' + ip.toLowerCase()));
-  return [...new Uint8Array(digest)].map(b => b.toString(16).padStart(2, '0')).join('');
+// on hosted Supabase). Strict IPv4/IPv6 parsing canonicalizes IPv6 to its /64
+// prefix, and only a server-keyed HMAC-SHA-256 leaves this function; raw IPs
+// are never stored or logged.
+const ipv4Part = /^(?:0|[1-9]\d{0,2})$/;
+const ipv6Group = /^[0-9a-f]{1,4}$/i;
+
+function parseIpv4(text) {
+  const parts = text.split('.');
+  if (parts.length !== 4) return null;
+  const nums = [];
+  for (const part of parts) {
+    if (!ipv4Part.test(part)) return null;
+    const n = Number(part);
+    if (n > 255) return null;
+    nums.push(n);
+  }
+  return nums;
 }
 
-export async function createHandler({privateKeys, origins, rpc, clock=Date.now}) {
+export function normalizeClientIp(raw) {
+  const ip = String(raw || '').trim();
+  if (!ip || ip.length > 45 || ip.includes('%')) return null;
+  const v4 = parseIpv4(ip);
+  if (v4) return 'v4:' + v4.join('.');
+  if (!ip.includes(':')) return null;
+  const doubleColons = ip.split('::');
+  if (doubleColons.length > 2) return null;
+  const parseSide = (side, allowTrailingV4) => {
+    if (!side) return [];
+    const tokens = side.split(':');
+    const out = [];
+    for (let i = 0; i < tokens.length; i++) {
+      const tok = tokens[i];
+      if (allowTrailingV4 && i === tokens.length - 1 && tok.includes('.')) {
+        const mapped = parseIpv4(tok);
+        if (!mapped) return null;
+        out.push((mapped[0] << 8) | mapped[1], (mapped[2] << 8) | mapped[3]);
+      } else {
+        if (!ipv6Group.test(tok)) return null;
+        out.push(parseInt(tok, 16));
+      }
+    }
+    return out;
+  };
+  let groups;
+  if (doubleColons.length === 2) {
+    const left = parseSide(doubleColons[0], false);
+    const right = parseSide(doubleColons[1], true);
+    if (!left || !right) return null;
+    const missing = 8 - (left.length + right.length);
+    if (missing < 1) return null;
+    groups = [...left, ...new Array(missing).fill(0), ...right];
+  } else {
+    groups = parseSide(ip, true);
+    if (!groups || groups.length !== 8) return null;
+  }
+  // Canonicalize IPv4-mapped IPv6 (::ffff:a.b.c.d) to its IPv4 address.
+  if (groups[0] === 0 && groups[1] === 0 && groups[2] === 0 && groups[3] === 0 && groups[4] === 0 && groups[5] === 0xffff) {
+    return `v4:${groups[6] >> 8}.${groups[6] & 0xff}.${groups[7] >> 8}.${groups[7] & 0xff}`;
+  }
+  // Bucket IPv6 addresses by their /64 network prefix so rotating interface IDs cannot bypass limits.
+  return 'v6:' + groups.slice(0, 4).map(g => g.toString(16).padStart(4, '0')).join(':');
+}
+
+async function importHmacKey(secret) {
+  if (secret && typeof secret === 'object' && secret.type === 'secret') return secret;
+  const raw = typeof secret === 'string' && secret ? secret : null;
+  if (!raw) throw Error('missing-hmac-key');
+  const material = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(raw));
+  return crypto.subtle.importKey('raw', material, {name:'HMAC', hash:'SHA-256'}, false, ['sign']);
+}
+
+export async function clientKey(request, hmacKey) {
+  const normalized = normalizeClientIp(request.headers.get('cf-connecting-ip'));
+  if (!normalized) return null;
+  const key = await importHmacKey(hmacKey);
+  const sig = await crypto.subtle.sign('HMAC', key, new TextEncoder().encode('codewiki-client-v2:' + normalized));
+  return [...new Uint8Array(sig)].map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+export async function createHandler({privateKeys, origins, rpc, clock=Date.now, clientHashKey}) {
   if (!Array.isArray(privateKeys) || !privateKeys.length || privateKeys.length > 2 || !origins?.length || origins.includes('*')) throw Error('invalid-config');
   const keys=new Map();
   for(const jwk of privateKeys){
@@ -65,6 +135,8 @@ export async function createHandler({privateKeys, origins, rpc, clock=Date.now})
     keys.set(jwk.kid,key);
   }
   const first=privateKeys[0], publicJwk={kty:'RSA',alg:'RSA-OAEP-256',use:'enc',kid:first.kid,n:first.n,e:first.e};
+  // Server-only HMAC key prevents offline IPv4 rainbow-table reversal.
+  const hmacKey=await importHmacKey(clientHashKey || ('codewiki-client-hmac-v2:' + first.d));
   return async request=>{
     const origin=request.headers.get('origin');
     const headers={'Cache-Control':'no-store','Content-Type':'application/json','X-Content-Type-Options':'nosniff','Vary':'Origin'};
@@ -96,7 +168,7 @@ export async function createHandler({privateKeys, origins, rpc, clock=Date.now})
     }catch{return reply({code:'CW_ENVELOPE_INVALID'},400);}
     try{
       const args={p_operation:payload.operation,p_args:payload.args,p_request_id:payload.jti,p_expires_at:new Date(payload.exp*1000).toISOString()};
-      const client=await clientKey(request);
+      const client=await clientKey(request,hmacKey);
       if(client)args.p_client=client;
       const result=await rpc(args);
       if(result?.code){const status=Object.hasOwn(errorStatuses,result.code)?errorStatuses[result.code]:null;return reply({code:status?result.code:'CW_AUTH_UNAVAILABLE'},status||503);}

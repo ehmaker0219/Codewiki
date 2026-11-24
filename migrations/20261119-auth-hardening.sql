@@ -177,7 +177,10 @@ grant execute on function public.cw_login(text,text),public.cw_signup(text,text,
 do $transport_guard$
 declare f record;
 begin
-  if to_regprocedure('public.cw_secure_auth(text,jsonb,uuid,timestamptz)') is not null then
+  if exists(
+    select 1 from pg_proc p join pg_namespace n on n.oid=p.pronamespace
+    where n.nspname='public' and p.proname='cw_secure_auth'
+  ) then
     for f in select p.oid::regprocedure as signature from pg_proc p join pg_namespace n on n.oid=p.pronamespace
       where n.nspname='public' and p.proname in ('cw_login','cw_signup','cw_signup_with_birthday','cw_signup_with_roster') loop
       execute format('revoke all on function %s from public,anon,authenticated',f.signature);

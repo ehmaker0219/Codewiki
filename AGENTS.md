@@ -6,7 +6,7 @@
 
 1. 현재 브랜치, 작업 트리, 실제 배포된 버전과의 차이를 확인한다. 사용자 작업과 기존 세이브포인트를 보존한다.
 2. 변경 코드를 검토한다. 중복/불필요한 로직, 상태 관리, 이벤트 중복 등록, 비동기 경쟁, 데이터 유실, 기존 기능의 회귀 가능성을 확인한다. 검사만을 이유로 무관한 대규모 리팩터링을 하지 않는다.
-3. 편집기 소스나 의존성이 바뀌었다면 `pnpm install --frozen-lockfile` 및 `node scripts/build-study-editor.cjs`로 산출물을 준비한다. `node scripts/update-assets.cjs`, `node scripts/check.cjs`, `git diff --check`를 실행한다. 변경된 주요 사용자 흐름도 적절하게 확인한다.
+3. 편집기·인증 전송 소스나 의존성이 바뀌었다면 `pnpm install --frozen-lockfile` 및 `node scripts/build-study-editor.cjs` / `node scripts/build-auth.cjs`로 산출물을 준비한다. `node scripts/update-assets.cjs`, `node scripts/check.cjs`, `git diff --check`를 실행한다. 변경된 주요 사용자 흐름도 적절하게 확인한다.
 4. 실제 배포 예정 변경 전체에 대해 일반적인 코드 직접 검토와 보안 점검을 수행한다. 인증/세션, 관리자 권한, 사용자별 데이터 접근, XSS/입력 처리, SQL/RPC/RLS, 비밀정보 유출을 관련 코드에 맞게 확인한다. `pnpm audit --prod` 등으로 의존성 취약점도 확인하고 탐지 결과의 실제 영향을 검토한다. Daybreak나 별도 보안 플러그인은 필수 조건이 아니며, 플러그인을 사용할 수 없어도 직접 검토와 테스트를 수행할 수 있으면 진행한다. 비밀번호나 토큰을 출력하거나 커밋하지 않는다. 검증을 위해 운영 데이터에 테스트 쓰기를 하지 않는다.
 5. 검사 실패, 확인된 문제, 해결되지 않은 보안 경고 또는 필수 검사의 실행 불가가 있으면 **푸시와 배포를 멈춘다**. 원인, 영향, 필요한 수정/조치를 한국어로 간단히 보고한다. 검사를 생략하고 통과했다고 말하지 않는다. 수정이 승인되어 해결했다면 해당 검사들을 다시 통과한 뒤 진행한다.
 6. 검사에서 문제가 발견되지 않았다면 사용자의 배포 요청을 근거로 **추가 승인 질문 없이 업로드와 배포를 진행**한다. 이 저장소는 main 푸시가 배포를 유발할 수 있으므로 검사는 반드시 푸시 전에 끝낸다.
@@ -23,4 +23,4 @@
 
 ## 일일 수업 필기 반영 규칙
 
-- 사용자가 오늘 배운 수업 내용이나 일자별 필기 파일(`.txt`, `.md` 등)을 사이트에 반영해 달라고 요청하면 `.agents/skills/codewiki-daily-lesson/SKILL.md`(`codewiki-daily-lesson` 스킬)를 먼저 읽고 정의된 절차(`codewiki-rich-v1` 블록 복원, 주제별 문서 `js/class-notes.js` · 일자별 페이지 `js/lesson-days.js` · 예제 안내 `js/example-notes.js` · 교재 매핑 `js/textbook.js` 동기화, 회귀 테스트 갱신 및 `node scripts/update-assets.cjs` · `node scripts/check.cjs` 실행)에 따라 반영한다.
+- 사용자가 오늘 배운 수업 내용이나 일자별 필기 파일(`.txt`, `.md` 등)을 사이트에 반영해 달라고 요청하면 `.agents/skills/codewiki-daily-lesson/SKILL.md`(`codewiki-daily-lesson` 스킬)를 먼저 읽고 정의된 절차(`codewiki-rich-v1` · `codewiki-table-v1` 블록 복원, 주제별 문서 `js/class-notes.js` · 일자별 페이지 `js/lesson-days.js` · 예제 안내 `js/example-notes.js` · 교재 매핑 `js/textbook.js` 동기화, 회귀 테스트 갱신 및 `node scripts/update-assets.cjs` · `node scripts/check.cjs` 실행)에 따라 반영한다.

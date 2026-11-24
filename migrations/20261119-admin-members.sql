@@ -58,7 +58,10 @@ revoke all on function public.cw_admin_student_directory(uuid),public.cw_admin_r
 grant execute on function public.cw_admin_student_directory(uuid),public.cw_admin_reset_student_password(uuid,uuid,text,text) to anon,authenticated;
 do $transport_guard$
 begin
-  if to_regprocedure('public.cw_secure_auth(text,jsonb,uuid,timestamptz)') is not null then
+  if exists(
+    select 1 from pg_proc p join pg_namespace n on n.oid=p.pronamespace
+    where n.nspname='public' and p.proname='cw_secure_auth'
+  ) then
     revoke all on function public.cw_admin_reset_student_password(uuid,uuid,text,text) from public,anon,authenticated;
   end if;
 end;

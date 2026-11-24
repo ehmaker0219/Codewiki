@@ -41,6 +41,11 @@
 .kind-project { background:#ece6fa; color:#60428f; }
 .kind-assessment { background:#fff0ce; color:#86570c; }
 .kind-holiday { background:#f2e5e6; color:#93555c; }
+:root[data-theme="dark"] .kind-ui { background:#143634; color:#8de2d9; }
+:root[data-theme="dark"] .kind-abap { background:#172d4d; color:#a8cbf8; }
+:root[data-theme="dark"] .kind-project { background:#2a2042; color:#cfc0f5; }
+:root[data-theme="dark"] .kind-assessment { background:#3c2e12; color:#f4d084; }
+:root[data-theme="dark"] .kind-holiday { background:#3a2125; color:#ebb4bb; }
 .schedule-milestone { font-size:9px; line-height:1.5; padding:0 3px; color:var(--text-sub); overflow-wrap:anywhere; }
 .schedule-detail { background:var(--bg-subtle); border:1px solid var(--border-subtle); border-radius:7px; padding:18px; min-width:0; }
 .schedule-detail h2 { font-size:15px; margin:0 0 16px; }

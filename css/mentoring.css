@@ -30,7 +30,9 @@
 .mentoring-form-section+.mentoring-form-section {margin-top:28px;padding-top:28px;border-top:1px solid var(--border-hairline);}
 .mentoring-form h2 {font-size:16px;line-height:1.5;margin:0;}
 .mentoring-fields {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px;margin-bottom:18px;}
-.mentoring-identity-fields {grid-template-columns:minmax(0,1fr) 200px;}
+.mentoring-identity-fields {grid-template-columns:minmax(0,1fr) 170px minmax(220px,auto);}
+.mentoring-time-range {display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:center;gap:6px;}
+.mentoring-time-sep {color:var(--text-muted);font-size:13px;}
 .mentoring-section-title {display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:18px;}
 .mentoring-state-field {display:flex;align-items:center;gap:10px;font-size:13px;color:var(--text-sub);}
 .mentoring-page textarea {resize:vertical;min-height:116px;}
@@ -66,6 +68,7 @@
 .mentoring-report footer {margin-top:32px;padding-top:12px;border-top:1px solid var(--border-hairline);}
 .mentoring-role {display:flex;align-items:center;gap:12px;font-size:12px;flex-wrap:wrap;}
 .mentoring-page select {font-size:13px;min-height:36px;padding:8px;border:1px solid var(--border-subtle,var(--border-hairline));border-radius:6px;background:var(--bg-card);color:var(--text-strong);max-width:100%;}
+.mentoring-page .mentoring-time-range select {width:100%;height:48px;padding:10px 8px;border-radius:7px;}
 .mentoring-field {display:flex;flex-direction:column;min-width:0;gap:8px;margin-bottom:18px;font-size:14px;color:var(--text-sub);}
 .mentoring-field>span {line-height:1.5;font-weight:500;}
 .mentoring-fields .mentoring-field {margin-bottom:0;}
@@ -80,6 +83,10 @@
 #mentoringPage [data-action=delete] {color:#ba4545!important;background:transparent;border:1px solid var(--border-hairline);}
 .mentoring-archive {margin-top:28px;}
 .mentoring-report .mentoring-text-block {font-size:13px;}
+@media(max-width:1200px){
+ .mentoring-identity-fields {grid-template-columns:170px minmax(220px,1fr);}
+ .mentoring-identity-fields > :first-child {grid-column:1 / -1;}
+}
 @media(max-width:680px){
  .mentoring-page {padding:20px 12px;}
  .mentoring-heading {align-items:flex-start;}
@@ -88,7 +95,8 @@
  .mentoring-library {border-right:0;border-bottom:1px solid var(--border-hairline);}
  #mentoringList {max-height:180px;}
  .mentoring-form,.mentoring-report {padding:20px 16px;}
- .mentoring-fields,.mentoring-report-info {grid-template-columns:minmax(0,1fr);}
+ .mentoring-fields,.mentoring-identity-fields,.mentoring-report-info {grid-template-columns:minmax(0,1fr);}
+ .mentoring-identity-fields > :first-child {grid-column:auto;}
  .mentoring-section-title {align-items:flex-start;}
  .mentoring-role {justify-content:flex-end;}
  .mentoring-actions {position:static;padding:12px 16px;}
@@ -98,14 +106,12 @@
 }
 @media print {
  @page {size:A4;margin:16mm;}
- body.mentoring-print {background:#fff!important;color:#111!important;}
- body.mentoring-print .docked-sidebar,body.mentoring-print .edge-collapse-btn,
- body.mentoring-print .workspace-area> :not(#mentoringPage),
- body.mentoring-print .mentoring-heading,body.mentoring-print .mentoring-library,
- body.mentoring-print .mentoring-actions,body.mentoring-print #mentoringEditor,body.mentoring-print #mentoringUpdates,body.mentoring-print dialog {display:none!important;}
- body.mentoring-print .app-layout,body.mentoring-print .workspace-area,body.mentoring-print .mentoring-page,body.mentoring-print .mentoring-layout,body.mentoring-print .mentoring-main {display:block!important;width:auto!important;max-width:none!important;min-height:0!important;height:auto!important;margin:0!important;padding:0!important;border:0!important;overflow:visible!important;background:#fff!important;}
- body.mentoring-print .mentoring-report {display:block!important;padding:0;color:#111;background:#fff;font-size:10pt;}
- body.mentoring-print .mentoring-report :is(dt,header p,header span,figcaption,footer) {color:#555;}
- body.mentoring-print .mentoring-report h1 {font-size:20pt;}
- body.mentoring-print .mentoring-report pre {color:#111;background:#f4f5f7;}
+ body.mentoring-print,body:has(#mentoringPage:not([hidden]) #mentoringReport:not([hidden])) {background:#fff!important;color:#111!important;}
+ :is(body.mentoring-print,body:has(#mentoringPage:not([hidden]) #mentoringReport:not([hidden]))) :is(.docked-sidebar,.edge-collapse-btn,.workspace-area> :not(#mentoringPage),.mentoring-heading,.mentoring-library,.mentoring-actions,#mentoringEditor,#mentoringUpdates,dialog) {display:none!important;}
+ :is(body.mentoring-print,body:has(#mentoringPage:not([hidden]) #mentoringReport:not([hidden]))) :is(.app-layout,.workspace-area,.mentoring-page,.mentoring-layout,.mentoring-main) {display:block!important;width:auto!important;max-width:none!important;min-height:0!important;height:auto!important;margin:0!important;padding:0!important;border:0!important;overflow:visible!important;background:#fff!important;}
+ :is(body.mentoring-print,body:has(#mentoringPage:not([hidden]) #mentoringReport:not([hidden]))) .mentoring-report {display:block!important;padding:0;color:#111;background:#fff;font-size:10pt;}
+ :is(body.mentoring-print,body:has(#mentoringPage:not([hidden]) #mentoringReport:not([hidden]))) .mentoring-report header {border-bottom-color:#111;}
+ :is(body.mentoring-print,body:has(#mentoringPage:not([hidden]) #mentoringReport:not([hidden]))) .mentoring-report :is(dt,header p,header span,figcaption,footer) {color:#555;}
+ :is(body.mentoring-print,body:has(#mentoringPage:not([hidden]) #mentoringReport:not([hidden]))) .mentoring-report h1 {font-size:20pt;}
+ :is(body.mentoring-print,body:has(#mentoringPage:not([hidden]) #mentoringReport:not([hidden]))) .mentoring-report pre {color:#111;background:#f4f5f7;}
 }

@@ -69,6 +69,10 @@ assert.equal((parseInline('DATA · TYPE').match(/data-doc="abap-basics"/g) || []
 assert.equal(parseInline('`DATA lv TYPE i`'), '<code>DATA lv TYPE i</code>');
 assert.equal(parseInline('[[abap-basics|DATA TYPE]]'), '<a href="#doc/abap-basics" class="wiki-link" data-doc="abap-basics">DATA TYPE</a>');
 assert.equal(parseInline('<code>DATA TYPE</code>'), '<code>DATA TYPE</code>');
+assert.equal(parseInline('Program ZBC400_F##_HELLO'), 'Program ZBC400_F##_HELLO', '#-suffixed alias must not split longer identifiers');
+assert.match(parseInline('Package ZBC400_F## 열기'), /data-doc="sap-gui-programs"/, 'standalone ZBC400_F## still links');
+assert.equal(parseInline('Field Symbol <fs_row> & <script>x</script>'), 'Field Symbol &lt;fs_row&gt; &amp; &lt;script&gt;x&lt;/script&gt;', 'unknown angle-bracket syntax and raw script tags are escaped');
+assert.equal(parseInline('<strong>굵게</strong><br><mark class="declaration-modifier">TABLE OF</mark>'), '<strong>굵게</strong><br><mark class="declaration-modifier">TABLE OF</mark>', 'whitelisted inline HTML stays intact');
 for (const target of Object.values(compoundTargets)) {
   const sources = computeBacklinks(target).map(doc => doc.id);
   assert.ok(sources.includes('test-nested-links'), `${target}: nested visible links must have backlinks`);

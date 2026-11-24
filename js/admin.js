@@ -106,8 +106,13 @@
         if (deleting) {
           users = users.filter(user=>String(user.id) !== target);
           busy = false; render();
+          window.CodeWikiAdminMembers?.invalidate?.();
+          window.CodeWikiBirthdays?.refresh?.({ force: true });
+          if (getToken() === token && getUser()?.id === id) await onChange();
           return;
         }
+        window.CodeWikiAdminMembers?.invalidate?.();
+        window.CodeWikiBirthdays?.refresh?.({ force: true });
         await open();
         if (getToken() === token && getUser()?.id === id) await onChange();
       } catch (error) {

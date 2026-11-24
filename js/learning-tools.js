@@ -1,8 +1,10 @@
 /* Pure helpers shared by rendering and regression tests. */
 (() => {
+  const HTML_TAG_RE = /<\/?[a-z][a-z0-9-]*(?:\s[^<>]*)?\/?>/gi;
   const escape = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;'}[c]));
   const plain = value => String(value ?? '').replace(/\[\[([^|\]]+)(?:\|([^\]]+))?\]\]/g, (_, id, label) => label || id)
-    .replace(/<[^>]*>/g, '').replace(/[`*]/g, '').replace(/\s+/g, ' ').trim();
+    .replace(/~~(.+?)~~/g, '$1').replace(/\{\{(.+?)\}\}/g, '$1')
+    .replace(/<br\s*\/?>/gi, ' ').replace(HTML_TAG_RE, '').replace(/[`*]/g, '').replace(/\s+/g, ' ').trim();
   function blockText(block) {
     if (typeof block === 'string') return [plain(block)];
     if (Array.isArray(block)) return block.flatMap(blockText);
@@ -53,8 +55,10 @@
     const references = JSON.stringify(doc.sections || []).matchAll(/\[\[([a-z0-9-]+)(?:\|[^\]]+)?\]\]/g);
     for (const ref of references) topics.add(ref[1]);
     const backlinkIds = new Set(backlinks.map(d => d.id));
+    const isOverview = d => Boolean(d.isHome || d.id === 'learning-roadmap' || d.id === 'abap-textbook' || d.id === 'sap-gui-programs');
     const concepts = documents.filter(d => d.id !== doc.id && d.track !== 'ui5' && !d.isDailyLesson &&
-      (topics.has(d.id) || backlinkIds.has(d.id)));
+      (topics.has(d.id) || backlinkIds.has(d.id)))
+      .sort((a, b) => Number(isOverview(a)) - Number(isOverview(b)));
     const dates = documents.filter(d => d.isDailyLesson && (doc.lessonDates || []).includes(d.id.replace('lesson-','')));
     return {concepts, dates};
   }
@@ -80,64 +84,5 @@
       clearTimeout(timer);
     }
   }
-  function renderStudyNode(node) {
-    if (!node || typeof node !== 'object') return '';
-    const kids = () => (node.content || []).map(renderStudyNode);
-    if (node.type === 'text') {
-      let text = String(node.text || '');
-      for (const mark of node.marks || []) {
-        if (mark?.type === 'code') text = '`' + text + '`';
-        else if (mark?.type === 'bold') text = '**' + text + '**';
-        else if (mark?.type === 'italic') text = '*' + text + '*';
-        else if (mark?.type === 'strike') text = '~~' + text + '~~';
-        else if (mark?.type === 'highlight') text = '==' + text + '==';
-      }
-      return text;
-    }
-    if (node.type === 'hardBreak') return '\n';
-    if (node.type === 'paragraph') return kids().join('');
-    if (node.type === 'heading') {
-      const level = Math.min(6, Math.max(1, Number(node.attrs?.level) || 1));
-      return '#'.repeat(level) + ' ' + kids().join('');
-    }
-    if (node.type === 'blockquote') {
-      return kids().join('\n\n').split('\n').map(line => '> ' + line).join('\n');
-    }
-    if (node.type === 'bulletList') {
-      return (node.content || []).map(item => '- ' + renderStudyNode(item).replace(/\n/g, '\n  ')).join('\n');
-    }
-    if (node.type === 'orderedList') {
-      const start = Number(node.attrs?.start) || 1;
-      return (node.content || []).map((item, i) => `${start + i}. ` + renderStudyNode(item).replace(/\n/g, '\n   ')).join('\n');
-    }
-    if (node.type === 'listItem') return kids().join('\n');
-    if (node.type === 'codeBlock') {
-      const lang = node.attrs?.language ? String(node.attrs.language) : '';
-      return '```' + lang + '\n' + kids().join('') + '\n```';
-    }
-    if (node.type === 'table') {
-      const rows = (node.content || []).map(row =>
-        (row.content || []).map(cell => renderStudyNode(cell).replace(/\n+/g, ' / ').replace(/\|/g, '\\|').trim())
-      ).filter(row => row.length);
-      if (!rows.length) return '';
-      const width = Math.max(...rows.map(r => r.length));
-      const pad = row => Array.from({length: width}, (_, i) => row[i] || '');
-      const lines = rows.map(row => '| ' + pad(row).join(' | ') + ' |');
-      lines.splice(1, 0, '| ' + Array(width).fill('---').join(' | ') + ' |');
-      return lines.join('\n');
-    }
-    if (node.type === 'tableCell' || node.type === 'tableHeader') return kids().join('\n');
-    return kids().join('\n');
-  }
-  function stripStudyRichBlocks(markdown) {
-    return String(markdown ?? '').replace(/(^|\n)(`{3,})codewiki-(?:rich|table)-v1[ \t]*\r?\n([\s\S]*?)\r?\n\2(?=\r?\n|$)/g, (match, prefix, _fence, payload) => {
-      try {
-        const rendered = renderStudyNode(JSON.parse(payload));
-        return rendered ? prefix + rendered : match;
-      } catch {
-        return match;
-      }
-    });
-  }
-  window.CodeWikiLearning = {escape, plain, indexDocuments, search, highlight, relatedGroups, rpcWithTimeout, stripStudyRichBlocks};
+  window.CodeWikiLearning = {escape, plain, indexDocuments, search, highlight, relatedGroups, rpcWithTimeout};
 })();

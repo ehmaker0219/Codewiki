@@ -766,7 +766,7 @@ code, pre, .mono {
 
 .toss-badge-blue {
   background: var(--toss-blue);
-  color: #fff;
+  color: var(--on-accent, #fff);
   font-size: 11px;
   font-weight: 700;
   padding: 3px 8px;
@@ -1310,7 +1310,7 @@ body.quiz-mode .quiz-token.revealed {
   padding: 3px 9px;
   border-radius: 999px;
   background: var(--toss-blue);
-  color: #fff;
+  color: var(--on-accent, #fff);
 }
 
 .nested-box.depth-1 > .nested-header .nested-badge {
@@ -1487,7 +1487,7 @@ body.quiz-mode .quiz-token.revealed {
   height: 22px;
   border-radius: 7px;
   background: var(--toss-blue);
-  color: #fff;
+  color: var(--on-accent, #fff);
   font-size: 11.5px;
   font-weight: 800;
   display: inline-flex;
@@ -2021,7 +2021,7 @@ body.track-selecting .app-layout {
   border: none;
   border-radius: 10px;
   background: var(--toss-blue);
-  color: #fff;
+  color: var(--on-accent, #fff);
   font-size: 14px;
   font-weight: 700;
   font-family: inherit;
@@ -2139,7 +2139,7 @@ body.track-selecting .app-layout {
 
 .approve-btn {
   background: var(--toss-blue);
-  color: #fff;
+  color: var(--on-accent, #fff);
   border: none;
   padding: 8px 14px;
   border-radius: 10px;
@@ -2302,7 +2302,7 @@ body.track-selecting .app-layout {
   font-size: 11px;
   font-weight: 800;
   background: var(--toss-blue);
-  color: #fff;
+  color: var(--on-accent, #fff);
   padding: 2px 8px;
   border-radius: 6px;
   flex-shrink: 0;
@@ -2343,7 +2343,7 @@ body.track-selecting .app-layout {
 
 .board-action-btn.copy-prompt-btn:hover {
   background: var(--toss-blue);
-  color: #fff;
+  color: var(--on-accent, #fff);
 }
 
 .toss-select,

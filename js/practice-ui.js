@@ -31,7 +31,7 @@
     trigger.hidden=!isAdmin;
     if(!isAdmin){
       if(dialog.open)dialog.close();
-      current=null;select.value='';output.replaceChildren();status.textContent='';
+      current=null;select.value='';output.textContent='공부하고 싶은 주제를 선택해 주세요.';status.textContent='';
       next.disabled=true;copy.disabled=true;
     }
   }
@@ -68,7 +68,7 @@
   });
   select.addEventListener('change',showQuestion);
   next.addEventListener('click',showQuestion);
-  trigger.addEventListener('click',()=>{if(!isAdmin)return;dialog.showModal();select.focus();});
+  trigger.addEventListener('click',()=>{if(!isAdmin)return;if(!select.value&&!current)output.textContent='공부하고 싶은 주제를 선택해 주세요.';dialog.showModal();select.focus();});
   document.getElementById('closePracticeBtn').addEventListener('click',()=>dialog.close());
   dialog.addEventListener('close',()=>{if(isAdmin)trigger.focus();});
 })();
