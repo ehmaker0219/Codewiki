@@ -91,6 +91,13 @@ const read = file => {
     await db.exec(read('tests/login-history.sql'));
     await db.exec(read('tests/encrypted-auth.sql'));
     await db.exec(read('tests/security-review-hardening.sql'));
+    await db.exec(read('migrations/20261124-signup-login-log.sql'));
+    await db.exec(read('migrations/20261124-signup-login-log.sql'));
+    await db.exec(read('tests/signup-login-log.sql'));
+    await db.exec(read('tests/auth-review-hardening.sql'));
+    await db.exec(read('tests/login-history.sql'));
+    await db.exec(read('tests/encrypted-auth.sql'));
+    await db.exec(read('tests/security-review-hardening.sql'));
     // A new migration file must also be exercised here, not silently skipped.
     const onDisk = fs.readdirSync(path.join(root,'migrations')).filter(file=>file.endsWith('.sql')).sort();
     const missing = onDisk.filter(file=>!appliedMigrations.has(file));
