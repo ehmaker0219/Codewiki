@@ -131,6 +131,8 @@
     const isApprovedStudent = user?.role === 'student' && user.status === 'approved';
     const thinkingFlow = document.getElementById('sbThinkingFlowItem');
     if (thinkingFlow) thinkingFlow.hidden = !isApprovedStudent;
+    const programCatalog = document.getElementById('sbProgramCatalogItem');
+    if (programCatalog) programCatalog.hidden = !isApprovedStudent;
     const learningContents = document.getElementById('learningContentsGroup');
     if (learningContents) learningContents.hidden = !isApprovedStudent;
     const learningTools = document.getElementById('learningToolsGroup');

@@ -69,14 +69,6 @@ window.WIKI_DOCS = {
       { title: "메시지 · MESSAGE TYPE 'E'", blocks: [
         { type: "code", label: "오류 메시지", code: "MESSAGE '입력 내용을 확인해 주세요.' TYPE 'E'." },
         { type: "text", paragraphs: ["'E'는 오류(Error) 메시지 유형이며, 문자열 값은 대문자로 지정합니다. E 메시지 이후의 처리 흐름은 선택 화면·Dynpro·백그라운드 등 실행 문맥에 따라 달라집니다.", "ABAP에서 줄 중간 주석은 큰따옴표(\")로 시작합니다. 별표(*) 주석은 행의 첫 번째 칸에서 시작하므로, MESSAGE 문 뒤에 *를 붙여 주석을 적지 않습니다."] }
-      ] },
-      { title: "참고 자료", blocks: [
-        { type: "text", paragraphs: [
-          "<a href=\"https://learning.sap.com/courses/deepening-your-abap-programming-knowledge/processing-strings-using-functions-and-regular-expressions_abe828f3-4e84-45ce-9c39-0cf9eb2a9f2f\" target=\"_blank\" rel=\"noopener noreferrer\">SAP 공식 학습 자료 · 문자열 함수</a>",
-          "<a href=\"https://help.sap.com/docs/abap-cloud/abap-keyword/cstring-func-charlen-dbmaxlen-numofchar-strlen\" target=\"_blank\" rel=\"noopener noreferrer\">ABAP Keyword Documentation · 길이 함수</a>",
-          "<a href=\"https://help.sap.com/docs/ABAP_Cloud/abap-cloud-docs_abap-keyword-documentation_abap-for-cloud-development/ABENLOGEXP_INITIAL.html\" target=\"_blank\" rel=\"noopener noreferrer\">ABAP Keyword Documentation · IS INITIAL</a>",
-          "<a href=\"https://help.sap.com/docs/abap-cloud/abap-keywords/continue\" target=\"_blank\" rel=\"noopener noreferrer\">ABAP Keyword Documentation · CONTINUE</a>"
-        ] }
       ] }
     ]
   },
@@ -104,7 +96,7 @@ window.WIKI_DOCS = {
             ["/nend", "확인 창을 거친 뒤 로그오프", "현재 로그온의 모든 세션 종료"],
             ["/nex", "확인 창 없이 즉시 로그오프", "저장하지 않은 작업이 사라질 수 있으므로 주의"]
           ] },
-          { type: "text", paragraphs: ["세션 수는 서버 설정과 버전에 따라 달라집니다. 수업 필기 기준으로 기본 6개, 설정에 따라 최대 16개이며 실제 사용 가능한 수는 실습 시스템 설정을 확인하세요.", "명령어 동작 참고: <a href=\"https://learning.sap.com/courses/technical-implementation-and-operation-i-of-sap-s-4hana-and-sap-business-suite/describing-sap-gui-functions-help-and-personalization\" target=\"_blank\" rel=\"noopener noreferrer\">SAP 공식 학습 자료</a>"] }
+          { type: "text", paragraphs: ["세션 수는 서버 설정과 버전에 따라 달라집니다. 수업 필기 기준으로 기본 6개, 설정에 따라 최대 16개이며 실제 사용 가능한 수는 실습 시스템 설정을 확인하세요."] }
         ]
       },
       {
@@ -270,10 +262,6 @@ window.WIKI_DOCS = {
         "SE11은 데이터 구조를 정의하고, SE16은 저장된 데이터를 조회합니다. SE84는 객체 검색, SE80은 객체를 탐색하며 개발하는 통합 작업 공간에 가깝습니다.",
         "SM50·SM04는 현재 애플리케이션 서버 기준입니다. 화면에 보이는 목록을 시스템 전체의 프로세스·사용자 목록으로 혼동하지 마세요.",
         "[[sap-gui-shortcuts|SAP GUI · ABAP 단축키]]에서 명령 필드 사용법도 함께 확인할 수 있습니다."
-      ] }] },
-      { title: "공식 참고 자료", blocks: [{ type: "text", paragraphs: [
-        '<a href="https://help.sap.com/docs/SUPPORT_CONTENT/abapfaq/3353523950.html" target="_blank" rel="noopener noreferrer">SAP Help · 개발 관련 트랜잭션 코드</a>',
-        '<a href="https://help.sap.com/docs/SUPPORT_CONTENT/basis/3354611686.html" target="_blank" rel="noopener noreferrer">SAP Help · 시스템 관리 트랜잭션 코드</a>'
       ] }] }
     ]
   };

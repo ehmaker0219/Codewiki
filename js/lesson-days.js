@@ -100,6 +100,17 @@
       from('abap-data-report', 'Report 처리 순서'),
       from('abap-development', 'SE80에서 Program이 안 보일 때'),
       from('abap-open-sql', '최신 문법(Strict Mode)과 쉼표·@ 규칙')
+    ]},
+    {date: '2026-11-23', source: '261123 월요일.md', sections: [
+      from('abap-data-report', '리스트 아이콘과 컬럼 서식 참고'),
+      from('abap-dictionary', 'ABAP Dictionary의 역할과 3가지 기능'),
+      from('abap-dictionary', 'View 4가지'),
+      from('abap-dictionary', 'Data의 속성과 Domain · Data Element가 필요한 이유'),
+      from('abap-dictionary', 'Domain — Technical Attribute와 SE11 절차'),
+      from('abap-dictionary', 'Data Element — Semantic Attribute와 SE11 절차'),
+      from('abap-dictionary', 'Structure — 종류(Flat · Deep)와 .INCLUDE'),
+      from('abap-dictionary', 'Table Type — SE11 전역 내부 테이블 타입'),
+      from('abap-dictionary', '필기와 참고 자료')
     ]}
   ];
   // Dates are rebuilt from explicit source associations, including split topics.

@@ -20,3 +20,7 @@
 - SAP/ABAP 용어는 수업에서 사용하는 원어 표기를 유지한다(예: `Change Request`, `Task`, `Package`, `Package` 안에서 생성하는 저장소 객체 개념의 `Program`). 한글 검색 편의를 위한 별칭(`aliases`)은 필요 시 유지할 수 있다.
 - ABAP 테이블·구조체 예시는 학생/더미 데이터 대신 SAP 항공 실습 모델(`SCARR`, `SPFLI`, `SFLIGHT`, `SBOOK`, `SCUSTOM`, `SAPLANE` 등)을 기준으로 작성한다.
 - 실행 가능 ABAP Report 예제의 `REPORT` 선언 이름은 수업 규칙에 맞춰 `REPORT zabap_f##_##.` 형식을 사용한다.
+
+## 일일 수업 필기 반영 규칙
+
+- 사용자가 오늘 배운 수업 내용이나 일자별 필기 파일(`.txt`, `.md` 등)을 사이트에 반영해 달라고 요청하면 `.agents/skills/codewiki-daily-lesson/SKILL.md`(`codewiki-daily-lesson` 스킬)를 먼저 읽고 정의된 절차(`codewiki-rich-v1` 블록 복원, 주제별 문서 `js/class-notes.js` · 일자별 페이지 `js/lesson-days.js` · 예제 안내 `js/example-notes.js` · 교재 매핑 `js/textbook.js` 동기화, 회귀 테스트 갱신 및 `node scripts/update-assets.cjs` · `node scripts/check.cjs` 실행)에 따라 반영한다.

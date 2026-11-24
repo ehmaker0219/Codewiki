@@ -34,11 +34,13 @@ function boot(storage, rpc) {
   assert.equal(app.window.CodeWikiAuth.getCurrentUser().id,'student');
   assert.equal(app.get('learningContentsGroup').hidden,false);
   assert.equal(app.get('sbThinkingFlowItem').hidden,false);
+  assert.equal(app.get('sbProgramCatalogItem').hidden,false);
   assert.match(app.get('studySidebarSlot').innerHTML,/id="openStudyBtn"/);
   assert.ok(!app.get('adminSidebarSlot').innerHTML.includes('id="openAdminModalBtn"'),'student does not receive admin controls');
   profile.role='admin';await app.window.refresh();
   assert.equal(app.get('learningContentsGroup').hidden,true);
   assert.equal(app.get('sbThinkingFlowItem').hidden,true,'thinking flow stays student-only');
+  assert.equal(app.get('sbProgramCatalogItem').hidden,true,'program catalog stays student-only');
   assert.ok(!app.get('studySidebarSlot').innerHTML.includes('id="openStudyBtn"'),'admin study menu is retired');
   assert.match(app.get('adminSidebarSlot').innerHTML,/id="openAdminModalBtn"/);
   profile.role='student';

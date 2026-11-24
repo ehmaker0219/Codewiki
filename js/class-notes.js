@@ -1,4 +1,4 @@
-/** 2026-11-11 ~ 19 수업 필기를 주제별로 정리한 문서. */
+/** 2026-11-11 ~ 23 수업 필기를 주제별로 정리한 문서. */
 (function () {
   const docs = window.WIKI_DOCS;
   const text = (...paragraphs) => ({ type: 'text', paragraphs });
@@ -6,12 +6,12 @@
   const code = (label, code) => ({ type: 'code', label, code });
   const section = (title, ...blocks) => ({ title, blocks });
   const related = ids => section('관련 문서', text(ids.map(id => `[[${id}|${docs[id].title}]]`).join(' · ')));
-  const source = (dates, links = []) => section('필기와 참고 자료', text(
-    `수업 필기: ${dates}. 중복 메모는 합치고 설명과 예제를 보완했습니다. SAP GUI 기반 Standard ABAP 학습을 기준으로 하며, ABAP Cloud에서는 사용 가능한 문법과 도구가 다를 수 있습니다.`,
-    ...links.map(([label, url]) => `<a href="${url}" target="_blank" rel="noopener noreferrer">${label}</a>`)
-  ));
-  function put(id, title, summary, aliases, sections, dates, links) {
-    docs[id] = { id, title, summary, aliases, lessonDates: dates.split(' · ').map(date => '2026-' + date.replace('/', '-')), sections: [...sections, source(dates, links)], track: 'abap', categoryId: 'abap-curriculum', subtitle: '수업 필기 정리 · 개념과 예제', stepNum: '', tcodes: [], specs: {} };
+  const source = (dates, programs = []) => section('필기와 참고 자료',
+    text(`수업 필기: ${dates}. 중복 메모는 합치고 설명과 예제를 보완했습니다. SAP GUI 기반 Standard ABAP 학습을 기준으로 하며, ABAP Cloud에서는 사용 가능한 문법과 도구가 다를 수 있습니다.`),
+    ...(programs.length ? [table(['실습 Program (`SE80` · `ZBC400_F##`)', '내용'], programs)] : [])
+  );
+  function put(id, title, summary, aliases, sections, dates, programs) {
+    docs[id] = { id, title, summary, aliases, lessonDates: dates.split(' · ').map(date => '2026-' + date.replace('/', '-')), sections: [...sections, source(dates, programs)], track: 'abap', categoryId: 'abap-curriculum', subtitle: '수업 필기 정리 · 개념과 예제', stepNum: '', tcodes: [], specs: {} };
   }
   put('sap-architecture', 'SAP 시스템 구조', '사용자 요청이 처리되는 흐름과 서버 구성 요소의 역할을 구분합니다.', ['Dispatcher', 'Work Process', '워크 프로세스', 'Message Server', 'Gateway', 'ICM', 'SAP GUI'], [
     section('요청 처리 흐름', text('SAP GUI → Dispatcher → 사용 가능한 Work Process → 필요한 경우 데이터베이스 접근 → 결과 반환 순서로 이해할 수 있습니다. 모든 요청이 데이터베이스 작업을 수행하는 것은 아닙니다.', 'Dispatcher는 요청을 받아 작업을 배분합니다. 큐를 단순한 처리 순서 예제로 이해하되, 실제 스케줄링 전체를 항상 FIFO라고 단정하지 않습니다.')),
@@ -21,7 +21,7 @@
     section('통신 구성 요소', table(['구성 요소', '역할'], [
       ['Message Server', '애플리케이션 서버 간 통신 조정과 로그온 부하 분산 지원'], ['Gateway', 'RFC 통신 처리'], ['ICM', 'HTTP(S) 등 인터넷 프로토콜 통신 처리']
     ]), text('SAP NetWeaver는 SAP의 기술 플랫폼입니다. “SAP의 모든 제품을 포함하는 프레임워크”라는 뜻은 아닙니다.'))
-  ], '11/11', [['SAP Help · AS ABAP 구조', 'https://help.sap.com/docs/ABAP_PLATFORM_NEW/1ba3197c1aa7489882770103e3a610dc/f9e2350eca7f4a109eb0a7bc63135e27.html']]);
+  ], '11/11');
 
   put('abap-development', '개발 객체와 전송 관리', 'Program을 Package에 담고 Change Request를 통해 다른 시스템으로 전달하는 흐름입니다.', ['패키지', 'Package', 'Change Request', 'Workbench Request', 'Customizing Request', 'Transport'], [
     section('개발·품질·운영 시스템', text('일반적인 시스템 구성은 개발(DEV) → 품질 검증(QAS) → 운영(PRD)입니다. 개발 객체의 변경을 Change Request와 Task로 기록하고 검증 후 대상 시스템으로 전송합니다.', 'Change Request를 누가 만들고 몇 개로 관리하는지는 팀의 정책에 따릅니다. SI는 항상 Change Request 하나, SM은 여러 개라는 고정 규칙은 없습니다.')),
@@ -48,7 +48,14 @@ START-OF-SELECTION.
   DATA(lv_double) = p_count * 2.
   WRITE: / '입력:', p_count,
          / '두 배:', lv_double.`), text('PARAMETERS는 리포트의 선택 화면 입력 필드를 정의합니다. WRITE는 클래식 리스트 출력을 만듭니다. 문자열 함수와 조건 표현은 [[abap-useful-syntax|유용한 함수 · 문법 모음]]으로 연결됩니다.'))
-  ], '11/11 · 11/12');
+  ], '11/11 · 11/12', [
+    ['`ZABAP_F##_01`', 'ABAP Write statement'],
+    ['`ZABAP_F##_02`', 'ABAP Syntax'],
+    ['`ZABAP_F##_04`', 'ABAP Calculation'],
+    ['`ZABAP_F##_05`', 'ABAP IF Conditional Statement'],
+    ['`ZBC400_F##_HELLO`', 'Program ZBC400_F##_HELLO'],
+    ['`ZBC400_F##_COMPUTE`', 'Program ZBC400_F##_COMPUTE']
+  ]);
 
   put('abap-types', '자료형과 초기값', '문자형·숫자형·바이트형을 구분하고 길이와 소수 자릿수를 명시합니다.', ['자료형', 'DATA TYPE', '초기값', 'DECFLOAT16', 'DECFLOAT34', 'XSTRING'], [
     section('주요 기본 타입', table(['타입', '용도', '주의점'], [
@@ -67,7 +74,11 @@ ENDIF.
 WRITE / lv_digits.`), text('숫자형은 0, c는 공백, n은 길이만큼의 숫자 문자 0, string/xstring은 길이 0이 초기 상태입니다. IS INITIAL은 SQL의 NULL 검사와 다릅니다.')),
     section('텍스트 심볼과 번역', text('화면 문구는 텍스트 심볼로 분리할 수 있습니다. text-001 또는 문자열 리터럴 뒤의 텍스트 심볼 ID를 사용하는 방식이 있습니다.', '텍스트 요소에서 문구를 관리하고 필요한 언어로 번역합니다. Program과 텍스트 요소의 저장·활성화 상태를 함께 확인하세요.'), code('텍스트 심볼 사용', `WRITE / text-001.
 WRITE / '안녕하세요'(002).`))
-  ], '11/12');
+  ], '11/12', [
+    ['`ZABAP_F##_03`', 'ABAP Data Type & Elementary Data Objects'],
+    ['`ZABAP_F##_13`', 'ABAP Structure Variable'],
+    ['`ZBC400_F##_STRUCTURE`', 'Program ZBC400_F##_STRUCTURE']
+  ]);
 
   put('abap-loops', '반복문과 시스템 필드', '반복 종류에 맞는 시스템 필드를 읽고 CONTINUE와 EXIT를 구분합니다.', ['DO', 'WHILE', 'sy-index', 'sy-tabix', 'sy-subrc', 'sy-dbcnt', 'sy-uname', '시스템 필드'], [
     section('반복문 비교', table(['문장', '용도', '참고'], [
@@ -86,7 +97,11 @@ ENDDO.`), text('출력은 1, 3, 5입니다. CONTINUE는 현재 반복의 남은 
     section('자주 보는 시스템 필드', table(['필드', '의미'], [
       ['sy-mandt', '현재 클라이언트 번호'], ['sy-uname', '현재 로그온 사용자 이름; 클라이언트 이름이 아님'], ['sy-langu', '로그온 언어 키'], ['sy-datum / sy-uzeit', '애플리케이션 서버 기준 시스템 날짜 / 시간'], ['sy-tcode', '현재 트랜잭션 코드'], ['sy-repid', '현재 ABAP Program 이름'], ['sy-index', 'DO / WHILE 반복 회차'], ['sy-tabix', '인덱스 테이블 작업의 행 인덱스. 해시 테이블은 일반적으로 0'], ['sy-subrc', '해당 문장이 설정한 반환 코드'], ['sy-dbcnt', '해당 SQL 문장이 처리한 행 수']
     ]), text('sy-subrc의 0은 흔히 성공을 뜻하지만 값과 의미는 문장마다 다릅니다. 0/4/8만 존재하는 것은 아닙니다. 다음 문장에서 덮어쓸 수 있으므로 결과를 설정하는 문장 바로 뒤에서 검사하세요.'))
-  ], '11/13', [['SAP Help · 시스템 필드', 'https://help.sap.com/saphelp_snc700_ehp01/helpdata/en/7b/fb96c8882811d295a90000e8353423/content.htm']]);
+  ], '11/13', [
+    ['`ZABAP_F##_06`', 'ABAP Loop Statement'],
+    ['`ZABAP_F##_07`', 'ABAP sy-subrc System Field'],
+    ['`ZBC400_F##_LOOP`', 'Program ZBC400_F##_LOOP']
+  ]);
 
   put('abap-debug-messages', '디버깅과 메시지', '중단점에서 값을 추적하고 메시지와 예외의 목적을 구분합니다.', ['디버깅', 'Debugger', '중단점', '메시지 클래스', 'MESSAGE'], [
     section('디버깅 순서', text('SE38 또는 SE80에서 중단점을 설정하고 실행합니다. 중단된 위치에서 변수 값, 호출 스택, 조건식의 결과를 확인합니다.', '디버거의 F5는 한 단계 실행(Single Step)입니다. 편집 화면의 F5는 텍스트 요소 등 다른 기능일 수 있으므로 화면 맥락을 확인하세요. 런타임 오류는 ST22에서 덤프를 확인합니다.')),
@@ -115,12 +130,19 @@ ENDFORM.`)),
     section('호출자와 함수의 방향', table(['함수 인터페이스', '호출 문장', '방향'], [
       ['IMPORTING', 'EXPORTING', '호출자가 함수에 입력 전달'], ['EXPORTING', 'IMPORTING', '함수 결과를 호출자가 수신'], ['CHANGING', 'CHANGING', '값을 전달하고 변경 결과 수신']
     ]), text('호출 예제를 입력할 때는 해당 함수의 실제 매개변수 이름과 타입을 SE37에서 확인하세요.'))
-  ], '11/16 · 11/17', [['SAP Help · 서브루틴 매개변수', 'https://help.sap.com/saphelp_ewm900/helpdata/en/9f/db984635c111d1829f0000e829fbfe/content.htm']]);
+  ], '11/16 · 11/17', [
+    ['`ZABAP_F##_08`', 'ABAP Subroutine'],
+    ['`ZABAP_F##_09`', 'ABAP Subroutine Parameters'],
+    ['`ZABAP_F##_10`', 'ABAP Function Module'],
+    ['`ZBC400_F##_SUBROUTINE`', 'Program ZBC400_F##_SUBROUTINE'],
+    ['`ZBC400_F##_FUNCTION_MODULE`', 'Function Module 실습 1'],
+    ['`ZBC400_F##_FUNCTION_MODULE_2`', 'Function Module 실습 2']
+  ]);
 
   put('abap-bapi', 'BAPI와 RFC', '원격 호출 기술인 RFC와 업무 API인 BAPI를 구분합니다.', ['BAPI', 'RFC', 'RETURN'], [
     section('BAPI와 RFC의 관계', text('RFC는 시스템 간 함수 호출 기술입니다. BAPI는 표준화된 업무 객체 인터페이스이며 전통적인 BAPI 구현에는 원격 호출 가능 함수 모듈이 사용됩니다. 모든 RFC 함수가 BAPI인 것은 아닙니다.', 'GetList, GetDetail, Create, Change 등은 업무 동작의 예입니다. 실제 제공 메서드와 이름은 업무 객체별로 확인합니다.')),
     section('입출력과 오류 처리', text('BAPI는 화면 팝업 대신 RETURN 구조 또는 테이블로 성공·오류 메시지를 전달하도록 설계합니다. 호출자는 RETURN의 TYPE과 메시지 내용을 확인해야 합니다.', '원격 함수의 인터페이스는 RFC 지원 타입과 값 전달 제약을 따릅니다. 일반 로컬 함수의 모든 설정에 그대로 적용할 규칙으로 이해하지 마세요.', '변경 BAPI의 커밋·롤백 책임은 개별 BAPI 문서를 확인해야 합니다. 호출 성공 여부만 보고 저장 완료라고 판단하지 않습니다.'))
-  ], '11/17', [['SAP Help · BAPI 반환 메시지', 'https://help.sap.com/saphelp_snc70/helpdata/en/a5/3ec9f74ac011d1894e0000e829fbbd/content.htm']]);
+  ], '11/17');
 
   put('abap-objects', '클래스와 메서드', '클래스 자체의 정적 메서드와 객체의 인스턴스 메서드를 구분합니다.', ['Global class', 'Local class', '정적 메서드', '인스턴스 메서드', '참조 변수', 'TYPE REF TO'], [
     section('글로벌 클래스와 로컬 클래스', text('글로벌 클래스는 저장소 객체로 관리하며 SE24에서 확인할 수 있습니다. 로컬 클래스는 Program 안에 정의합니다. 클래스는 속성과 메서드를 함께 묶는 단위입니다.')),
@@ -172,7 +194,12 @@ START-OF-SELECTION.
   DATA lv_result TYPE i.
   lv_result = lcl_calculator=>double( iv_number = 5 ).
   WRITE / lv_result.`), text('클래스 외부에서는 공개된 double 메서드를 호출하고, PRIVATE 영역의 c_factor는 클래스 내부에서 사용합니다. 호출 방식은 [[abap-modularization|프로그램 모듈화]]와 비교해 보세요.')),
-    source('11/17 · 11/18', [['SAP Help · CLASS DEFINITION', 'https://help.sap.com/docs/abap-cloud/abap-keywords-standard-abap/ABAPCLASS_DEFINITION.html']]));
+    source('11/17 · 11/18', [
+      ['`ZABAP_F##_11`', 'ABAP Call Class Method'],
+      ['`ZABAP_F##_12`', 'ABAP Local Class'],
+      ['`ZBC400_F##_GLOBAL_CLASS_1`', 'Global Class 실습 1'],
+      ['`ZBC400_F##_GLOBAL_CLASS_2`', 'Global Class 실습 2']
+    ]));
 
   docs['abap-types'].aliases.push('구조체', 'Structure', 'MOVE-CORRESPONDING');
   const typeSource = docs['abap-types'].sections.pop();
@@ -386,14 +413,18 @@ START-OF-SELECTION.
     INTO TABLE @DATA(gt_connections).
   cl_demo_output=>display( gt_connections ).`),
       text('so_carr는 Header Line과 Internal Table 본문을 함께 가지므로 INITIALIZATION에서는 Header Line(so_carr-sign 등)에 값을 채운 뒤 APPEND so_carr.로 본문에 넣고, AT SELECTION-SCREEN에서는 본문이 비었는지 so_carr[] IS INITIAL로 검사합니다.')),
-    section('이후 학습', text('DB에서 데이터를 읽고 변경하는 문법은 [[abap-open-sql|Open SQL]]에서 이어집니다. 이 문서는 11월 18일 Internal Table과 11월 20일 Classic ABAP Report 필기를 정리한 범위이며, ALV 화면 구성은 준비 중입니다.'))
-  ], '11/18 · 11/20', [
-    ['SAP Help · 내부 테이블과 키', 'https://help.sap.com/saphelp_gbt10/helpdata/en/fc/eb35de358411d1829f0000e829fbfe/content.htm'],
-    ['SAP Help · 기본 키 컴포넌트', 'https://help.sap.com/docs/ABAP_PLATFORM_NEW/8132142fd1a144a59303663a03a7c2d4/3606e11612b046e1b801fde0e26682b3.html'],
-    ['SAP Help · OCCURS와 기존 선언', 'https://help.sap.com/saphelp_em900/helpdata/en/fc/eb3646358411d1829f0000e829fbfe/content.htm'],
-    ['SAP Help · 내부 테이블 정렬', 'https://help.sap.com/docs/abap-cloud/abap-concepts/sorting-table-content'],
-    ['SAP ABAP 7.52 · SELECT-OPTIONS', 'https://help.sap.com/doc/abapdocu_752_index_htm/7.52/en-US/abapselect-options.htm'],
-    ['SAP ABAP 7.52 · 리포트 이벤트 순서', 'https://help.sap.com/doc/abapdocu_752_index_htm/7.52/en-US/abenprogram_events.htm']
+    section('리스트 아이콘과 컬럼 서식 참고', text(
+      '클래식 리스트 출력에 사용하는 SAP 아이콘 목록과 코드는 ICON 테이블(SE11 · SE16 조회)에서 확인할 수 있습니다.',
+      '아이콘 출력과 컬럼 서식(색상·강조·정렬 등)을 적용한 클래식 리포트 구현 예시는 표준 데모/해답 Program인 BC400_RPS_REP_A에서 확인할 수 있습니다(SE38 · SE80 조회). 현재 실습 시스템 버전은 ABAP 7.5 기준입니다.')),
+    section('이후 학습', text('DB에서 데이터를 읽고 변경하는 문법은 [[abap-open-sql|Open SQL]]에서, 전역 타입과 테이블 정의는 [[abap-dictionary|ABAP Dictionary]]에서 이어집니다. 이 문서는 11월 18일 Internal Table과 11월 20·23일 Classic ABAP Report 필기를 정리한 범위이며, ALV 화면 구성은 준비 중입니다.'))
+  ], '11/18 · 11/20 · 11/23', [
+    ['`ZABAP_F##_14`', 'ABAP Internal Table'],
+    ['`ZABAP_F##_15`', 'ABAP Header Line'],
+    ['`ZABAP_F##_16`', 'ABAP Internal table & Work area'],
+    ['`ZABAP_F##_17`', 'ABAP Select-Options'],
+    ['`ZBC400_F##_REP_A`', 'Report with Select-Options & Classic List (A)'],
+    ['`ZBC400_F##_REP_B`', 'Template: Report with Select Options and Classic List (B)'],
+    ['`ZBC430S_ITAB_SORTED`', 'Program SAPBC430S_ITAB_SORTED']
   ]);
 
   put('abap-open-sql', 'Open SQL', 'DB 테이블 조회부터 조건·집계·JOIN과 데이터 변경까지 정리합니다.',
@@ -623,15 +654,223 @@ ENDIF.`), text('SELECT 열에 키를 빼면 원래 서로 다른 행이 같은 �
         ['INTO ~ 절을 SELECT 문 마지막에 작성', 'SELECT 컬럼 목록을 쉼표(,)로 구분'],
         ['SELECT 절에 일반 컬럼 + 집계 함수 함께 작성', 'ABAP 호스트 변수 앞에 모두 @ 붙이기 (@p_carr, @so_carr, @DATA(...))']
       ]))
-  ], '11/19 · 11/20', [
-    ['SAP ABAP 7.52 · SELECT', 'https://help.sap.com/doc/abapdocu_752_index_htm/7.52/en-US/abapselect.htm'],
-    ['SAP ABAP 7.52 · INTO와 APPENDING', 'https://help.sap.com/doc/abapdocu_752_index_htm/7.52/en-US/abapinto_clause.htm'],
-    ['SAP ABAP 7.52 · 정렬된 첫 행과 건수 제한', 'https://help.sap.com/doc/abapdocu_752_index_htm/7.52/en-US/abapselect_up_to_offset.htm'],
-    ['SAP ABAP · 집계 결과와 COUNT 예외', 'https://help.sap.com/docs/abap-cloud/abap-keywords/select-col-spec'],
-    ['SAP ABAP 7.52 · JOIN', 'https://help.sap.com/doc/abapdocu_752_index_htm/7.52/en-US/abapselect_join.htm'],
-    ['SAP ABAP 7.52 · FOR ALL ENTRIES', 'https://help.sap.com/doc/abapdocu_752_index_htm/7.52/en-US/abenwhere_logexp_itab.htm'],
-    ['SAP ABAP 7.52 · MODIFY', 'https://help.sap.com/doc/abapdocu_752_index_htm/7.52/en-US/abapmodify_dbtab.htm'],
-    ['SAP Help · 트랜잭션과 LUW', 'https://help.sap.com/docs/abap-cloud/abap-concepts/luws-in-abap']
+  ], '11/19 · 11/20');
+
+  put('abap-dictionary', 'ABAP Dictionary', 'SE11에서 관리하는 Type Definitions·DB Objects·Services와 Domain, Data Element, Structure, Table Type, View를 정리합니다.',
+    ['데이터 사전', 'DDIC', 'DATA ELEMENT', '데이터 요소', 'Domain', '도메인', '데이터베이스 테이블', 'Transparent Table', 'Technical Attribute', 'Semantic Attribute', 'Search Help', 'SET/GET Parameters', 'Flat structure', 'Simple structure', 'Nested structure', 'Deep structure', 'Table Type', 'Line Type', 'Database view', 'Projection view', 'Help view', 'Maintenance view'], [
+    section('ABAP Dictionary의 역할과 3가지 기능', text(
+      'ABAP Dictionary(SE11)는 시스템 전체의 Program과 화면이 공유하는 전역 타입, 데이터베이스 객체, 입력 도움말 서비스를 중앙에서 정의·관리하는 저장소입니다. 현재 수업 실습 시스템은 ABAP 7.5 기준입니다.'),
+      table(['기능 구분', '포함 객체 · 역할'], [
+        ['1. Type Definitions', 'Data Element(기본 타입), Structure(구조 타입), Table Type(내부 테이블 타입) 등 전역 타입 정의'],
+        ['2. DB Objects', 'Transparent Table, View 등 실제 데이터베이스 객체 정의'],
+        ['3. Services', 'Search Help(F4 입력 도움말), Lock Object 등 화면·프로그램 지원 서비스']
+      ])),
+    section('View 4가지', text(
+      'SE11에서 View를 생성할 때는 목적에 따라 네 가지 유형 중 하나를 선택합니다. 필기에서 비어 있던 2·3번 항목(Projection view, Help view)은 SE11의 표준 4가지 View 기준으로 보완했습니다.'),
+      table(['순서 · 유형', '목적과 특징'], [
+        ['1. Database view', '하나 이상의 Transparent Table을 Inner Join으로 결합해 DB에 실제 뷰를 생성합니다(읽기 조회 중심).'],
+        ['2. Projection view', '단일 테이블에서 필요한 일부 필드(컬럼)만 선택해 노출합니다.'],
+        ['3. Help view', 'Search Help의 데이터 조회(Selection Method)에서 Outer Join이 필요할 때 사용합니다.'],
+        ['4. Maintenance view', '연관된 여러 테이블의 데이터를 하나의 업무 화면(SM30 등)에서 함께 조회·유지보수할 때 사용합니다.']
+      ])),
+    section('Data의 속성과 Domain · Data Element가 필요한 이유', text(
+      'Data 하나를 제대로 다루려면 어떤 종류·길이인지 나타내는 기술 속성과, 화면 라벨·도움말 같은 의미 속성을 모두 정해 주어야 합니다.'),
+      {
+        type: 'compare',
+        items: [
+          {
+            tag: 'Domain이 담당',
+            title: 'Technical Attribute',
+            points: [
+              '어떤 종류인지 (Data Type: CHAR, NUMC, DEC, INT4, DATS 등)',
+              '몇 글자인지 (길이 · 소수 자릿수)',
+              '허용 값 범위 (Value Range · Fixed Values)'
+            ]
+          },
+          {
+            tag: 'Data Element가 담당',
+            title: 'Semantic Attribute',
+            points: [
+              '화면에 표시할 단어와 언어별 번역 (Field Label / Translation)',
+              '입력 가능한 값 도움말 (Search Help · F4)',
+              '화면 간 값 전달 메모리 ID (SET/GET Parameters) 등 필드 의미·동작'
+            ]
+          }
+        ]
+      },
+      {
+        type: 'callout', style: 'point', title: '왜 Data Element와 Domain 두 단계로 나누어 만들어 둘까?',
+        body: '변수를 만들 때마다 종류·길이·화면 라벨·Search Help를 매번 하나하나 정하기 번거로우므로, 빈칸만 채워 재사용할 수 있게 미리 만들어 둔 양식이 **Data Element**입니다. 그런데 Data Element마다 또 “종류는 숫자 문자, 길이는 3글자” 같은 기술 속성을 반복 입력하는 것도 번거로우므로, **Technical Attribute만 따로 미리 만들어 여러 Data Element가 공유**하도록 한 틀이 **Domain**입니다.'
+      },
+      text('전체 참조 흐름(`TABLE → STRUCTURE · WORK AREA → DATA ELEMENT → Domain`)은 [[abap-thinking-flow|ABAP 사고 흐름]]의 ‘전체적인 그림’에서도 한눈에 볼 수 있습니다.')),
+    section('Domain — Technical Attribute와 SE11 절차', text(
+      'Domain은 필드의 기술적 속성(Technical Attribute)인 데이터 종류(Data Type)와 길이(No. Characters · Decimal Places), 출력 길이, 값 범위(Value Range)를 정의하는 틀입니다. 고객 생성 객체는 보통 Z 또는 Y로 시작하는 이름을 사용합니다.'),
+      table(['항목', '설정 내용', '예 (S_CONN_ID)'], [
+        ['1. 종류 (Data Type)', '데이터 형식 지정 (CHAR, NUMC, DEC, CURR, QUAN 등)', 'NUMC (숫자 문자)'],
+        ['2. 길이 (No. Characters)', '문자·숫자 자릿수 및 소수 자릿수(Decimal Places)', '길이 4 · 소수 없음'],
+        ['값 범위 (Value Range)', '고정값(Single Vals), 구간(Intervals), Value Table 지정 가능', '0000 ~ 9999 표현 범위']
+      ]),
+      {
+        type: 'practice',
+        title: 'SE11에서 Domain 조회 · 만드는 법',
+        steps: [
+          { step: '1', action: 'SE11 실행', detail: 'SAP GUI 명령 필드에 SE11을 입력해 ABAP Dictionary 초기 화면을 엽니다.' },
+          { step: '2', action: 'Domain 선택 및 이름 설정 후 Display / Create', detail: 'Domain 라디오 버튼을 선택하고 객체 이름(표준 예: S_CARR_ID, 신규 예: ZDO_GRADE_##)을 입력한 뒤 Display 또는 Create를 누릅니다.' },
+          { step: '3', action: '구성 입력', detail: 'Short Description을 적고 Definition 탭에서 Data Type(종류)과 No. Characters(길이), 필요 시 Value Range를 입력합니다.' },
+          { step: '4', action: 'Activate', detail: '저장 후 Activate(Ctrl + F3)하여 Data Element에서 참조할 수 있는 활성 버전으로 만듭니다.' }
+        ]
+      }),
+    section('Data Element — Semantic Attribute와 SE11 절차', text(
+      'Data Element는 필드의 의미적 속성(Semantic Attribute)을 담는 틀입니다. 기술 속성은 주로 Domain을 등록해 가져오며, 아래 세 가지 대표 의미·부가 속성을 설정할 수 있습니다.'),
+      table(['속성', '역할'], [
+        ['1. Field Label / Translation', '선택 화면·리스트·ALV 컬럼에 표시할 단어를 길이별(Short · Medium · Long · Heading)로 설정하고 각 언어별로 번역해 표시되게 할 수 있습니다(필기의 Field ID / Translation).'],
+        ['2. Search Help', 'Further Characteristics 탭에 Search Help를 연결해 입력 필드에서 F4 Help 항목을 제공하게 할 수 있습니다.'],
+        ['3. SET/GET Parameters', 'Further Characteristics 탭에 Parameter ID를 지정해 SAP Memory에 값을 저장(SET)하고 다른 스크린·트랜잭션으로 이동할 때 기본값을 불러오는(GET) 기능을 연결할 수 있습니다.']
+      ]),
+      {
+        type: 'practice',
+        title: 'SE11에서 Data Element 조회 · 만드는 법',
+        steps: [
+          { step: '1', action: 'SE11 실행', detail: 'ABAP Dictionary 초기 화면으로 이동합니다.' },
+          { step: '2', action: 'Data Type(Data Element) 선택 및 이름 설정 후 Display / Create', detail: 'SE11의 Data Type 칸에 이름(표준 예: S_CARR_ID, 신규 예: ZDE_CARRID_##)을 넣고 Display 또는 Create를 누른 뒤, 생성 팝업에서 Data Element를 선택합니다.' },
+          { step: '3', action: 'Data Type 설정 (Domain 등록)', detail: 'Data Type 탭의 Elementary Type에서 미리 정의된 Domain 이름을 입력합니다.' },
+          { step: '4', action: 'Field Label 등록', detail: 'Field Label 탭에서 Short · Medium · Long · Heading 문구를 입력합니다.' },
+          { step: '5', action: 'Activate', detail: '저장 후 Activate(Ctrl + F3)합니다.' }
+        ]
+      },
+      code('Data Element를 참조한 PARAMETERS와 변수 선언', `REPORT zabap_f##_##.
+
+PARAMETERS: p_carr TYPE s_carr_id DEFAULT 'LH',
+            p_conn TYPE s_conn_id DEFAULT '0400'.
+
+DATA gv_cityfrom TYPE spfli-cityfrom.
+DATA gv_cityto   TYPE spfli-cityto.
+
+START-OF-SELECTION.
+  SELECT SINGLE cityfrom, cityto
+    FROM spfli
+    WHERE carrid = @p_carr
+      AND connid = @p_conn
+    INTO (@gv_cityfrom, @gv_cityto).
+
+  IF sy-subrc = 0.
+    WRITE: / p_carr, p_conn, gv_cityfrom, '->', gv_cityto.
+  ELSE.
+    WRITE / '일치하는 노선이 없습니다.'.
+  ENDIF.`),
+      text('p_carr와 p_conn은 Data Element(S_CARR_ID, S_CONN_ID)를 참조하므로 Domain에 정의된 길이·타입뿐 아니라 Data Element의 Field Label, F4 Search Help, Parameter ID(CAR, CON) 특성까지 선택 화면에 그대로 반영됩니다.')),
+    section('Structure — 종류(Flat · Deep)와 .INCLUDE', text(
+      'Structure는 여러 컴포넌트(필드)를 묶어 하나의 행 모양을 정의하는 데이터 타입이자 다른 Structure·Table의 재료입니다. 데이터베이스에 실제 저장 공간을 만들지 않고 구조 모양만 정의합니다.',
+      '수업의 계층 예시처럼 ‘사람’이라는 구조가 ‘이름’과 ‘주소’ 속성으로 이루어지고, ‘이름’은 다시 ‘성’·‘이름’, ‘주소’는 ‘나라’·‘시’·‘구’·‘도로명 주소’로 이루어지면 사람-이름-성처럼 하이픈(-)을 이어 하위 속성에 접근(access)합니다.'),
+      table(['분류', '세부 종류', '구성 기준과 특징'], [
+        ['1. Flat structure', '1-1. Simple structure', '길이가 정해진 고정 길이 구조 중 Component Type이 모두 Elementary Type(기본 타입 · Data Element)으로만 구성된 일반적인 Structure입니다.'],
+        ['1. Flat structure', '1-2. Nested structure', 'Component Type 안에 다른 Structure Type이 포함된 중첩 구조입니다(구조-하위구조-필드 형태로 접근; 하위 끝단 필드가 모두 고정 길이면 Flat에 속함).'],
+        ['2. Deep structure', '길이가 정해지지 않은 구조', 'Component Type에 Table Type(내부 테이블)이나 string · xstring · 참조 변수 등 동적 요소가 하나라도 포함된 구조입니다.']
+      ]),
+      {
+        type: 'callout', style: 'tip', title: 'Nested structure보다 .INCLUDE를 더 많이 쓰는 이유',
+        body: 'SE11에서 Structure를 만들 때 Component 열에 **.INCLUDE**를 적고 Component Type에 다른 Structure를 넣으면(로컬 ABAP 코드의 `INCLUDE TYPE`과 동일 원리), 하위 구조 이름을 두 번 거쳐 접근(`gs_nested-route-cityfrom`)하는 대신 **그 자리에 필드를 그대로 붙여넣어 선언한 것처럼(`gs_included-cityfrom`) 평탄하게 작동**합니다.'
+      },
+      code('Nested Structure와 INCLUDE TYPE 접근 비교', `REPORT zabap_f##_##.
+
+TYPES: BEGIN OF ts_route_info,
+         cityfrom TYPE spfli-cityfrom,
+         cityto   TYPE spfli-cityto,
+       END OF ts_route_info.
+
+" 1) Nested structure: 하위 구조 이름(route)을 한 번 더 거쳐 접근
+TYPES: BEGIN OF ts_flight_nested,
+         carrid TYPE sflight-carrid,
+         connid TYPE sflight-connid,
+         route  TYPE ts_route_info,
+       END OF ts_flight_nested.
+
+" 2) INCLUDE TYPE (SE11의 .INCLUDE와 동일 개념): 현재 구조에 평탄하게 포함
+TYPES: BEGIN OF ts_flight_included,
+         carrid TYPE sflight-carrid,
+         connid TYPE sflight-connid.
+         INCLUDE TYPE ts_route_info.
+TYPES: END OF ts_flight_included.
+
+DATA gs_nested   TYPE ts_flight_nested.
+DATA gs_included TYPE ts_flight_included.
+
+gs_nested-carrid         = 'LH'.
+gs_nested-connid         = '0400'.
+gs_nested-route-cityfrom = 'FRANKFURT'.
+gs_nested-route-cityto   = 'NEW YORK'.
+
+gs_included-carrid   = 'LH'.
+gs_included-connid   = '0400'.
+gs_included-cityfrom = 'FRANKFURT'.
+gs_included-cityto   = 'NEW YORK'.
+
+WRITE: / 'Nested  :', gs_nested-carrid, gs_nested-route-cityfrom, gs_nested-route-cityto,
+       / 'Include :', gs_included-carrid, gs_included-cityfrom, gs_included-cityto.`),
+      {
+        type: 'practice',
+        title: 'SE11에서 Structure 조회 · 생성 방법',
+        steps: [
+          { step: '1', action: 'SE11 실행', detail: 'ABAP Dictionary 초기 화면을 엽니다.' },
+          { step: '2', action: 'Data Type 선택 및 이름 설정 후 Display / Create', detail: 'Data Type 라디오 버튼을 선택하고 이름(표준 예: BC400_S_FLIGHT, 신규 예: ZST_FLIGHT_##)을 입력한 뒤 Display 또는 Create를 누릅니다(필기의 Data Element 칸 위치가 SE11에서는 Data Type 통합 라디오 버튼입니다).' },
+          { step: '3', action: 'Structure 선택', detail: '유형 선택 팝업에서 Structure를 선택하고 Short Description을 입력합니다.' },
+          { step: '4', action: '컬럼명(Component) · Component Type 표 채우기', detail: 'Components 탭에서 필드명과 참조할 Data Element/Structure를 입력합니다. 다른 구조의 필드를 평탄하게 합칠 때는 Component에 .INCLUDE를 입력합니다.' },
+          { step: '5', action: 'Activate', detail: '필요 시 통화·수량 필드의 Currency/Quantity Fields 참조 탭을 확인한 뒤 Activate(Ctrl + F3)합니다.' }
+        ]
+      }),
+    section('Table Type — SE11 전역 내부 테이블 타입', text(
+      'Table Type은 Program 안에서 TYPES ... TYPE TABLE OF ...로 선언하던 내부 테이블 타입을 ABAP Dictionary에 전역으로 등록한 객체입니다(예: BC400_T_FLIGHTS). 행의 모양(Line Type), 접근 방식(Access Mode), 기본 키(Primary Key)를 함께 정의합니다.'),
+      {
+        type: 'practice',
+        title: 'SE11에서 Table Type 조회 · 생성 방법',
+        steps: [
+          { step: '1', action: 'SE11 실행', detail: 'ABAP Dictionary 초기 화면을 엽니다.' },
+          { step: '2', action: 'Data Type 선택 및 이름 설정 후 Display / Create', detail: 'Data Type 라디오 버튼에 이름(표준 예: BC400_T_FLIGHTS, 신규 예: ZTT_FLIGHTS_##)을 넣고 Display 또는 Create를 누릅니다.' },
+          { step: '3', action: 'Table Type 선택', detail: '유형 선택 팝업에서 Table Type을 선택하고 Short Description을 입력합니다.' },
+          { step: '4', action: 'Line Type 작성', detail: 'Line Type 탭에서 행 타입을 지정합니다. Structure가 가장 흔하지만 Data Element부터 다른 Table Type까지 모두 올 수 있습니다.' },
+          { step: '5', action: 'Initialization and Access 탭에서 Table 타입 선택', detail: 'Access Mode에서 Standard Table, Sorted Table, Hashed Table 중 목적에 맞는 테이블 종류를 선택합니다.' },
+          { step: '6', action: 'Primary Key에서 키 속성 선택 후 Activate', detail: 'Primary Key 탭에서 Key Definition(Standard Key · Key Components 등)과 Key Category(Unique · Non-Unique)를 선택한 뒤 Activate(Ctrl + F3)합니다.' }
+        ]
+      },
+      code('Deep Structure와 전역 Table Type 활용', `REPORT zabap_f##_##.
+
+TYPES: BEGIN OF ts_route,
+         connid   TYPE spfli-connid,
+         cityfrom TYPE spfli-cityfrom,
+         cityto   TYPE spfli-cityto,
+       END OF ts_route.
+TYPES tt_routes TYPE STANDARD TABLE OF ts_route WITH NON-UNIQUE KEY connid.
+
+" Component(routes)에 Table Type이 포함되어 길이가 가변인 Deep structure
+TYPES: BEGIN OF ts_carrier_deep,
+         carrid   TYPE scarr-carrid,
+         carrname TYPE scarr-carrname,
+         routes   TYPE tt_routes,
+       END OF ts_carrier_deep.
+
+DATA gs_carrier TYPE ts_carrier_deep.
+
+START-OF-SELECTION.
+  SELECT SINGLE carrid, carrname
+    FROM scarr
+    WHERE carrid = 'LH'
+    INTO (@gs_carrier-carrid, @gs_carrier-carrname).
+
+  SELECT connid, cityfrom, cityto
+    FROM spfli
+    WHERE carrid = 'LH'
+    ORDER BY connid
+    INTO TABLE @gs_carrier-routes.
+
+  WRITE: / gs_carrier-carrid, gs_carrier-carrname,
+         / '보유 노선 수:', lines( gs_carrier-routes ).`),
+      text('위 예제의 tt_routes처럼 내부 테이블 타입을 SE11에 전역 Table Type(예: BC400_T_FLIGHTS)으로 만들어 두면 여러 Program과 글로벌 Structure(Deep structure 컴포넌트)·함수/메서드 인터페이스에서 그대로 재사용할 수 있습니다.'))
+  ], '11/23', [
+    ['`ZABAP_F##_18`', 'ABAP Flat(Simple & Nested) Structure'],
+    ['`ZABAP_F##_19`', 'ABAP Deep Structure'],
+    ['`ZBC430S_DATA_ELEMENTS`', 'Program SAPBC430S_DATA_ELEMENTS'],
+    ['`ZBC430S_F##_STRUCT_NESTED`', 'Report SAPBC430S_STRUCT_NESTED'],
+    ['`ZBC430S_F##_STRUCT_DEEP`', 'Report SAPBC430S_STRUCT_DEEP (Deep Structure)']
   ]);
 
   // Remove the setup stub and repair every existing reference, including home and roadmap.
@@ -653,22 +892,23 @@ ENDIF.`), text('SELECT 열에 키를 빼면 원래 서로 다른 행이 같은 �
     'abap-objects': ['abap-modularization', 'abap-program-types'],
     'abap-program-types': ['abap-development', 'abap-modularization'],
     'abap-data-report': ['abap-types', 'abap-loops', 'abap-dictionary', 'abap-open-sql'],
-    'abap-open-sql': ['abap-data-report', 'abap-dictionary', 'abap-loops']
+    'abap-open-sql': ['abap-data-report', 'abap-dictionary', 'abap-loops'],
+    'abap-dictionary': ['abap-types', 'abap-data-report', 'abap-open-sql', 'sap-tcode-reference']
   };
   for (const [id, targets] of Object.entries(connections)) docs[id].sections.push(related(targets));
   // Move broad aliases to their dedicated topic pages.
   const owners = { 'SAP GUI': 'sap-architecture', '자료형': 'abap-types', 'Include 프로그램': 'abap-program-types', '리포트 프로그램': 'abap-program-types', 'Open SQL': 'abap-open-sql' };
   for (const doc of Object.values(docs)) doc.aliases = (doc.aliases || []).filter(alias => !owners[alias] || owners[alias] === doc.id);
   docs['learning-roadmap'].subtitle = '수업 필기 기반 ABAP 학습 순서';
-  docs['learning-roadmap'].summary = '11월 11~20일 필기를 주제별로 정리했습니다. 본문이 채워진 문서부터 읽고, 이후 과정은 준비된 목차로 확인하세요.';
+  docs['learning-roadmap'].summary = '11월 11~23일 필기를 주제별로 정리했습니다. 본문이 채워진 문서부터 읽고, 이후 과정은 준비된 목차로 확인하세요.';
   docs['learning-roadmap'].sections[0].blocks[0].rows = order.map(id => [docs[id].stepNum, `[[${id}|${docs[id].title}]]`, connections[id] ? '필기 정리 · 예제' : '목차 준비 · 본문 예정']);
   docs['welcome-abap'].topWidgetId = 'knowledge-map-entry';
   docs['welcome-abap'].sections[0].blocks = [text('[[learning-roadmap|전체 학습 목차]]에서 주제별 내용을 확인하세요. 수업 필기에서 다루지 않은 ERP 모듈은 목차로 남겨 두었습니다.'), table(['분야', '문서'], [
     ['시스템과 개발', '[[sap-architecture|SAP 시스템 구조]] · [[abap-development|개발 객체와 전송 관리]] · [[abap-program-types|Program 종류]]'],
     ['ABAP 기본기', '[[abap-basics|ABAP 기초]] · [[abap-types|자료형과 초기값]] · [[abap-loops|반복문과 시스템 필드]] · [[abap-debug-messages|디버깅과 메시지]]'],
     ['모듈화', '[[abap-modularization|프로그램 모듈화]] · [[abap-bapi|BAPI와 RFC]] · [[abap-objects|클래스와 메서드]]'],
-    ['데이터 처리', '[[abap-types|구조체와 자료형]] · [[abap-data-report|내부 테이블 · Report]] · [[abap-open-sql|Open SQL]]'],
-    ['이후 학습', '[[abap-dictionary|데이터 사전]] · [[learning-roadmap|ERP 모듈 목차]]']
+    ['데이터 처리', '[[abap-types|구조체와 자료형]] · [[abap-data-report|내부 테이블 · Report]] · [[abap-open-sql|Open SQL]] · [[abap-dictionary|ABAP Dictionary]]'],
+    ['이후 학습', '[[learning-roadmap|ERP 모듈 목차]]']
   ])];
   docs['abap-thinking-flow'] = {
     id: 'abap-thinking-flow',
@@ -974,6 +1214,89 @@ END-OF-SELECTION.
   CALL METHOD cl_demo_output=>display
     EXPORTING
       data = gt_output.`)
+      )
+    ]
+  };
+  docs['sap-gui-programs'] = {
+    id: 'sap-gui-programs',
+    track: 'abap',
+    stepNum: '',
+    categoryId: '학습 가이드',
+    hideSectionNumbers: true,
+    title: 'SAP GUI 프로그램 정리표',
+    subtitle: 'SE80 · Package ZBC400_F## 실습 Program 파트별 가이드',
+    aliases: ['SAP GUI 프로그램 정리표', '프로그램 정리표', '실습 프로그램 정리표', 'ZBC400_F##'],
+    tcodes: [],
+    specs: {},
+    summary: 'SE80 Repository Browser의 Package ZBC400_F## 아래에 있는 실습 Program을 공부 파트별로 정리했습니다. F## 자리에 본인 번호를 넣어 SE80 또는 SE38에서 열어 복습하세요.',
+    sections: [
+      section('SE80에서 찾는 법',
+        {
+          type: 'callout',
+          style: 'tip',
+          title: 'Package ZBC400_F## 열기',
+          body: 'SAP GUI에서 **SE80**을 열고 왼쪽 Repository Browser에서 **Package** → **`ZBC400_F##`**(본인 번호)을 입력하면 아래 `Programs` 목록 전체를 펼쳐서 볼 수 있습니다. 새로 만든 Program이 목록에 바로 안 보이면 Package 우클릭 → **Additional Functions → Rebuild Object List**를 실행하세요.'
+        }
+      ),
+      section('파트별 한눈에 보기',
+        table(['공부할 파트', '관련 위키 문서', '열어 볼 실습 Program (`ZBC400_F##`)'], [
+          ['ABAP 기초 · 문법 · 조건문', '[[abap-basics|ABAP 기초]]', '`ZABAP_F##_01`, `02`, `04`, `05`<br>`ZBC400_F##_HELLO`, `ZBC400_F##_COMPUTE`'],
+          ['자료형 · 구조체', '[[abap-types|자료형과 초기값]]', '`ZABAP_F##_03`, `13`<br>`ZBC400_F##_STRUCTURE`'],
+          ['반복문 · 시스템 필드', '[[abap-loops|반복문과 시스템 필드]]', '`ZABAP_F##_06`, `07`<br>`ZBC400_F##_LOOP`'],
+          ['모듈화 (FORM · Function Module)', '[[abap-modularization|프로그램 모듈화]]', '`ZABAP_F##_08`, `09`, `10`<br>`ZBC400_F##_SUBROUTINE`, `ZBC400_F##_FUNCTION_MODULE`, `ZBC400_F##_FUNCTION_MODULE_2`'],
+          ['클래스 · 메서드', '[[abap-objects|클래스와 메서드]]', '`ZABAP_F##_11`, `12`<br>`ZBC400_F##_GLOBAL_CLASS_1`, `ZBC400_F##_GLOBAL_CLASS_2`'],
+          ['Internal Table · Classic Report', '[[abap-data-report|데이터 처리와 리포트]]', '`ZABAP_F##_14`, `15`, `16`, `17`<br>`ZBC400_F##_REP_A`, `ZBC400_F##_REP_B`, `ZBC430S_ITAB_SORTED`'],
+          ['ABAP Dictionary (Data Element · Structure)', '[[abap-dictionary|ABAP Dictionary]]', '`ZABAP_F##_18`, `19`<br>`ZBC430S_DATA_ELEMENTS`, `ZBC430S_F##_STRUCT_NESTED`, `ZBC430S_F##_STRUCT_DEEP`']
+        ])
+      ),
+      section('ZABAP_F##_01 ~ 19 · 수업 진도별 Program',
+        text('강사님과 수업 순서대로 작성한 핵심 개념별 Program 목록입니다.'),
+        table(['Program', '설명 (Description)', '공부할 파트', '확인 포인트'], [
+          ['`ZABAP_F##_01`', 'ABAP Write statement', '[[abap-basics|ABAP 기초]]', '기본 `WRITE` 출력과 줄바꿈(`/`)'],
+          ['`ZABAP_F##_02`', 'ABAP Syntax', '[[abap-basics|ABAP 기초]]', '문장 마침표(.), 주석(`*`, `"`), 체인 문법(`:`)'],
+          ['`ZABAP_F##_03`', 'ABAP Data Type & Elementary Data Objects', '[[abap-types|자료형과 초기값]]', '기본 자료형(`c`, `n`, `i`, `p`, `d`, `t`, `string`)과 `TYPE`/`LIKE`·초기값'],
+          ['`ZABAP_F##_04`', 'ABAP Calculation', '[[abap-basics|ABAP 기초]]', '산술 연산, `DIV`/`MOD`, 계산 결과 변수 저장'],
+          ['`ZABAP_F##_05`', 'ABAP IF Conditional Statement', '[[abap-basics|ABAP 기초]]', '`IF` / `ELSEIF` / `ELSE` / `CASE` 조건 분기'],
+          ['`ZABAP_F##_06`', 'ABAP Loop Statement', '[[abap-loops|반복문과 시스템 필드]]', '`DO`, `WHILE`, `CONTINUE`, `EXIT`, `sy-index`'],
+          ['`ZABAP_F##_07`', 'ABAP sy-subrc System Field', '[[abap-loops|반복문과 시스템 필드]]', '문장 실행 결과 반환 코드 `sy-subrc` 판별'],
+          ['`ZABAP_F##_08`', 'ABAP Subroutine', '[[abap-modularization|프로그램 모듈화]]', '`FORM ... ENDFORM` 정의와 `PERFORM` 호출'],
+          ['`ZABAP_F##_09`', 'ABAP Subroutine Parameters', '[[abap-modularization|프로그램 모듈화]]', '`USING` / `CHANGING`, `VALUE(...)` 값 전달 vs 참조 전달'],
+          ['`ZABAP_F##_10`', 'ABAP Function Module', '[[abap-modularization|프로그램 모듈화]]', '`SE37` 함수 모듈 인터페이스와 `CALL FUNCTION` 호출 방향'],
+          ['`ZABAP_F##_11`', 'ABAP Call Class Method', '[[abap-objects|클래스와 메서드]]', '정적 메서드(`=>`)와 인스턴스 메서드(`->`) 호출'],
+          ['`ZABAP_F##_12`', 'ABAP Local Class', '[[abap-objects|클래스와 메서드]]', '`CLASS ... DEFINITION / IMPLEMENTATION`, `PUBLIC`/`PRIVATE`'],
+          ['`ZABAP_F##_13`', 'ABAP Structure Variable', '[[abap-types|자료형과 초기값]]', '로컬 구조 타입(`ts_`)·구조 변수(`gs_`) 선언과 `MOVE-CORRESPONDING`'],
+          ['`ZABAP_F##_14`', 'ABAP Internal Table', '[[abap-data-report|데이터 처리와 리포트]]', '`STANDARD`/`SORTED`/`HASHED` Internal Table 선언·행 조작(`APPEND`, `INSERT`, `READ`, `MODIFY`, `DELETE`, `SORT`)'],
+          ['`ZABAP_F##_15`', 'ABAP Header Line', '[[abap-data-report|데이터 처리와 리포트]]', '기존 코드의 `WITH HEADER LINE`과 `CLEAR itab` vs `CLEAR itab[]` 구분'],
+          ['`ZABAP_F##_16`', 'ABAP Internal table & Work area', '[[abap-data-report|데이터 처리와 리포트]]', '글로벌/로컬 `TYPE`, `TYPE TABLE OF`, `TYPE LINE OF`, `LIKE` 선언 비교'],
+          ['`ZABAP_F##_17`', 'ABAP Select-Options', '[[abap-data-report|데이터 처리와 리포트]]', '`SELECT-OPTIONS`(`SIGN`·`OPTION`·`LOW`·`HIGH`), `WHERE ... IN`과 Selection Screen'],
+          ['`ZABAP_F##_18`', 'ABAP Flat(Simple & Nested) Structure', '[[abap-dictionary|ABAP Dictionary]]', '`Simple structure` vs `Nested structure`와 `.INCLUDE` 접근 비교'],
+          ['`ZABAP_F##_19`', 'ABAP Deep Structure', '[[abap-dictionary|ABAP Dictionary]]', '컴포넌트에 `Table Type`이 포함된 `Deep structure` 구성과 활용']
+        ])
+      ),
+      section('ZBC400_F##_* · BC400 교재 실습 Program',
+        text('BC400 교재 Exercise를 따라 작성·복사한 실습 Program입니다.'),
+        table(['Program', '공부할 파트', '확인 포인트'], [
+          ['`ZBC400_F##_HELLO`', '[[abap-basics|ABAP 기초]]', '첫 실행 가능 Program 생성·활성화·실행 (Exercise 2)'],
+          ['`ZBC400_F##_COMPUTE`', '[[abap-basics|ABAP 기초]]', '기본 연산문과 변수 처리 실습 (Exercise 4)'],
+          ['`ZBC400_F##_LOOP`', '[[abap-loops|반복문과 시스템 필드]]', '반복문과 디버거 단계 실행 확인'],
+          ['`ZBC400_F##_SUBROUTINE`', '[[abap-modularization|프로그램 모듈화]]', 'Subroutine(`FORM` / `PERFORM`) 구현 실습 (Exercise 6)'],
+          ['`ZBC400_F##_FUNCTION_MODULE`', '[[abap-modularization|프로그램 모듈화]]', 'Function Module 호출 실습 1 (Exercise 7)'],
+          ['`ZBC400_F##_FUNCTION_MODULE_2`', '[[abap-modularization|프로그램 모듈화]]', '직접 만든 Function Module 호출 실습 2 (Exercise 9)'],
+          ['`ZBC400_F##_GLOBAL_CLASS_1`', '[[abap-objects|클래스와 메서드]]', 'Global Class 정적 메서드 호출 실습 1 (Exercise 10)'],
+          ['`ZBC400_F##_GLOBAL_CLASS_2`', '[[abap-objects|클래스와 메서드]]', 'Global Class 생성 및 메서드 호출 실습 2 (Exercise 11~12)'],
+          ['`ZBC400_F##_STRUCTURE`', '[[abap-types|자료형과 초기값]]', 'Structured Data Objects 실습 (Exercise 13)'],
+          ['`ZBC400_F##_REP_A`', '[[abap-data-report|데이터 처리와 리포트]]', 'Select-Options·Classic List·아이콘·컬럼 서식 실습 템플릿 A (Exercise 20)'],
+          ['`ZBC400_F##_REP_B`', '[[abap-data-report|데이터 처리와 리포트]]', 'Select-Options·Classic List·Report 이벤트 실습 템플릿 B (Exercise 21)']
+        ])
+      ),
+      section('ZBC430S_* · BC430(Dictionary · Table) 실습 Program',
+        text('BC430 ABAP Dictionary 파트에서 표준 예제(`SAPBC430S_*`)를 기반으로 다루는 Program입니다.'),
+        table(['Program', '원본 / 설명', '공부할 파트', '확인 포인트'], [
+          ['`ZBC430S_DATA_ELEMENTS`', 'Program `SAPBC430S_DATA_ELEMENTS`', '[[abap-dictionary|ABAP Dictionary]]', '`Data Element`·`Domain` 참조와 `Field Label`·`F4 Help` 동작 확인'],
+          ['`ZBC430S_F##_STRUCT_NESTED`', 'Report `SAPBC430S_STRUCT_NESTED`', '[[abap-dictionary|ABAP Dictionary]]', '`Nested structure`와 `.INCLUDE` 컴포넌트 접근 방식 확인'],
+          ['`ZBC430S_F##_STRUCT_DEEP`', 'Deep Structure 실습', '[[abap-dictionary|ABAP Dictionary]]', '내부 테이블(`Table Type`)을 포함하는 `Deep structure` 확인'],
+          ['`ZBC430S_ITAB_SORTED`', 'Program `SAPBC430S_ITAB_SORTED`', '[[abap-data-report|데이터 처리와 리포트]]', '`Sorted Table` 선언·정렬 유지·키 접근 확인']
+        ])
       )
     ]
   };

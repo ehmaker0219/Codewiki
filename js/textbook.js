@@ -46,8 +46,8 @@
       [273, 'Exercise 14: Use Internal Tables', ['abap-data-report']]
     ]],
     [6, 283, 'Data Modeling and Data Retrieval', [
-      [285, 'Lesson: Explaining Data Models'],
-      [295, 'Exercise 15: Analyze Transparent Tables in the Data Dictionary'],
+      [285, 'Lesson: Explaining Data Models', ['abap-dictionary']],
+      [295, 'Exercise 15: Analyze Transparent Tables in the Data Dictionary', ['abap-dictionary', 'abap-open-sql']],
       [301, 'Lesson: Retrieving Single Database Records', ['abap-open-sql']],
       [309, 'Exercise 16: Implement Single Record Access', ['abap-open-sql']],
       [315, 'Lesson: Retrieving Multiple Database Records', ['abap-open-sql']],

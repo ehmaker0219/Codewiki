@@ -300,6 +300,7 @@ code, pre, .mono {
 .admin-workspace #brandTrackToggle,
 .admin-workspace #sbHomeItem,
 .admin-workspace #sbThinkingFlowItem,
+.admin-workspace #sbProgramCatalogItem,
 .admin-workspace #mealMenuGroup { display:none; }
 .admin-workspace #workspaceNavigation { gap:24px; }
 .admin-workspace #adminSidebarSlot,

@@ -143,6 +143,7 @@
       document.getElementById('sbHomeItem')?.classList.add('active');
       document.getElementById('sbScheduleItem')?.classList.remove('active');
       document.getElementById('sbThinkingFlowItem')?.classList.remove('active');
+      document.getElementById('sbProgramCatalogItem')?.classList.remove('active');
       document.querySelectorAll('.nav-doc-link.active').forEach(el=>el.classList.remove('active'));
       active=true;
     }
