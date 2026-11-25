@@ -590,7 +590,7 @@
     window.CodeWikiStudy?.leave?.();
     window.CodeWikiMentoring?.leave?.();
     window.CodeWikiObjectGame?.leave?.();
-    document.querySelectorAll('#sbHomeItem.active, #sbScheduleItem.active, #sbThinkingFlowItem.active, #sbProgramCatalogItem.active, .nav-doc-link.active').forEach(el => el.classList.remove('active'));
+    document.querySelectorAll('#sbHomeItem.active, #sbScheduleItem.active, #sbThinkingFlowItem.active, #sbProgramCatalogItem.active, #sbSqlGuideItem.active, .nav-doc-link.active').forEach(el => el.classList.remove('active'));
     document.getElementById('quizModeBtn')?.classList.add('hidden');
     if (!mounted) {
       mounted = true;

@@ -325,6 +325,7 @@
     document.getElementById('sbScheduleItem')?.classList.toggle('active', currentDocId === 'education-schedule');
     document.getElementById('sbThinkingFlowItem')?.classList.toggle('active', currentDocId === 'abap-thinking-flow');
     document.getElementById('sbProgramCatalogItem')?.classList.toggle('active', currentDocId === 'sap-gui-programs');
+    document.getElementById('sbSqlGuideItem')?.classList.toggle('active', currentDocId === 'abap-sql-guide');
     document.getElementById('sbTextbookItem')?.classList.toggle('active', currentDocId === 'abap-textbook');
     syncTrackChrome();
 
@@ -619,6 +620,8 @@
   }
 
   // 메인 문서 렌더링
+  const activeDocTabs = new Map();
+  const activeDocModes = new Map();
   function renderDocument(docId) {
     if ((docId === 'welcome-abap' || docId === 'welcome-ui5') && window.CodeWikiAdminMembers?.openHome()) return;
     if (docId === "erp-setup") {
@@ -667,6 +670,14 @@
 
     let widgetCounter = 0;
     const sections = doc.sections || [];
+    const hasSectionTabs = Array.isArray(doc.sectionTabs) && doc.sectionTabs.length > 0;
+    const hasSyntaxModes = Array.isArray(doc.syntaxModes) && doc.syntaxModes.length > 0;
+    const initialMode = hasSyntaxModes
+      ? (doc.syntaxModes.some(m => m.id === activeDocModes.get(doc.id))
+        ? activeDocModes.get(doc.id)
+        : (doc.syntaxModes.some(m => m.id === doc.defaultSyntaxMode) ? doc.defaultSyntaxMode : doc.syntaxModes[0].id))
+      : null;
+    const syntaxModeMap = hasSyntaxModes ? new Map(doc.syntaxModes.map(m => [m.id, m])) : null;
     const hasMetaTop = Boolean(doc.categoryId || doc.stepNum || (doc.tcodes && doc.tcodes.length > 0));
     const showFooter = !doc.isHome;
 
@@ -714,7 +725,44 @@
 
       ${isDocumentPending(doc) ? '<div class="pending-doc-notice" role="status"><strong>준비 중</strong><p>아직 본문이 작성되지 않았습니다. 아래 학습 목차에 맞춰 내용을 보강할 예정입니다.</p></div>' : ""}
       <div id="documentTocSlot"></div>
-      <div class="doc-sections-wrap">
+      ${
+        hasSyntaxModes
+          ? `
+        <div class="doc-syntax-panel" id="docSyntaxPanel" data-syntax-mode="${esc(initialMode)}">
+          <div class="doc-syntax-header">
+            <div class="doc-syntax-switch" role="group" aria-label="${esc(doc.title)} 문법 선택">
+              ${doc.syntaxModes
+                .map(
+                  mode => `<button type="button" class="doc-syntax-btn" id="docSyntax-${esc(mode.id)}" data-doc-mode="${esc(mode.id)}" aria-pressed="false"><span class="doc-syntax-label">${esc(mode.label)}</span>${mode.badge ? `<span class="doc-syntax-badge">${esc(mode.badge)}</span>` : ""}</button>`
+                )
+                .join("")}
+            </div>
+            <span class="doc-syntax-current" id="docSyntaxCurrent"></span>
+          </div>
+          <p class="doc-syntax-desc" id="docSyntaxDesc"></p>
+        </div>
+      `
+          : ""
+      }
+      ${
+        hasSectionTabs
+          ? `
+        <div class="doc-tab-shell">
+          <div class="doc-tab-bar" role="tablist" aria-label="${esc(doc.title)} 주제 탭">
+            <button type="button" class="doc-tab-btn" role="tab" id="docTab-all" data-doc-tab="all" aria-selected="false" tabindex="-1"><span class="doc-tab-label">전체 보기</span><span class="doc-tab-count">${sections.length}</span></button>
+            ${doc.sectionTabs
+              .map(tab => {
+                const count = sections.filter(sec => sec.tab === tab.id).length;
+                return `<button type="button" class="doc-tab-btn" role="tab" id="docTab-${esc(tab.id)}" data-doc-tab="${esc(tab.id)}" aria-selected="false" tabindex="-1"><span class="doc-tab-label">${esc(tab.label)}</span><span class="doc-tab-count">${count}</span></button>`;
+              })
+              .join("")}
+          </div>
+          <p class="doc-tab-desc" id="docTabDesc"></p>
+        </div>
+      `
+          : ""
+      }
+      <div class="doc-sections-wrap"${hasSectionTabs ? ' role="tabpanel" id="docTabPanel"' : ""}${hasSyntaxModes ? ` data-active-mode="${esc(initialMode)}"` : ""}>
         ${
           sections.length === 0
             ? `
@@ -724,11 +772,17 @@
         `
             : sections
                 .map(
-                  (sec, sIdx) => `
-          <section class="doc-section" id="sec-${sIdx + 1}">
+                  (sec, sIdx) => {
+                    const secMode = sec.mode || "both";
+                    const modePill = hasSyntaxModes
+                      ? `<span class="doc-sec-mode-pill mode-${esc(secMode)}">${esc(secMode === "both" ? "공통" : (syntaxModeMap.get(secMode)?.label || secMode))}</span>`
+                      : "";
+                    return `
+          <section class="doc-section" id="sec-${sIdx + 1}"${sec.tab ? ` data-section-tab="${esc(sec.tab)}"` : ""}${hasSyntaxModes ? ` data-section-mode="${esc(secMode)}"` : ""}>
             <h2 class="doc-sec-title">
               ${doc.hideSectionNumbers ? "" : `<span class="doc-sec-num">${sIdx + 1}.</span>`}
               <span>${esc(sec.title)}</span>
+              ${modePill}
             </h2>
             ${!(sec.blocks || []).length ? '<p class="pending-section-note">준비 중 · 본문을 작성하고 있습니다.</p>' : ""}
             ${(sec.blocks || [])
@@ -738,7 +792,8 @@
               })
               .join("")}
           </section>
-        `
+        `;
+                  }
                 )
                 .join("")
         }
@@ -762,6 +817,116 @@
           : ""
       }
     `;
+
+    if (hasSectionTabs || hasSyntaxModes) {
+      const tabButtons = [...articleContainer.querySelectorAll("[data-doc-tab]")];
+      const modeButtons = [...articleContainer.querySelectorAll("[data-doc-mode]")];
+      const sectionNodes = [...articleContainer.querySelectorAll(".doc-section")];
+      const sectionsWrap = articleContainer.querySelector(".doc-sections-wrap");
+      const tabDesc = document.getElementById("docTabDesc");
+      const tabPanel = document.getElementById("docTabPanel");
+      const syntaxPanel = document.getElementById("docSyntaxPanel");
+      const syntaxCurrent = document.getElementById("docSyntaxCurrent");
+      const syntaxDesc = document.getElementById("docSyntaxDesc");
+      const tabMap = hasSectionTabs ? new Map(doc.sectionTabs.map(t => [t.id, t])) : new Map();
+
+      let currentMode = initialMode;
+      let currentTab = hasSectionTabs ? (activeDocTabs.get(doc.id) || doc.sectionTabs[0].id) : "all";
+
+      const matchesMode = (secMode, modeId) => !hasSyntaxModes || !secMode || secMode === "both" || secMode === modeId;
+
+      const applyDocView = (nextTabId, nextModeId, focusEl = null) => {
+        if (hasSyntaxModes) {
+          currentMode = syntaxModeMap.has(nextModeId) ? nextModeId : initialMode;
+          activeDocModes.set(doc.id, currentMode);
+          const modeMeta = syntaxModeMap.get(currentMode);
+          if (syntaxPanel) syntaxPanel.dataset.syntaxMode = currentMode;
+          if (sectionsWrap) sectionsWrap.dataset.activeMode = currentMode;
+          modeButtons.forEach(btn => {
+            const active = btn.dataset.docMode === currentMode;
+            btn.classList.toggle("active", active);
+            btn.setAttribute("aria-pressed", String(active));
+            if (active && focusEl === "mode") btn.focus();
+          });
+          if (syntaxCurrent && modeMeta) {
+            syntaxCurrent.textContent = `현재 화면 · ${modeMeta.bannerTitle || modeMeta.label}`;
+          }
+          if (syntaxDesc && modeMeta) {
+            syntaxDesc.textContent = modeMeta.desc || "";
+          }
+        }
+
+        const modeSections = sections.filter(sec => matchesMode(sec.mode || "both", currentMode));
+
+        if (hasSectionTabs) {
+          currentTab = nextTabId === "all" || tabMap.has(nextTabId) ? nextTabId : doc.sectionTabs[0].id;
+          activeDocTabs.set(doc.id, currentTab);
+          tabButtons.forEach(btn => {
+            const id = btn.dataset.docTab;
+            const active = id === currentTab;
+            btn.classList.toggle("active", active);
+            btn.setAttribute("aria-selected", String(active));
+            btn.tabIndex = active ? 0 : -1;
+            const labelNode = btn.querySelector(".doc-tab-label");
+            const countNode = btn.querySelector(".doc-tab-count");
+            if (id === "all") {
+              if (countNode) countNode.textContent = String(modeSections.length);
+            } else {
+              const meta = tabMap.get(id);
+              if (labelNode && meta) labelNode.textContent = (hasSyntaxModes && meta.labelByMode?.[currentMode]) || meta.label;
+              if (countNode) countNode.textContent = String(modeSections.filter(sec => sec.tab === id).length);
+            }
+            if (active && focusEl === "tab") btn.focus();
+          });
+          if (tabPanel) tabPanel.setAttribute("aria-labelledby", `docTab-${currentTab}`);
+          if (tabDesc) {
+            const modePrefix = hasSyntaxModes ? `${syntaxModeMap.get(currentMode)?.label || ""} ` : "";
+            const meta = tabMap.get(currentTab);
+            tabDesc.textContent = currentTab === "all"
+              ? `${modePrefix}전체 ${modeSections.length}개 주제를 한 번에 보고 있습니다.`
+              : ((hasSyntaxModes && meta?.descByMode?.[currentMode]) || meta?.desc || "");
+          }
+        }
+
+        sectionNodes.forEach(sec => {
+          const modeOk = matchesMode(sec.dataset.sectionMode || "both", currentMode);
+          const tabOk = !hasSectionTabs || currentTab === "all" || sec.dataset.sectionTab === currentTab;
+          sec.hidden = !(modeOk && tabOk);
+        });
+      };
+
+      modeButtons.forEach((btn, idx) => {
+        btn.addEventListener("click", () => applyDocView(currentTab, btn.dataset.docMode));
+        btn.addEventListener("keydown", e => {
+          let nextIdx = -1;
+          if (e.key === "ArrowRight") nextIdx = (idx + 1) % modeButtons.length;
+          else if (e.key === "ArrowLeft") nextIdx = (idx - 1 + modeButtons.length) % modeButtons.length;
+          else if (e.key === "Home") nextIdx = 0;
+          else if (e.key === "End") nextIdx = modeButtons.length - 1;
+          if (nextIdx >= 0) {
+            e.preventDefault();
+            applyDocView(currentTab, modeButtons[nextIdx].dataset.docMode, "mode");
+          }
+        });
+      });
+
+      tabButtons.forEach((btn, idx) => {
+        btn.addEventListener("click", () => applyDocView(btn.dataset.docTab, currentMode));
+        btn.addEventListener("keydown", e => {
+          let nextIdx = -1;
+          if (e.key === "ArrowRight") nextIdx = (idx + 1) % tabButtons.length;
+          else if (e.key === "ArrowLeft") nextIdx = (idx - 1 + tabButtons.length) % tabButtons.length;
+          else if (e.key === "Home") nextIdx = 0;
+          else if (e.key === "End") nextIdx = tabButtons.length - 1;
+          if (nextIdx >= 0) {
+            e.preventDefault();
+            applyDocView(tabButtons[nextIdx].dataset.docTab, currentMode, "tab");
+          }
+        });
+      });
+
+      applyDocView(currentTab, currentMode);
+    }
 
     const toggleReadBtn = document.getElementById("toggleReadBtn");
     if (toggleReadBtn) {

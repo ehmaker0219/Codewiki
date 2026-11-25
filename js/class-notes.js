@@ -1455,6 +1455,960 @@ END-OF-SELECTION.
       )
     ]
   };
+  const sqlSection = (tab, mode, title, ...blocks) => ({ tab, mode, title, blocks });
+  docs['abap-sql-guide'] = {
+    id: 'abap-sql-guide',
+    track: 'abap',
+    studentOnly: true,
+    stepNum: '',
+    categoryId: '학습 가이드',
+    hideSectionNumbers: true,
+    hideToc: true,
+    title: 'ABAP SQL 가이드',
+    subtitle: 'ABAP 내에서 활용하는 Open SQL 실전 레퍼런스 — 구문법(Classic) · 신문법(7.40+) 분리 보기',
+    aliases: ['SQL 가이드', 'ABAP SQL 레퍼런스', 'SQL 표현식', 'DB LUW', 'SAP LUW', 'Lock Object', 'ST05'],
+    tcodes: ['SE11', 'SE16', 'SE38', 'ST05'],
+    specs: {},
+    summary: 'ABAP Program 안에서 데이터베이스를 읽고 변경할 때 사용하는 Open SQL 문법과 실전 패턴을 정리했습니다. 아래 버튼에서 **구문법(Classic)**과 **신문법(7.40+ · Strict Mode)**을 전환해 서로 섞이지 않게 따로 확인할 수 있으며, 모든 예제는 SAP 항공 모델(SCARR·SPFLI·SFLIGHT·SBOOK·SCUSTOM) 기준입니다.',
+    defaultSyntaxMode: 'new',
+    syntaxModes: [
+      {
+        id: 'classic',
+        label: '구문법',
+        badge: 'Classic',
+        bannerTitle: '구문법 (Classic Open SQL)',
+        desc: 'ABAP 7.40 SP05 이전·비-Strict Mode 기준입니다. 컬럼 공백 구분, @ 미사용, INTO 절을 FROM 뒤·WHERE 앞에 배치하며 사전 TYPES/DATA 선언이 필요합니다.'
+      },
+      {
+        id: 'new',
+        label: '신문법',
+        badge: '7.40+ · 권장',
+        bannerTitle: '신문법 (ABAP 7.40+ / 7.5+ · Strict Mode)',
+        desc: '현재 수업·실무 권장 기준입니다. 쉼표(,)로 컬럼을 구분하고 ABAP 변수 앞에 @를 붙이며, INTO 절을 문장 끝에 두고 @DATA(...) 인라인 선언·SQL 표현식을 활용합니다.'
+      }
+    ],
+    sectionTabs: [
+      {
+        id: 'select',
+        label: 'SELECT · INTO',
+        desc: 'ABAP 안의 SQL 범위(Open SQL vs Native SQL), 단건·다건 조회, INTO TABLE · CORRESPONDING · APPENDING 패턴을 정리합니다.',
+        descByMode: {
+          classic: '구문법(Classic) 기준의 SELECT 절 순서, 공백 구분 단건·다건 조회, 사전 DATA 선언 기반 INTO TABLE · CORRESPONDING · APPENDING 패턴을 표시합니다.',
+          new: '신문법(7.40+ Strict Mode) 기준의 SELECT 절 순서, 쉼표·@·INTO 문장 끝 배치, @DATA(...) 인라인 선언 기반 단건·다건 조회 패턴을 표시합니다.'
+        }
+      },
+      {
+        id: 'filter',
+        label: '조건 · 집계',
+        desc: 'WHERE 연산자, SELECT-OPTIONS, LIKE · NULL, DISTINCT · 집계 함수 · GROUP BY · HAVING과 0건 시 시스템 필드를 정리합니다.',
+        descByMode: {
+          classic: '구문법 기준의 WHERE(@ 미사용)·SELECT-OPTIONS·LIKE·NULL과 공백 구분 GROUP BY · HAVING 집계 패턴을 표시합니다.',
+          new: '신문법 기준의 WHERE(@ 호스트 변수)·SELECT-OPTIONS(IN @so_)·LIKE·NULL과 쉼표 구분 GROUP BY · HAVING 집계 패턴을 표시합니다.'
+        }
+      },
+      {
+        id: 'join',
+        label: 'JOIN · 서브쿼리 · FAE',
+        desc: 'INNER / LEFT OUTER JOIN의 ON vs WHERE 차이, EXISTS · IN 서브쿼리, FOR ALL ENTRIES 안전 규칙을 정리합니다.',
+        descByMode: {
+          classic: '구문법 기준의 INNER / LEFT OUTER JOIN(ON 제약 포함), EXISTS 서브쿼리, @ 없는 FOR ALL ENTRIES 안전 패턴을 표시합니다.',
+          new: '신문법 기준의 INNER / LEFT / RIGHT / CROSS JOIN, EXISTS 서브쿼리, @lt_keys 기반 FOR ALL ENTRIES 안전 패턴을 표시합니다.'
+        }
+      },
+      {
+        id: 'dml',
+        label: '변경(CUD) · 트랜잭션',
+        desc: 'INSERT · UPDATE · MODIFY · DELETE 문법과 DB LUW · SAP LUW · Lock Object 안전 원칙을 정리합니다.',
+        descByMode: {
+          classic: '구문법 기준의 INSERT · UPDATE · MODIFY · DELETE(@ 미사용 · TABLES 헤더 구문 주의)와 DB LUW · SAP LUW · Lock Object 원칙을 표시합니다.',
+          new: '신문법 기준의 @ 호스트 변수 기반 INSERT · UPDATE · MODIFY · DELETE와 DB LUW · SAP LUW · Lock Object 원칙을 표시합니다.'
+        }
+      },
+      {
+        id: 'advanced',
+        label: '표현식 · 성능 · Strict Mode',
+        labelByMode: {
+          classic: '구문법 규칙 · 후처리 · 성능',
+          new: 'Strict Mode · 표현식 · 성능'
+        },
+        desc: '문법 규칙, 데이터 가공 패턴, Table Buffer와 ST05 성능 체크리스트를 정리합니다.',
+        descByMode: {
+          classic: '구문법(Classic Open SQL) 필수 규칙, SQL 표현식 미지원 시 ABAP LOOP 후처리 패턴, Table Buffer · ST05 성능 체크리스트를 표시합니다.',
+          new: '신문법(Strict Mode) 필수 규칙, CASE·COALESCE·산술식·UNION·WITH(CTE) SQL 표현식, Table Buffer · ST05 성능 체크리스트를 표시합니다.'
+        }
+      }
+    ],
+    sections: [
+      /* ===================== SELECT · INTO (신문법) ===================== */
+      sqlSection('select', 'new', 'ABAP 안에서의 SQL 범위와 신문법 SELECT 절 순서',
+        text(
+          'ABAP Program에서 데이터베이스에 접근할 때는 기본적으로 **Open SQL**(ABAP SQL)을 사용합니다. Open SQL은 SAP Application Server의 데이터베이스 인터페이스가 실제 DB(HANA 등) 문법으로 변환해 주므로 DB 종류가 달라져도 ABAP 코드를 그대로 유지할 수 있습니다.',
+          '반면 `EXEC SQL` 같은 Native SQL이나 AMDP는 특정 DB 전용 기능이 꼭 필요할 때만 제한적으로 사용하며, 클라이언트(`MANDT`) 자동 처리나 Table Buffer 혜택을 받지 못합니다.'
+        ),
+        table(['구분', 'Open SQL (ABAP SQL · 기본)', 'Native SQL / AMDP (특수 목적)'], [
+          ['DB 독립성', 'SAP 지원 모든 DB에서 동일 코드 실행', '특정 DB(예: SAP HANA SQLScript)에 종속'],
+          ['클라이언트(`MANDT`)', '현재 로그온 클라이언트(`sy-mandt`) 자동 필터링', '직접 `MANDT` 조건을 명시해야 함'],
+          ['`Table Buffer`', 'SE11 버퍼 설정 테이블이면 자동 활용', '버퍼 우회(항상 DB 직접 접근)'],
+          ['문법 · 타입 검사', 'ABAP 컴파일러가 DDIC 테이블·필드명을 정적 검증', '런타임에 DB 오류로 발견되기 쉬움'],
+          ['권장 사용처', '일반 Report·화면 조회·업무 CRUD 대부분', '대용량 HANA 전용 계산·DB 고유 프로시저']
+        ]),
+        table(['신문법 `SELECT` 절 작성 순서 (7.40+ · Strict Mode)', '역할'], [
+          ['`SELECT [SINGLE | DISTINCT] 열1, 열2`', '가져올 컬럼·집계 함수·SQL 표현식 지정 (**쉼표 `,` 필수**)'],
+          ['`FROM 테이블 [JOIN ... ON ...]`', '조회 대상 ABAP Dictionary 테이블·View와 조인 조건'],
+          ['`[FOR ALL ENTRIES IN @itab]`', '이미 보유한 Internal Table 행을 조건으로 집합 조회 (`@` 필수)'],
+          ['`[WHERE 조건]`', '원본 행 필터링 (모든 ABAP 호스트 변수 앞 `@` 필수)'],
+          ['`[GROUP BY 열1, 열2]` / `[HAVING 조건]`', '그룹 묶기(쉼표 구분)와 집계 결과 필터링'],
+          ['`[ORDER BY 열1, 열2]`', 'DB 단계 정렬 (쉼표 구분, `PRIMARY KEY` 포함)'],
+          ['`INTO [CORRESPONDING FIELDS OF] [TABLE] @대상`', '**문장 끝**에 배치 · `@DATA(...)` 인라인 선언 지원'],
+          ['`[UP TO n ROWS] [OFFSET m]`', '최대 조회 건수 제한 및 건너뛰기(`OFFSET`은 7.51+ · `ORDER BY` 필요)']
+        ])
+      ),
+      sqlSection('select', 'new', '단건 조회 — SELECT SINGLE vs UP TO 1 ROWS',
+        text(
+          '정확히 한 건만 읽을 때는 **Primary Key 전체**를 조건으로 주는 `SELECT SINGLE`이 가장 명확합니다. 키 전체를 주지 않거나 특정 정렬 기준(예: 가장 빠른 운항일, 최저 운임)의 첫 1건이 필요하면 `SELECT ... ORDER BY ... INTO TABLE @DATA(...) UP TO 1 ROWS`를 사용합니다(`SELECT SINGLE`에는 `ORDER BY`를 붙일 수 없습니다).',
+          '조회 결과가 0건(`sy-subrc = 4`)이면 기존 변수나 Work Area에 이전 값이 그대로 남을 수 있으므로, 조회 전 `CLEAR` 하거나 조회 직후 반드시 `IF sy-subrc = 0.`을 검사하세요.'
+        ),
+        table(['신문법 패턴', '특징', '권장 상황'], [
+          ['`SELECT SINGLE col1, col2 FROM dbtab WHERE ... INTO @gs_row.`', '최대 1행 반환, `ORDER BY` 불가, `INTO`를 문장 끝에 배치', 'Primary Key 전체 조건으로 유일한 1건 조회'],
+          ['`SELECT ... FROM dbtab ORDER BY ... INTO TABLE @DATA(gt_top) UP TO 1 ROWS.`', '정렬 후 상위 1건만 추출, 인라인 Internal Table 선언', '가장 최근/최소/최대 1건처럼 정렬 기준이 필요한 조회'],
+          ['`SELECT SINGLE @abap_true FROM dbtab WHERE ... INTO @DATA(lv_exists).`', '컬럼을 읽지 않고 존재 여부만 경량 확인 (7.40+ 지원)', '데이터 유무만 빠르게 판별할 때']
+        ]),
+        code('[신문법] 단건 조회: SELECT SINGLE과 UP TO 1 ROWS 비교', `REPORT zabap_f##_##.
+
+PARAMETERS p_carr TYPE scarr-carrid DEFAULT 'LH'.
+
+DATA gs_scarr TYPE scarr.
+
+" 1) Primary Key 전체(carrid)로 단건 조회: SELECT SINGLE (신문법)
+CLEAR gs_scarr.
+SELECT SINGLE carrid, carrname, currcode
+  FROM scarr
+  WHERE carrid = @p_carr
+  INTO CORRESPONDING FIELDS OF @gs_scarr.
+
+IF sy-subrc = 0.
+  WRITE: / '항공사:', gs_scarr-carrid, gs_scarr-carrname, gs_scarr-currcode.
+ELSE.
+  WRITE: / '해당 항공사를 찾지 못했습니다.'.
+ENDIF.
+
+" 2) 정렬 기준 첫 1건 조회: ORDER BY + UP TO 1 ROWS (신문법)
+SELECT carrid, connid, fldate, price, currency
+  FROM sflight
+  WHERE carrid = @p_carr
+  ORDER BY price ASCENDING, fldate ASCENDING
+  INTO TABLE @DATA(gt_cheapest)
+  UP TO 1 ROWS.
+
+IF sy-subrc = 0.
+  READ TABLE gt_cheapest INDEX 1 INTO DATA(gs_cheapest).
+  WRITE: / '최저 운임:', gs_cheapest-carrid, gs_cheapest-connid,
+           gs_cheapest-fldate, gs_cheapest-price, gs_cheapest-currency.
+ENDIF.`)
+      ),
+      sqlSection('select', 'new', '다건 조회 — INTO TABLE · APPENDING · CORRESPONDING',
+        text(
+          '여러 행을 읽을 때는 `SELECT ... ENDSELECT` 루프보다 **한 번에 Internal Table로 받는 `INTO TABLE`**이 성능과 가독성 모두 유리합니다. 신문법에서는 필요한 컬럼만 쉼표로 나열해 `@DATA(gt_...)` 인라인 선언으로 받으면 별도 `TYPES` 선언 없이 바로 구조가 맞춰집니다.',
+          '이미 선언해 둔 커스텀 구조체/Internal Table에 담을 때 컬럼 순서가 다르면 `INTO CORRESPONDING FIELDS OF TABLE @gt_out`으로 이름(`AS` 별칭 포함) 기준 매핑을 사용합니다. 기존 행을 유지하면서 결과를 덧붙여야 할 때만 `APPENDING TABLE`을 씁니다.'
+        ),
+        table(['신문법 INTO 절 형태', '기존 데이터 처리', '컬럼 매핑 기준'], [
+          ['`INTO TABLE @DATA(gt_out)`', '새 Internal Table 인라인 생성·채움', 'SELECT 열 이름·별칭 그대로 컴포넌트 자동 생성'],
+          ['`INTO TABLE @gt_out`', '기존 행을 모두 비우고 새로 채움', '열 순서와 타입이 구조체와 일치해야 함'],
+          ['`INTO CORRESPONDING FIELDS OF TABLE @gt_out`', '기존 행을 비우고 새로 채움', '컬럼명(`AS` 별칭)과 컴포넌트 이름이 같은 필드만 매핑'],
+          ['`APPENDING [CORRESPONDING FIELDS OF] TABLE @gt_out`', '기존 행을 유지하고 뒤에 추가', '중복 자동 제거 안 함(UNIQUE 키 테이블은 충돌 주의)']
+        ]),
+        code('[신문법] 다건 조회: INTO TABLE과 CORRESPONDING FIELDS OF TABLE', `REPORT zabap_f##_##.
+
+TYPES: BEGIN OF ts_route,
+         cityfrom TYPE spfli-cityfrom,
+         cityto   TYPE spfli-cityto,
+         carrid   TYPE spfli-carrid,
+         connid   TYPE spfli-connid,
+       END OF ts_route.
+
+DATA gt_routes TYPE STANDARD TABLE OF ts_route WITH EMPTY KEY.
+
+" 1) 컬럼 순서가 ts_route와 달라도 이름 기준으로 매핑 (신문법)
+SELECT carrid, connid, cityfrom, cityto
+  FROM spfli
+  WHERE countryfr = 'DE'
+  ORDER BY carrid, connid
+  INTO CORRESPONDING FIELDS OF TABLE @gt_routes.
+
+WRITE: / '독일 출발 노선 수:', sy-dbcnt.
+
+" 2) 기존 행을 유지하며 미국 출발 노선 추가
+SELECT carrid, connid, cityfrom, cityto
+  FROM spfli
+  WHERE countryfr = 'US'
+  APPENDING CORRESPONDING FIELDS OF TABLE @gt_routes.
+
+WRITE: / '합산 노선 수:', lines( gt_routes ).
+
+" 3) 인라인 선언으로 필요한 컬럼만 간결하게 조회
+SELECT carrid, connid, fltime
+  FROM spfli
+  WHERE carrid = 'LH'
+  ORDER BY fltime DESCENDING
+  INTO TABLE @DATA(gt_lh_routes).
+
+LOOP AT gt_lh_routes INTO DATA(gs_lh).
+  WRITE: / gs_lh-carrid, gs_lh-connid, gs_lh-fltime, '분'.
+ENDLOOP.`)
+      ),
+
+      /* ===================== SELECT · INTO (구문법) ===================== */
+      sqlSection('select', 'classic', 'ABAP 안에서의 SQL 범위와 구문법 SELECT 절 순서',
+        text(
+          'ABAP Program에서 데이터베이스에 접근할 때는 구문법 환경에서도 기본적으로 **Open SQL**을 사용합니다. Open SQL은 SAP Application Server의 DB 인터페이스가 실제 DB 문법으로 변환해 주므로 DB 독립성, 클라이언트(`MANDT`) 자동 처리, `Table Buffer`, 정적 타입 검사를 그대로 활용할 수 있습니다.',
+          '구문법(Classic Open SQL)은 ABAP 7.40 SP05 이전이나 기존 레거시 프로그램·BC400 교재에서 널리 쓰이는 형식입니다. 컬럼·정렬 목록을 **공백으로 구분**하고, ABAP 변수에 `@`를 붙이지 않으며, `INTO` 절을 `FROM` 바로 뒤(`WHERE` 앞)에 두는 것이 일반적입니다.'
+        ),
+        table(['구분', 'Open SQL (Classic · 기본)', 'Native SQL (특수 목적)'], [
+          ['DB 독립성', 'SAP 지원 모든 DB에서 동일 코드 실행', '특정 DB 문법에 종속'],
+          ['클라이언트(`MANDT`)', '현재 로그온 클라이언트(`sy-mandt`) 자동 필터링', '직접 `MANDT` 조건을 명시해야 함'],
+          ['`Table Buffer`', 'SE11 버퍼 설정 테이블이면 자동 활용', '버퍼 우회(항상 DB 직접 접근)'],
+          ['문법 · 타입 검사', 'ABAP 컴파일러가 DDIC 테이블·필드명을 정적 검증', '런타임에 DB 오류로 발견되기 쉬움']
+        ]),
+        table(['구문법 `SELECT` 절 작성 순서 (Classic Open SQL)', '역할 및 주의사항'], [
+          ['`SELECT [SINGLE | DISTINCT] 열1 열2`', '가져올 컬럼·집계 함수 지정 (**공백 구분 · 쉼표 사용 안 함**)'],
+          ['`FROM 테이블 [JOIN ... ON ...]`', '조회 대상 ABAP Dictionary 테이블·View와 조인 조건'],
+          ['`INTO [CORRESPONDING FIELDS OF] [TABLE] 대상`', '`FROM` 뒤·`WHERE` 앞 배치(사전 `DATA` 선언 필수 · `@` 미사용)'],
+          ['`[UP TO n ROWS]`', '최대 조회 건수 제한 (`OFFSET`은 구문법 미지원)'],
+          ['`[FOR ALL ENTRIES IN itab]`', '이미 보유한 Internal Table 행을 조건으로 집합 조회 (`@` 미사용)'],
+          ['`[WHERE 조건]`', '원본 행 필터링 (ABAP 변수 그대로 기재, `@` 미사용)'],
+          ['`[GROUP BY 열1 열2]` / `[HAVING 조건]`', '그룹 묶기(**공백 구분**)와 집계 결과 필터링'],
+          ['`[ORDER BY 열1 열2]`', 'DB 단계 정렬 (**공백 구분** · `PRIMARY KEY` 포함)']
+        ])
+      ),
+      sqlSection('select', 'classic', '단건 조회 — SELECT SINGLE vs UP TO 1 ROWS',
+        text(
+          '구문법에서도 Primary Key 전체로 유일한 1건을 읽을 때는 `SELECT SINGLE`, 정렬 기준의 첫 1건이 필요할 때는 `UP TO 1 ROWS` + `ORDER BY`를 사용합니다. 단, 구문법에서는 `@DATA(...)` 인라인 선언이나 `@abap_true` 리터럴 조회를 쓸 수 없으므로 **받는 구조체·Internal Table·존재 확인용 변수를 반드시 `TYPES`와 `DATA`로 먼저 선언**해야 합니다.',
+          '조회 결과가 0건(`sy-subrc = 4`)이면 기존 Work Area에 이전 값이 남을 수 있으므로 조회 전 `CLEAR` 하고 직후 `IF sy-subrc = 0.`을 확인하세요.'
+        ),
+        table(['구문법 패턴', '특징', '권장 상황'], [
+          ['`SELECT SINGLE col1 col2 FROM dbtab INTO gs_row WHERE ...`', '공백 구분, `@` 없음, `INTO`를 `WHERE` 앞에 배치', 'Primary Key 전체 조건으로 유일한 1건 조회'],
+          ['`SELECT ... FROM dbtab INTO TABLE gt_top UP TO 1 ROWS WHERE ... ORDER BY ...`', '사전 선언된 `gt_top`에 정렬 후 첫 1건 수신', '가장 최근/최소/최대 1건처럼 정렬 기준이 필요한 조회'],
+          ['`SELECT SINGLE carrid FROM scarr INTO lv_carrid WHERE ...`', '가벼운 키 컬럼 1개만 읽어 존재 여부 판별 (`@abap_true` 미지원)', '데이터 유무만 빠르게 확인할 때']
+        ]),
+        code('[구문법] 단건 조회: SELECT SINGLE과 UP TO 1 ROWS 비교', `REPORT zabap_f##_##.
+
+PARAMETERS p_carr TYPE scarr-carrid DEFAULT 'LH'.
+
+TYPES: BEGIN OF ts_cheapest,
+         carrid   TYPE sflight-carrid,
+         connid   TYPE sflight-connid,
+         fldate   TYPE sflight-fldate,
+         price    TYPE sflight-price,
+         currency TYPE sflight-currency,
+       END OF ts_cheapest.
+
+DATA: gs_scarr    TYPE scarr,
+      gt_cheapest TYPE STANDARD TABLE OF ts_cheapest,
+      gs_cheapest TYPE ts_cheapest.
+
+" 1) Primary Key 전체(carrid)로 단건 조회: SELECT SINGLE (구문법)
+CLEAR gs_scarr.
+SELECT SINGLE carrid carrname currcode
+  FROM scarr
+  INTO CORRESPONDING FIELDS OF gs_scarr
+  WHERE carrid = p_carr.
+
+IF sy-subrc = 0.
+  WRITE: / '항공사:', gs_scarr-carrid, gs_scarr-carrname, gs_scarr-currcode.
+ELSE.
+  WRITE: / '해당 항공사를 찾지 못했습니다.'.
+ENDIF.
+
+" 2) 정렬 기준 첫 1건 조회: UP TO 1 ROWS + ORDER BY (구문법)
+SELECT carrid connid fldate price currency
+  FROM sflight
+  INTO TABLE gt_cheapest
+  UP TO 1 ROWS
+  WHERE carrid = p_carr
+  ORDER BY price ASCENDING fldate ASCENDING.
+
+IF sy-subrc = 0.
+  READ TABLE gt_cheapest INTO gs_cheapest INDEX 1.
+  WRITE: / '최저 운임:', gs_cheapest-carrid, gs_cheapest-connid,
+           gs_cheapest-fldate, gs_cheapest-price, gs_cheapest-currency.
+ENDIF.`)
+      ),
+      sqlSection('select', 'classic', '다건 조회 — INTO TABLE · APPENDING · CORRESPONDING',
+        text(
+          '구문법에서도 `SELECT ... INTO gs_row ... ENDSELECT.` 루프보다는 **Internal Table로 한 번에 받는 `INTO TABLE gt_out`**을 사용해야 DB 왕복과 성능 저하를 피할 수 있습니다. 구문법에서는 `@DATA(...)`와 `lines( ... )` 대신 사전 `TYPES`·`DATA` 선언과 `DESCRIBE TABLE gt_out LINES lv_cnt.` 패턴을 자주 봅니다.',
+          '기존 Internal Table의 행을 유지하면서 조회 결과를 이어 붙일 때는 `APPENDING [CORRESPONDING FIELDS OF] TABLE gt_out`을 사용합니다.'
+        ),
+        table(['구문법 INTO 절 형태', '기존 데이터 처리', '컬럼 매핑 · 참고'], [
+          ['`INTO TABLE gt_out`', '기존 행을 모두 비우고 새로 채움', '사전 선언된 `gt_out`의 열 순서·타입이 SELECT 목록과 일치해야 함'],
+          ['`INTO CORRESPONDING FIELDS OF TABLE gt_out`', '기존 행을 비우고 새로 채움', '컬럼명(`AS` 별칭)과 구조체 컴포넌트 이름이 같은 필드만 매핑'],
+          ['`APPENDING [CORRESPONDING FIELDS OF] TABLE gt_out`', '기존 행을 유지하고 뒤에 추가', '중복 자동 제거 안 함(UNIQUE 키 테이블 충돌 주의)'],
+          ['`SELECT ... INTO gs_row ... ENDSELECT.` (레거시)', '1행씩 반복 수신', '기존 코드 해석용으로만 알고, 신규 작성은 `INTO TABLE` 권장']
+        ]),
+        code('[구문법] 다건 조회: INTO TABLE과 CORRESPONDING FIELDS OF TABLE', `REPORT zabap_f##_##.
+
+TYPES: BEGIN OF ts_route,
+         cityfrom TYPE spfli-cityfrom,
+         cityto   TYPE spfli-cityto,
+         carrid   TYPE spfli-carrid,
+         connid   TYPE spfli-connid,
+       END OF ts_route,
+       BEGIN OF ts_lh,
+         carrid TYPE spfli-carrid,
+         connid TYPE spfli-connid,
+         fltime TYPE spfli-fltime,
+       END OF ts_lh.
+
+DATA: gt_routes    TYPE STANDARD TABLE OF ts_route,
+      gt_lh_routes TYPE STANDARD TABLE OF ts_lh,
+      gs_lh        TYPE ts_lh,
+      lv_cnt       TYPE i.
+
+" 1) 컬럼 순서가 ts_route와 달라도 이름 기준으로 매핑 (구문법)
+SELECT carrid connid cityfrom cityto
+  FROM spfli
+  INTO CORRESPONDING FIELDS OF TABLE gt_routes
+  WHERE countryfr = 'DE'
+  ORDER BY carrid connid.
+
+WRITE: / '독일 출발 노선 수:', sy-dbcnt.
+
+" 2) 기존 행을 유지하며 미국 출발 노선 추가
+SELECT carrid connid cityfrom cityto
+  FROM spfli
+  APPENDING CORRESPONDING FIELDS OF TABLE gt_routes
+  WHERE countryfr = 'US'.
+
+DESCRIBE TABLE gt_routes LINES lv_cnt.
+WRITE: / '합산 노선 수:', lv_cnt.
+
+" 3) 사전 선언한 구조체·Internal Table로 조회
+SELECT carrid connid fltime
+  FROM spfli
+  INTO TABLE gt_lh_routes
+  WHERE carrid = 'LH'
+  ORDER BY fltime DESCENDING.
+
+LOOP AT gt_lh_routes INTO gs_lh.
+  WRITE: / gs_lh-carrid, gs_lh-connid, gs_lh-fltime, '분'.
+ENDLOOP.`)
+      ),
+
+      /* ===================== 조건 · 집계 (신문법) ===================== */
+      sqlSection('filter', 'new', 'WHERE 조건 · SELECT-OPTIONS · LIKE · NULL',
+        text(
+          '`WHERE` 절은 DB 서버에서 먼저 데이터를 걸러 네트워크 전송량과 메모리를 줄여 줍니다. 신문법에서는 모든 ABAP 프로그램 변수·`PARAMETERS`·`SELECT-OPTIONS` 앞에 `@`를 붙여 호스트 변수로 전달하며, `AND`가 `OR`보다 우선하므로 조건이 섞일 때는 반드시 괄호 `( ... )`로 묶어야 합니다.',
+          '`SELECT-OPTIONS`를 `WHERE col IN @so_...`로 연결할 때 사용자가 아무 값도 입력하지 않아 **Range 테이블이 비어 있으면 조건이 생략되어 전체 행이 조회**됩니다(0건이 아님).'
+        ),
+        table(['신문법 연산자 / 표현', '의미 및 주의사항'], [
+          ['`=`, `<>`, `<`, `>`, `<=`, `>=`', '비교 연산자 (`EQ`, `NE`, `LT`, `GT`, `LE`, `GE`도 동일)'],
+          ['`BETWEEN @v1 AND @v2`', '`v1`과 `v2` 양 끝 값을 모두 포함하는 범위'],
+          ['`IN ( \'LH\', \'AA\' )` / `IN @so_carr`', '고정 목록 또는 `SELECT-OPTIONS`/Range 테이블 조건 (`@` 필수)'],
+          ['`LIKE \'L%\'` / `LIKE \'_A%\'`', '`%`: 0글자 이상, `_`: 정확히 1글자 (ABAP 문자열 연산자 `CP`의 `*`/`+`와 다름!)'],
+          ['`IS NULL` / `IS NOT NULL`', 'DB NULL 검사 (`= NULL` 불가 · ABAP 초기값 공백/0과 개념이 다름)'],
+          ['`AND` · `OR` · `NOT`', '우선순위 `NOT` → `AND` → `OR`. 혼합 시 괄호 `( ... )` 필수']
+        ]),
+        code('[신문법] SCUSTOM 조건 조회: SELECT-OPTIONS·LIKE·BETWEEN', `REPORT zabap_f##_##.
+
+DATA gv_custid TYPE scustom-id.
+SELECT-OPTIONS so_id FOR gv_custid.
+PARAMETERS p_cntry TYPE scustom-country DEFAULT 'DE'.
+
+SELECT id, name, city, country, discount
+  FROM scustom
+  WHERE id IN @so_id
+    AND country = @p_cntry
+    AND ( name LIKE 'A%' OR name LIKE 'S%' )
+    AND discount BETWEEN '000' AND '020'
+  ORDER BY id
+  INTO TABLE @DATA(gt_customers)
+  UP TO 20 ROWS.
+
+IF sy-subrc = 0.
+  LOOP AT gt_customers INTO DATA(gs_cust).
+    WRITE: / gs_cust-id, gs_cust-name, gs_cust-city, gs_cust-discount.
+  ENDLOOP.
+ELSE.
+  WRITE: / '조건에 맞는 고객이 없습니다.'.
+ENDIF.`)
+      ),
+      sqlSection('filter', 'new', '집계 함수 · DISTINCT · GROUP BY · HAVING · 0건 주의',
+        text(
+          '집계 함수(`COUNT`, `SUM`, `AVG`, `MIN`, `MAX`)와 `GROUP BY`를 사용하면 ABAP `LOOP`에서 직접 합산하지 않고 DB에서 요약 결과만 받아올 수 있습니다. 집계 전 원본 행을 거를 때는 `WHERE`, 집계된 그룹을 거를 때는 `HAVING`을 사용합니다.',
+          '일반 컬럼과 집계 함수를 함께 조회할 때는 **집계하지 않는 모든 일반 컬럼을 `GROUP BY`에 쉼표로 빠짐없이 명시**해야 하며, 금액을 `SUM`/`AVG` 할 때는 통화(`currency`/`loccurkey`)를 함께 `GROUP BY` 해 서로 다른 통화가 섞이지 않게 해야 합니다.'
+        ),
+        table(['집계 / 절 (신문법)', '역할', '자주 하는 실수'], [
+          ['`DISTINCT`', 'SELECT에 나열한 컬럼 조합 전체의 중복 제거', '특정 1개 컬럼만 중복 제거하는 기능이 아님'],
+          ['`COUNT( * ) AS cnt`', '조건에 맞는 전체 행 수 (인라인 선언 시 `AS` 별칭 필수)', '`GROUP BY` 없는 집계에서 0건이어도 `sy-subrc = 0, sy-dbcnt = 1`'],
+          ['`COUNT( DISTINCT col )`', 'NULL 제외한 서로 다른 값의 개수', '괄호 안쪽 공백(`COUNT( DISTINCT ... )`) 지키기'],
+          ['`SUM( col )` / `AVG( col )`', '합계 / 평균 (신문법은 내부 SQL 표현식도 가능)', '통화가 다른 금액을 통화 그룹 없이 합산하면 의미 없는 값'],
+          ['`WHERE` vs `HAVING`', '집계 전 원본 행 필터 vs 집계 후 그룹 필터', '집계 함수 조건(`COUNT( * ) >= 5`)은 `WHERE`가 아닌 `HAVING`에 작성']
+        ]),
+        {
+          type: 'callout',
+          style: 'warning',
+          title: '집계 SELECT에서 0건 판별 주의',
+          body: '`GROUP BY` 없이 `SELECT COUNT( * ) AS cnt, MAX( seatsocc ) AS max_occ ...`처럼 집계만 조회하면, 조건에 맞는 원본 행이 0건이어도 집계 결과 1행(`cnt = 0`)이 반환되어 `sy-subrc = 0`, `sy-dbcnt = 1`이 됩니다. 따라서 `sy-dbcnt` 대신 `COUNT` 결과 변수(`gs_stat-cnt > 0`)로 데이터 존재 여부를 판별하세요.'
+        },
+        code('[신문법] SBOOK 예약 집계: GROUP BY와 HAVING', `REPORT zabap_f##_##.
+
+PARAMETERS p_year TYPE c LENGTH 4 DEFAULT '2026'.
+DATA(lv_from) = CONV d( p_year && '0101' ).
+DATA(lv_to)   = CONV d( p_year && '1231' ).
+
+SELECT carrid,
+       loccurkey,
+       COUNT( * )          AS book_cnt,
+       SUM( loccuram )     AS total_amt,
+       MIN( order_date )   AS first_order,
+       MAX( order_date )   AS last_order
+  FROM sbook
+  WHERE order_date BETWEEN @lv_from AND @lv_to
+    AND cancelled = @space
+  GROUP BY carrid, loccurkey
+  HAVING COUNT( * ) >= 5
+  ORDER BY carrid, loccurkey
+  INTO TABLE @DATA(gt_stats).
+
+IF sy-subrc = 0.
+  LOOP AT gt_stats INTO DATA(gs_stat).
+    WRITE: / gs_stat-carrid, gs_stat-book_cnt,
+             gs_stat-total_amt CURRENCY gs_stat-loccurkey, gs_stat-loccurkey,
+             gs_stat-first_order, '~', gs_stat-last_order.
+  ENDLOOP.
+ELSE.
+  WRITE: / '집계 조건을 만족하는 예약이 없습니다.'.
+ENDIF.`)
+      ),
+
+      /* ===================== 조건 · 집계 (구문법) ===================== */
+      sqlSection('filter', 'classic', 'WHERE 조건 · SELECT-OPTIONS · LIKE · NULL',
+        text(
+          '구문법의 `WHERE` 절에서는 ABAP 변수·`PARAMETERS`·`SELECT-OPTIONS` 앞에 **`@`를 붙이지 않고 변수 이름 그대로** 적습니다(`WHERE id IN so_id AND country = p_cntry`). 비교 연산자와 `AND`·`OR` 우선순위(`NOT` → `AND` → `OR`), 괄호 `( ... )` 사용 원칙은 동일합니다.',
+          '구문법 `WHERE` 안에서는 좌변에 SQL 표현식이나 함수(`UPPER( name )` 등)를 넣을 수 없으며, `SELECT-OPTIONS` Range 테이블이 비어 있으면 조건이 생략되어 전체 행이 조회되는 동작도 동일합니다.'
+        ),
+        table(['구문법 연산자 / 표현', '의미 및 주의사항'], [
+          ['`=`, `<>`, `<`, `>`, `<=`, `>=`', '비교 연산자 (`EQ`, `NE`, `LT`, `GT`, `LE`, `GE` 동일 · `@` 미사용)'],
+          ['`BETWEEN lv_v1 AND lv_v2`', '`lv_v1`과 `lv_v2` 양 끝 값을 모두 포함하는 범위'],
+          ['`IN ( \'LH\', \'AA\' )` / `IN so_carr`', '고정 목록(괄호 안은 쉼표 구분) 또는 `SELECT-OPTIONS` 조건 (`@` 없음)'],
+          ['`LIKE \'L%\'` / `LIKE \'_A%\'`', '`%`: 0글자 이상, `_`: 정확히 1글자 (`CP`의 `*`/`+`와 다름)'],
+          ['`IS NULL` / `IS NOT NULL`', 'DB NULL 검사 (`= NULL` 불가 · ABAP 초기값과 다름)'],
+          ['`AND` · `OR` · `NOT`', '우선순위 `NOT` → `AND` → `OR`. 혼합 시 괄호 `( ... )` 필수']
+        ]),
+        code('[구문법] SCUSTOM 조건 조회: SELECT-OPTIONS·LIKE·BETWEEN', `REPORT zabap_f##_##.
+
+TYPES: BEGIN OF ts_cust,
+         id       TYPE scustom-id,
+         name     TYPE scustom-name,
+         city     TYPE scustom-city,
+         country  TYPE scustom-country,
+         discount TYPE scustom-discount,
+       END OF ts_cust.
+
+DATA: gv_custid    TYPE scustom-id,
+      gt_customers TYPE STANDARD TABLE OF ts_cust,
+      gs_cust      TYPE ts_cust.
+
+SELECT-OPTIONS so_id FOR gv_custid.
+PARAMETERS p_cntry TYPE scustom-country DEFAULT 'DE'.
+
+SELECT id name city country discount
+  FROM scustom
+  INTO TABLE gt_customers
+  UP TO 20 ROWS
+  WHERE id IN so_id
+    AND country = p_cntry
+    AND ( name LIKE 'A%' OR name LIKE 'S%' )
+    AND discount BETWEEN '000' AND '020'
+  ORDER BY id.
+
+IF sy-subrc = 0.
+  LOOP AT gt_customers INTO gs_cust.
+    WRITE: / gs_cust-id, gs_cust-name, gs_cust-city, gs_cust-discount.
+  ENDLOOP.
+ELSE.
+  WRITE: / '조건에 맞는 고객이 없습니다.'.
+ENDIF.`)
+      ),
+      sqlSection('filter', 'classic', '집계 함수 · DISTINCT · GROUP BY · HAVING · 0건 주의',
+        text(
+          '구문법에서도 `COUNT`, `SUM`, `AVG`, `MIN`, `MAX`와 `GROUP BY`·`HAVING`을 사용할 수 있습니다. 다만 **`SELECT`·`GROUP BY`·`ORDER BY`의 컬럼을 쉼표 없이 공백으로 구분**하고, 결과를 담을 구조체 `TYPES`와 Internal Table `DATA`를 미리 선언해야 합니다.',
+          '구문법에서는 `SUM( price * seatsocc )`처럼 집계 함수 안에 산술식·`CASE` 같은 SQL 표현식을 넣을 수 없으며, 순수 컬럼명만 전달해야 합니다.'
+        ),
+        table(['집계 / 절 (구문법)', '역할', '구문법 주의사항'], [
+          ['`DISTINCT`', 'SELECT 컬럼 조합 전체의 중복 제거', '공백으로 컬럼 나열 (`SELECT DISTINCT carrid connid`)'],
+          ['`COUNT( * )`', '조건에 맞는 전체 행 수', '결과 구조체에 `TYPE i` 컴포넌트 사전 선언 필요'],
+          ['`COUNT( DISTINCT col )`', 'NULL 제외한 서로 다른 값의 개수', '괄호 안쪽 공백(`COUNT( DISTINCT col )`) 지키기'],
+          ['`SUM( col )` / `AVG( col )`', '합계 / 평균', '함수 안에 산술식·표현식 불가, 통화 컬럼 함께 `GROUP BY`'],
+          ['`GROUP BY col1 col2` / `HAVING`', '공백 구분 그룹 묶기 · 집계 후 필터', '집계하지 않는 모든 일반 컬럼을 `GROUP BY`에 명시']
+        ]),
+        {
+          type: 'callout',
+          style: 'warning',
+          title: '집계 SELECT에서 0건 판별 주의',
+          body: '구문법에서도 `GROUP BY` 없이 `SELECT COUNT( * ) MAX( seatsocc ) INTO (lv_cnt, lv_max) FROM ...`처럼 집계만 조회하면, 조건에 맞는 원본 행이 0건이어도 1행(`lv_cnt = 0`)이 반환되어 `sy-subrc = 0`, `sy-dbcnt = 1`이 됩니다. 반드시 `lv_cnt > 0`으로 존재 여부를 확인하세요.'
+        },
+        code('[구문법] SBOOK 예약 집계: GROUP BY와 HAVING', `REPORT zabap_f##_##.
+
+PARAMETERS p_year TYPE c LENGTH 4 DEFAULT '2026'.
+
+TYPES: BEGIN OF ts_stat,
+         carrid      TYPE sbook-carrid,
+         loccurkey   TYPE sbook-loccurkey,
+         book_cnt    TYPE i,
+         total_amt   TYPE sbook-loccuram,
+         first_order TYPE sbook-order_date,
+         last_order  TYPE sbook-order_date,
+       END OF ts_stat.
+
+DATA: lv_from  TYPE d,
+      lv_to    TYPE d,
+      gt_stats TYPE STANDARD TABLE OF ts_stat,
+      gs_stat  TYPE ts_stat.
+
+CONCATENATE p_year '0101' INTO lv_from.
+CONCATENATE p_year '1231' INTO lv_to.
+
+SELECT carrid
+       loccurkey
+       COUNT( * )
+       SUM( loccuram )
+       MIN( order_date )
+       MAX( order_date )
+  FROM sbook
+  INTO TABLE gt_stats
+  WHERE order_date BETWEEN lv_from AND lv_to
+    AND cancelled = space
+  GROUP BY carrid loccurkey
+  HAVING COUNT( * ) >= 5
+  ORDER BY carrid loccurkey.
+
+IF sy-subrc = 0.
+  LOOP AT gt_stats INTO gs_stat.
+    WRITE: / gs_stat-carrid, gs_stat-book_cnt,
+             gs_stat-total_amt CURRENCY gs_stat-loccurkey, gs_stat-loccurkey,
+             gs_stat-first_order, '~', gs_stat-last_order.
+  ENDLOOP.
+ELSE.
+  WRITE: / '집계 조건을 만족하는 예약이 없습니다.'.
+ENDIF.`)
+      ),
+
+      /* ===================== JOIN · 서브쿼리 · FAE (신문법) ===================== */
+      sqlSection('join', 'new', 'JOIN 종류와 ON vs WHERE 핵심 차이',
+        text(
+          '여러 테이블이 Foreign Key로 연결되어 있을 때 `JOIN`을 사용하면 DB에서 한 번의 조회로 결합된 결과를 가져올 수 있습니다. 테이블마다 `AS a`, `AS b` 별칭을 붙이고 `a~carrid`, `b~cityfrom`처럼 물결표(`~`)로 소속 테이블을 명시합니다.',
+          '가장 자주 틀리는 부분은 **`LEFT OUTER JOIN`에서 오른쪽 테이블 필터 위치**입니다. 오른쪽 테이블 조건(`b~countryfr = \'DE\'`)을 `ON` 절에 쓰면 조건에 맞는 노선이 없는 항공사도 왼쪽 행이 유지되지만, 같은 조건을 `WHERE` 절로 옮기면 오른쪽이 `NULL`인 행이 제거되어 `INNER JOIN`과 같아집니다.'
+        ),
+        table(['신문법 JOIN 유형', '반환 결과', 'ABAP 7.40+ / 7.5+ 참고'], [
+          ['`INNER JOIN`', '양쪽 테이블에서 `ON` 조건이 일치하는 행만', '기본 `JOIN`과 동일 · `ON` 절에 다양한 비교·호스트 변수 허용'],
+          ['`LEFT OUTER JOIN`', '왼쪽 행 전체 유지, 오른쪽 미일치 열은 `NULL`', '오른쪽 테이블 필터를 `ON` vs `WHERE` 중 어디에 둘지 신중히 선택'],
+          ['`RIGHT OUTER JOIN`', '오른쪽 행 전체 유지, 왼쪽 미일치 열은 `NULL`', 'ABAP 7.52+ 신문법 지원'],
+          ['`CROSS JOIN`', '양쪽 모든 행의 곱집합(카테시안 곱)', 'ABAP 7.50+ 신문법 지원 · 행 수가 급격히 커지므로 소규모 조합에만 사용']
+        ]),
+        code('[신문법] SCARR·SPFLI·SFLIGHT 다중 LEFT OUTER JOIN', `REPORT zabap_f##_##.
+
+SELECT a~carrid,
+       a~carrname,
+       b~connid,
+       b~cityfrom,
+       b~cityto,
+       c~fldate,
+       c~seatsocc
+  FROM scarr AS a
+  LEFT OUTER JOIN spfli AS b
+    ON a~carrid = b~carrid
+   AND b~countryfr = 'DE'
+  LEFT OUTER JOIN sflight AS c
+    ON b~carrid = c~carrid
+   AND b~connid = c~connid
+  ORDER BY a~carrid, b~connid, c~fldate
+  INTO TABLE @DATA(gt_result)
+  UP TO 30 ROWS.
+
+LOOP AT gt_result INTO DATA(gs_row).
+  WRITE: / gs_row-carrid, gs_row-carrname, gs_row-connid,
+           gs_row-cityfrom, '->', gs_row-cityto,
+           gs_row-fldate, gs_row-seatsocc.
+ENDLOOP.`)
+      ),
+      sqlSection('join', 'new', '서브쿼리(EXISTS · IN)와 FOR ALL ENTRIES 안전 패턴',
+        text(
+          '상대 테이블의 컬럼을 출력할 필요 없이 **존재 여부만으로 필터링**할 때는 `JOIN`보다 `WHERE EXISTS ( SELECT * FROM ... )` 또는 `NOT EXISTS`가 중복 행이 생기지 않아 깔끔합니다.',
+          '이미 메모리에 있는 Internal Table의 키 목록으로 DB를 조회할 때는 `LOOP` 안에서 `SELECT`를 반복하지 말고 **`FOR ALL ENTRIES IN @gt_keys`**를 사용합니다. 단, 아래 4가지 안전 규칙을 반드시 지켜야 합니다.'
+        ),
+        table(['`FOR ALL ENTRIES` 필수 안전 규칙 (신문법)', '어기면 생기는 문제'], [
+          ['1. `IF gt_keys IS NOT INITIAL.` 선행 검사', '기준 테이블이 비어 있으면 `WHERE` 조건이 통째로 무시되어 대상 테이블 전체를 읽어 옴'],
+          ['2. `SELECT` 목록에 대상 테이블의 **Key 컬럼 포함**', 'FAE는 결과의 중복 행을 자동 제거하므로, 키를 빼면 서로 다른 행이 같은 값으로 합쳐져 건수·합계가 누락됨'],
+          ['3. 기준 테이블 복사 후 `SORT` + `DELETE ADJACENT DUPLICATES`', '중복 키가 많은 기준 테이블을 그대로 넘기면 DB에 불필요한 조건이 반복 전달됨'],
+          ['4. `ORDER BY` · 집계 함수 · `GROUP BY` 제약 확인', 'FAE와 함께 쓸 수 있는 절이 일반 SELECT보다 제한적(정렬은 조회 후 Internal Table `SORT` 권장)']
+        ]),
+        code('[신문법] SCUSTOM·SBOOK: FOR ALL ENTRIES 안전 패턴과 EXISTS', `REPORT zabap_f##_##.
+
+" 1) EXISTS: 예약 이력이 1건 이상 존재하는 독일 고객만 조회 (중복 없음)
+SELECT a~id, a~name, a~city
+  FROM scustom AS a
+  WHERE a~country = 'DE'
+    AND EXISTS ( SELECT * FROM sbook AS b
+                   WHERE b~customid = a~id
+                     AND b~cancelled = @space )
+  ORDER BY a~id
+  INTO TABLE @DATA(gt_active_cust)
+  UP TO 20 ROWS.
+
+" 2) FOR ALL ENTRIES: 조회된 고객의 예약 상세 일괄 조회
+IF gt_active_cust IS NOT INITIAL.
+  DATA(lt_keys) = gt_active_cust.
+  SORT lt_keys BY id.
+  DELETE ADJACENT DUPLICATES FROM lt_keys COMPARING id.
+
+  " SBOOK Primary Key(carrid, connid, fldate, bookid)를 포함해 행 누락 방지
+  SELECT carrid, connid, fldate, bookid, customid, order_date
+    FROM sbook
+    FOR ALL ENTRIES IN @lt_keys
+    WHERE customid = @lt_keys-id
+      AND cancelled = @space
+    INTO TABLE @DATA(gt_books).
+
+  SORT gt_books BY customid order_date DESCENDING.
+  WRITE: / '대상 고객 수:', lines( gt_active_cust ),
+           '/ 조회 예약 건수:', lines( gt_books ).
+ELSE.
+  WRITE: / '예약 이력이 있는 고객이 없습니다.'.
+ENDIF.`)
+      ),
+
+      /* ===================== JOIN · 서브쿼리 · FAE (구문법) ===================== */
+      sqlSection('join', 'classic', 'JOIN 종류와 ON vs WHERE 핵심 차이',
+        text(
+          '구문법(Classic Open SQL)에서는 **`INNER JOIN`과 `LEFT OUTER JOIN`**을 사용합니다. `RIGHT OUTER JOIN`과 `CROSS JOIN`은 구문법에서 지원되지 않으므로, 오른쪽 테이블을 기준으로 유지해야 할 때는 테이블 순서를 바꿔 `LEFT OUTER JOIN`으로 작성합니다.',
+          '구문법 `LEFT OUTER JOIN`의 `ON` 절은 제약이 더 엄격해 오른쪽 테이블 필드를 포함하는 `=` / `AND` 조건 위주로 작성해야 하며(`OR`·`BETWEEN`·`LIKE` 등 제한), 오른쪽 테이블 필터를 `WHERE`에 두면 `INNER JOIN`처럼 변하는 주의점은 동일합니다.'
+        ),
+        table(['구문법 JOIN 유형', '반환 결과', '구문법 제약 · 참고'], [
+          ['`INNER JOIN`', '양쪽 테이블에서 `ON` 조건이 일치하는 행만', '기본 `JOIN`과 동일 · 컬럼 목록은 공백 구분'],
+          ['`LEFT OUTER JOIN`', '왼쪽 행 전체 유지, 오른쪽 미일치 열은 `NULL`', '`ON` 절은 `=` · `AND` 중심, 오른쪽 조건을 `WHERE`에 쓰면 미일치 행 탈락'],
+          ['`RIGHT OUTER JOIN` / `CROSS JOIN`', '구문법 미지원', '테이블 순서를 바꾼 `LEFT OUTER JOIN`으로 대체']
+        ]),
+        code('[구문법] SCARR·SPFLI·SFLIGHT 다중 LEFT OUTER JOIN', `REPORT zabap_f##_##.
+
+TYPES: BEGIN OF ts_join,
+         carrid   TYPE scarr-carrid,
+         carrname TYPE scarr-carrname,
+         connid   TYPE spfli-connid,
+         cityfrom TYPE spfli-cityfrom,
+         cityto   TYPE spfli-cityto,
+         fldate   TYPE sflight-fldate,
+         seatsocc TYPE sflight-seatsocc,
+       END OF ts_join.
+
+DATA: gt_result TYPE STANDARD TABLE OF ts_join,
+      gs_row    TYPE ts_join.
+
+SELECT a~carrid
+       a~carrname
+       b~connid
+       b~cityfrom
+       b~cityto
+       c~fldate
+       c~seatsocc
+  FROM scarr AS a
+  LEFT OUTER JOIN spfli AS b
+    ON a~carrid = b~carrid
+   AND b~countryfr = 'DE'
+  LEFT OUTER JOIN sflight AS c
+    ON b~carrid = c~carrid
+   AND b~connid = c~connid
+  INTO TABLE gt_result
+  UP TO 30 ROWS
+  ORDER BY a~carrid b~connid c~fldate.
+
+LOOP AT gt_result INTO gs_row.
+  WRITE: / gs_row-carrid, gs_row-carrname, gs_row-connid,
+           gs_row-cityfrom, '->', gs_row-cityto,
+           gs_row-fldate, gs_row-seatsocc.
+ENDLOOP.`)
+      ),
+      sqlSection('join', 'classic', '서브쿼리(EXISTS · IN)와 FOR ALL ENTRIES 안전 패턴',
+        text(
+          '구문법에서도 존재 여부 필터링은 `WHERE EXISTS ( SELECT * FROM ... )`, 이미 가진 Internal Table 기준 일괄 조회는 **`FOR ALL ENTRIES IN lt_keys`**(`@` 없음)를 사용합니다.',
+          '구문법에서는 `INTO TABLE gt_books` 뒤에 `FOR ALL ENTRIES IN lt_keys`와 `WHERE customid = lt_keys-id`를 이어 쓰며, 빈 기준 테이블 검사·Primary Key 포함·중복 제거·`ORDER BY` 제약의 4가지 안전 규칙은 신문법과 똑같이 필수입니다.'
+        ),
+        table(['`FOR ALL ENTRIES` 필수 안전 규칙 (구문법)', '어기면 생기는 문제'], [
+          ['1. `IF gt_keys IS NOT INITIAL.` 선행 검사', '기준 테이블이 비어 있으면 `WHERE` 조건이 무시되어 대상 테이블 전체를 읽어 옴'],
+          ['2. `SELECT` 목록에 대상 테이블의 **Key 컬럼 포함**', 'FAE가 중복 행을 자동 제거하므로 키 누락 시 건수·합계가 빠짐'],
+          ['3. 기준 테이블 복사 후 `SORT` + `DELETE ADJACENT DUPLICATES`', '중복 키가 많은 테이블을 넘기면 불필요한 DB 조건이 반복 전달됨'],
+          ['4. `ORDER BY` · 집계 함수 · `GROUP BY` 미사용 (조회 후 `SORT`)', '구문법 FAE는 `ORDER BY PRIMARY KEY` 외 정렬 및 집계를 함께 쓰기 어려움']
+        ]),
+        code('[구문법] SCUSTOM·SBOOK: FOR ALL ENTRIES 안전 패턴과 EXISTS', `REPORT zabap_f##_##.
+
+TYPES: BEGIN OF ts_cust,
+         id   TYPE scustom-id,
+         name TYPE scustom-name,
+         city TYPE scustom-city,
+       END OF ts_cust,
+       BEGIN OF ts_book,
+         carrid     TYPE sbook-carrid,
+         connid     TYPE sbook-connid,
+         fldate     TYPE sbook-fldate,
+         bookid     TYPE sbook-bookid,
+         customid   TYPE sbook-customid,
+         order_date TYPE sbook-order_date,
+       END OF ts_book.
+
+DATA: gt_active_cust TYPE STANDARD TABLE OF ts_cust,
+      lt_keys        TYPE STANDARD TABLE OF ts_cust,
+      gt_books       TYPE STANDARD TABLE OF ts_book,
+      lv_cust_cnt    TYPE i,
+      lv_book_cnt    TYPE i.
+
+" 1) EXISTS: 예약 이력이 1건 이상 존재하는 독일 고객만 조회 (구문법)
+SELECT a~id a~name a~city
+  FROM scustom AS a
+  INTO TABLE gt_active_cust
+  UP TO 20 ROWS
+  WHERE a~country = 'DE'
+    AND EXISTS ( SELECT * FROM sbook AS b
+                   WHERE b~customid = a~id
+                     AND b~cancelled = space )
+  ORDER BY a~id.
+
+" 2) FOR ALL ENTRIES: 조회된 고객의 예약 상세 일괄 조회 (구문법)
+IF gt_active_cust IS NOT INITIAL.
+  lt_keys = gt_active_cust.
+  SORT lt_keys BY id.
+  DELETE ADJACENT DUPLICATES FROM lt_keys COMPARING id.
+
+  " SBOOK Primary Key(carrid, connid, fldate, bookid)를 포함해 행 누락 방지
+  SELECT carrid connid fldate bookid customid order_date
+    FROM sbook
+    INTO TABLE gt_books
+    FOR ALL ENTRIES IN lt_keys
+    WHERE customid = lt_keys-id
+      AND cancelled = space.
+
+  SORT gt_books BY customid order_date DESCENDING.
+  DESCRIBE TABLE gt_active_cust LINES lv_cust_cnt.
+  DESCRIBE TABLE gt_books LINES lv_book_cnt.
+  WRITE: / '대상 고객 수:', lv_cust_cnt,
+           '/ 조회 예약 건수:', lv_book_cnt.
+ELSE.
+  WRITE: / '예약 이력이 있는 고객이 없습니다.'.
+ENDIF.`)
+      ),
+
+      /* ===================== 변경(CUD) · 트랜잭션 ===================== */
+      sqlSection('dml', 'new', 'DB 변경 문법 — INSERT · UPDATE · MODIFY · DELETE',
+        text(
+          'Open SQL의 `INSERT`, `UPDATE`, `MODIFY`, `DELETE`는 **데이터베이스 테이블의 실제 데이터**를 바꿉니다. 신문법(Strict Mode)에서는 조회와 마찬가지로 DML 문장에서도 Work Area·Internal Table·조건 변수 앞에 모두 `@`를 붙입니다.',
+          '일부 컬럼만 변경할 때는 Work Area 전체를 덮어쓰는 `MODIFY` 대신 **`UPDATE dbtab SET col = @val WHERE ...`**를 쓰면 의도가 명확하고, 채우지 않은 필드가 초기값으로 덮어쓰이는 사고를 막을 수 있습니다.'
+        ),
+        {
+          type: 'callout',
+          style: 'warning',
+          title: '실습 시 표준 테이블 직접 변경 금지',
+          body: '`SCARR`, `SPFLI`, `SFLIGHT`, `SBOOK`, `SCUSTOM` 같은 교육용 표준 테이블이나 업무 테이블에 직접 `INSERT`/`UPDATE`/`DELETE`를 실행하지 마세요. DB 변경 실습은 반드시 `SE11`에서 본인이 만든 `Z` 연습용 테이블(예: `ZCARRIER_##`)에서만 수행하세요.'
+        },
+        table(['신문법 문장 (Z 연습 테이블 기준)', '동작', '실무 확인 포인트'], [
+          ['`INSERT zcarrier_## FROM @gs_row.`', '새 1행 삽입', '동일 Primary Key가 이미 있으면 `sy-subrc = 4`'],
+          ['`INSERT zcarrier_## FROM TABLE @gt_rows ACCEPTING DUPLICATE KEYS.`', '여러 행 일괄 삽입(중복 키만 건너뜀)', '옵션 없이 중복 키가 있으면 런타임 덤프(`CX_SY_OPEN_SQL_DB`) 발생'],
+          ['`UPDATE zcarrier_## SET carrname = @lv_name WHERE carrid = @lv_id.`', '조건에 맞는 행의 지정 컬럼만 변경', '실제 변경 행 수는 `sy-dbcnt`로 확인'],
+          ['`MODIFY zcarrier_## FROM @gs_row.`', '키가 있으면 전체 덮어쓰기, 없으면 삽입', 'Work Area에 비어 있는 필드도 DB 값을 초기값으로 덮어쓸 수 있음'],
+          ['`DELETE FROM zcarrier_## WHERE carrid = @lv_id.`', '조건에 맞는 행 삭제', '`WHERE` 절 누락 주의! 삭제 전 대상·건수 먼저 조회 확인']
+        ])
+      ),
+      sqlSection('dml', 'classic', 'DB 변경 문법 — INSERT · UPDATE · MODIFY · DELETE',
+        text(
+          '구문법의 DB 변경 문장(`INSERT`, `UPDATE`, `MODIFY`, `DELETE`)은 Work Area·Internal Table·조건 변수 앞에 **`@`를 붙이지 않습니다**. [[abap-data-report|내부 테이블]] 조작 문장과 이름이 비슷하므로 대상이 DB 테이블인지 Internal Table 변수인지 항상 구분하세요.',
+          '오래된 레거시 프로그램에서는 `TABLES zcarrier_##.`로 테이블명과 같은 암묵적 Work Area를 선언한 뒤 `FROM` 없이 `INSERT zcarrier_##.`처럼 쓰는 짧은 형태도 볼 수 있지만, 가독성과 안전을 위해 구문법에서도 **명시적인 `FROM gs_row`** 사용을 권장합니다.'
+        ),
+        {
+          type: 'callout',
+          style: 'warning',
+          title: '실습 시 표준 테이블 직접 변경 금지',
+          body: '`SCARR`, `SPFLI`, `SFLIGHT`, `SBOOK`, `SCUSTOM` 같은 교육용 표준 테이블이나 업무 테이블에 직접 `INSERT`/`UPDATE`/`DELETE`를 실행하지 마세요. DB 변경 실습은 반드시 `SE11`에서 본인이 만든 `Z` 연습용 테이블(예: `ZCARRIER_##`)에서만 수행하세요.'
+        },
+        table(['구문법 문장 (Z 연습 테이블 기준)', '동작', '실무 · 레거시 확인 포인트'], [
+          ['`INSERT zcarrier_## FROM gs_row.`', '새 1행 삽입 (`@` 없음)', '동일 Primary Key가 이미 있으면 `sy-subrc = 4`'],
+          ['`INSERT zcarrier_## FROM TABLE gt_rows ACCEPTING DUPLICATE KEYS.`', '여러 행 일괄 삽입(중복 키만 건너뜀)', '옵션 없이 중복 키가 있으면 런타임 덤프(`CX_SY_OPEN_SQL_DB`) 발생'],
+          ['`UPDATE zcarrier_## SET carrname = lv_name WHERE carrid = lv_id.`', '조건에 맞는 행의 지정 컬럼만 변경', '실제 변경 행 수는 `sy-dbcnt`로 확인'],
+          ['`MODIFY zcarrier_## FROM gs_row.`', '키가 있으면 전체 덮어쓰기, 없으면 삽입', '채우지 않은 필드가 초기값으로 덮어쓰일 수 있어 부분 변경은 `UPDATE SET` 권장'],
+          ['`DELETE FROM zcarrier_## WHERE carrid = lv_id.`', '조건에 맞는 행 삭제', '`WHERE` 절 누락 주의! 삭제 전 대상·건수 먼저 조회 확인'],
+          ['`INSERT zcarrier_##.` / `MODIFY zcarrier_##.` (레거시)', '`TABLES` 선언 암묵적 Work Area 사용', '기존 코드 해석용으로만 알고 신규 작성에서는 `FROM gs_row` 명시']
+        ])
+      ),
+      sqlSection('dml', 'both', '트랜잭션(COMMIT / ROLLBACK) · LUW · Lock Object',
+        text(
+          'ABAP에서는 데이터베이스 단위의 트랜잭션인 **DB LUW**와, 여러 화면·단계를 하나의 업무 단위로 묶는 **SAP LUW**를 구분합니다. `COMMIT WORK`는 현재 LUW의 변경을 영구 확정하고, `ROLLBACK WORK`는 아직 커밋되지 않은 변경을 되돌립니다.',
+          '화면 전환(Dynpro PBO/PAI), `CALL TRANSACTION`, 동기 RFC 호출 등에서는 **암묵적 DB 커밋**이 발생할 수 있으므로, `COMMIT WORK`를 적지 않았다고 변경이 절대 저장되지 않는다고 가정하면 안 됩니다. 또한 `SELECT ... ENDSELECT` 루프 안에서 `COMMIT WORK`를 호출하면 DB 커서가 닫혀 런타임 오류가 납니다.'
+        ),
+        table(['안전한 DB 변경 5단계 (구문법·신문법 공통)', '핵심 실천'], [
+          ['1. 사전 확인', '변경/삭제 대상 행과 건수를 먼저 `SELECT`로 확인 (단, 조회와 변경 사이 타 사용자 수정 가능성 염두)'],
+          ['2. 권한 검사', '업무 권한 객체(`AUTHORITY-CHECK`)로 실행 권한 검증 (Open SQL은 업무 권한을 자동 체크하지 않음)'],
+          ['3. 잠금(`Lock Object`)', '`SE11`에 정의된 Lock Object의 `ENQUEUE_...` 함수로 동시 수정 방지'],
+          ['4. 변경 및 오류 처리', '좁은 Primary Key 조건으로 변경 후 즉시 `sy-subrc`·`sy-dbcnt` 및 `CX_SY_OPEN_SQL_DB` 예외 처리'],
+          ['5. 확정 / 복구 및 해제', '업무 단위가 모두 성공하면 `COMMIT WORK`, 하나라도 실패하면 `ROLLBACK WORK` 후 `DEQUEUE_...` 해제']
+        ])
+      ),
+
+      /* ===================== 규칙 · 표현식 / 후처리 · 성능 ===================== */
+      sqlSection('advanced', 'new', '신문법(Strict Mode) 필수 규칙',
+        text(
+          'ABAP 7.40 SP05 / 7.5+ Open SQL에서는 쉼표(`,`)로 컬럼을 구분하거나 `@` 호스트 변수·`@DATA(...)` 인라인 선언·SQL 표현식 등 최신 요소가 하나라도 들어가면 컴파일러가 **Strict Mode(신문법)**로 검사합니다.',
+          'Strict Mode가 켜지면 아래 규칙을 **해당 SQL 문장 전체에 일관되게** 적용해야 합니다. 한 `SELECT` 안에서 쉼표와 `@` 없는 변수, 앞쪽 `INTO` 같은 구문법 요소를 섞어 쓰면 즉시 문법 오류가 발생합니다.'
+        ),
+        table(['신문법(Strict Mode) 규칙', '올바른 신문법 예시', '자주 나는 문법 오류'], [
+          ['컬럼·정렬·그룹 **쉼표 `,` 필수**', '`SELECT carrid, carrname` / `GROUP BY carrid, loccurkey`', '공백으로만 나열하면 Strict Mode 컴파일 오류'],
+          ['모든 ABAP 변수 앞 **`@` 필수**', '`WHERE carrid = @p_carr` / `INTO TABLE @gt_tab`', '하나의 변수라도 `@`를 빼먹으면 오류'],
+          ['**`INTO` 절은 문장 끝**에 배치', '`FROM scarr WHERE ... ORDER BY ... INTO TABLE @gt_tab.`', '`FROM` 바로 뒤에 `INTO`를 두면 오류'],
+          ['**`@DATA(...)` 인라인 선언** 지원', '`INTO @DATA(gs_row)` · `INTO TABLE @DATA(gt_tab)`', '집계·표현식 컬럼에 `AS 별칭`을 빼면 인라인 컴포넌트 생성 오류'],
+          ['SQL 표현식 · 최신 JOIN 지원', '`CASE`, `COALESCE`, 산술식, `RIGHT OUTER JOIN`, `WITH`', '시스템 릴리스(7.40 vs 7.50 vs 7.52)별 지원 범위 확인']
+        ])
+      ),
+      sqlSection('advanced', 'new', 'SQL 표현식 · 내장 함수 · UNION · WITH(CTE)',
+        text(
+          '신문법 Open SQL에서는 데이터를 ABAP 메모리로 옮긴 뒤 `LOOP`로 가공하는 대신, **DB 단계에서 조건 분기·NULL 치환·산술 계산·문자열 조합**까지 처리해 가져올 수 있습니다. 표현식 결과에는 `AS 별칭`을 붙여 대상 컴포넌트 이름을 명확히 지정합니다.',
+          '여러 `SELECT` 결과를 세로로 합칠 때는 `UNION`(중복 제거) 또는 `UNION ALL`(중복 유지, 더 빠름)을 사용하고, 복잡한 중간 조회는 `WITH +cte AS ( SELECT ... ) SELECT ... FROM +cte`(ABAP 7.51+)로 단계를 나눌 수 있습니다.'
+        ),
+        table(['신문법 SQL 표현식 / 기능', '역할 · 예시', '참고'], [
+          ['`CASE ... WHEN ... ELSE ... END`', '조건에 따른 값 분류 (`AS seat_status`)', 'Simple CASE와 Searched CASE 모두 지원'],
+          ['`COALESCE( a, b )`', '`a`가 `NULL`이면 `b` 반환', '`LEFT OUTER JOIN` 오른쪽 `NULL` 기본값 처리에 유용'],
+          ['산술식 (`+`, `-`, `*`)', '`( a~seatsmax - a~seatsocc ) AS seatsfree`', '나눗셈은 `DIVISION` / `DIV` / `MOD`·`FLTP` 타입 규칙 확인'],
+          ['문자열 함수 (`CONCAT`, `SUBSTRING`, `UPPER`, `LOWER`, `LENGTH`)', 'DB에서 문자열 가공 (`CONCAT_WITH_SPACE` 포함)', '지원 함수 범위는 ABAP 7.5 / 7.52 릴리스별 F1 문서 확인'],
+          ['`UNION` / `UNION ALL`', '컬럼 수·타입이 호환되는 두 결과 집합 결합', '중복 제거가 필요 없으면 `UNION ALL`이 유리'],
+          ['`WITH +cte AS ( ... )` / `OFFSET`', '공통 테이블 식(CTE) · 정렬 결과 앞부분 건너뛰기', 'ABAP 7.51+ 지원 · `OFFSET`은 `ORDER BY`와 함께 사용']
+        ]),
+        code('[신문법] SFLIGHT SQL 표현식: CASE·산술식·COALESCE', `REPORT zabap_f##_##.
+
+PARAMETERS p_carr TYPE sflight-carrid DEFAULT 'LH'.
+
+SELECT a~carrid,
+       a~connid,
+       a~fldate,
+       a~seatsmax,
+       a~seatsocc,
+       ( a~seatsmax - a~seatsocc ) AS seatsfree,
+       CASE
+         WHEN a~seatsocc >= a~seatsmax THEN '만석'
+         WHEN a~seatsmax - a~seatsocc <= 20 THEN '마감임박'
+         ELSE '여유'
+       END AS seat_status,
+       COALESCE( b~cityto, '미등록' ) AS dest_city
+  FROM sflight AS a
+  LEFT OUTER JOIN spfli AS b
+    ON a~carrid = b~carrid
+   AND a~connid = b~connid
+  WHERE a~carrid = @p_carr
+    AND a~seatsmax > 0
+  ORDER BY a~fldate DESCENDING, a~connid ASCENDING
+  INTO TABLE @DATA(gt_status)
+  UP TO 20 ROWS.
+
+LOOP AT gt_status INTO DATA(gs_st).
+  WRITE: / gs_st-carrid, gs_st-connid, gs_st-fldate,
+           '잔여:', gs_st-seatsfree, gs_st-seat_status, gs_st-dest_city.
+ENDLOOP.`)
+      ),
+      sqlSection('advanced', 'classic', '구문법(Classic Open SQL) 필수 규칙과 혼용 주의',
+        text(
+          '구문법(Classic Open SQL)은 기존 SAP ECC·레거시 `Z` 프로그램을 유지보수하거나 BC400 기본 문법을 읽을 때 반드시 알아야 하는 형식입니다. 구문법은 컬럼과 절을 **공백으로 구분**하고 `@`를 쓰지 않으며, 모든 대상 변수를 사전에 선언합니다.',
+          '가장 흔한 실수는 기존 구문법 `SELECT`를 수정할 때 새 조건에 `@lv_val`이나 컬럼 쉼표 `,`를 하나만 추가하는 것입니다. **신문법 요소가 단 하나라도 들어가면 컴파일러가 문장 전체를 Strict Mode로 전환**하므로, 한 문장 안에서는 구문법과 신문법을 절대 섞어 쓰지 마세요.'
+        ),
+        table(['구문법(Classic) 규칙', '올바른 구문법 예시', '혼용 시 주의사항'], [
+          ['컬럼·정렬·그룹 **공백 구분**', '`SELECT carrid carrname` / `ORDER BY carrid connid`', '쉼표 `,`를 넣으면 Strict Mode가 켜져 나머지 구문법에서 오류'],
+          ['ABAP 변수 앞 **`@` 미사용**', '`WHERE carrid = p_carr` / `INTO TABLE gt_tab`', '일부 변수에만 `@`를 붙이면 문법 오류'],
+          ['**`INTO` 절은 `FROM` 뒤·`WHERE` 앞**', '`SELECT ... FROM scarr INTO TABLE gt_tab WHERE ...`', '구문법에서는 `INTO`를 문장 끝에 두는 스타일을 섞지 않기'],
+          ['**사전 `TYPES`·`DATA` 선언 필수**', '`DATA gt_tab TYPE STANDARD TABLE OF ts_row.`', '`@DATA(...)` 인라인 선언 불가'],
+          ['SQL 표현식 · `UNION` · `WITH` 미지원', '원본 컬럼 조회 후 ABAP `LOOP`에서 계산·가공', '표현식이 필요하면 문장 전체를 신문법으로 전환']
+        ])
+      ),
+      sqlSection('advanced', 'classic', '구문법의 데이터 가공 — SELECT 후 ABAP LOOP 후처리',
+        text(
+          '구문법 Open SQL에서는 `SELECT` 문 안에서 `CASE`, `COALESCE`, 산술 계산(`seatsmax - seatsocc`), 문자열 함수, `UNION`, `WITH(CTE)`, `OFFSET`을 사용할 수 없습니다.',
+          '따라서 구문법에서는 **필요한 원본 컬럼만 `INTO [CORRESPONDING FIELDS OF] TABLE`로 먼저 조회**한 뒤, ABAP `LOOP AT` 내부에서 계산·조건 분기(`IF`/`CASE`)·초기값 치환(`IS INITIAL`)을 처리합니다. 아래 예제는 신문법의 `CASE·산술식·COALESCE` 예제와 동일한 결과를 구문법으로 구현한 패턴입니다.'
+        ),
+        table(['필요한 가공 작업', '구문법(Classic) 처리 패턴', '참고'], [
+          ['조건 분기 (`CASE` 대체)', '`LOOP AT` 안에서 `IF ... ELSEIF ... ELSE ... ENDIF.`', '결과를 구조체 추가 필드에 저장 후 `MODIFY gt_tab FROM gs_row.`'],
+          ['`NULL`/미일치 기본값 (`COALESCE` 대체)', '`IF gs_row-dest_city IS INITIAL. gs_row-dest_city = \'미등록\'. ENDIF.`', '`LEFT OUTER JOIN` 미일치 열은 ABAP 초기값으로 들어옴'],
+          ['산술 계산 (`seatsmax - seatsocc`)', '`gs_row-seatsfree = gs_row-seatsmax - gs_row-seatsocc.`', '결과 구조체(`TYPES`)에 계산용 필드를 미리 정의'],
+          ['두 조회 결과 합치기 (`UNION` 대체)', '첫 조회 `INTO TABLE gt_all` + 두 번째 조회 `APPENDING TABLE gt_all`', '중복 제거가 필요하면 `SORT` 후 `DELETE ADJACENT DUPLICATES`'],
+          ['부분 건수 조회 (`OFFSET` 대체)', '`UP TO n ROWS` 조회 후 필요한 범위 처리', '대량 데이터는 키 조건(`WHERE key > lv_last_key`)으로 페이징']
+        ]),
+        code('[구문법] SFLIGHT 가공: Classic SELECT 후 LOOP 계산·분기', `REPORT zabap_f##_##.
+
+PARAMETERS p_carr TYPE sflight-carrid DEFAULT 'LH'.
+
+TYPES: BEGIN OF ts_status,
+         carrid      TYPE sflight-carrid,
+         connid      TYPE sflight-connid,
+         fldate      TYPE sflight-fldate,
+         seatsmax    TYPE sflight-seatsmax,
+         seatsocc    TYPE sflight-seatsocc,
+         dest_city   TYPE spfli-cityto,
+         seatsfree   TYPE i,
+         seat_status TYPE c LENGTH 10,
+       END OF ts_status.
+
+DATA: gt_status TYPE STANDARD TABLE OF ts_status,
+      gs_st     TYPE ts_status.
+
+" 1) 구문법은 SELECT 안 CASE·산술식·COALESCE 불가 -> 원본 컬럼 먼저 조회
+SELECT a~carrid
+       a~connid
+       a~fldate
+       a~seatsmax
+       a~seatsocc
+       b~cityto AS dest_city
+  FROM sflight AS a
+  LEFT OUTER JOIN spfli AS b
+    ON a~carrid = b~carrid
+   AND a~connid = b~connid
+  INTO CORRESPONDING FIELDS OF TABLE gt_status
+  UP TO 20 ROWS
+  WHERE a~carrid = p_carr
+    AND a~seatsmax > 0
+  ORDER BY a~fldate DESCENDING a~connid ASCENDING.
+
+" 2) ABAP LOOP에서 잔여 좌석 계산·상태 분기·미등록 도시 치환
+LOOP AT gt_status INTO gs_st.
+  gs_st-seatsfree = gs_st-seatsmax - gs_st-seatsocc.
+
+  IF gs_st-seatsocc >= gs_st-seatsmax.
+    gs_st-seat_status = '만석'.
+  ELSEIF gs_st-seatsfree <= 20.
+    gs_st-seat_status = '마감임박'.
+  ELSE.
+    gs_st-seat_status = '여유'.
+  ENDIF.
+
+  IF gs_st-dest_city IS INITIAL.
+    gs_st-dest_city = '미등록'.
+  ENDIF.
+
+  MODIFY gt_status FROM gs_st.
+  WRITE: / gs_st-carrid, gs_st-connid, gs_st-fldate,
+           '잔여:', gs_st-seatsfree, gs_st-seat_status, gs_st-dest_city.
+ENDLOOP.`)
+      ),
+      sqlSection('advanced', 'both', 'ABAP SQL 성능 체크리스트 · Table Buffer · ST05',
+        text(
+          '구문법과 신문법 어느 쪽을 쓰더라도 ABAP 프로그램 성능 저하의 가장 흔한 원인은 **불필요하게 많은 DB 왕복 호출**과 **과도한 컬럼·행 전송**입니다. 감으로 추측하기보다 `ST05`(SQL Trace)로 실제 실행된 SQL 횟수와 소요 시간, 실행 계획을 확인하는 습관이 중요합니다.'
+        ),
+        table(['점검 항목 (구문법·신문법 공통)', '피해야 할 패턴', '권장 패턴'], [
+          ['컬럼 선택', '항상 `SELECT *`로 수십 개 컬럼 전체 읽기', '화면에 실제로 쓰는 컬럼만 명시적으로 나열'],
+          ['반복 DB 호출', '`LOOP AT gt_list` 안에서 매 행마다 `SELECT SINGLE` 호출', '`JOIN` 또는 `FOR ALL ENTRIES`로 한 번에 조회 후 `READ TABLE ... BINARY SEARCH` / `HASHED TABLE` 매칭'],
+          ['행 수 제한', '전체 테이블을 읽고 ABAP `LOOP`에서 `IF`로 버리기', '`WHERE` 조건으로 DB에서 먼저 필터링, 목록은 `UP TO n ROWS` 고려'],
+          ['인덱스 활용', '키/인덱스 앞쪽 컬럼을 빼거나 선택도 낮은 조건만 사용', '`SE11` Primary Key / Secondary Index 선두 컬럼 순서와 선택도 고려'],
+          ['`Table Buffer`', '버퍼 테이블에 `JOIN`/`DISTINCT`/`GROUP BY` 등을 무심코 써서 버퍼 우회', '버퍼 우회가 꼭 필요한 실시간 조회에만 명시적으로 `BYPASSING BUFFER` 사용'],
+          ['성능 측정', '느낌으로 튜닝 (`JOIN`이 항상 빠르다고 단정)', '`ST05` SQL Trace로 호출 수·읽은 행 수·실행 계획 측정 후 개선']
+        ]),
+        {
+          type: 'callout',
+          style: 'tip',
+          title: '관련 문서 함께 보기',
+          body: '수업 필기 원문과 연결 개념은 [[abap-open-sql|Open SQL (수업 필기)]] · [[abap-dictionary|ABAP Dictionary]] · [[abap-data-report|내부 테이블 · Report]] · [[sap-tcode-reference|자주 쓰는 T-Code 모음]]에서 바로 이어서 볼 수 있습니다.'
+        }
+      )
+    ]
+  };
   const sortedIds = ['welcome-abap', 'learning-roadmap', ...order];
   const sorted = Object.fromEntries([...sortedIds, ...Object.keys(docs).filter(id => !sortedIds.includes(id))].map(id => [id, docs[id]]));
   window.WIKI_DOCS = sorted;

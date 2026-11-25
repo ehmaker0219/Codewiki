@@ -116,6 +116,7 @@
     document.getElementById('sbScheduleItem')?.classList.remove('active');
     document.getElementById('sbThinkingFlowItem')?.classList.remove('active');
     document.getElementById('sbProgramCatalogItem')?.classList.remove('active');
+    document.getElementById('sbSqlGuideItem')?.classList.remove('active');
     isBoardViewActive = true;
     if (openBoardBtn) openBoardBtn.classList.add("active");
     if (sidebarRight) sidebarRight.classList.add("hidden");

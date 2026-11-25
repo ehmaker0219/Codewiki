@@ -1,7 +1,9 @@
 /** Expected results are explanatory; none of these examples has been run in SAP here. */
 (() => {
-  const sqlRequirements = 'Standard ABAP 7.52 기준입니다. SCARR·SPFLI·SFLIGHT 교육용 테이블이 있는 시스템에서 실행하세요. 실제 출력은 현재 클라이언트의 데이터에 따라 달라집니다.';
+  const sqlRequirements = 'Standard ABAP 7.52 기준입니다. SCARR·SPFLI·SFLIGHT·SBOOK·SCUSTOM 교육용 테이블이 있는 시스템에서 실행하세요. 실제 출력은 현재 클라이언트의 데이터에 따라 달라집니다.';
+  const classicSqlRequirements = 'Classic Open SQL 기준입니다. SCARR·SPFLI·SFLIGHT·SBOOK·SCUSTOM 교육용 테이블이 있는 Standard ABAP 시스템에서 실행하세요. 실제 출력은 현재 클라이언트의 데이터에 따라 달라집니다.';
   const sqlExample = (input, expected) => ({input, expected, requirements:sqlRequirements});
+  const classicSqlExample = (input, expected) => ({input, expected, requirements:classicSqlRequirements});
   const notes = {
     'Open SQL 기본 조회': sqlExample('p_carr = LH', 'LH가 있으면 항공사 코드·이름·통화가 출력되고, 없으면 조회 결과가 없습니다가 출력됩니다.'),
     '항공사 이름과 가장 빠른 운항일': sqlExample('p_carr = LH', '항공사 이름과 해당 항공사의 가장 이른 운항일 한 건을 출력합니다. 같은 날짜라면 노선 번호가 작은 행을 선택합니다. 데이터가 없는 조회 부분은 출력되지 않습니다.'),
@@ -13,6 +15,20 @@
     '항공사와 독일 출발 노선 연결': sqlExample('SCARR·SPFLI의 현재 데이터', '항공사별 독일 출발 노선을 출력합니다. 해당 노선이 없는 항공사도 표시되며 오른쪽 열은 ABAP 초기값으로 보입니다.'),
     '노선이 있는 항공사만 조회': sqlExample('SCARR·SPFLI의 현재 데이터', 'SPFLI에 노선이 하나 이상 있는 항공사를 한 행씩 코드순으로 출력합니다.'),
     '빈 기준 테이블을 막는 FOR ALL ENTRIES': sqlExample('독일 출발 노선과 운항 데이터', '해당 노선의 운항 건수를 출력합니다. 기준 노선이 없으면 두 번째 조회를 실행하지 않고 조회할 노선이 없습니다를 출력합니다.'),
+    '[신문법] 단건 조회: SELECT SINGLE과 UP TO 1 ROWS 비교': sqlExample('p_carr = LH', 'SCARR에서 LH 항공사 기본 정보를 1건 출력하고, SFLIGHT에서 최저 운임·가장 이른 운항일 1건을 출력합니다.'),
+    '[신문법] 다건 조회: INTO TABLE과 CORRESPONDING FIELDS OF TABLE': sqlExample('SPFLI의 DE·US·LH 노선 데이터', '독일 출발 노선 수, 미국 출발 노선을 이어 담은 합산 노선 수, LH 노선의 비행시간 내림차순 목록이 순서대로 출력됩니다.'),
+    '[신문법] SCUSTOM 조건 조회: SELECT-OPTIONS·LIKE·BETWEEN': sqlExample('so_id 비움 또는 고객 ID 범위, p_cntry = DE', '독일 고객 중 이름이 A 또는 S로 시작하고 할인율이 000~020 사이인 고객을 최대 20건 출력합니다.'),
+    '[신문법] SBOOK 예약 집계: GROUP BY와 HAVING': sqlExample('p_year = 2026 (취소되지 않은 SBOOK 예약)', '해당 연도에 5건 이상 예약이 있는 항공사·통화 조합별 예약 건수, 총액, 최초/최종 예약일을 출력합니다.'),
+    '[신문법] SCARR·SPFLI·SFLIGHT 다중 LEFT OUTER JOIN': sqlExample('SCARR·SPFLI·SFLIGHT의 현재 데이터', '모든 항공사를 유지하면서 독일 출발 노선과 운항일·점유 좌석을 최대 30건 출력합니다. 독일 노선이 없는 항공사는 오른쪽 열이 초기값으로 보입니다.'),
+    '[신문법] SCUSTOM·SBOOK: FOR ALL ENTRIES 안전 패턴과 EXISTS': sqlExample('SCUSTOM·SBOOK의 독일 고객과 취소되지 않은 예약', '예약 이력이 있는 독일 고객 최대 20명을 먼저 조회한 뒤, 중복 키를 제거한 기준 테이블로 해당 고객들의 예약 상세 총 건수를 출력합니다.'),
+    '[신문법] SFLIGHT SQL 표현식: CASE·산술식·COALESCE': sqlExample('p_carr = LH', 'LH 운항편의 잔여 좌석(seatsmax - seatsocc), 좌석 상태(만석/마감임박/여유), 도착 도시(미등록 시 기본값)를 최신 운항일순으로 최대 20건 출력합니다.'),
+    '[구문법] 단건 조회: SELECT SINGLE과 UP TO 1 ROWS 비교': classicSqlExample('p_carr = LH', '구문법(공백 구분·@ 미사용)으로 SCARR에서 LH 항공사 1건과 SFLIGHT 최저 운임·가장 이른 운항일 1건을 출력합니다.'),
+    '[구문법] 다건 조회: INTO TABLE과 CORRESPONDING FIELDS OF TABLE': classicSqlExample('SPFLI의 DE·US·LH 노선 데이터', '구문법 사전 선언 테이블과 DESCRIBE TABLE로 독일 출발 노선 수, 합산 노선 수, LH 비행시간 내림차순 목록을 출력합니다.'),
+    '[구문법] SCUSTOM 조건 조회: SELECT-OPTIONS·LIKE·BETWEEN': classicSqlExample('so_id 비움 또는 고객 ID 범위, p_cntry = DE', '구문법 WHERE(id IN so_id, @ 미사용)로 독일 고객 중 이름이 A 또는 S로 시작하고 할인율이 000~020 사이인 고객을 최대 20건 출력합니다.'),
+    '[구문법] SBOOK 예약 집계: GROUP BY와 HAVING': classicSqlExample('p_year = 2026 (취소되지 않은 SBOOK 예약)', '구문법 공백 구분 GROUP BY와 사전 선언 구조체로 5건 이상 예약이 있는 항공사·통화 조합별 통계를 출력합니다.'),
+    '[구문법] SCARR·SPFLI·SFLIGHT 다중 LEFT OUTER JOIN': classicSqlExample('SCARR·SPFLI·SFLIGHT의 현재 데이터', '구문법 공백 구분 다중 LEFT OUTER JOIN으로 모든 항공사와 독일 출발 노선·운항일·점유 좌석을 최대 30건 출력합니다.'),
+    '[구문법] SCUSTOM·SBOOK: FOR ALL ENTRIES 안전 패턴과 EXISTS': classicSqlExample('SCUSTOM·SBOOK의 독일 고객과 취소되지 않은 예약', '구문법 EXISTS와 @ 없는 FOR ALL ENTRIES IN lt_keys로 예약 이력이 있는 독일 고객 수와 예약 상세 총 건수를 출력합니다.'),
+    '[구문법] SFLIGHT 가공: Classic SELECT 후 LOOP 계산·분기': classicSqlExample('p_carr = LH', '구문법 SELECT로 원본 컬럼을 먼저 읽은 뒤 ABAP LOOP에서 잔여 좌석·좌석 상태(만석/마감임박/여유)·도착 도시 기본값(미등록)을 계산해 최대 20건 출력합니다.'),
     '로컬 클래스의 정적 메서드': {input:'iv_number = 5', expected:'10이 출력됩니다.'},
     '구조 타입과 구조 변수': {input:'carrid = LH, carrname = Lufthansa', expected:'LH Lufthansa / Lufthansa가 출력됩니다.', requirements:'SCARR 교육용 테이블이 있는 시스템에서 실행하세요.'},
     '같은 이름의 필드만 복사': {input:'원본 gs_spfli(LH / 0400 / FRANKFURT), 대상 gs_flight-seatsocc = 320', expected:'LH 0400 320이 출력됩니다. seatsocc는 원본에 같은 이름의 필드가 없어 유지되고, cityfrom은 대상에 없어 복사되지 않습니다.', requirements:'SPFLI·SFLIGHT 교육용 테이블이 있는 시스템에서 실행하세요.'},

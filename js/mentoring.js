@@ -513,7 +513,7 @@
       }
       return;
     }
-    window.CodeWikiBoard?.closeIfActive();document.querySelectorAll('#sbHomeItem.active,#sbScheduleItem.active,#sbThinkingFlowItem.active,#sbProgramCatalogItem.active,.nav-doc-link.active').forEach(el=>el.classList.remove('active'));document.getElementById('quizModeBtn')?.classList.add('hidden');
+    window.CodeWikiBoard?.closeIfActive();document.querySelectorAll('#sbHomeItem.active,#sbScheduleItem.active,#sbThinkingFlowItem.active,#sbProgramCatalogItem.active,#sbSqlGuideItem.active,.nav-doc-link.active').forEach(el=>el.classList.remove('active'));document.getElementById('quizModeBtn')?.classList.add('hidden');
     if(entering)window.scrollTo({top:0,behavior:'instant'});if(!loaded&&!busy&&!dirty){frame();void run(load);}
   }
   function syncEndTimeOptions(startValue){
