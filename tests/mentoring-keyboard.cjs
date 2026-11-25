@@ -3,13 +3,15 @@ const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/st
 // Exercise the page's real event handlers without touching the browser's records or IndexedDB.
 const nodes=new Map(),events={},location={hash:'#mentoring'};
 let document,stored,storeCalls=0,failNext=false,pending=null,holdNext=false;
+let downloadedFiles=[];
 function element(id=''){
   let inert=false;
   const classes=new Set();
-  return {id,tagName:'DIV',className:'',dataset:{},events:{},children:[],hidden:false,open:false,isConnected:true,value:'',textContent:'',innerHTML:'',scrollTop:0,attributes:{},
+  return {id,tagName:'DIV',className:'',dataset:{},events:{},children:[],hidden:false,open:false,isConnected:true,value:'',textContent:'',innerHTML:'',scrollTop:0,attributes:{},href:'',download:'',
     classList:{add(c){classes.add(c);},remove(c){classes.delete(c);},toggle(c,force){if(force===undefined){if(classes.has(c))classes.delete(c);else classes.add(c);}else if(force)classes.add(c);else classes.delete(c);},contains(c){return classes.has(c);}},
     get inert(){return inert;},set inert(value){inert=value;if(value&&document)document.activeElement=document.body;},
     addEventListener(type,fn){this.events[type]=fn;},
+    click(){if(this.download)downloadedFiles.push({download:this.download,href:this.href});},
     append(...items){this.children.push(...items);},prepend(...items){this.children.unshift(...items);},
     querySelector(selector){
       if(selector.startsWith('#'))return node(selector.slice(1));
@@ -35,9 +37,14 @@ document={title:'코드위키',body:element('body'),activeElement:null,getElemen
   querySelector(selector){return selector.includes('dialog')&&node('mentoringImport').open?node('mentoringImport'):null;},
   addEventListener(type,fn){events[type]=fn;},createElement:()=>element()};
 document.activeElement=document.body;
-let copiedText='',printedTitles=[];
+let copiedText='',printedTitles=[],pdfRequests=[];
 const window={addEventListener(type,fn){events[type]=fn;},scrollTo(){},print(){printedTitles.push(document.title);},
-  CodeWikiAuth:{getSessionToken:()=> 'test-session'},CodeWikiLearning:{escape:value=>String(value).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}};
+  CodeWikiAuth:{getSessionToken:()=> 'test-session'},
+  CodeWikiLearning:{escape:value=>String(value).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))},
+  CodeWikiMentoringPdf:{
+    safePdfFilename:title=>String(title||'').replace(/[<>:"/\\|?*\x00-\x1f]/g,'_')+'.pdf',
+    async generate(report){pdfRequests.push(report);return new Blob(['%PDF-1.4'],{type:'application/pdf'});}
+  }};
 let uuidCounter=0;
 const context=vm.createContext({window,document,location,structuredClone,Date,Intl,URL,Map,Set,setTimeout,clearTimeout,
   navigator:{clipboard:{async writeText(text){copiedText=text;}}},
@@ -144,14 +151,12 @@ function hasUnsaved(){let prevented=false;events.beforeunload({preventDefault(){
   clickAction('reset-discord');assert.ok(!node('mentoringDiscordText').value.includes('추가 메모'));
   clickAction('close-discord');assert.equal(node('mentoringDiscord').open,false);
 
-  clickAction('print');await flush();
-  assert.ok(!node('mentoringReport').innerHTML.includes('활동 목표'),'report must omit removed goals section');
-  assert.ok(!node('mentoringReport').innerHTML.includes('활동 마무리'),'report must omit removed closing section');
-  assert.ok(!node('mentoringReport').innerHTML.includes('결과물 설명'),'report must omit removed result description section');
-  assert.ok(!node('mentoringReport').innerHTML.includes('진행 중')&&!node('mentoringReport').innerHTML.includes('완료'),'report must omit status label');
-  assert.ok(!node('mentoringReport').innerHTML.includes('멘토링 process'),'report must omit internal process checklist');
-  // Report renders image gallery (multi-column) and non-image attachment cards cleanly.
-  clickAction('preview');await flush();
+  clickAction('pdf');await flush();
+  assert.equal(printedTitles.length,0,'direct PDF download must not open browser print dialog');
+  assert.equal(downloadedFiles.length,1,'PDF save must trigger direct file download');
+  assert.equal(downloadedFiles[0].download,'1회차_2주차_6반_3조_이은호 멘토링 활동 결과보고서.pdf');
+  assert.equal(pdfRequests[0].mentorName,'이은호');
+  // Report preview renders image gallery (multi-column) and non-image attachment cards cleanly.
   stored.activities[0].attachments=[
     {id:'img-1',name:'capture1.png',type:'image/png',size:2048},
     {id:'img-2',name:'capture2.webp',type:'image/webp',size:4096},
@@ -160,14 +165,21 @@ function hasUnsaved(){let prevented=false;events.beforeunload({preventDefault(){
   node('report-files').children=[];
   clickAction('refresh');await flush();
   clickAction('preview');await flush();
+  assert.ok(!node('mentoringReport').innerHTML.includes('활동 목표'),'report must omit removed goals section');
+  assert.ok(!node('mentoringReport').innerHTML.includes('활동 마무리'),'report must omit removed closing section');
+  assert.ok(!node('mentoringReport').innerHTML.includes('결과물 설명'),'report must omit removed result description section');
+  assert.ok(!node('mentoringReport').innerHTML.includes('진행 중')&&!node('mentoringReport').innerHTML.includes('완료'),'report must omit status label');
+  assert.ok(!node('mentoringReport').innerHTML.includes('멘토링 process'),'report must omit internal process checklist');
   assert.match(node('mentoringReport').innerHTML,/첨부 자료 \(3건\)/);
   assert.equal(node('report-files').children.length,2,'images gallery and non-image file list rendered separately');
   assert.equal(node('report-files').children[0].className,'mentoring-report-gallery is-multi');
   assert.equal(node('report-files').children[0].children.length,2);
   assert.equal(node('report-files').children[1].className,'mentoring-report-file-list');
   assert.equal(node('report-files').children[1].children[0].children[0].textContent,'PDF');
-  assert.deepEqual(printedTitles,['1회차_2주차_6반_3조_이은호 멘토링 활동 결과보고서'],'PDF default filename must append report suffix to title');
   assert.equal(document.title,'1회차_2주차_6반_3조_이은호 멘토링 활동 결과보고서');
+  clickAction('pdf');await flush();
+  assert.equal(pdfRequests.at(-1).images.length,2,'direct PDF export must include previewable images');
+  assert.equal(pdfRequests.at(-1).otherFiles.length,1,'direct PDF export must include non-image files');
   clickAction('preview');await flush();
   assert.equal(document.title,'코드위키','returning to editor restores original page title');
   clickAction('preview');await flush();

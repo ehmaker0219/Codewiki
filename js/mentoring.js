@@ -92,11 +92,11 @@
     host.innerHTML=`<header class="mentoring-heading"><div><span class="mentoring-eyebrow">MENTORING NOTES</span><h1>내 멘토링</h1><p>진행한 활동과 결과물을 기록하고 보고서로 정리하세요.</p></div><span class="mentoring-role">${esc(actor.name)} · 멘토</span></header>
       <div class="mentoring-layout" id="mentoringLayout"><aside class="mentoring-library" aria-label="내 활동 기록"><div class="mentoring-library-heading"><h2>내 활동</h2><div class="mentoring-library-actions"><button type="button" id="mentoringNew" class="toss-primary-btn" data-action="new">+ 새 활동</button><button type="button" id="mentoringLibraryToggle" class="mentoring-library-toggle" data-action="toggle-library" aria-controls="mentoringLibraryContent" aria-expanded="true" aria-label="내 활동 접기" title="내 활동 접기">${toggleIcon}</button></div></div>
       <div class="mentoring-library-content" id="mentoringLibraryContent"><label class="sr-only" for="mentoringSearch">활동 검색</label><input id="mentoringSearch" type="search" placeholder="활동 제목 검색"><div id="mentoringFolders" class="mentoring-folders"></div><div id="mentoringList" class="mentoring-list"></div></div></aside><div class="mentoring-main">
-      <div class="mentoring-actions"><span id="mentoringStatus" role="status"></span><div class="mentoring-action-buttons">${button('refresh','새로고침')}<span class="mentoring-action-divider" aria-hidden="true"></span>${button('discord','디스코드 양식')}${button('preview','결과보고서')}${button('print','인쇄 / PDF')}${button('save','저장',true)}</div></div>
+      <div class="mentoring-actions"><span id="mentoringStatus" role="status"></span><div class="mentoring-action-buttons">${button('refresh','새로고침')}<span class="mentoring-action-divider" aria-hidden="true"></span>${button('discord','디스코드 양식')}${button('preview','결과보고서')}${button('pdf','PDF 저장')}${button('save','저장',true)}</div></div>
       <div id="mentoringUpdates" class="mentoring-help" role="status" hidden>새 내용이 있습니다. 새로고침하면 확인할 수 있습니다.</div>
       <div id="mentoringEditor"></div><article id="mentoringReport" class="mentoring-report" hidden></article></div></div>
       <dialog id="mentoringImport" class="profile-dialog" aria-labelledby="mentoringImportTitle"><div class="profile-dialog-header"><h2 id="mentoringImportTitle">내 기록 가져오기</h2>${button('close-import','닫기')}</div><p class="mentoring-help" id="mentoringImportHelp"></p><div id="mentoringImportList"></div></dialog>
-      <dialog id="mentoringDiscord" class="profile-dialog mentoring-discord-dialog" aria-labelledby="mentoringDiscordTitle"><div class="profile-dialog-header"><h2 id="mentoringDiscordTitle">디스코드 제출 양식</h2>${button('close-discord','닫기')}</div><p class="mentoring-help" id="mentoringDiscordHelp"></p><label class="sr-only" for="mentoringDiscordText">디스코드 제출 메시지</label><textarea id="mentoringDiscordText" class="mentoring-discord-textarea" rows="12"></textarea><p class="mentoring-help mentoring-discord-pdf-hint" id="mentoringDiscordPdfHint"></p><p id="mentoringDiscordStatus" class="mentoring-discord-status" role="status"></p><div class="mentoring-discord-actions">${button('reset-discord','다시 생성')}${button('print-from-discord','PDF 인쇄')}${button('copy-discord','클립보드 복사',true)}</div></dialog>`;
+      <dialog id="mentoringDiscord" class="profile-dialog mentoring-discord-dialog" aria-labelledby="mentoringDiscordTitle"><div class="profile-dialog-header"><h2 id="mentoringDiscordTitle">디스코드 제출 양식</h2>${button('close-discord','닫기')}</div><p class="mentoring-help" id="mentoringDiscordHelp"></p><label class="sr-only" for="mentoringDiscordText">디스코드 제출 메시지</label><textarea id="mentoringDiscordText" class="mentoring-discord-textarea" rows="12"></textarea><p class="mentoring-help mentoring-discord-pdf-hint" id="mentoringDiscordPdfHint"></p><p id="mentoringDiscordStatus" class="mentoring-discord-status" role="status"></p><div class="mentoring-discord-actions">${button('reset-discord','다시 생성')}${button('pdf-from-discord','PDF 저장')}${button('copy-discord','클립보드 복사',true)}</div></dialog>`;
     setLibraryCollapsed(libraryCollapsed);
   }
   const formatTimeRange=a=>a?.startTime&&a?.endTime?`${a.startTime} ~ ${a.endTime}`:'';
@@ -202,7 +202,7 @@
   function render(){
     renderFolders();renderList();revoke();preview=false;restoreReportTitle();$('mentoringReport').hidden=true;$('mentoringEditor').hidden=false;
     host.querySelector('[data-action=preview]').textContent='결과보고서';
-    for(const action of ['save','preview','print','discord'])host.querySelector('[data-action='+action+']').disabled=!activity();
+    for(const action of ['save','preview','pdf','discord'])host.querySelector('[data-action='+action+']').disabled=!activity();
     if(!activity()){folderMoveMarkup='';$('mentoringEditor').innerHTML='<div class="mentoring-empty"><h2>첫 활동을 만들어 주세요</h2><p>진행 내용과 결과물을 기록해 보고서로 정리하세요.</p>'+button('new','+ 활동 만들기',true)+'</div>';return;}
     const a=editing.activity;
     const presetParticipants=participantsFor(actor);
@@ -226,7 +226,7 @@
     selected=state.activities.some(a=>a.id===selected)?selected:state.activities[0]?.id||null;
     resetEditing();render();status('로컬 기록을 불러왔습니다.');
   }
-  function errorMessage(error){return ({conflict:'다른 탭에서 이 항목을 수정했습니다. 입력 내용을 복사한 뒤 새로고침해 주세요.',forbidden:'현재 역할에서는 수정할 수 없습니다.',title:'활동 제목을 입력해 주세요.',time:'활동 시작·종료 시간을 올바르게 선택해 주세요.',invalid:'입력한 날짜와 내용을 확인해 주세요.',files:'첨부파일 크기나 개수 제한을 확인해 주세요.',missing:'활동을 찾지 못했습니다. 새로고침해 주세요.','folder-name':'폴더 이름을 입력해 주세요.','duplicate-folder':'같은 이름의 폴더가 있습니다.'})[error.message]||'처리하지 못했습니다. 브라우저 저장 공간을 확인하고 다시 시도해 주세요.';}
+  function errorMessage(error){return ({conflict:'다른 탭에서 이 항목을 수정했습니다. 입력 내용을 복사한 뒤 새로고침해 주세요.',forbidden:'현재 역할에서는 수정할 수 없습니다.',title:'활동 제목을 입력해 주세요.',time:'활동 시작·종료 시간을 올바르게 선택해 주세요.',invalid:'입력한 날짜와 내용을 확인해 주세요.',files:'첨부파일 크기나 개수 제한을 확인해 주세요.',missing:'활동을 찾지 못했습니다. 새로고침해 주세요.','folder-name':'폴더 이름을 입력해 주세요.','duplicate-folder':'같은 이름의 폴더가 있습니다.','canvas-export-unavailable':'PDF 파일을 생성하지 못했습니다. 새로고침한 뒤 다시 시도해 주세요.'})[error.message]||'처리하지 못했습니다. 브라우저 저장 공간을 확인하고 다시 시도해 주세요.';}
   function folderErrorMessage(error){return ({'duplicate-folder':'같은 이름의 폴더가 있습니다.','folder-name':'폴더 이름을 입력해 주세요.',conflict:'폴더가 다른 탭에서 변경되었습니다. 폴더를 새로고침해 주세요.',missing:'폴더나 활동을 찾지 못했습니다. 폴더를 새로고침해 주세요.'})[error?.message]||'변경 결과를 확인하지 못했습니다. 폴더를 새로고침한 뒤 시도해 주세요.';}
   async function run(fn){
     if(busy||!visible())return;const ticket=version;
@@ -422,13 +422,47 @@
       container.append(list);
     }
   }
-  async function print(){await report();const ticket=version;if(!preview)return;await Promise.all([...$('mentoringReport').querySelectorAll('img')].map(img=>img.decode().catch(()=>{})));if(ticket!==version||!visible())return;const a=activity();if(a)applyReportTitle(a.title);document.body.classList.add('mentoring-print');try{window.print();}finally{document.body.classList.remove('mentoring-print');}}
+  async function downloadPdf(){
+    await save();const ticket=version,a=activity();if(!a)return;
+    const pdfApi=window.CodeWikiMentoringPdf;
+    if(!pdfApi?.generate){status('PDF 생성기를 불러오지 못했습니다. 새로고침해 주세요.');return;}
+    status('PDF 파일을 만드는 중…');
+    const files=Array.isArray(a.attachments)?a.attachments:[];
+    const imageFiles=files.filter(isPreviewableImage),otherFiles=files.filter(f=>!isPreviewableImage(f));
+    const images=[];
+    for(const f of imageFiles){
+      const blob=await store.file(a.id,actor.id,f.id);
+      if(ticket!==version||!visible())return;
+      images.push({id:f.id,name:f.name,size:f.size,type:f.type,blob});
+    }
+    const pdfTitle=pdfFileTitle(a.title);
+    const filename=pdfApi.safePdfFilename(pdfTitle);
+    const blob=await pdfApi.generate({
+      title:a.title,
+      pdfTitle,
+      date:a.date,
+      timeRange:formatTimeRange(a),
+      mentorName:actor.name,
+      participants:resolveParticipants(a,actor),
+      location:typeof a.location==='string'?a.location.trim():defaultLocation,
+      task:a.task,
+      code:a.code,
+      images,
+      otherFiles
+    });
+    if(ticket!==version||!visible())return;
+    const url=URL.createObjectURL(blob),link=document.createElement('a');
+    link.href=url;link.download=filename;link.click();
+    setTimeout(()=>URL.revokeObjectURL(url),2000);
+    status('PDF 파일을 저장했습니다.');
+  }
   function openDiscord(){
     if(!editing)return;
     const text=formatDiscordTemplate(editing.activity,state.activities,actor);
     $('mentoringDiscordText').value=text;
     $('mentoringDiscordHelp').textContent=dirty?'작성 중인 내용(미저장 포함)을 반영했습니다. 필요하면 아래에서 수정한 뒤 복사해 디스코드에 붙여넣어 주세요.':'활동 기록을 바탕으로 디스코드 제출 양식을 만들었습니다. 필요하면 수정한 뒤 복사해 디스코드에 붙여넣어 주세요.';
-    $('mentoringDiscordPdfHint').textContent='첨부 PDF 기본 파일명: '+pdfFileTitle(editing.activity.title)+'.pdf';
+    const pdfName=window.CodeWikiMentoringPdf?.safePdfFilename(pdfFileTitle(editing.activity.title))||(pdfFileTitle(editing.activity.title)+'.pdf');
+    $('mentoringDiscordPdfHint').textContent='저장될 PDF 파일명: '+pdfName;
     $('mentoringDiscordStatus').textContent='';
     $('mentoringDiscord').showModal();
     $('mentoringDiscordText')?.focus?.({preventScroll:true});
@@ -568,8 +602,8 @@
     if(action==='close-discord'){$('mentoringDiscord').close();return;}
     if(action==='reset-discord'){if(editing&&$('mentoringDiscordText')){$('mentoringDiscordText').value=formatDiscordTemplate(editing.activity,state.activities,actor);if($('mentoringDiscordStatus'))$('mentoringDiscordStatus').textContent='활동 기록 기준으로 양식을 다시 생성했습니다.';}return;}
     if(action==='copy-discord'){void copyDiscord();return;}
-    if(action==='print-from-discord'){$('mentoringDiscord').close();void run(print);return;}
-    const actions={new:create,save,refresh,delete:remove,preview:()=>preview?render():report(),print};
+    if(action==='pdf-from-discord'){$('mentoringDiscord').close();void run(downloadPdf);return;}
+    const actions={new:create,save,refresh,delete:remove,preview:()=>preview?render():report(),pdf:downloadPdf};
     if(actions[action])void run(actions[action]);
   });
   host.addEventListener('dragstart',e=>{
