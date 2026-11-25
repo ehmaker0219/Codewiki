@@ -13,10 +13,11 @@
     return opening;
   }
   const fileKey=(activity,owner,id)=>`${activity}:${owner}:${id}`;
-  function references(state){
+  function references(state,owner){
     const refs=new Set();
     for(const a of state.activities)for(const f of a.attachments||[]){
       if(f.owner)refs.add(fileKey(a.id,f.owner,f.id));
+      else if(owner)refs.add(fileKey(a.id,owner,f.id));
       else for(const m of model.members)refs.add(fileKey(a.id,m.id,f.id));
     }
     for(const collection of [state.drafts,state.submissions])for(const item of Object.values(collection))for(const f of item.attachments||[])refs.add(fileKey(item.activity,item.owner,f.id));
@@ -33,28 +34,29 @@
   }
   function create(actor){
     if(!model.member(actor))throw Error('forbidden');
+    const storeKey=model.storageKeyFor(actor);
     return {
       read:()=>transaction('readonly',(tx,done)=>{
-        const req=tx.objectStore('team').get('group');req.onsuccess=()=>done(model.view(req.result||model.empty(),actor));
+        const req=tx.objectStore('team').get(storeKey);req.onsuccess=()=>done(model.view(req.result||model.empty(),actor));
       }),
       execute:(command,uploads=[])=>transaction('readwrite',(tx,done,fail)=>{
-        const table=tx.objectStore('team'),blobs=tx.objectStore('files'),req=table.get('group');
+        const table=tx.objectStore('team'),blobs=tx.objectStore('files'),req=table.get(storeKey);
         req.onsuccess=()=>{
           try{
-            const before=req.result||model.empty(),after=model.apply(before,actor,command),refs=references(after);
+            const before=req.result||model.empty(),after=model.apply(before,actor,command),refs=references(after,actor);
             if(uploads.length&&command.type!=='activity')throw Error('files');
             for(const f of uploads){
               const metadata=after.activities.find(a=>a.id===command.id)?.attachments.find(a=>a.id===f.id);
               if(!metadata||!(f.blob instanceof Blob)||metadata.size!==f.blob.size)throw Error('files');
               blobs.put(f.blob,fileKey(command.id,actor,f.id));
             }
-            for(const ref of references(before))if(!refs.has(ref))blobs.delete(ref);
-            table.put(after,'group');done(model.view(after,actor));
+            for(const ref of references(before,actor))if(!refs.has(ref))blobs.delete(ref);
+            table.put(after,storeKey);done(model.view(after,actor));
           }catch(e){fail(e);}
         };
       }),
       file:(activity,owner,id)=>transaction('readonly',(tx,done)=>{
-        const req=tx.objectStore('team').get('group');req.onsuccess=()=>{
+        const req=tx.objectStore('team').get(storeKey);req.onsuccess=()=>{
           const state=model.view(req.result||model.empty(),actor),k=model.key(activity,owner);
           const own=owner===actor?state.activities.find(a=>a.id===activity):null;
           if(![own,state.drafts[k],state.submissions[k]].some(s=>s?.attachments?.some(f=>f.id===id))){done(null);return;}

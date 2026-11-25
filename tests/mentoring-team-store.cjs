@@ -88,5 +88,25 @@ vm.runInContext(fs.readFileSync('js/mentoring-team-store.js','utf8'),ctx);
   // Deleting the activity garbage-collects its stored file blobs.
   await store.execute({type:'delete',id:'act-1',revision:2});
   assert.equal(fileStore.size,0,'deleting activity removes orphaned blobs');
-  console.log('PASS: mentoring team store onclose reconnection, blob cleanup, legacy null-attachments safety and role enforcement');
+
+  // Additional mentors (김태규, 이예진) get isolated storage keys and blobs without touching 이은호's legacy 'group' record.
+  const taegyu=model.members.find(m=>m.name==='김태규').id;
+  const yejin=model.members.find(m=>m.name==='이예진').id;
+  const tgStore=create(taegyu),yjStore=create(yejin);
+  await store.execute({type:'create',id:'eh-1',date:'2026-11-25'});
+  const tgBlob=new FakeBlob('tg-file');
+  await tgStore.execute({type:'create',id:'tg-1',date:'2026-11-25'});
+  await tgStore.execute({
+    type:'activity',id:'tg-1',revision:1,
+    value:{title:'1회차_2주차_6반_1조_김태규',date:'2026-11-25',startTime:'18:00',endTime:'20:00',task:'',attachments:[{id:'tf1',name:'a.txt',type:'text/plain',size:tgBlob.size}]}
+  },[{id:'tf1',blob:tgBlob}]);
+  await yjStore.execute({type:'create',id:'yj-1',date:'2026-11-25'});
+  assert.equal((await store.read()).activities[0].id,'eh-1');
+  assert.equal((await tgStore.read()).activities[0].id,'tg-1');
+  assert.equal((await yjStore.read()).activities[0].id,'yj-1');
+  assert.equal((await tgStore.file('tg-1',taegyu,'tf1')).text,'tg-file');
+  assert.equal(await yjStore.file('tg-1',taegyu,'tf1'),null,'another mentor cannot read another mentor file');
+  await yjStore.execute({type:'delete',id:'yj-1',revision:1});
+  assert.equal((await tgStore.file('tg-1',taegyu,'tf1')).text,'tg-file','deleting one mentor activity must not delete another mentor blobs');
+  console.log('PASS: mentoring team store onclose reconnection, blob cleanup, legacy null-attachments safety, per-mentor isolation and role enforcement');
 })().catch(e=>{console.error(e);process.exitCode=1;});

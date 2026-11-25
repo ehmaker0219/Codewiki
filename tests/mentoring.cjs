@@ -1,24 +1,72 @@
 const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict');
 const window={};vm.runInNewContext(fs.readFileSync('js/mentoring-model.js','utf8'),{window,structuredClone,Date});
 const m=window.CodeWikiMentoringModel,mentor=m.members[0];
+const taegyu=m.members.find(x=>x.name==='김태규'),yejin=m.members.find(x=>x.name==='이예진');
 const excluded=['d181e98f-1459-4a0f-b696-befb30e35327','fdd0fbb5-cc2d-4f74-94af-56d4d507d65f','another-student','admin'];
-assert.equal(m.members.length,1);
+assert.equal(m.members.length,3);
+assert.ok(taegyu&&yejin,'김태규 and 이예진 must be configured mentors');
+assert.equal(m.storageKeyFor(mentor),'group');
+assert.equal(m.storageKeyFor(taegyu),'mentor:'+taegyu.id);
+assert.equal(m.storageKeyFor(yejin),'mentor:'+yejin.id);
+const tgState=m.apply(m.empty(),taegyu.id,{type:'create',id:'tg-1',date:'2026-11-25'});
+assert.equal(tgState.activities[0].title,'1회차_N주차_6반_1조_김태규');
+assert.deepEqual(Array.from(tgState.activities[0].participants),['김태규','최영환','박찬규']);
+assert.equal(m.processStepsFor(taegyu)[5].label,'구글시트-김태규에 탭 추가 및 작성');
+assert.match(m.formatDiscordTemplate(tgState.activities[0],tgState.activities,taegyu),/^\[CL6 김태규 멘토링 1회차\]/);
+assert.match(m.formatDiscordTemplate(tgState.activities[0],tgState.activities,taegyu),/참여 인원: 3명 \(김태규,최영환,박찬규\)/);
+const yjState=m.apply(m.empty(),yejin.id,{type:'create',id:'yj-1',date:'2026-11-25'});
+assert.equal(yjState.activities[0].title,'1회차_N주차_6반_2조_이예진');
+assert.deepEqual(Array.from(yjState.activities[0].participants),['이예진','김하임','이수현']);
+assert.equal(m.processStepsFor(yejin)[5].label,'구글시트-이예진에 탭 추가 및 작성');
+assert.match(m.formatDiscordTemplate(yjState.activities[0],yjState.activities,yejin),/^\[CL6 이예진 멘토링 1회차\]/);
+assert.match(m.formatDiscordTemplate(yjState.activities[0],yjState.activities,yejin),/참여 인원: 3명 \(이예진,김하임,이수현\)/);
 const id='activity-one',base=m.empty();
 for(const actor of excluded){assert.throws(()=>m.view(base,actor),/forbidden/);assert.throws(()=>m.apply(base,actor,{type:'create',id,date:'2026-11-19'}),/forbidden/);}
 assert.throws(()=>m.apply(base,mentor.id,{type:'create',id,date:'2026-02-30'}),/invalid/);
 let state=m.apply(base,mentor.id,{type:'create',id,date:'2026-11-19'});
 assert.equal(base.activities.length,0);
+assert.equal(state.activities[0].title,'1회차_N주차_6반_3조_이은호');
+assert.equal(m.defaultTitleFor(state.activities),'2회차_N주차_6반_3조_이은호');
+assert.equal(m.defaultTitleFor([{title:'3회차_2주차_6반_3조_이은호'}]),'4회차_N주차_6반_3조_이은호');
+assert.equal(m.defaultTitleFor([{title:'2주차_1회차_6반_3조_이은호'}]),'2회차_N주차_6반_3조_이은호');
+assert.deepEqual(Array.from(state.activities[0].participants),['이은호','김성재','김은철','김지수']);
+assert.equal(state.activities[0].location,'CL6 강의장');
+assert.equal(state.activities[0].startTime,'18:00');
+assert.equal(state.activities[0].endTime,'20:00');
+assert.equal(m.startTimes[0],'09:30');
+assert.equal(m.endTimes[0],'10:00');
+assert.ok(!m.startTimes.includes('00:00')&&!m.startTimes.includes('09:00'));
 const owner=excluded[0],k=m.key(id,owner);
 state.drafts[k]={activity:id,owner,body:'private draft',attachments:[]};
 state.submissions[k]={activity:id,owner,body:'shared result',attachments:[]};
 state.feedback[k]={activity:id,owner,body:'old feedback'};
 state.comments.push({id:'old-comment',activity:id,author:owner,body:'old comment'});
-const edit={...state.activities[0],title:'SQL 멘토링',startTime:'14:00',endTime:'16:30',result:'결과 설명',code:'WRITE 1.',attachments:[{id:'file-one',name:'result.txt',size:10,type:'text/plain'}]};
+const edit={...state.activities[0],title:'SQL 멘토링',startTime:'14:00',endTime:'16:30',participants:['이은호','김성재','이은호'],location:'온라인 줌',result:'결과 설명',code:'WRITE 1.',attachments:[{id:'file-one',name:'result.txt',size:10,type:'text/plain'}]};
 state=m.apply(state,mentor.id,{type:'activity',id,revision:1,value:edit});
 assert.equal(state.activities[0].startTime,'14:00');assert.equal(state.activities[0].endTime,'16:30');
+assert.deepEqual(Array.from(state.activities[0].participants),['이은호','김성재']);assert.equal(state.activities[0].location,'온라인 줌');
 assert.equal(state.activities[0].result,'결과 설명');assert.equal(state.activities[0].attachments.length,1);
+assert.throws(()=>m.apply(state,mentor.id,{type:'activity',id,revision:2,value:{...edit,participants:'bad'}}),/invalid/);
+assert.equal(m.pdfFileTitle('1회차_2주차_6반_3조_이은호'),'1회차_2주차_6반_3조_이은호 멘토링 활동 결과보고서');
+assert.equal(m.pdfFileTitle('1회차_2주차 멘토링 활동 결과보고서'),'1회차_2주차 멘토링 활동 결과보고서');
+assert.equal(m.pdfFileTitle('   '),'멘토링 활동 결과보고서');
+assert.equal(m.inferRound({title:'1회차_2주차_6반_3조_이은호'}),'1회차');
+assert.equal(m.inferRound({title:'2주차_1회차_6반_3조_이은호'}),'1회차');
+assert.equal(m.inferRound({title:'2회차_3주차_6반_3조_이은호'}),'2회차');
+assert.equal(m.inferRound({id:'b',title:'자유 제목',date:'2026-11-25'},[{id:'a',date:'2026-11-24'},{id:'b',date:'2026-11-25'}]),'2회차');
+assert.equal(
+  m.formatDiscordTemplate({
+    title:'1회차_2주차_6반_3조_이은호',date:'2026-11-24',startTime:'18:00',endTime:'20:00',
+    participants:['이은호','김성재','김은철'],participantsVersion:2,location:'CL6 강의장',
+    task:'코드위키 사이트를 제작하여 멘티들에게 배부함.\nData Type 부터 DB Table까지의 구조 정립'
+  }),
+  '[CL6 이은호 멘토링 1회차]\n\n일시: 11/24(화) 18:00 ~ 20:00\n참여 인원: 3명 (이은호,김성재,김은철)\n장소: CL6 강의장\n\n내용:\n코드위키 사이트를 제작하여 멘티들에게 배부함.\nData Type 부터 DB Table까지의 구조 정립'
+);
+assert.deepEqual(Array.from(m.resolveParticipants({participants:['이은호','김성재','김은철']})),['이은호','김성재','김은철','김지수']);
+assert.deepEqual(Array.from(m.resolveParticipants({participants:['이은호','김성재','김은철'],participantsVersion:2})),['이은호','김성재','김은철']);
 assert.throws(()=>m.apply(state,mentor.id,{type:'activity',id,revision:2,value:{...edit,startTime:'16:00',endTime:'16:00'}}),/time/);
 assert.throws(()=>m.apply(state,mentor.id,{type:'activity',id,revision:2,value:{...edit,startTime:'17:00',endTime:'16:00'}}),/time/);
+assert.throws(()=>m.apply(state,mentor.id,{type:'activity',id,revision:2,value:{...edit,startTime:'09:00',endTime:'11:00'}}),/time/);
 assert.throws(()=>m.apply(state,mentor.id,{type:'activity',id,revision:2,value:{...edit,startTime:'14:15',endTime:'16:00'}}),/time/);
 assert.throws(()=>m.apply(state,mentor.id,{type:'activity',id,revision:2,value:{...edit,startTime:'14:00',endTime:''}}),/time/);
 assert.equal(state.drafts[k].body,'private draft');
@@ -29,7 +77,40 @@ assert.throws(()=>m.apply(state,mentor.id,{type:'activity',id,revision:1,value:e
 assert.throws(()=>m.apply(state,mentor.id,{type:'activity',id,revision:2,value:{...edit,attachments:[{id:'bad',name:'large',size:6*1024*1024,type:''}]}}),/files/);
 for(const type of ['draft','submit','feedback','comment','report-comment'])assert.throws(()=>m.apply(state,mentor.id,{type,id}),/invalid/);
 state=m.apply(state,mentor.id,{type:'activity',id,revision:2,value:{...edit,status:'complete'}});
-state=m.apply(state,mentor.id,{type:'activity',id,revision:3,value:{...edit,summary:'완료 후 기록 보완'}});
+state=m.apply(state,mentor.id,{type:'activity',id,revision:3,value:{...edit,status:undefined,summary:'완료 후 기록 보완'}});
+assert.equal(state.activities[0].status,'complete');
+
+// Folder CRUD, assignment isolation (no revision bump), duplicate checks, legacy normalization, and cleanup on delete.
+const legacyView=m.view({activities:[],drafts:{},submissions:{},feedback:{},comments:[]},mentor.id);
+assert.deepEqual(Array.from(legacyView.folders),[]);assert.equal(Object.keys(legacyView.folderAssignments).length,0);assert.equal(Object.keys(legacyView.checklists).length,0);
+assert.equal(m.processSteps.length,6);
+assert.throws(()=>m.apply(state,mentor.id,{type:'checklist',id,checked:['unknown-step']}),/invalid/);
+state=m.apply(state,mentor.id,{type:'checklist',id,checked:['notice','report','notice']});
+assert.deepEqual(Array.from(state.checklists[id]),['notice','report']);
+assert.equal(state.activities[0].revision,4,'toggling checklist must not bump activity revision');
+assert.throws(()=>m.apply(state,mentor.id,{type:'folder-save',id:'f-1',name:'   ',revision:0}),/folder-name/);
+state=m.apply(state,mentor.id,{type:'folder-save',id:'f-1',name:'1주차 멘토링',revision:0});
+assert.equal(state.folders.length,1);assert.equal(state.folders[0].revision,1);
+assert.throws(()=>m.apply(state,mentor.id,{type:'folder-save',id:'f-2',name:'1주차 멘토링',revision:0}),/duplicate-folder/);
+state=m.apply(state,mentor.id,{type:'folder-save',id:'f-1',name:'ABAP 기초',revision:1});
+assert.equal(state.folders[0].name,'ABAP 기초');assert.equal(state.folders[0].revision,2);
+assert.throws(()=>m.apply(state,mentor.id,{type:'folder-save',id:'f-1',name:'충돌',revision:1}),/conflict/);
+state=m.apply(state,mentor.id,{type:'folder-move',id,folderId:'f-1'});
+assert.equal(state.folderAssignments[id],'f-1');
+assert.equal(state.activities[0].revision,4,'moving activity to folder must not bump activity revision');
+assert.throws(()=>m.apply(state,mentor.id,{type:'folder-move',id,folderId:'missing-folder'}),/missing/);
+state=m.apply(state,mentor.id,{type:'create',id:'activity-two',date:'2026-11-25',folderId:'f-1'});
+assert.equal(state.folderAssignments['activity-two'],'f-1');
+state=m.apply(state,mentor.id,{type:'folder-delete',id:'f-1',revision:2});
+assert.equal(state.folders.length,0);
+assert.equal(state.folderAssignments[id],undefined,'deleting folder unfiles activities instead of deleting them');
+assert.equal(state.folderAssignments['activity-two'],undefined);
+assert.equal(state.activities.length,2);
+state=m.apply(state,mentor.id,{type:'folder-save',id:'f-2',name:'SQL',revision:0});
+state=m.apply(state,mentor.id,{type:'folder-move',id,folderId:'f-2'});
 state=m.apply(state,mentor.id,{type:'delete',id,revision:4});
+assert.equal(state.folderAssignments[id],undefined,'deleting activity cleans up its folder assignment');
+assert.equal(state.checklists[id],undefined,'deleting activity cleans up its process checklist');
+state=m.apply(state,mentor.id,{type:'delete',id:'activity-two',revision:1});
 assert.equal(state.activities.length,0);assert.equal(Object.keys(state.drafts).length,0);assert.equal(Object.keys(state.submissions).length,0);assert.equal(state.comments.length,0);
-console.log('PASS: mentor-only access, results/files, revisions, size validation, legacy preservation, private draft exclusion and deletion');
+console.log('PASS: mentor-only access, results/files, folders, revisions, size validation, legacy preservation, private draft exclusion and deletion');
