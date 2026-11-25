@@ -34,7 +34,7 @@
 .library-collapsed .mentoring-library-heading {justify-content:center;padding:24px 6px;}
 .library-collapsed .mentoring-library-heading h2,.library-collapsed #mentoringNew {display:none;}
 .library-collapsed .mentoring-library-toggle svg {transform:rotate(180deg);}
-.mentoring-page input:not([type=checkbox]):not([type=file]),.mentoring-page textarea {box-sizing:border-box;width:100%;min-width:0;border:1px solid var(--border-subtle,var(--border-hairline));border-radius:7px;padding:11px 12px;background:var(--bg-card);color:var(--text-strong);font-size:14px;line-height:1.7;}
+.mentoring-page input:where(:not([type=checkbox]):not([type=file])),.mentoring-page textarea {box-sizing:border-box;width:100%;min-width:0;border:1px solid var(--border-subtle,var(--border-hairline));border-radius:7px;padding:11px 12px;background:var(--bg-card);color:var(--text-strong);font-size:14px;line-height:1.7;}
 .mentoring-page .mentoring-library input[type=search] {border-color:var(--border-hairline);border-radius:5px;padding:9px 10px;font-size:12px;line-height:1.4;margin-bottom:12px;}
 .mentoring-page input:focus-visible,.mentoring-page textarea:focus-visible,.mentoring-page select:focus-visible,.mentoring-page button:focus-visible {outline:2px solid var(--accent,#0c3378);outline-offset:2px;}
 .mentoring-folders {border-bottom:1px solid var(--border-hairline);padding-bottom:12px;margin-bottom:12px;}

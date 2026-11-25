@@ -35,7 +35,7 @@
     clear();online=null;session=user?.role==='admin'&&token?{id:user.id,token}:null;query='';classFilter='';statusFilter='';
     sortKey='full_name';sortDirection=1;
     const h=window.location.hash;
-    if(session&&(!h||h==='#admin/students'||h==='#doc/welcome-abap'||h==='#doc/welcome-ui5'))openHome();else route();
+    if(session&&(!h||h==='#admin/students'||h==='#doc/welcome-abap'||h==='#doc/welcome-ui5'||h==='#map'||h==='#study'||h==='#mentoring'||h==='#data-game'))openHome();else route();
   }
   function openHome(){if(!session)return false;history.replaceState(null,'','#admin/students');route();window.CodeWikiPresence?.refresh();return true;}
   function renderPresence(){

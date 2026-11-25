@@ -42,6 +42,9 @@ const pdf=window.CodeWikiMentoringPdf;
 (async()=>{
   assert.equal(pdf.safePdfFilename('1회차_2주차_6반_3조_이은호 멘토링 활동 결과보고서'),'1회차_2주차_6반_3조_이은호 멘토링 활동 결과보고서.pdf');
   assert.equal(pdf.safePdfFilename('1회차:테스트/제목*?.pdf'),'1회차_테스트_제목__.pdf');
+  assert.equal(pdf.safePdfFilename('보고서.   '),'보고서.pdf');
+  assert.equal(pdf.safePdfFilename('  ...  '),'멘토링 활동 결과보고서.pdf');
+  assert.equal(pdf.safePdfFilename('.pdf'),'멘토링 활동 결과보고서.pdf');
   assert.equal(pdf.safePdfFilename('   '),'멘토링 활동 결과보고서.pdf');
 
   // Direct PDF binary validation: header, MediaBox, DCTDecode, xref byte offsets, trailer, EOF.
@@ -100,5 +103,16 @@ const pdf=window.CodeWikiMentoringPdf;
   assert.ok(drawnText.some(t=>t.includes('첨부 자료 (3건)')),'must render combined attachment section heading');
   assert.ok(drawnText.includes('XLSX'),'must render non-image extension badge');
   assert.ok(drawnText.includes('1 / '+countMatch[1]),'must stamp page numbers in footer');
+
+  // Verify indented long token produces no phantom blank line and emoji filenames do not split surrogate pairs.
+  drawnText.length=0;
+  await pdf.generate({
+    title:'포맷 검증',date:'2026-11-25',mentorName:'이은호',participants:['이은호'],
+    task:'    '+'A'.repeat(180),
+    otherFiles:[{id:'emoji1',name:'🚀'.repeat(40)+'.zip',size:512,type:'application/zip'}]
+  });
+  const bodyIdx=drawnText.indexOf('진행 내용');
+  assert.ok(bodyIdx>=0&&drawnText[bodyIdx+1]!=='','indented overflowing token must not insert a phantom blank line');
+  assert.ok(!drawnText.some(t=>/[\uD800-\uDBFF](?![\uDC00-\uDFFF])/.test(t)),'truncated emoji filenames must not split surrogate pairs');
   console.log('PASS: direct A4 PDF 1.4 binary builder, exact xref offsets, Korean title metadata, multi-page pagination, images and attachments');
 })().catch(e=>{console.error(e);process.exitCode=1;});

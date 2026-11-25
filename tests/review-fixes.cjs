@@ -37,27 +37,37 @@ const read = name => fs.readFileSync(name, 'utf8');
     assert.deepEqual(opened, ['abap-basics'], 'the current document is rendered again');
   });
 })().then(() => {
-  // 2. Admin-only practice is reachable for admins.
+  // 2. Admin workspace hides knowledge map, practice, and the empty primary learning nav section.
   const css = read('css/style.css');
   const hiddenForAdmin = css.match(/((?:\.admin-workspace #[\w-]+,\s*)*\.admin-workspace #[\w-]+)\s*\{\s*display:none;\s*\}/g) || [];
-  assert.ok(hiddenForAdmin.length > 0 && hiddenForAdmin.every(rule => !rule.includes('#openPracticeBtn')), 'admin CSS must not hide the practice button');
+  assert.ok(
+    hiddenForAdmin.some(rule => rule.includes('#openPracticeBtn') && rule.includes('#openKnowledgeMapBtn') && rule.includes('#primaryNavSection')),
+    'admin CSS must hide knowledge map, practice, and primary learning nav'
+  );
 
   // 3. The disabled UI5 track is not loaded on startup.
   assert.ok(!/src="js\/ui5-data\.js/.test(read('index.html')), 'ui5-data.js must not load at startup');
 
-  // 4. Navigation renders once: a hash change defers to the hashchange handler.
+  // 4. Navigation renders once: a hash change defers to the hashchange handler, and admin redirects from student home / student-only docs.
   const app = read('js/app.js');
   const slice = app.slice(app.indexOf('  // When the hash changes, render once'), app.indexOf('  window.CodeWikiApp = {'));
   const renders = [];
-  const nav = {window:{location:{hash:'#study'}, WIKI_DOCS:{'abap-basics':{}}, scrollTo(){}}, getHomeDocId:()=>'welcome-abap',
-    renderDocument:id=>renders.push(id), sessionStorage:{setItem(){}}, TRACK_SESSION_KEY:'k', currentTrack:'abap'};
-  vm.runInNewContext(slice + '\nwindow.navigateTo = navigateTo; window.pending = () => pendingNavigation;', nav);
+  let adminHomeCalls = 0, currentRole = 'student';
+  const nav = {window:{location:{hash:'#study'}, WIKI_DOCS:{'abap-basics':{}, 'welcome-abap':{isHome:true}, 'abap-thinking-flow':{studentOnly:true}}, scrollTo(){},
+      CodeWikiAuth:{getCurrentUser:()=>({role:currentRole})}, CodeWikiAdminMembers:{openHome(){adminHomeCalls++;}}},
+    getHomeDocId:()=>'welcome-abap', renderDocument:id=>renders.push(id), sessionStorage:{setItem(){}}, TRACK_SESSION_KEY:'k', currentTrack:'abap'};
+  vm.runInNewContext(slice + '\nwindow.navigateTo = navigateTo; window.isDocAccessible = isDocAccessible; window.pending = () => pendingNavigation;', nav);
   nav.window.navigateTo('abap-basics');
   assert.equal(nav.window.location.hash, '#doc/abap-basics');
   assert.deepEqual(renders, [], 'a hash change must not also render synchronously');
   assert.equal(nav.window.pending(), 'abap-basics');
   nav.window.navigateTo('abap-basics');
   assert.deepEqual(renders, ['abap-basics'], 'same-hash navigation renders immediately');
+  currentRole = 'admin';
+  assert.equal(nav.window.isDocAccessible(nav.window.WIKI_DOCS['welcome-abap']), false, 'student home must not be accessible to admin');
+  assert.equal(nav.window.isDocAccessible(nav.window.WIKI_DOCS['abap-thinking-flow']), false, 'studentOnly docs must not be accessible to admin');
+  nav.window.navigateTo('welcome-abap');
+  assert.equal(adminHomeCalls, 1, 'admin navigating to student home redirects to admin home');
 
   // 5. Legacy mentoring records without updatedAt can still be listed.
   const store = read('js/mentoring-store.js');

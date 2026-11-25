@@ -4,7 +4,7 @@
   const collator=new Intl.Collator('ko',{numeric:true,sensitivity:'base'});
   const icon='<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M3 5h6l2 3h10v12H3z" stroke-linejoin="round"/></svg>';
   function create({element,moveElement,listElement,call,getNote,getNotes,onChange}) {
-    let folders=[],assignments=new Map(),filter='all',editing=null,ready=false,pending=false,alive=true,loading=null;
+    let folders=[],assignments=new Map(),filter='all',editing=null,renderedEditingId=null,ready=false,pending=false,alive=true,loading=null;
     let message='',markup='',moveMarkup='';
     let draggedNote=null,dragSource=null,dropTarget=null;
     const folderOf=id=>assignments.get(id)||'';
@@ -14,13 +14,14 @@
       // Keep the typed folder name and focus when a background list/save refresh
       // re-renders the form; the name is otherwise only captured on submit.
       const activeEl=globalThis.document?.activeElement;
-      const input=editing?element.querySelector?.('#studyFolderName'):null;
+      const sameForm=Boolean(editing)&&renderedEditingId===editing.id;
+      const input=sameForm?element.querySelector?.('#studyFolderName'):null;
       const hadFocus=Boolean(input)&&input===activeEl;
       const selStart=hadFocus&&typeof input.selectionStart==='number'?input.selectionStart:null;
       const selEnd=hadFocus&&typeof input.selectionEnd==='number'?input.selectionEnd:null;
       const focusedFilter=!hadFocus&&activeEl?.dataset?.folderFilter!==undefined&&element.contains?.(activeEl)?activeEl.dataset.folderFilter:null;
       const focusedMove=activeEl?.id==='studyMoveFolder'&&moveElement.contains?.(activeEl);
-      if(input&&typeof input.value==='string')editing={...editing,name:input.value};
+      if(sameForm&&input&&typeof input.value==='string')editing={...editing,name:input.value};
       const notes=getNotes(),counts=new Map();
       notes.forEach(n=>counts.set(folderOf(n.id),(counts.get(folderOf(n.id))||0)+1));
       const disabled=!ready||pending||Boolean(loading),selected=folders.find(f=>f.id===filter);
@@ -32,7 +33,7 @@
         <p class="study-folder-status" role="status">${esc(loading?'폴더 불러오는 중…':message)}</p>
         ${message?`<button type="button" data-folder-action="reload" ${pending||loading?'disabled':''}>폴더 다시 불러오기</button>`:''}`;
       if(markup!==html){
-        element.innerHTML=html;markup=html;
+        element.innerHTML=html;markup=html;renderedEditingId=editing?editing.id:null;
         if(hadFocus){
           const next=element.querySelector?.('#studyFolderName');
           next?.focus();

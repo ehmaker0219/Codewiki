@@ -298,13 +298,15 @@ code, pre, .mono {
   border-top:1px solid var(--border-subtle);
 }
 .admin-workspace #brandTrackToggle,
+.admin-workspace #primaryNavSection,
 .admin-workspace #sbHomeItem,
+.admin-workspace #openKnowledgeMapBtn,
 .admin-workspace #sbThinkingFlowItem,
 .admin-workspace #sbProgramCatalogItem,
+.admin-workspace #openPracticeBtn,
 .admin-workspace #mealMenuGroup { display:none; }
 .admin-workspace #workspaceNavigation { gap:24px; }
 .admin-workspace #adminSidebarSlot,
-.admin-workspace #primaryNavSection,
 .admin-workspace #campusNavSection {
   display:flex;
   flex-direction:column;
@@ -314,8 +316,6 @@ code, pre, .mono {
   border:0;
 }
 .admin-workspace #campusNavSection { order:1; }
-.admin-workspace #openPracticeBtn { order:1; }
-.admin-workspace #primaryNavSection { order:2; }
 .admin-workspace #workspaceNavigation .sb-group-label { margin-bottom:8px; }
 .admin-workspace #workspaceNavigation .sb-menu-item {
   min-height:36px;

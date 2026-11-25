@@ -29,6 +29,11 @@ function harness(){
  h.move(id);h.requests.shift().resolve({note_id:'n1',folder_id:id});await tick();assert.equal(h.api.includesNote({id:'n1'}),true);
  h.click({folderAction:'rename'});h.submit('변경 이름');const rename=h.requests.shift();assert.equal(rename.args.p_revision,1);
  rename.resolve({id,name:'변경 이름',revision:2});await tick();assert.ok(h.element.innerHTML.includes('변경 이름'));
+ // Switching directly between rename and new must not copy the old form input into the new form.
+ h.click({folderAction:'rename'});h.element.input.value='변경 이름';
+ h.click({folderAction:'new'});assert.ok(h.element.innerHTML.includes('value=""'),'switching from rename to new must start blank');
+ h.element.input.value='';h.click({folderAction:'rename'});assert.ok(h.element.innerHTML.includes('value="변경 이름"'),'switching from new to rename must keep folder name');
+ h.click({folderAction:'cancel'});
  h.click({folderAction:'rename'});h.submit('ABAP');h.requests.shift().reject({code:'23505'});await tick();assert.match(h.element.innerHTML,/같은 이름/);assert.ok(h.element.innerHTML.includes('변경 이름'));
  h.confirm(false);h.click({folderAction:'delete'});assert.equal(h.requests.length,0);h.confirm(true);h.click({folderAction:'delete'});
  assert.equal(h.requests[0].args.p_revision,2);h.requests.shift().resolve(null);await tick();

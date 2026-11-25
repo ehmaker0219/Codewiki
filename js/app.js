@@ -129,7 +129,13 @@
   }
 
   // 인라인 문법 파서 + 나무위키식 자동 키워드 하이퍼링크 엔진
-  function parseInline(text, sourceDocId = currentDocId) {
+  function canLinkDoc(doc) {
+    if (typeof isDocAccessible === "function") return isDocAccessible(doc);
+    if (!doc || doc.track === "ui5") return false;
+    return !((doc.studentOnly || doc.isHome) && window.CodeWikiAuth?.getCurrentUser?.()?.role === "admin");
+  }
+
+  function parseInline(text, sourceDocId = currentDocId, checkAccess = true) {
     if (!text) return "";
     const tokens = [];
     const stash = html => {
@@ -153,7 +159,7 @@
       const id = targetId.trim();
       const targetDoc = window.WIKI_DOCS[id];
       const textLabel = label ? label.trim() : targetDoc ? targetDoc.title : id;
-      if (targetDoc?.track === "ui5" || id === sourceDocId) return stash(esc(textLabel));
+      if (targetDoc?.track === "ui5" || id === sourceDocId || (checkAccess && targetDoc && !canLinkDoc(targetDoc))) return stash(esc(textLabel));
       if (!targetDoc) {
         return stash(
           `<a href="#missing/${esc(id)}" class="wiki-link missing-wiki-link" data-missing-doc="${esc(textLabel)}" title="아직 미작성된 문서입니다. 클릭하여 추가 건의하기">${esc(textLabel)}</a>`
@@ -171,7 +177,7 @@
     out = out.replace(/`([^`]+)`/g, (_, codeStr) => {
       const matchedDocId = findDocIdByExactAlias(codeStr);
       const safeCode = esc(codeStr);
-      if (matchedDocId && matchedDocId !== sourceDocId) {
+      if (matchedDocId && matchedDocId !== sourceDocId && (!checkAccess || canLinkDoc(window.WIKI_DOCS[matchedDocId]))) {
         return stash(
           `<a href="#doc/${esc(matchedDocId)}" class="wiki-link code-wiki-link" data-doc="${esc(matchedDocId)}"><code>${safeCode}</code></a>`
         );
@@ -186,7 +192,7 @@
     for (const entry of aliases) {
       // Protect the whole term even on its own page, before shorter aliases run.
       out = out.replace(entry.regex, matchedText =>
-        stash(entry.docId === sourceDocId ? matchedText :
+        stash(entry.docId === sourceDocId || (checkAccess && !canLinkDoc(window.WIKI_DOCS[entry.docId])) ? matchedText :
           `<a href="#doc/${esc(entry.docId)}" class="wiki-link" data-doc="${esc(entry.docId)}">${matchedText}</a>`)
       );
     }
@@ -261,7 +267,7 @@
       if (doc.track === "ui5") continue;
       const targets = new Set();
       for (const value of inlineValues(doc)) {
-        for (const match of parseInline(value, doc.id).matchAll(/data-doc="([^"]+)"/g)) {
+        for (const match of parseInline(value, doc.id, false).matchAll(/data-doc="([^"]+)"/g)) {
           if (match[1] !== doc.id && window.WIKI_DOCS[match[1]]) targets.add(match[1]);
         }
       }
@@ -872,13 +878,15 @@
 
   // When the hash changes, render once from the hashchange handler (after every
   // other view has routed away) instead of rendering here and again there.
+  const STUDENT_ONLY_HASHES = new Set(["#map", "#study", "#mentoring", "#data-game"]);
   function isDocAccessible(doc) {
     if (!doc || doc.track === "ui5") return false;
-    if (doc.studentOnly && window.CodeWikiAuth?.getCurrentUser?.()?.role === "admin") return false;
+    if ((doc.studentOnly || doc.isHome) && window.CodeWikiAuth?.getCurrentUser?.()?.role === "admin") return false;
     return true;
   }
 
   let pendingNavigation = null;
+  let renderedAdminRole = null;
   function showDocument(docId) {
     if (window.CodeWikiBoard) window.CodeWikiBoard.closeIfActive();
     const hash = `#doc/${docId}`;
@@ -906,7 +914,7 @@
     currentTrack = "abap";
     try { sessionStorage.setItem(TRACK_SESSION_KEY, currentTrack); } catch {}
     const h = window.location.hash;
-    if (h === "#map" || h === "#study" || h === "#mentoring" || h === "#data-game") return;
+    if (STUDENT_ONLY_HASHES.has(h)) return;
     if (h.startsWith("#doc/")) {
       const target = h.replace("#doc/", "");
       const resolved = target === "erp-setup" ? "sap-architecture" : target;
@@ -926,8 +934,17 @@
     resetTrackChoice: () => { try { sessionStorage.removeItem(TRACK_SESSION_KEY); } catch {} },
     selectTrack,
     syncAccess: () => {
-      if (window.WIKI_DOCS[currentDocId] && !isDocAccessible(window.WIKI_DOCS[currentDocId])) {
+      const isAdmin = window.CodeWikiAuth?.getCurrentUser?.()?.role === "admin";
+      const h = window.location.hash;
+      const roleChanged = renderedAdminRole !== null && renderedAdminRole !== isAdmin;
+      renderedAdminRole = isAdmin;
+      if (isAdmin && (STUDENT_ONLY_HASHES.has(h) || (window.WIKI_DOCS[currentDocId] && !isDocAccessible(window.WIKI_DOCS[currentDocId])))) {
         window.CodeWikiAdminMembers?.openHome?.();
+        return;
+      }
+      const appHidden = appShell?.classList.contains('object-game-hidden') || appShell?.classList.contains('mentoring-hidden') || appShell?.classList.contains('study-hidden') || appShell?.classList.contains('members-hidden') || appShell?.classList.contains('board-mode-shell') || appShell?.classList.contains('map-hidden');
+      if (roleChanged && !appHidden && h.startsWith("#doc/") && isDocAccessible(window.WIKI_DOCS[currentDocId])) {
+        renderDocument(currentDocId);
       }
     }
   };
@@ -994,8 +1011,11 @@
       if (e.key === "/" && !modalOpen && document.activeElement !== searchInput && !document.activeElement?.isContentEditable && !["INPUT", "TEXTAREA", "SELECT"].includes(document.activeElement?.tagName)) {
         e.preventDefault();
         searchInput.focus();
-      } else if (e.key === "Escape") {
+      } else if (e.key === "Escape" && !searchDropdown.classList.contains?.("hidden")) {
+        e.preventDefault?.();
+        const inDropdown = searchDropdown.contains?.(document.activeElement);
         searchDropdown.classList.add("hidden");
+        if (inDropdown) searchInput.focus?.();
       }
     });
 
@@ -1075,15 +1095,33 @@
       const h = window.location.hash;
       const requested = pendingNavigation;
       pendingNavigation = null;
+      const isAdmin = window.CodeWikiAuth?.getCurrentUser?.()?.role === "admin";
+      if (isAdmin && STUDENT_ONLY_HASHES.has(h)) {
+        if (window.CodeWikiBoard) window.CodeWikiBoard.closeIfActive();
+        window.CodeWikiAdminMembers?.openHome?.();
+        return;
+      }
       const appHidden = appShell?.classList.contains('object-game-hidden') || appShell?.classList.contains('mentoring-hidden') || appShell?.classList.contains('study-hidden') || appShell?.classList.contains('members-hidden') || appShell?.classList.contains('board-mode-shell') || appShell?.classList.contains('map-hidden');
       if (h.startsWith("#doc/")) {
         const target = h.replace("#doc/", "");
+        const resolved = target === "erp-setup" ? "sap-architecture" : target;
+        const targetDoc = window.WIKI_DOCS[resolved];
+        if (isAdmin && (!targetDoc || !isDocAccessible(targetDoc))) {
+          if (window.CodeWikiBoard) window.CodeWikiBoard.closeIfActive();
+          window.CodeWikiAdminMembers?.openHome?.();
+          return;
+        }
         if ((window.WIKI_DOCS[target] || target === "erp-setup") && (target !== currentDocId || appHidden || requested === target)) {
           if (window.CodeWikiBoard) window.CodeWikiBoard.closeIfActive();
           renderDocument(target);
           window.scrollTo({ top: 0, behavior: "smooth" });
         }
       } else if (!h) {
+        if (isAdmin) {
+          if (window.CodeWikiBoard) window.CodeWikiBoard.closeIfActive();
+          window.CodeWikiAdminMembers?.openHome?.();
+          return;
+        }
         if (window.CodeWikiBoard) window.CodeWikiBoard.closeIfActive();
         renderDocument(currentDocId);
       }
@@ -1153,6 +1191,7 @@
     }
 
     renderDocument(currentDocId);
+    renderedAdminRole = window.CodeWikiAuth?.getCurrentUser?.()?.role === "admin";
   }
 
   init();

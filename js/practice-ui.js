@@ -25,15 +25,14 @@
   const copy=document.getElementById('copyPracticeBtn');
   const status=document.getElementById('practiceCopyStatus');
   const decks=new Map();
-  let current=null,isAdmin=false;
+  let current=null,allowed=false;
   function setUser(user) {
-    isAdmin=user?.role==='admin';
-    trigger.hidden=!isAdmin;
-    if(!isAdmin){
-      if(dialog.open)dialog.close();
-      current=null;select.value='';output.textContent='공부하고 싶은 주제를 선택해 주세요.';status.textContent='';
-      next.disabled=true;copy.disabled=true;
-    }
+    // Disabled for admin accounts as well as students until re-enabled.
+    allowed=false;
+    trigger.hidden=true;
+    if(dialog.open)dialog.close();
+    current=null;select.value='';output.textContent='공부하고 싶은 주제를 선택해 주세요.';status.textContent='';
+    next.disabled=true;copy.disabled=true;
   }
   window.CodeWikiPractice={createDeck,setUser};
   setUser(window.CodeWikiAuth?.getCurrentUser()||null);
@@ -42,7 +41,7 @@
     decks.set(category.id,createDeck(category.questions));
   });
   function showQuestion() {
-    if(!isAdmin)return;
+    if(!allowed)return;
     const category=window.WIKI_PRACTICE.find(c=>c.id===select.value);
     status.textContent='';
     if (!category) {
@@ -59,7 +58,7 @@
     output.append(count,title,body,list);next.disabled=false;copy.disabled=false;
   }
   copy.addEventListener('click',async()=>{
-    if(!isAdmin||!current) return;
+    if(!allowed||!current) return;
     const selected=current;
     const {category,question}=selected;
     const text=`[${question.id.toUpperCase()}] ${category.title}\n${question.title}\n\n${question.body}\n\n${question.conditions.map(c=>'- '+c).join('\n')}`;
@@ -68,7 +67,7 @@
   });
   select.addEventListener('change',showQuestion);
   next.addEventListener('click',showQuestion);
-  trigger.addEventListener('click',()=>{if(!isAdmin)return;if(!select.value&&!current)output.textContent='공부하고 싶은 주제를 선택해 주세요.';dialog.showModal();select.focus();});
+  trigger.addEventListener('click',()=>{if(!allowed)return;if(!select.value&&!current)output.textContent='공부하고 싶은 주제를 선택해 주세요.';dialog.showModal();select.focus();});
   document.getElementById('closePracticeBtn').addEventListener('click',()=>dialog.close());
-  dialog.addEventListener('close',()=>{if(isAdmin)trigger.focus();});
+  dialog.addEventListener('close',()=>{if(allowed)trigger.focus();});
 })();

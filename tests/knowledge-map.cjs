@@ -119,12 +119,19 @@ assert.ok(graph.topicById.get('abap-open-sql').relatedIds.includes('abap-data-re
 assert.ok(graph.stepOrder.includes('sap-architecture') && graph.stepOrder.includes('abap-open-sql'));
 assert.ok(!graph.stepOrder.includes('erp-fi'), 'pending ERP stubs excluded from active learning path');
 
-// 2. Unapproved users cannot access the map; approved users and admins can.
+// 2. Unapproved users and admins cannot access the map; approved students can.
 api.setUser({ id: 'pending-u', role: 'student', status: 'pending' });
 location.hash = '#map';
 winEvents.hashchange();
 assert.equal(host.hidden, true);
 assert.equal(trigger.hidden, true);
+
+api.setUser({ id: 'admin-1', role: 'admin', status: 'approved' });
+location.hash = '#map';
+winEvents.hashchange();
+assert.equal(host.hidden, true, 'admin must not access knowledge map');
+assert.equal(trigger.hidden, true, 'admin sidebar must hide knowledge map trigger');
+assert.equal(shell.classList.contains('map-hidden'), false);
 
 api.setUser({ id: 'student-1', role: 'student', status: 'approved' });
 assert.equal(trigger.hidden, false);
@@ -189,7 +196,11 @@ assert.match(focusSlot.innerHTML, /문서 읽기/);
 assert.match(crossLayer.innerHTML, /kmap-cross-edge/);
 assertProjectedNodes();
 
-// 4. Escape steps up cleanly: Topic -> Cluster -> Overview.
+// 4. Escape steps up cleanly: Topic -> Cluster -> Overview, and honors defaultPrevented.
+let mapEscapeCalls = 0;
+winEvents.keydown({ key: 'Escape', defaultPrevented: true, preventDefault() { mapEscapeCalls++; } });
+assert.equal(mapEscapeCalls, 0, 'Escape already handled by search dropdown must not step up map');
+assert.match(focusSlot.innerHTML, /자료형과 초기값/);
 winEvents.keydown({ key: 'Escape', preventDefault() {} });
 assert.equal(focusSlot.innerHTML, '');
 assert.match(breadcrumb.innerHTML, /ABAP 기본기/);

@@ -438,7 +438,7 @@
         await refreshAfterChange(version,token);
       } catch (error) {
         const raw = String(error?.message || "");
-        const detail = raw === "TIMEOUT"
+        const detail = (error?.code === "TIMEOUT" || raw === "TIMEOUT")
           ? "응답 시간이 초과되었습니다. 잠시 후 다시 시도해 주세요."
           : /권한/.test(raw)
             ? "권한 오류가 발생했습니다. 다시 로그인한 뒤 시도해 주세요."
@@ -448,7 +448,7 @@
         errorBox.textContent = `답변을 저장하지 못했습니다. ${detail}`;
       } finally {
         saving = false;
-        writeModal._saving = false;
+        if (modalRequest === modalVersion) writeModal._saving = false;
         save.disabled = close.disabled = false;
         save.textContent = "답변 저장";
       }
@@ -474,7 +474,7 @@
     const modalRequest = ++modalVersion;
     const currentUser = window.CodeWikiAuth?.getCurrentUser();
     const isAdmin = currentUser?.role === "admin";
-    const docs = Object.values(window.WIKI_DOCS || {}).filter(d => d.track !== "ui5" && !(d.studentOnly && isAdmin));
+    const docs = Object.values(window.WIKI_DOCS || {}).filter(d => d.track !== "ui5" && !((d.studentOnly || d.isHome) && isAdmin));
     const authorName = currentUser?.full_name || "익명 학생";
     const normalizedPreselect = preselectedDocId === "erp-setup" ? "sap-architecture" : preselectedDocId;
 
@@ -614,10 +614,10 @@
         writeModal.classList.add("hidden");
         await refreshAfterChange(version,token,true);
       } catch (error) {
-        errorBox.textContent = error?.message === "TIMEOUT"
+        errorBox.textContent = (error?.code === "TIMEOUT" || error?.message === "TIMEOUT")
           ? '응답 시간이 초과되었습니다. 작성 내용은 유지됩니다. 다시 시도해 주세요.'
           : '등록하지 못했습니다. 작성 내용은 유지됩니다. 다시 시도해 주세요.';
-      } finally { saving = false; writeModal._saving = false; submit.disabled = closeBtn.disabled = false; }
+      } finally { saving = false; if (modalRequest === modalVersion) writeModal._saving = false; submit.disabled = closeBtn.disabled = false; }
     });
   }
 

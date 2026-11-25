@@ -469,6 +469,7 @@
         <div id="kmapHint" class="kmap-hint"></div>
       </div>
     `;
+    dragState = null;
     bindStageInteractions();
     syncVisualState();
   }
@@ -555,8 +556,14 @@
     else focusOverview();
   }
 
+  let renderedReadKey = null;
+  function readDocsKey(readDocs) {
+    return [...(readDocs || [])].sort().join(',');
+  }
+
   function refreshGraph(preserveSelection = true) {
     const readDocs = window.CodeWikiProgress?.getReadDocs?.() || [];
+    renderedReadKey = readDocsKey(readDocs);
     graph = buildGraph(window.WIKI_DOCS || {}, readDocs);
     if (!visible()) return;
     renderCanvas();
@@ -601,12 +608,15 @@
   }
 
   function setUser(user) {
-    const nextAllowed = Boolean(user && (user.status === 'approved' || user.role === 'admin'));
+    const nextAllowed = Boolean(user && user.role === 'student' && user.status === 'approved');
     if (!nextAllowed) {
       allowed = false;
       mounted = false;
       selectedClusterId = null;
       selectedTopicId = null;
+      pendingTopicId = null;
+      dragState = null;
+      renderedReadKey = null;
       resizeObserver?.disconnect();
       if (host) {
         host.innerHTML = '';
@@ -656,7 +666,7 @@
   });
 
   window.addEventListener('keydown', e => {
-    if (!visible()) return;
+    if (e.defaultPrevented || !visible()) return;
     if (document.querySelector?.('dialog[open], .admin-modal-backdrop:not(.hidden)')) return;
     const active = document.activeElement;
     if (active && (active.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(active.tagName))) return;
@@ -684,7 +694,9 @@
 
   window.addEventListener('hashchange', route);
   window.addEventListener('cw-progress-change', () => {
-    if (visible()) refreshGraph(true);
+    if (!visible() || !mounted) return;
+    const nextKey = readDocsKey(window.CodeWikiProgress?.getReadDocs?.() || []);
+    if (nextKey !== renderedReadKey) refreshGraph(true);
   });
 
   window.CodeWikiKnowledgeMap = {

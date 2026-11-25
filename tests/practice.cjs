@@ -21,18 +21,17 @@ for(const name of ['data','ui5-data','class-notes','practice','practice-ui']) vm
   }
  }
  assert.equal(nodes.openPracticeBtn.hidden,true);
- ctx.window.CodeWikiPractice.setUser({role:'student'});
+ ctx.window.CodeWikiPractice.setUser({role:'student',status:'approved'});
+ assert.equal(nodes.openPracticeBtn.hidden,true);
  nodes.openPracticeBtn.events.click();assert.ok(!nodes.practiceDialog.open,'student cannot open practice');
- ctx.window.CodeWikiPractice.setUser({role:'admin'});assert.equal(nodes.openPracticeBtn.hidden,false);
- nodes.openPracticeBtn.events.click();assert.equal(nodes.practiceDialog.open,true);
+ ctx.window.CodeWikiPractice.setUser({role:'admin',status:'approved'});
+ assert.equal(nodes.openPracticeBtn.hidden,true,'admin must not see practice button');
+ nodes.openPracticeBtn.events.click();assert.ok(!nodes.practiceDialog.open,'admin cannot open practice');
  nodes.practiceCategory.value='forms';nodes.practiceCategory.events.change();
- const first=nodes.practiceQuestion.children[1].textContent;
- await nodes.copyPracticeBtn.events.click();assert.ok(copied.includes(first));assert.match(copied,/FORMS-\d\d/);
- nodes.nextPracticeBtn.events.click();assert.notEqual(nodes.practiceQuestion.children[1].textContent,first);
- nodes.practiceCategory.value='';nodes.practiceCategory.events.change();assert.equal(nodes.nextPracticeBtn.disabled,true);assert.equal(nodes.copyPracticeBtn.disabled,true);
+ assert.equal(nodes.nextPracticeBtn.disabled,true);assert.equal(nodes.copyPracticeBtn.disabled,true);
+ await nodes.copyPracticeBtn.events.click();assert.equal(copied,'');
  ctx.window.CodeWikiPractice.setUser(null);
- assert.equal(nodes.openPracticeBtn.hidden,true);assert.equal(nodes.practiceDialog.open,false);
+ assert.equal(nodes.openPracticeBtn.hidden,true);assert.ok(!nodes.practiceDialog.open);
  assert.equal(nodes.practiceCategory.value,'');assert.equal(nodes.copyPracticeBtn.disabled,true);
- nodes.openPracticeBtn.events.click();assert.equal(nodes.practiceDialog.open,false);
- console.log('PASS: 60 stable IDs, unique rounds, admin-only practice, question copy and logout cleanup');
+ console.log('PASS: 60 stable IDs, unique rounds, hidden practice for admin/student and logout cleanup');
 })().catch(e=>{console.error(e);process.exitCode=1});

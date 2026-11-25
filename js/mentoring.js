@@ -15,7 +15,7 @@
   const uploads=new Map();
   let loaded=false,busy=false,preview=false,version=0,urls=[],importVersion=0;
   let savedDocTitle=null,appliedDocTitle='';
-  let libraryCollapsed=false,folderFilter='all',folderEditing=null,folderMessage='',folderMarkup='',folderMoveMarkup='',listMarkup='';
+  let libraryCollapsed=false,folderFilter='all',folderEditing=null,renderedFolderEditId=null,folderMessage='',folderMarkup='',folderMoveMarkup='',listMarkup='';
   let draggedActivity=null,dragSource=null,dropTarget=null;
   const $=id=>host.querySelector('#'+id);
   const visible=()=>Boolean(session)&&location.hash==='#mentoring';
@@ -72,8 +72,8 @@
     version++;importVersion++;revoke();restoreReportTitle();clearDragState();$('mentoringImport')?.close();$('mentoringDiscord')?.close();
     session=valid?{id:user.id,token}:null;actor=valid?member(user.id):null;
     store=actor?window.CodeWikiMentoringTeamStore.create(actor.id):null;
-    state=model.empty();selected=null;editing=null;dirty=false;uploads.clear();loaded=false;busy=false;host.inert=false;
-    libraryCollapsed=false;folderFilter='all';folderEditing=null;folderMessage='';folderMarkup='';folderMoveMarkup='';listMarkup='';
+    state=model.empty();selected=null;editing=null;dirty=false;preview=false;importItems=[];uploads.clear();loaded=false;busy=false;host.inert=false;
+    libraryCollapsed=false;folderFilter='all';folderEditing=null;renderedFolderEditId=null;folderMessage='';folderMarkup='';folderMoveMarkup='';listMarkup='';
     host.replaceChildren();trigger.hidden=!session;route();
   }
   function setLibraryCollapsed(collapsed){
@@ -88,7 +88,7 @@
     }
   }
   function frame(){
-    folderMarkup='';folderMoveMarkup='';listMarkup='';
+    folderMarkup='';folderMoveMarkup='';listMarkup='';renderedFolderEditId=null;
     host.innerHTML=`<header class="mentoring-heading"><div><span class="mentoring-eyebrow">MENTORING NOTES</span><h1>내 멘토링</h1><p>진행한 활동과 결과물을 기록하고 보고서로 정리하세요.</p></div><span class="mentoring-role">${esc(actor.name)} · 멘토</span></header>
       <div class="mentoring-layout" id="mentoringLayout"><aside class="mentoring-library" aria-label="내 활동 기록"><div class="mentoring-library-heading"><h2>내 활동</h2><div class="mentoring-library-actions"><button type="button" id="mentoringNew" class="toss-primary-btn" data-action="new">+ 새 활동</button><button type="button" id="mentoringLibraryToggle" class="mentoring-library-toggle" data-action="toggle-library" aria-controls="mentoringLibraryContent" aria-expanded="true" aria-label="내 활동 접기" title="내 활동 접기">${toggleIcon}</button></div></div>
       <div class="mentoring-library-content" id="mentoringLibraryContent"><label class="sr-only" for="mentoringSearch">활동 검색</label><input id="mentoringSearch" type="search" placeholder="활동 제목 검색"><div id="mentoringFolders" class="mentoring-folders"></div><div id="mentoringList" class="mentoring-list"></div></div></aside><div class="mentoring-main">
@@ -107,12 +107,13 @@
     const el=$('mentoringFolders');if(!el)return;
     normalizeFolderFilter();
     const activeEl=document.activeElement;
-    const input=folderEditing?el.querySelector?.('#mentoringFolderName'):null;
+    const sameForm=Boolean(folderEditing)&&renderedFolderEditId===folderEditing.id;
+    const input=sameForm?el.querySelector?.('#mentoringFolderName'):null;
     const hadFocus=Boolean(input)&&input===activeEl;
     const selStart=hadFocus&&typeof input.selectionStart==='number'?input.selectionStart:null;
     const selEnd=hadFocus&&typeof input.selectionEnd==='number'?input.selectionEnd:null;
     const focusedFilter=!hadFocus&&activeEl?.dataset?.folderFilter!==undefined&&el.contains?.(activeEl)?activeEl.dataset.folderFilter:null;
-    if(input&&typeof input.value==='string')folderEditing={...folderEditing,name:input.value};
+    if(sameForm&&input&&typeof input.value==='string')folderEditing={...folderEditing,name:input.value};
     const folders=[...folderList()].sort((a,b)=>folderCollator.compare(a.name,b.name));
     const counts=new Map();
     for(const a of state.activities)counts.set(folderOf(a.id),(counts.get(folderOf(a.id))||0)+1);
@@ -124,7 +125,7 @@
       ${folderEditing?`<form class="mentoring-folder-form"><label for="mentoringFolderName">${folderEditing.revision?'폴더 이름 변경':'새 폴더 이름'}</label><input id="mentoringFolderName" maxlength="60" required value="${esc(folderEditing.name)}" ${busy?'disabled':''}><div><button type="submit" ${busy?'disabled':''}>${busy?'저장 중…':'확인'}</button><button type="button" data-folder-action="cancel" ${busy?'disabled':''}>취소</button></div></form>`:''}
       <p class="mentoring-folder-status" role="status">${esc(folderMessage)}</p>`;
     if(folderMarkup!==html){
-      el.innerHTML=html;folderMarkup=html;
+      el.innerHTML=html;folderMarkup=html;renderedFolderEditId=folderEditing?folderEditing.id:null;
       if(hadFocus){
         const next=el.querySelector?.('#mentoringFolderName');
         next?.focus({preventScroll:true});
@@ -327,13 +328,10 @@
   async function toggleProcessStep(activityId,stepId,isChecked){
     if(!loaded||!state.activities.some(a=>a.id===activityId))return;
     const steps=processStepsFor(actor);
-    const current=new Set(checkedStepsOf(activityId));
-    if(isChecked)current.add(stepId);else current.delete(stepId);
-    const ordered=steps.map(s=>s.id).filter(id=>current.has(id));
     try{
-      await execute({type:'checklist',id:activityId,checked:ordered});
+      await execute({type:'checklist',id:activityId,stepId,value:Boolean(isChecked)});
       renderProcess();
-      if(!dirty)status(`멘토링 process (${ordered.length}/${steps.length}) 저장됨`);
+      if(!dirty)status(`멘토링 process (${checkedStepsOf(activityId).length}/${steps.length}) 저장됨`);
     }catch(e){
       if(e?.message!=='session-changed')renderProcess();
       throw e;
@@ -504,7 +502,17 @@
 
   function route(){
     const open=visible(),entering=open&&host.hidden;host.hidden=!open;shell.classList.toggle('mentoring-hidden',open);trigger.classList.toggle('active',open);
-    if(!open){clearDragState();$('mentoringImport')?.close();$('mentoringDiscord')?.close();importVersion++;revoke();restoreReportTitle();return;}
+    if(!open){
+      clearDragState();$('mentoringImport')?.close();$('mentoringDiscord')?.close();importVersion++;revoke();restoreReportTitle();
+      if(loaded&&preview){
+        preview=false;
+        if($('mentoringReport')){$('mentoringReport').hidden=true;$('mentoringReport').innerHTML='';}
+        if($('mentoringEditor'))$('mentoringEditor').hidden=false;
+        const previewBtn=host.querySelector('[data-action=preview]');
+        if(previewBtn)previewBtn.textContent='결과보고서';
+      }
+      return;
+    }
     window.CodeWikiBoard?.closeIfActive();document.querySelectorAll('#sbHomeItem.active,#sbScheduleItem.active,#sbThinkingFlowItem.active,#sbProgramCatalogItem.active,.nav-doc-link.active').forEach(el=>el.classList.remove('active'));document.getElementById('quizModeBtn')?.classList.add('hidden');
     if(entering)window.scrollTo({top:0,behavior:'instant'});if(!loaded&&!busy&&!dirty){frame();void run(load);}
   }

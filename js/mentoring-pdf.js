@@ -8,8 +8,8 @@
   const encoder=new TextEncoder();
 
   function safePdfFilename(pdfTitle){
-    const clean=String(pdfTitle||'').replace(/[<>:"/\\|?*\x00-\x1f]/g,'_').replace(/\.+$/g,'').trim()||'멘토링 활동 결과보고서';
-    return clean.toLowerCase().endsWith('.pdf')?clean:clean+'.pdf';
+    const base=String(pdfTitle||'').replace(/[<>:"/\\|?*\x00-\x1f\x7f]/g,'_').trim().replace(/\.pdf$/i,'').replace(/^\.+|[.\s]+$/g,'').trim();
+    return (base||'멘토링 활동 결과보고서')+'.pdf';
   }
   function formatFileSize(bytes){
     const size=Math.max(0,Number(bytes)||0);
@@ -110,14 +110,16 @@
       const candidate=line+token;
       if(line&&ctx.measureText(candidate).width<=maxWidth){line=candidate;continue;}
       if(!line&&ctx.measureText(token).width<=maxWidth){line=token;continue;}
+      let leadingIndent='';
       if(line){
-        lines.push(line.replace(/\s+$/,''));
+        if(/\S/.test(line))lines.push(line.replace(/\s+$/,''));
+        else leadingIndent=line;
         line='';
       }
       const trimmed=/^\s+$/.test(token)?'':token;
       if(!trimmed)continue;
       if(ctx.measureText(trimmed).width<=maxWidth){line=trimmed;continue;}
-      let chunk='';
+      let chunk=ctx.measureText(leadingIndent).width<maxWidth?leadingIndent:'';
       for(const ch of trimmed){
         if(chunk&&ctx.measureText(chunk+ch).width>maxWidth){lines.push(chunk);chunk=ch;}
         else chunk+=ch;
@@ -136,13 +138,14 @@
   function truncateText(ctx,text,maxWidth){
     const str=String(text||'');
     if(ctx.measureText(str).width<=maxWidth)return str;
-    let lo=0,hi=str.length;
+    const chars=Array.from(str);
+    let lo=0,hi=chars.length;
     while(lo<hi){
       const mid=(lo+hi+1)>>1;
-      if(ctx.measureText(str.slice(0,mid)+'…').width<=maxWidth)lo=mid;
+      if(ctx.measureText(chars.slice(0,mid).join('')+'…').width<=maxWidth)lo=mid;
       else hi=mid-1;
     }
-    return str.slice(0,Math.max(1,lo))+'…';
+    return chars.slice(0,Math.max(1,lo)).join('')+'…';
   }
   async function loadDrawableImage(blob){
     if(!blob)return null;
@@ -169,20 +172,26 @@
     }
     return null;
   }
+  function isJpegBytes(bytes){
+    return bytes instanceof Uint8Array&&bytes.length>=2&&bytes[0]===0xFF&&bytes[1]===0xD8;
+  }
   async function canvasToJpegBytes(canvas){
     if(typeof canvas.toBlob==='function'){
       const blob=await new Promise(resolve=>canvas.toBlob(resolve,'image/jpeg',0.92));
-      if(blob){
-        if(typeof blob.arrayBuffer==='function')return new Uint8Array(await blob.arrayBuffer());
+      if(blob&&typeof blob.arrayBuffer==='function'){
+        const bytes=new Uint8Array(await blob.arrayBuffer());
+        if(isJpegBytes(bytes))return bytes;
       }
     }
     if(typeof canvas.toDataURL==='function'){
       const dataUrl=canvas.toDataURL('image/jpeg',0.92);
       const b64=dataUrl.split(',')[1]||'';
-      const bin=atob(b64);
-      const bytes=new Uint8Array(bin.length);
-      for(let i=0;i<bin.length;i++)bytes[i]=bin.charCodeAt(i);
-      return bytes;
+      if(b64){
+        const bin=atob(b64);
+        const bytes=new Uint8Array(bin.length);
+        for(let i=0;i<bin.length;i++)bytes[i]=bin.charCodeAt(i);
+        if(isJpegBytes(bytes))return bytes;
+      }
     }
     throw new Error('canvas-export-unavailable');
   }
@@ -196,11 +205,13 @@
     const pxW=Math.round(PAGE_W*SCALE),pxH=Math.round(PAGE_H*SCALE);
     const canvases=[];
     let ctx=null,y=MARGIN_TOP,truncated=false;
+    const releaseCanvases=()=>{for(const item of canvases){item.canvas.width=0;item.canvas.height=0;}};
 
     function newPage(){
       if(canvases.length>=MAX_PAGES){truncated=true;return false;}
       const c=createCanvas(pxW,pxH);
       const nextCtx=c.getContext('2d');
+      if(!nextCtx){c.width=0;c.height=0;throw new Error('canvas-export-unavailable');}
       nextCtx.scale(SCALE,SCALE);
       nextCtx.fillStyle='#ffffff';
       nextCtx.fillRect(0,0,PAGE_W,PAGE_H);
@@ -216,6 +227,7 @@
     }
     function setFont(weight,size,family=SANS){ctx.font=`${weight} ${size}px ${family}`;}
 
+    try{
     newPage();
 
     // 1. Report Header
@@ -247,7 +259,7 @@
     if(report.location)infoCols.push({label:'장소',value:report.location});
     const colGap=16,colW=(CONTENT_W-colGap*(infoCols.length-1))/infoCols.length;
     const colLines=infoCols.map(col=>{
-      setFont(400,10.5);
+      setFont(500,10.5);
       return wrapText(ctx,col.value||'—',colW);
     });
     const maxInfoLines=Math.max(...colLines.map(l=>l.length),1);
@@ -323,20 +335,38 @@
       try{
         for(const img of images)loadedImages.push({...img,drawable:await loadDrawableImage(img.blob)});
 
-        if(ensureSpace(46)){
+        const singleMediaH=item=>{
+          const maxMediaH=330;
+          if(!item?.drawable||!item.drawable.width||!item.drawable.height)return 140;
+          const ratio=Math.min((CONTENT_W-16)/item.drawable.width,(maxMediaH-16)/item.drawable.height,1);
+          return Math.max(110,Math.min(maxMediaH,Math.round(item.drawable.height*ratio+16)));
+        };
+        const multiGap=12,multiColW=(CONTENT_W-multiGap)/2,multiMaxH=205;
+        const pairMediaH=pair=>Math.max(...pair.map(item=>{
+          if(!item?.drawable||!item.drawable.width||!item.drawable.height)return 120;
+          const ratio=Math.min((multiColW-16)/item.drawable.width,(multiMaxH-16)/item.drawable.height,1);
+          return Math.max(110,Math.min(multiMaxH,Math.round(item.drawable.height*ratio+16)));
+        }));
+        const cardH=44;
+        const firstBlockH=loadedImages.length===1
+          ? singleMediaH(loadedImages[0])+28
+          : loadedImages.length>1
+            ? pairMediaH(loadedImages.slice(0,2))+28
+            : cardH+8;
+
+        if(ensureSpace(20+firstBlockH)){
           setFont(700,11.5);ctx.fillStyle='#111827';
           ctx.fillText(`첨부 자료 (${totalFiles}건)`,MARGIN_X,y);
           y+=20;
-        }
 
         const drawFigure=(item,figIndex,x,w,mediaBoxH,topY)=>{
-          const capH=28,cardH=mediaBoxH+capH;
-          roundedRect(ctx,x,topY,w,cardH,8);
+          const capH=28,figCardH=mediaBoxH+capH;
+          roundedRect(ctx,x,topY,w,figCardH,8);
           ctx.fillStyle='#FFFFFF';ctx.fill();
           ctx.strokeStyle='#D8DDE6';ctx.lineWidth=0.8;ctx.stroke();
 
           ctx.save();
-          roundedRect(ctx,x+0.5,topY+0.5,w-1,cardH-1,7.5);
+          roundedRect(ctx,x+0.5,topY+0.5,w-1,figCardH-1,7.5);
           ctx.clip();
           ctx.fillStyle='#F7F8FA';
           ctx.fillRect(x,topY,w,mediaBoxH);
@@ -375,34 +405,24 @@
           setFont(500,9.5);ctx.fillStyle='#111827';
           ctx.fillText(truncateText(ctx,item.name,nameMaxW),nameX,topY+mediaBoxH+9);
           ctx.restore();
-          return cardH;
+          return figCardH;
         };
 
         if(loadedImages.length===1&&!truncated){
           const item=loadedImages[0];
-          const maxMediaH=330;
-          let mediaH=140;
-          if(item.drawable&&item.drawable.width>0&&item.drawable.height>0){
-            const ratio=Math.min((CONTENT_W-16)/item.drawable.width,(maxMediaH-16)/item.drawable.height,1);
-            mediaH=Math.max(110,Math.min(maxMediaH,Math.round(item.drawable.height*ratio+16)));
-          }
+          const mediaH=singleMediaH(item);
           if(ensureSpace(mediaH+28)){
             const h=drawFigure(item,1,MARGIN_X,CONTENT_W,mediaH,y);
             y+=h+14;
           }
         }else if(loadedImages.length>1&&!truncated){
-          const gap=12,colW=(CONTENT_W-gap)/2,maxMediaH=205;
           for(let i=0;i<loadedImages.length&&!truncated;i+=2){
             const pair=loadedImages.slice(i,i+2);
-            const rowMediaH=Math.max(...pair.map(item=>{
-              if(!item.drawable||!item.drawable.width||!item.drawable.height)return 120;
-              const ratio=Math.min((colW-16)/item.drawable.width,(maxMediaH-16)/item.drawable.height,1);
-              return Math.max(110,Math.min(maxMediaH,Math.round(item.drawable.height*ratio+16)));
-            }));
+            const rowMediaH=pairMediaH(pair);
             if(!ensureSpace(rowMediaH+28))break;
             const rowY=y;
             pair.forEach((item,j)=>{
-              drawFigure(item,i+j+1,MARGIN_X+j*(colW+gap),colW,rowMediaH,rowY);
+              drawFigure(item,i+j+1,MARGIN_X+j*(multiColW+multiGap),multiColW,rowMediaH,rowY);
             });
             y+=rowMediaH+28+12;
           }
@@ -410,7 +430,6 @@
 
         if(otherFiles.length&&!truncated){
           if(loadedImages.length)y+=4;
-          const cardH=44;
           for(const f of otherFiles){
             if(!ensureSpace(cardH+8))break;
             roundedRect(ctx,MARGIN_X,y,CONTENT_W,cardH,7);
@@ -434,6 +453,7 @@
             ctx.fillText(`${formatFileSize(f.size)} · 별도 첨부파일`,metaX,y+24.5);
             y+=cardH+8;
           }
+        }
         }
       }finally{
         for(const item of loadedImages)item.drawable?.release?.();
@@ -463,10 +483,14 @@
     });
 
     const pages=[];
-    for(const {canvas} of canvases){
-      pages.push({bytes:await canvasToJpegBytes(canvas),width:pxW,height:pxH});
+    for(const item of canvases){
+      pages.push({bytes:await canvasToJpegBytes(item.canvas),width:pxW,height:pxH});
+      item.canvas.width=0;item.canvas.height=0;
     }
     return pages;
+    }finally{
+      releaseCanvases();
+    }
   }
 
   async function generate(report){

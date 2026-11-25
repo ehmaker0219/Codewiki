@@ -220,9 +220,18 @@
     }
     if(type==='checklist'){
       mentor();
-      if(!Array.isArray(command.checked))fail('invalid');
+      let source;
+      if(typeof command.stepId==='string'){
+        if(!processStepIds.has(command.stepId))fail('invalid');
+        const current=new Set(Array.isArray(next.checklists[id])?next.checklists[id]:[]);
+        if(command.value)current.add(command.stepId);else current.delete(command.stepId);
+        source=baseProcessSteps.map(s=>s.id).filter(stepId=>current.has(stepId));
+      }else{
+        if(!Array.isArray(command.checked))fail('invalid');
+        source=command.checked;
+      }
       const seen=new Set(),cleaned=[];
-      for(const stepId of command.checked){
+      for(const stepId of source){
         if(typeof stepId!=='string'||!processStepIds.has(stepId))fail('invalid');
         if(!seen.has(stepId)){seen.add(stepId);cleaned.push(stepId);}
       }

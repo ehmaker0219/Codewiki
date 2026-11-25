@@ -187,6 +187,8 @@ function hasUnsaved(){let prevented=false;events.beforeunload({preventDefault(){
   document.title='다른 문서 | 코드위키';
   location.hash='#doc/abap-dictionary';events.hashchange();
   assert.equal(document.title,'다른 문서 | 코드위키','leaving mentoring must not clobber another page title');
+  assert.equal(node('mentoringReport').hidden,true,'leaving mentoring during report preview resets report panel');
+  assert.equal(node('mentoringEditor').hidden,false,'returning to mentoring shows editor instead of revoked report blobs');
   document.title='코드위키';
   location.hash='#mentoring';events.hashchange();
 

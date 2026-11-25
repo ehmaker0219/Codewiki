@@ -47,6 +47,9 @@
     }
 
     function render() {
+      const doc = globalThis.document;
+      const hadFocus = Boolean(doc?.activeElement && modal.contains?.(doc.activeElement));
+      const focusedFilter = hadFocus ? doc.activeElement.getAttribute?.('data-class-filter') : null;
       const counts = new Map();
       for (const user of users) counts.set(className(user), (counts.get(className(user)) || 0) + 1);
       const classes = [...counts.keys()].sort((a,b) => a.localeCompare(b,'ko',{numeric:true}));
@@ -64,6 +67,12 @@
           return `<div class="admin-group-title" ${index ? 'style="margin-top:24px;"' : ''}><span>${group.title}</span><span class="count-pill">${members.length}명</span></div>`+
             (members.length ? `<div class="admin-user-list">${members.map(user=>renderRow(user,group)).join('')}</div>` : `<div class="admin-empty-box">${busy ? '불러오는 중…' : group.empty}</div>`);
         }).join('')}</div></div>`;
+      if (hadFocus && !modal.classList.contains('hidden')) {
+        const target = focusedFilter !== null
+          ? [...(modal.querySelectorAll?.('[data-class-filter]') || [])].find(el => el.getAttribute?.('data-class-filter') === focusedFilter)
+          : null;
+        (target || modal.querySelector?.('.admin-modal-card'))?.focus?.({preventScroll:true});
+      }
     }
 
     async function open() {
@@ -137,7 +146,11 @@
       const action = event.target.closest('[data-uid]');
       if (action) void updateStatus(action);
     });
-    modal.addEventListener('keydown', event => { if (event.key === 'Escape') close(); });
+    const onEscape = event => { if (event.key === 'Escape' && !modal.classList.contains('hidden')) close(); };
+    modal.addEventListener('keydown', onEscape);
+    if (typeof document !== 'undefined' && typeof document.addEventListener === 'function') {
+      document.addEventListener('keydown', onEscape);
+    }
     return {open, close, setUser};
   }
   window.CodeWikiAdmin = {create};
