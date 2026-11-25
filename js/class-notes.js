@@ -1,4 +1,4 @@
-/** 2026-11-11 ~ 24 수업 필기를 주제별로 정리한 문서. */
+/** 2026-11-11 ~ 25 수업 필기를 주제별로 정리한 문서. */
 (function () {
   const docs = window.WIKI_DOCS;
   const text = (...paragraphs) => ({ type: 'text', paragraphs });
@@ -656,8 +656,8 @@ ENDIF.`), text('SELECT 열에 키를 빼면 원래 서로 다른 행이 같은 �
       ]))
   ], '11/19 · 11/20');
 
-  put('abap-dictionary', 'ABAP Dictionary', 'SE11에서 관리하는 Type Definitions·DB Objects·Services와 Domain, Data Element, Structure, Table Type, View, Transparent Table, Index, Table Buffer, Input Checks(Fixed Values · Foreign Keys)를 정리합니다.',
-    ['데이터 사전', 'DDIC', 'DATA ELEMENT', '데이터 요소', 'Domain', '도메인', '데이터베이스 테이블', 'Transparent Table', 'Technical Attribute', 'Semantic Attribute', 'Search Help', 'SET/GET Parameters', 'Flat structure', 'Simple structure', 'Nested structure', 'Deep structure', 'Table Type', 'Line Type', 'Database view', 'Projection view', 'Help view', 'Maintenance view', 'Delivery Class', 'Technical Settings', 'Secondary Index', 'Table Buffer', 'Full Buffering', 'Generic Buffering', 'Single-Record Buffering', 'Synchronization Table', 'Input Checks', 'Fixed Values', 'Value Table', 'Check Table', 'Foreign Key', 'Cardinality', 'BYPASSING BUFFER'], [
+  put('abap-dictionary', 'ABAP Dictionary', 'SE11에서 관리하는 Type Definitions·DB Objects·Services와 Domain, Data Element, Structure, Table Type, Transparent Table, Index, Table Buffer, Input Checks(Fixed Values · Foreign Keys), Text Table, Table Conversion(SE14), Append Structure, Views · Maintenance View(SM30) · Dynamic Attachment를 정리합니다.',
+    ['데이터 사전', 'DDIC', 'DATA ELEMENT', '데이터 요소', 'Domain', '도메인', '데이터베이스 테이블', 'Transparent Table', 'Technical Attribute', 'Semantic Attribute', 'Search Help', 'SET/GET Parameters', 'Flat structure', 'Simple structure', 'Nested structure', 'Deep structure', 'Table Type', 'Line Type', 'Database view', 'Projection view', 'Help view', 'Maintenance view', 'Delivery Class', 'Technical Settings', 'Secondary Index', 'Table Buffer', 'Full Buffering', 'Generic Buffering', 'Single-Record Buffering', 'Synchronization Table', 'Input Checks', 'Fixed Values', 'Value Table', 'Check Table', 'Foreign Key', 'Cardinality', 'BYPASSING BUFFER', 'Text Table', 'SPRAS', 'Where-Used List', 'Table Conversion', 'QCM', 'Database Utility', 'Append Structure', 'Table Maintenance Generator', 'Maintenance Dialog', 'Dynamic Attachment'], [
     section('ABAP Dictionary의 역할과 3가지 기능', text(
       'ABAP Dictionary(SE11)는 시스템 전체의 Program과 화면이 공유하는 전역 타입, 데이터베이스 객체, 입력 도움말 서비스를 중앙에서 정의·관리하는 저장소입니다. 현재 수업 실습 시스템은 ABAP 7.5 기준입니다.'),
       table(['기능 구분', '포함 객체 · 역할'], [
@@ -1017,8 +1017,155 @@ START-OF-SELECTION.
           { step: '3', action: 'Check Table 입력 후 Create Proposal', detail: 'Check Table 이름을 기입하고 Create Proposal을 눌러 필드 매핑 제안을 생성합니다. (Domain → Value Range에 Value Table을 미리 등록해 두면(예: ZMAJOR_F##) 자동으로 제안됩니다.)' },
           { step: '4', action: '필드 유형·Cardinality 선택 후 Copy', detail: 'Foreign Key Field Type(Key 필드인지, Key 필드가 아닌 Non-key field / Function field인지)과 Cardinality(1:1, 1:N, 1:C, 1:CN)를 선택한 뒤 Copy하고 Activate합니다.' }
         ]
+      }),
+    section('Text Table과 Where-Used List', text(
+      'Text Table은 본체 테이블의 코드 값에 대해 다국어 설명 텍스트를 따로 보관하는 **언어전환용 테이블**입니다. 본체 테이블에 데이터를 입력하거나 조회할 때 Text Table에 선언한 설명 필드가 함께 디스플레이되며, 입력된 텍스트의 언어 코드는 `LANGU`(Data Element: `SPRAS`) 필드에 저장됩니다.'),
+      {
+        type: 'practice',
+        title: 'SE11에서 Text Table 생성 방법',
+        steps: [
+          { step: '1', action: 'SE11에서 Text Table 생성', detail: 'SE11에서 Database Table을 새로 생성합니다(관례상 본체 테이블명 뒤에 T를 붙인 이름 사용).' },
+          { step: '2', action: '본체 테이블의 Key Field만 그대로 복사', detail: '연결할 본체 테이블의 Key Field(예: MANDT + 코드 키 필드)를 동일하게 선언합니다.' },
+          { step: '3', action: 'LANGU(SPRAS) 및 텍스트 필드 추가', detail: 'Key Field에 언어 필드 LANGU(Data Element: SPRAS)를 추가하고, 언어별 설명을 담을 텍스트 필드를 일반 필드로 추가합니다.' },
+          { step: '4', action: 'Foreign Key 설정', detail: '본체 코드(Key) 필드에 Foreign Key를 연결할 때 Foreign Key Field Type 라디오 버튼을 Key fields of a text table로 설정합니다. LANGU 필드는 본체 테이블 키가 아니므로 본체 Foreign Key 매핑 대상에서 제외하거나 T002 언어 테이블 참조 시 Non-key-fields/candidates(필기의 non-key 필드)로 설정합니다.' }
+        ]
+      },
+      {
+        type: 'callout', style: 'tip', title: 'Domain 변경 전 Where-Used List 확인',
+        body: '특정 `Domain`(또는 `Data Element`·테이블)이 시스템의 어떤 객체에서 사용되고 있는지 확인하려면 `SE11` 툴바의 **`Where-Used List`**(단축키 `Ctrl + Shift + F3`)를 사용합니다. 특히 Domain 길이나 타입을 변경하기 전에 영향 범위를 미리 파악하는 데 필수입니다.'
+      },
+      code('Text Table(T005T)과 sy-langu로 언어별 국가명 조회', `REPORT zabap_f##_##.
+
+PARAMETERS p_carr TYPE spfli-carrid DEFAULT 'LH'.
+
+" SPFLI 출발 국가 코드(countryfr)에 대응하는 표준 Text Table(T005T)을
+" 현재 로그온 언어(sy-langu) 기준으로 LEFT OUTER JOIN 조회
+SELECT a~carrid,
+       a~connid,
+       a~countryfr,
+       t~landx AS country_name,
+       a~cityfrom,
+       a~cityto
+  FROM spfli AS a
+  LEFT OUTER JOIN t005t AS t
+    ON t~land1 = a~countryfr
+   AND t~spras = @sy-langu
+  WHERE a~carrid = @p_carr
+  ORDER BY a~connid
+  INTO TABLE @DATA(gt_routes).
+
+LOOP AT gt_routes INTO DATA(gs_route).
+  WRITE: / gs_route-carrid, gs_route-connid,
+           gs_route-countryfr, gs_route-country_name,
+           gs_route-cityfrom, '->', gs_route-cityto.
+ENDLOOP.`)),
+    section('Table Changes — Table Conversion과 Database Utility(SE14)', text(
+      '이미 데이터가 들어 있는 Transparent Table의 구조를 크게 바꾸면(예: Key 변경, Data Element의 Domain 길이 축소 등) SAP가 **Table Conversion**(필기의 `Table Coneversion` 철자 보완)을 수행합니다. 이때 SAP는 기존 데이터를 **`QCM`** 임시 테이블(`QCM<테이블명>`)로 피신시킨 뒤 새 구조의 테이블을 생성하고 데이터를 다시 옮겨 주며, 중간에 오류가 발생하면 **`SE14`(Database Utility)**에서 수습합니다.',
+      '특히 `Data Element`가 참조하는 `Domain` 길이를 **축소**할 때 `SE11`에서 저장·활성화만 시도하면 오류가 발생하므로 Database Utility에서 DB 조정 작업을 함께 진행해야 합니다.'),
+      {
+        type: 'practice',
+        title: 'Domain 축소·구조 변경 시 Database Utility(SE14) 반영 절차',
+        steps: [
+          { step: '1', action: 'SE11에서 Database Utility 열기', detail: '대상 테이블 화면 상단 메뉴 Utilities → Database Object → Database Utility를 선택하거나 T-Code SE14로 진입합니다.' },
+          { step: '2', action: 'Save data 옵션 확인', detail: '기존 레코드를 유지하기 위해 라디오 버튼이 Save data로 선택되어 있는지 반드시 확인합니다.' },
+          { step: '3', action: 'Activate and adjust database 실행', detail: 'Activate and adjust database 버튼을 눌러 Table Conversion과 DB 반영을 완료합니다.' }
+        ]
+      },
+      {
+        type: 'callout', style: 'warning', title: 'Delete Database Table · Delete data 절대 금지',
+        body: 'SE14(Database Utility)에서 **`Delete Database Table`** 또는 **`Delete data`**를 선택하면 현재 로그온한 클라이언트뿐만 아니라 **모든 클라이언트(Client)의 데이터베이스 테이블과 데이터가 전부 삭제**됩니다. 운영·공용 실습 환경에서는 절대 선택하지 마세요.'
+      }),
+    section('Enhancement — Standard Table과 Append Structure', text(
+      '고객사가 `Z`나 `Y`로 만든 자체 테이블이 아니라 **SAP의 Standard Table에 필드를 추가로 붙여 사용하고 싶을 때**(표준 필드 자체의 수정·삭제는 불가) **`Append Structure`**를 사용합니다.',
+      '하나의 Standard Table에 Append Structure를 **N개 생성**할 수 있으며, 삭제가 필요할 때는 `SE11`에서 해당 Append Structure를 삭제합니다. 향후 SAP 업그레이드 시 표준 필드와 이름이 충돌하지 않도록 **추가하는 필드(컬럼) 이름은 반드시 `ZZ` 또는 `YY`로 시작**해야 하는 규칙(Rule)이 있습니다.'),
+      {
+        type: 'practice',
+        title: 'SE11에서 Standard Table에 Append Structure 추가 방법',
+        steps: [
+          { step: '1', action: 'SE11에서 Standard Table 검색', detail: 'SE11에서 필드를 확장할 SAP Standard Table(예: SCARR, SPFLI 등)을 조회(Display)합니다.' },
+          { step: '2', action: 'Append Structure 버튼 클릭', detail: '상단 툴바의 Append Structure 버튼을 눌러 고객용 Append Structure 이름(Z/Y 시작)을 생성합니다.' },
+          { step: '3', action: 'ZZ/YY 컬럼 정의 및 활성화', detail: 'ZZ 또는 YY로 시작하는 필드명과 Component Type을 정의한 뒤 저장·Activate(Ctrl + F3)합니다.' }
+        ]
+      }),
+    section('Views와 Maintenance View (SM30) · Dynamic Attachment', text(
+      '11월 23일에 살펴본 SE11 View 4가지를 실제 생성 절차, **View별 Join 고정 규칙**, **`SM30` 기반 Maintenance View(Table Maintenance Generator)**, 그리고 원본 테이블 변경을 자동 반영하는 **`Dynamic Attachment`**까지 확장해 정리합니다.'),
+      {
+        type: 'practice',
+        title: 'SE11에서 View 만드는 법',
+        steps: [
+          { step: '1', action: 'SE11에서 View 이름 작성 후 생성', detail: 'View 라디오 버튼을 선택하고 이름을 입력한 뒤 Create를 눌러 4가지 View 유형 중 하나를 선택합니다.' },
+          { step: '2', action: 'Table/Join Conditions에서 테이블 입력 후 Relationships 선택', detail: '기준 테이블을 적고 Relationships 버튼을 누르면 테이블 간 Foreign Key를 바탕으로 Join Condition이 자동 처리됩니다.' },
+          { step: '3', action: 'View Fields 탭에서 Display할 필드 선택', detail: 'View Fields 탭의 Table fields 버튼으로 각 테이블에서 표시할 컬럼을 선택합니다.' },
+          { step: '4', action: 'Selection Conditions 지정', detail: 'Selection Conditions 탭에서 View에 표시할 행의 필터 조건을 선택·입력할 수 있습니다.' }
+        ]
+      },
+      table(['View 4가지 유형', 'Join 고정 규칙', '목적과 특징 (필기 3번 Help view 보완)'], [
+        ['1. Database view', '`INNER JOIN` 고정', '여러 개의 테이블에서 컬럼을 골라 Join해 Display 가능 (조인 조건에 매치되는 데이터만 조회)'],
+        ['2. Projection view', '단일 테이블 (Join 없음)', '하나의 테이블 안에서만 컬럼을 골라 Display 가능하며, 간단한 `Selection Condition`을 걸어 필요한 행만 추출 가능'],
+        ['3. Help view', '`LEFT OUTER JOIN` 고정', 'Search Help의 데이터 조회(Selection Method)에서 기준 테이블 행을 유지하는 Outer Join이 필요할 때 사용'],
+        ['4. Maintenance view', '`LEFT OUTER JOIN` 고정', '아주 관련이 깊은 테이블들을 모아 `SM30`에서 유지보수하는 용도(실무에서는 보통 여러 테이블보다 **딱 하나의 테이블**을 대상으로 유지보수하는 경우도 많음)']
+      ]),
+      {
+        type: 'compare',
+        items: [
+          {
+            tag: 'Database view 고정',
+            title: 'Inner Join',
+            points: [
+              'Join Condition에 양쪽 모두 매치되는 데이터만 결과에 표시',
+              'Database view에서는 항상 Inner Join으로 동작'
+            ]
+          },
+          {
+            tag: 'Help view · Maintenance view 고정',
+            title: 'Outer Join (LEFT OUTER JOIN)',
+            points: [
+              'Join Condition에 매치되는 데이터뿐만 아니라 기준 테이블(왼쪽 테이블)의 행까지 모두 표시',
+              'Help view와 Maintenance view는 LEFT OUTER JOIN으로 고정'
+            ]
+          }
+        ]
+      },
+      {
+        type: 'practice',
+        title: 'Maintenance View · Table Maintenance Generator 설정 (SM30)',
+        steps: [
+          { step: '1', action: 'Utilities → Table Maintenance Generator 실행', detail: 'Maintenance View 또는 Customer Table의 SE11 화면에서 Utilities → Table Maintenance Generator로 진입합니다. Maintenance Dialog는 최대 2개 화면(Overview / Detail view)까지 구성할 수 있습니다.' },
+          { step: '2', action: 'Authorization Group 및 Maintenance 전용 Function Group 지정', detail: 'Authorization Group은 보통 &NC&(권한 그룹 미지정)로 설정하고, Maintenance Dialog 생성을 위해 일반 로직과 분리된 Maintenance 전용 Function Group을 지정합니다.' },
+          { step: '3', action: 'Maint. Screen No. 지정 (Find Scr. Number(s) 활용)', detail: '스크린 번호는 1~9999 중 지정하되 1000~1010은 영구결번이라 사용할 수 없습니다. Find Scr. Number(s)로 세 가지 옵션 중 하나를 선택할 수 있으며, 나중에 스크린을 끼워 넣기 편하도록 보통 한 자리 수는 잘 사용하지 않습니다.' },
+          { step: '4', action: 'SM30에서 Overview · Detail view 유지보수', detail: '생성이 끝나면 SM30에서 데이터를 관리합니다. 2-step 구성 시 Overview 목록에서 행을 더블클릭해 Detail view로 접근(access)합니다.' }
+        ]
+      },
+      {
+        type: 'compare',
+        items: [
+          {
+            tag: 'Maintenance View 장점',
+            title: '간편한 유지보수',
+            points: [
+              '별도 화면 코딩 없이 SM30에서 간단한 데이터 조회·입력·수정을 빠르게 처리',
+              '오직 Customer Table(Z/Y)만 Maintenance View / SM30으로 관리 (Standard Table은 SAP 표준 방식으로 따로 관리)'
+            ]
+          },
+          {
+            tag: 'Maintenance View 단점 · 제약',
+            title: '동시 수정 Lock · 비동기 업데이트',
+            points: [
+              '기본적으로 비동기화 업데이트 방식으로 동작',
+              '테이블 단위 Lock이 걸려 다른 사용자가 수정 중이면 동시에 수정할 수 없음'
+            ]
+          }
+        ]
+      },
+      text('**Dynamic Attachment**', '원본 테이블의 필드가 추가·수정돼도 참조된 View에 자동으로 반영되도록 하는 설정입니다. `View Fields` 탭에서 아래 표처럼 `*`를 지정하면 해당 테이블의 모든 필드가 동적으로 연결됩니다.'),
+      table(['View Field', 'Table', 'Field'], [
+        ['`*`', '테이블 이름', '`*`']
+      ]),
+      {
+        type: 'callout', style: 'point', title: 'Dynamic Attachment에서 - 제외와 중복 필드 에러 주의',
+        body: '전체 포함(`*`) 상태에서 원하지 않는 특정 필드는 `View Field` 열에 **`-`**를 입력해 제외할 수 있습니다. 특히 조인된 여러 테이블에 **이름이 같은 필드**가 있을 때 중복 필드를 `-`로 빼주지 않으면 View 활성화 시 **에러**가 발생합니다.'
       })
-  ], '11/23 · 11/24', [
+  ], '11/23 · 11/24 · 11/25', [
     ['`ZABAP_F##_18`', 'ABAP Flat(Simple & Nested) Structure'],
     ['`ZABAP_F##_19`', 'ABAP Deep Structure'],
     ['`ZBC430S_DATA_ELEMENTS`', 'Program SAPBC430S_DATA_ELEMENTS'],
@@ -1053,7 +1200,7 @@ START-OF-SELECTION.
   const owners = { 'SAP GUI': 'sap-architecture', '자료형': 'abap-types', 'Include 프로그램': 'abap-program-types', '리포트 프로그램': 'abap-program-types', 'Open SQL': 'abap-open-sql' };
   for (const doc of Object.values(docs)) doc.aliases = (doc.aliases || []).filter(alias => !owners[alias] || owners[alias] === doc.id);
   docs['learning-roadmap'].subtitle = '수업 필기 기반 ABAP 학습 순서';
-  docs['learning-roadmap'].summary = '11월 11~24일 필기를 주제별로 정리했습니다. 본문이 채워진 문서부터 읽고, 이후 과정은 준비된 목차로 확인하세요.';
+  docs['learning-roadmap'].summary = '11월 11~25일 필기를 주제별로 정리했습니다. 본문이 채워진 문서부터 읽고, 이후 과정은 준비된 목차로 확인하세요.';
   docs['learning-roadmap'].sections[0].blocks[0].rows = order.map(id => [docs[id].stepNum, `[[${id}|${docs[id].title}]]`, connections[id] ? '필기 정리 · 예제' : '목차 준비 · 본문 예정']);
   docs['welcome-abap'].topWidgetId = 'knowledge-map-entry';
   docs['welcome-abap'].sections[0].blocks = [text('[[learning-roadmap|전체 학습 목차]]에서 주제별 내용을 확인하세요. 수업 필기에서 다루지 않은 ERP 모듈은 목차로 남겨 두었습니다.'), table(['분야', '문서'], [

@@ -44,6 +44,7 @@
     'Nested Structure와 INCLUDE TYPE 접근 비교': {input:'carrid = LH, connid = 0400, cityfrom = FRANKFURT, cityto = NEW YORK', expected:'Nested : LH FRANKFURT NEW YORK / Include : LH FRANKFURT NEW YORK 두 줄이 출력됩니다. Nested structure는 route를 한 번 더 거쳐 접근하고, INCLUDE TYPE은 바로 하위 필드명으로 접근합니다.', requirements:'SPFLI·SFLIGHT 교육용 테이블이 있는 시스템에서 실행하세요.'},
     'Deep Structure와 전역 Table Type 활용': {input:'SCARR·SPFLI의 LH 항공사 데이터', expected:'LH 항공사의 코드·이름과 SPFLI에서 조회되어 gs_carrier-routes 내부 테이블 컴포넌트에 담긴 보유 노선 수가 출력됩니다.', requirements:'Standard ABAP 7.5 기준입니다. SCARR·SPFLI 교육용 테이블이 있는 시스템에서 실행하세요. 실제 출력은 현재 클라이언트의 데이터에 따라 달라집니다.'},
     'Table Buffer 조회와 BYPASSING BUFFER': {input:'SCARR 테이블의 LH 항공사 행', expected:'버퍼/표준 조회와 DB 직접 조회(BYPASSING BUFFER) 모두 LH와 항공사 이름(Lufthansa)을 출력합니다. 테이블 버퍼가 활성화된 환경에서는 첫 조회가 Application Server 버퍼를 활용하고, 두 번째 조회는 버퍼를 우회해 DB에서 직접 읽습니다.', requirements:'Standard ABAP 7.5 기준입니다. SCARR 교육용 테이블이 있는 시스템에서 실행하세요.'},
+    'Text Table(T005T)과 sy-langu로 언어별 국가명 조회': {input:'p_carr = LH (현재 로그온 언어 sy-langu 기준)', expected:'LH 항공사의 각 노선과 출발 국가 코드(countryfr)에 대응하는 표준 Text Table(T005T)의 현재 로그온 언어별 국가명(landx), 출발/도착 도시가 출력됩니다.', requirements:'Standard ABAP 7.5 기준입니다. SPFLI 교육용 테이블과 표준 국가 Text Table(T005T)이 있는 시스템에서 실행하세요.'},
     'TYPE · LIKE · VALUE · CLEAR': {input:'별도 입력 없음', expected:'0, 17, 20이 각각 한 줄씩 출력됩니다.'},
     '선택 화면에서 숫자 입력받기': {input:'p_count = 3', expected:'입력: 3 / 두 배: 6', requirements:'인라인 DATA 선언을 지원하는 Standard ABAP 환경에서 실행하세요.'},
     '문자와 숫자의 초기값': {input:'코드의 초기값 그대로', expected:'정수 초기값은 0 / 0000이 출력됩니다. lv_text는 공백 5자리로 초기화됩니다.'},

@@ -117,6 +117,12 @@
       from('abap-dictionary', 'Database Access Using Index — Primary · Secondary Index'),
       from('abap-dictionary', 'Database Access Using the Buffer — Table Buffer와 동기화'),
       from('abap-dictionary', 'Input Checks — Fixed Values와 Foreign Keys')
+    ]},
+    {date: '2026-11-25', source: '261125 수요일.md', sections: [
+      from('abap-dictionary', 'Text Table과 Where-Used List'),
+      from('abap-dictionary', 'Table Changes — Table Conversion과 Database Utility(SE14)'),
+      from('abap-dictionary', 'Enhancement — Standard Table과 Append Structure'),
+      from('abap-dictionary', 'Views와 Maintenance View (SM30) · Dynamic Attachment')
     ]}
   ];
   // Dates are rebuilt from explicit source associations, including split topics.

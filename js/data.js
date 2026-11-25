@@ -232,7 +232,9 @@ window.WIKI_DOCS = {
       ["SE16", "Data Browser", "테이블 이름과 조회 조건을 입력하여 저장된 데이터 조회"],
       ["SE84", "Repository Information System", "Program 등 저장소의 개발 객체를 조건별로 검색"],
       ["SE80", "Object Navigator", "Package·Program·함수 그룹·클래스 등 개발 객체를 통합 탐색"],
-      ["SE11", "ABAP Dictionary", "테이블·구조·데이터 요소 등 데이터 사전 객체 정의와 유지보수"]
+      ["SE11", "ABAP Dictionary", "테이블·구조·데이터 요소·View 등 데이터 사전 객체 정의와 유지보수"],
+      ["SE14", "Database Utility", "테이블 구조 변경·축소 시 Activate and adjust database 수행 및 Table Conversion(QCM) 수습"],
+      ["SM30", "Maintain Table Views", "Maintenance View 및 Table Maintenance Generator로 생성한 Customer Table 데이터 유지보수"]
     ]],
     ["Program과 화면 개발", [
       ["SE38", "ABAP Editor", "ABAP Program 생성·소스 편집·검사·활성화·실행"],
@@ -257,7 +259,7 @@ window.WIKI_DOCS = {
       ...groups.map(([title, rows]) => ({ title, blocks: [{ type: "table", headers: ["T-Code", "도구 이름", "주요 용도"], rows }] })),
       { title: "헷갈리기 쉬운 구분", blocks: [{ type: "text", paragraphs: [
         "SE16의 Initial Screen은 데이터 브라우저의 첫 화면을 뜻합니다. SAP Easy Access로 돌아가는 명령은 /n이며, SE16 자체는 테이블 데이터 조회 도구입니다.",
-        "SE11은 데이터 구조를 정의하고, SE16은 저장된 데이터를 조회합니다. SE84는 객체 검색, SE80은 객체를 탐색하며 개발하는 통합 작업 공간에 가깝습니다.",
+        "SE11은 데이터 구조를 정의하고, SE14는 구조 변경(축소 등)을 실제 DB에 반영·수습하며, SE16은 저장된 데이터를 조회합니다. Customer Table의 유지보수 화면 관리는 SM30에서 수행합니다. SE84는 객체 검색, SE80은 객체를 탐색하며 개발하는 통합 작업 공간에 가깝습니다.",
         "SM50·SM04는 현재 애플리케이션 서버 기준입니다. 화면에 보이는 목록을 시스템 전체의 프로세스·사용자 목록으로 혼동하지 마세요.",
         "[[sap-gui-shortcuts|SAP GUI · ABAP 단축키]]에서 명령 필드 사용법도 함께 확인할 수 있습니다."
       ] }] }

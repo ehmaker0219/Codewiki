@@ -92,7 +92,7 @@
       [561, 'Lesson: Creating an ABAP Project in Eclipse']
     ]],
     [13, 569, 'SAP Standard Software Adjustments', [
-      [571, 'Lesson: Adjusting the SAP Standard Software']
+      [571, 'Lesson: Adjusting the SAP Standard Software', ['abap-dictionary']]
     ]]
   ];
   // Derive each topic's book references from the same links used in the book index.
