@@ -61,14 +61,13 @@
     const selStart=keepSearch&&typeof activeEl.selectionStart==='number'?activeEl.selectionStart:null;
     const selEnd=keepSearch&&typeof activeEl.selectionEnd==='number'?activeEl.selectionEnd:null;
     const tab=currentTab();
-    const busy=tab==='logins'?loginsLoading:loading;
     const source=tab==='logins'?logins:rows;
     const classes=[...new Set(source.map(u=>u.class_name||'기본반'))].sort((a,b)=>a.localeCompare(b,'ko',{numeric:true}));
     if(classFilter&&!classes.includes(classFilter))classes.push(classFilter);
     const title=tab==='logins'?'학생 로그인 내역':'학생 정보';
     const desc=tab==='logins'?'학생들의 최근 로그인 기록을 시간순으로 확인합니다.':'가입한 학생의 계정과 프로필을 관리합니다.';
     const statusText=tab==='logins'?(loginsLoading?'로그인 내역을 불러오는 중…':loginsMessage):(loading?'학생 정보를 불러오는 중…':rowsMessage);
-    host.innerHTML=`<header class="members-heading"><div><h1>${title}</h1><p>${desc}</p></div><div class="members-heading-actions"><button type="button" class="toss-chip-btn members-danger-btn" data-logout-all ${logoutAllBusy?'disabled':''}>전원 로그아웃</button><button type="button" class="toss-chip-btn" data-members-refresh ${busy?'disabled':''}>새로고침</button></div></header><section id="membersPresence" class="members-presence" aria-label="현재 접속자"></section>
+    host.innerHTML=`<header class="members-heading"><div><h1>${title}</h1><p>${desc}</p></div><div class="members-heading-actions"><button type="button" class="toss-chip-btn members-danger-btn" data-logout-all ${logoutAllBusy?'disabled':''}>전원 로그아웃</button></div></header><section id="membersPresence" class="members-presence" aria-label="현재 접속자"></section>
       <div class="members-tabs" role="tablist" aria-label="학생 관리 보기"><button type="button" class="members-tab" role="tab" aria-selected="${tab==='students'}" data-members-tab="students">학생 목록</button><button type="button" class="members-tab" role="tab" aria-selected="${tab==='logins'}" data-members-tab="logins">로그인 내역</button></div>
       <div class="members-filters"><label>검색<input id="membersSearch" type="search" placeholder="이름 또는 아이디" value="${esc(query)}"></label><label>반<select id="membersClass"><option value="">전체 반</option>${classes.map(c=>`<option value="${esc(c)}" ${classFilter===c?'selected':''}>${esc(c)}</option>`).join('')}</select></label><label>상태<select id="membersStatus"><option value="">전체 상태</option>${Object.entries(statuses).map(([id,name])=>`<option value="${id}" ${statusFilter===id?'selected':''}>${name}</option>`).join('')}</select></label><span class="members-count" id="membersCount"></span></div>
       <p id="membersMessage" role="status"></p><div class="members-table-wrap" id="membersTable"></div>`;
@@ -260,7 +259,6 @@
   }
   host.addEventListener('click',e=>{
     if(e.target.closest('[data-logout-all]')){openLogoutAllConfirm();return;}
-    if(e.target.closest('[data-members-refresh]')){if(currentTab()==='logins')void loadLogins(selectedUserId);else void load();return;}
     const tab=e.target.closest('[data-members-tab]');if(tab){switchTab(tab.dataset.membersTab);return;}
     const viewLogins=e.target.closest('[data-view-logins]');if(viewLogins){switchTab('logins',viewLogins.dataset.viewLogins,viewLogins.dataset.viewLoginsId);return;}
     const sort=e.target.closest('[data-members-sort]');if(sort){sortBy(sort.dataset.membersSort);return;}

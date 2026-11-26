@@ -22,7 +22,8 @@ const fixtures=[{id:'s1',username:'student-one',full_name:'<img onerror=alert(1)
  {id:'s2',username:'student-two',full_name:'학생 둘',class_name:'2반',student_number:2,status:'pending'}];
 (async()=>{
  api.setUser({id:'s',role:'student',status:'approved'});assert.equal(requests.length,0);assert.equal(host.hidden,true);
- api.setUser({id:'a',role:'admin'});assert.equal(requests.length,1);click('[data-members-refresh]');assert.equal(requests.length,1,'read coalescing');
+ api.setUser({id:'a',role:'admin'});assert.equal(requests.length,1);click('[data-members-tab]','students');assert.equal(requests.length,1,'read coalescing');
+ assert.equal(host.innerHTML.includes('data-members-refresh'),false,'students tab hides refresh button');
  requests.shift().resolve({data:fixtures});await flush();assert.equal(host.hidden,false);
  assert.equal(window.location.hash,'#admin/students');
  api.setPresence([{full_name:'<script>bad</script>',class_name:'6반',role:'student'}]);
@@ -49,7 +50,7 @@ const fixtures=[{id:'s1',username:'student-one',full_name:'<img onerror=alert(1)
   {id:'n2',full_name:'김나',username:'user2',class_name:'2반',student_number:2,birth_date:'1999-01-01',last_login_at:'2026-11-20T10:00:00Z',login_count:1,created_at:'2026-11-18T10:00:00Z',status:'pending'},
   {id:'n3',full_name:'김다',username:'user3',class_name:'1반',student_number:null,birth_date:null,last_login_at:null,login_count:0,created_at:null,status:'rejected'}];
  const order=()=>[...node('membersTable').innerHTML.matchAll(/data-reset-student="(.*?)"/g)].map(m=>m[1]);
- click('[data-members-refresh]');requests.shift().resolve({data:sortable});await flush();
+ api.invalidate();requests.shift().resolve({data:sortable});await flush();
  assert.deepEqual(order(),['n1','n2','n3']);
  click('[data-members-sort]','student_number');assert.deepEqual(order(),['n2','n1','n3']);
  assert.match(node('membersTable').innerHTML,/aria-sort="ascending"><button[^>]*data-members-sort="student_number"/);
@@ -59,11 +60,12 @@ const fixtures=[{id:'s1',username:'student-one',full_name:'<img onerror=alert(1)
  click('[data-members-sort]','username');assert.deepEqual(order(),['n2','n3','n1']);
  input('membersClass','2반');assert.deepEqual(order(),['n2']);input('membersClass','');assert.deepEqual(order(),['n2','n3','n1']);
  assert.equal(requests.length,0,'sorting and filtering must not request the server');
- click('[data-members-refresh]');requests.shift().resolve({data:sortable});await flush();assert.deepEqual(order(),['n2','n3','n1'],'refresh retains sorting');
- // Login history tab: lazy load, coalescing, escaping, local filtering, drill-down, PGRST202 and stale isolation.
+ api.invalidate();requests.shift().resolve({data:sortable});await flush();assert.deepEqual(order(),['n2','n3','n1'],'refresh retains sorting');
+ // Login history tab: lazy load, no refresh button, coalescing, escaping, local filtering, drill-down, PGRST202 and stale isolation.
  click('[data-members-tab]','logins');assert.equal(window.location.hash,'#admin/logins');assert.equal(requests.length,1);
+ assert.equal(host.innerHTML.includes('data-members-refresh'),false,'login history tab hides refresh button');
  assert.equal(requests[0].name,'cw_admin_login_history');assert.equal(requests[0].args.p_limit,100);
- click('[data-members-refresh]');assert.equal(requests.length,1,'login history read coalescing');
+ click('[data-members-tab]','logins');assert.equal(requests.length,1,'login history read coalescing');
  const loginFixtures=[
   {id:2,user_id:'n1',username:'user10',full_name:'<svg onload=alert(1)>',class_name:'10반',student_number:10,status:'approved',logged_in_at:'2026-11-21T10:00:00Z'},
   {id:1,user_id:'n2',username:'user2',full_name:'김나',class_name:'2반',student_number:2,status:'pending',logged_in_at:'2026-11-20T10:00:00Z'}];
@@ -74,11 +76,12 @@ const fixtures=[{id:'s1',username:'student-one',full_name:'<img onerror=alert(1)
  input('membersClass','10반');assert.match(node('membersCount').textContent,/0건 \/ 전체 2건/);
  input('membersSearch','');input('membersClass','');assert.equal(requests.length,0,'login filters must be local');
  click('[data-members-tab]','students');assert.equal(window.location.hash,'#admin/students');assert.equal(requests.length,0,'cached directory reused');
+ assert.equal(host.innerHTML.includes('data-members-refresh'),false,'students tab also hides refresh button');
  click('[data-view-logins]','user10');assert.equal(window.location.hash,'#admin/logins');assert.equal(requests.length,0,'cached login history reused');
  assert.match(node('membersCount').textContent,/1건 \/ 전체 2건/);
- click('[data-members-refresh]');requests.shift().resolve({error:{code:'PGRST202'}});await flush();
+ api.invalidate();requests.shift().resolve({error:{code:'PGRST202'}});await flush();
  assert.match(node('membersMessage').textContent,/로그인 내역 기능이 아직 서버에 적용/);
- click('[data-members-refresh]');const lateLogins=requests.shift();api.setUser(null);lateLogins.resolve({data:loginFixtures});await flush();
+ api.invalidate();const lateLogins=requests.shift();api.setUser(null);lateLogins.resolve({data:loginFixtures});await flush();
  assert.equal(host.innerHTML,'');assert.equal(host.hidden,true);assert.equal(timers.size,0);
  // Per-user drill-down race isolation, search focus preservation and invalidate() superseding in-flight reads.
  window.location.hash='#admin/students';
@@ -108,8 +111,8 @@ const fixtures=[{id:'s1',username:'student-one',full_name:'<img onerror=alert(1)
  assert.equal(node('membersTable').innerHTML.includes('user10'),false,'stale per-user response must not poison global cache');
  globalReq.resolve({data:loginFixtures});await flush();
  assert.match(node('membersCount').textContent,/2건 \/ 전체 2건/);
- // Switching tabs and triggering invalidate() while logins is active supersedes in-flight login fetch.
- click('[data-members-refresh]');const staleLogins2=requests.shift();
+ // Triggering invalidate() while logins is active supersedes in-flight login fetch.
+ api.invalidate();const staleLogins2=requests.shift();
  api.invalidate();assert.equal(requests.length,1,'invalidate must supersede in-flight login read');
  const freshLogins2=requests.shift();
  staleLogins2.resolve({data:[loginFixtures[0]]});await flush();
