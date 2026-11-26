@@ -14,12 +14,25 @@
   }
   function indexDocuments(documents) {
     return documents.filter(d => d.track !== 'ui5').map(doc => {
-      const parts = [doc.summary, doc.subtitle, ...(doc.sections || []).flatMap(s => [s.title, ...blockText(s.blocks)])]
-        .filter(Boolean).map(value => String(value).replace(/\s+/g, ' ').trim());
+      const entries = [];
+      const pushEntry = (raw, meta = {}) => {
+        const text = String(raw ?? '').replace(/\s+/g, ' ').trim();
+        if (!text) return;
+        entries.push({ text, lower: text.toLowerCase(), sectionId: null, sectionTitle: null, sectionTab: null, sectionMode: null, isSectionTitle: false, isAuxSection: false, ...meta });
+      };
+      pushEntry(doc.summary);
+      pushEntry(doc.subtitle);
+      (doc.sections || []).forEach((s, sIdx) => {
+        const sectionId = `sec-${sIdx + 1}`;
+        const isAuxSection = s.title === '관련 문서' || s.title === '필기와 참고 자료';
+        const base = { sectionId, sectionTitle: s.title || null, sectionTab: s.tab || null, sectionMode: s.mode || null, isAuxSection };
+        pushEntry(s.title, { ...base, isSectionTitle: true });
+        for (const chunk of blockText(s.blocks)) pushEntry(chunk, base);
+      });
       return {
         doc, title: doc.title.toLowerCase(),
         heading: [doc.title, ...(doc.aliases || []), ...(doc.tcodes || [])].join(' ').toLowerCase(),
-        parts, lowerParts: parts.map(value => value.toLowerCase())
+        entries
       };
     });
   }
@@ -28,15 +41,26 @@
     const q = input.trim().toLowerCase();
     if (!q) return [];
     return index.map(entry => {
-      const hitIndex = entry.lowerParts.findIndex(part => part.includes(q));
-      const hit = entry.parts[hitIndex];
+      const hit =
+        entry.entries.find(e => e.isSectionTitle && !e.isAuxSection && e.lower.includes(q)) ||
+        entry.entries.find(e => e.sectionId && !e.isAuxSection && e.lower.includes(q)) ||
+        entry.entries.find(e => e.sectionId && e.lower.includes(q)) ||
+        entry.entries.find(e => e.lower.includes(q));
       const score = entry.title === q ? 4 : entry.heading.includes(q) ? 3 : hit ? 1 : 0;
       if (!score) return null;
-      const value = hit || entry.doc.subtitle || entry.doc.title;
+      const value = hit?.text || entry.doc.subtitle || entry.doc.title;
       const at = Math.max(0, value.toLowerCase().indexOf(q));
       const start = Math.max(0, at - 32);
       const end = Math.max(start + 130, at + q.length + 25);
-      return {doc:entry.doc, score, snippet:(start ? '…' : '') + value.slice(start, end) + (end < value.length ? '…' : '')};
+      return {
+        doc: entry.doc,
+        score,
+        snippet: (start ? '…' : '') + value.slice(start, end) + (end < value.length ? '…' : ''),
+        sectionId: hit?.sectionId || null,
+        sectionTitle: hit?.sectionTitle || null,
+        sectionTab: hit?.sectionTab || null,
+        sectionMode: hit?.sectionMode && hit.sectionMode !== 'both' ? hit.sectionMode : null
+      };
     }).filter(Boolean).sort((a,b) => b.score-a.score || Number(a.doc.isDailyLesson || false)-Number(b.doc.isDailyLesson || false));
   }
   function highlight(text, query) {

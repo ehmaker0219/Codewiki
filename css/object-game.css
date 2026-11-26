@@ -3,8 +3,8 @@
 .object-game-header,.object-game-footer{display:flex;align-items:center;justify-content:space-between;gap:16px}
 .object-game-header h1{font-size:20px;margin:0;color:var(--text-strong)}
 .object-game-intro{font-size:13px;color:var(--text-caption);line-height:1.6;margin:12px 0 24px}
-.object-game-name{font-family:Consolas,monospace;font-size:clamp(19px,4vw,28px);overflow-wrap:anywhere;line-height:1.5;background:var(--bg-subtle);border:1px solid var(--border-subtle);border-radius:10px;padding:24px 16px;margin:0 0 22px;color:var(--text-strong);text-align:center}
-.object-game-prompt{white-space:pre-wrap;overflow-wrap:anywhere;font-family:Consolas,monospace;font-size:13px;line-height:1.7;margin:0 0 22px;padding:12px 14px;border:1px solid var(--border-subtle);border-radius:8px;background:var(--bg-subtle);color:var(--text-sub)}
+.object-game-name{font-family:var(--font-mono);font-size:clamp(19px,4vw,28px);overflow-wrap:anywhere;line-height:1.5;background:var(--bg-subtle);border:1px solid var(--border-subtle);border-radius:10px;padding:24px 16px;margin:0 0 22px;color:var(--text-strong);text-align:center}
+.object-game-prompt{white-space:pre-wrap;overflow-wrap:anywhere;font-family:var(--font-mono);font-size:13px;line-height:1.7;margin:0 0 22px;padding:12px 14px;border:1px solid var(--border-subtle);border-radius:8px;background:var(--bg-subtle);color:var(--text-sub)}
 .object-game-options{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .object-game-option{display:flex;align-items:center;text-align:left;gap:10px;min-height:64px;padding:12px;border:1px solid var(--border-subtle);border-radius:10px;font:inherit;font-size:13px;background:var(--bg-card);color:var(--text-body);cursor:pointer}
 .object-game-option-number{display:grid;place-items:center;flex-shrink:0;width:24px;height:24px;border-radius:6px;background:var(--bg-chip);font-size:12px;color:var(--text-caption)}

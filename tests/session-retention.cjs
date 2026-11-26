@@ -35,6 +35,7 @@ function boot(storage, rpc) {
   assert.equal(app.get('learningContentsGroup').hidden,false);
   assert.equal(app.get('sbThinkingFlowItem').hidden,false);
   assert.equal(app.get('sbProgramCatalogItem').hidden,false);
+  assert.equal(app.get('sbBasicSessionItem').hidden,false);
   assert.equal(app.get('sbSqlGuideItem').hidden,false);
   assert.match(app.get('studySidebarSlot').innerHTML,/id="openStudyBtn"/);
   assert.ok(!app.get('adminSidebarSlot').innerHTML.includes('id="openAdminModalBtn"'),'student does not receive admin controls');
@@ -42,6 +43,7 @@ function boot(storage, rpc) {
   assert.equal(app.get('learningContentsGroup').hidden,true);
   assert.equal(app.get('sbThinkingFlowItem').hidden,true,'thinking flow stays student-only');
   assert.equal(app.get('sbProgramCatalogItem').hidden,true,'program catalog stays student-only');
+  assert.equal(app.get('sbBasicSessionItem').hidden,true,'Basic Session Review stays student-only');
   assert.equal(app.get('sbSqlGuideItem').hidden,true,'ABAP SQL guide stays student-only');
   assert.ok(!app.get('studySidebarSlot').innerHTML.includes('id="openStudyBtn"'),'admin study menu is retired');
   assert.match(app.get('adminSidebarSlot').innerHTML,/id="openAdminModalBtn"/);

@@ -101,8 +101,8 @@ function createHarness(storageImpl) {
 
   assert.equal(h.notice.maybeShow(studentA), true, 'approved student sees notice on first entry');
   assert.equal(h.modal.classList.contains('hidden'), false);
-  assert.ok(h.modal.innerHTML.includes('교재'), 'notice mentions textbook-based TOC');
-  assert.ok(h.modal.innerHTML.includes('주말'), 'notice mentions weekend update');
+  assert.ok(h.modal.innerHTML.includes('Basic Session Review'), 'notice mentions Basic Session Review update');
+  assert.ok(h.modal.innerHTML.includes('ZPROG_CL5_T14_005'), 'notice mentions official instructor solution');
   assert.ok(h.modal.innerHTML.includes('월요일 시험공부 화이팅'), 'notice includes exam cheer');
   assert.equal(h.document.keydownCount(), 1, 'single Escape listener attached');
   assert.equal(h.getConfirmBtn().isFocused(), true, 'confirm button receives focus');

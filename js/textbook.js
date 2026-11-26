@@ -267,8 +267,8 @@
         headers: ['단계', 'BC400 Unit', '핵심 학습 내용', '상태'],
         rows: [
           ['기초 · 환경', '[[unit-01|Unit 1]] · [[unit-02|Unit 2]] · [[unit-03|Unit 3]]', 'SAP 요청 흐름 · Workbench/Package · 기본 문법 · 자료형 · 반복문 · 디버깅 (Ex 1–5)', '필기 정리 · 예제'],
-          ['모듈화 · 객체', '[[unit-04|Unit 4]] · [[unit-05|Unit 5]]', 'FORM · Function Module · BAPI · Class · 구조체 · Internal Table (Ex 6–14)', '필기 정리 · 예제'],
-          ['SQL · 리포트', '[[unit-06|Unit 6]] · [[unit-07|Unit 7]]', '데이터 모델 · Open SQL · Selection Screen · Classic Report (Ex 15–21)', '진행 중 (권한 체크 예정)'],
+          ['모듈화 · 객체', '[[unit-04|Unit 4]] · [[unit-05|Unit 5]]', 'FORM · Function Module · BAPI · Class · Structure · Internal Table (Ex 6–14)', '필기 정리 · 예제'],
+          ['SQL · Report', '[[unit-06|Unit 6]] · [[unit-07|Unit 7]]', '데이터 모델 · Open SQL · Selection Screen · Classic Report (Ex 15–21)', '진행 중 (권한 체크 예정)'],
           ['화면 · 도구', '[[unit-08|Unit 8]] · [[unit-09|Unit 9]] · [[unit-10|Unit 10]] · [[unit-11|Unit 11]] · [[unit-12|Unit 12]]', 'Screens(Dynpro) · ALV · Web Dynpro · Code Inspector · ADT (Ex 22–28)', '준비 중'],
           ['표준 조정', '[[unit-13|Unit 13]]', 'SAP Standard 소프트웨어 조정 (BC430 Unit 7 Append Structure 연계)', '필기 정리 · 연계']
         ]

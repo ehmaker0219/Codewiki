@@ -16,7 +16,7 @@
   }
   put('sap-architecture', 'SAP 시스템 구조', '사용자 요청이 처리되는 흐름과 서버 구성 요소의 역할을 구분합니다.', ['Dispatcher', 'Work Process', '워크 프로세스', 'Message Server', 'Gateway', 'ICM', 'SAP GUI'], [
     section('요청 처리 흐름', text('SAP GUI → Dispatcher → 사용 가능한 Work Process → 필요한 경우 데이터베이스 접근 → 결과 반환 순서로 이해할 수 있습니다. 모든 요청이 데이터베이스 작업을 수행하는 것은 아닙니다.', 'Dispatcher는 요청을 받아 작업을 배분합니다. 큐를 단순한 처리 순서 예제로 이해하되, 실제 스케줄링 전체를 항상 FIFO라고 단정하지 않습니다.')),
-    section('워크 프로세스와 잠금', table(['구분', '역할'], [
+    section('Work Process와 잠금', table(['구분', '역할'], [
       ['Dialog', '사용자의 대화형 요청 처리'], ['Background', '예약된 배치 작업과 비대화형 처리'], ['Update', '업데이트 Task의 데이터 변경 처리'], ['Spool', '인쇄 요청 처리'], ['Enqueue', 'SAP 논리 잠금 관리. 현대 구성에서는 ASCS의 별도 Enqueue Server가 담당하며 과거 Enqueue Work Process와 구분']
     ]), text('SM50에서 현재 애플리케이션 서버의 프로세스를, SM04에서 해당 서버의 사용자·세션을 확인합니다. 잠금은 동시에 같은 업무 데이터를 변경할 때 충돌을 조정하는 장치입니다.')),
     section('통신 구성 요소', table(['구성 요소', '역할'], [
@@ -28,9 +28,52 @@
     section('개발·품질·운영 시스템', text('일반적인 시스템 구성은 개발(DEV) → 품질 검증(QAS) → 운영(PRD)입니다. 개발 객체의 변경을 Change Request와 Task로 기록하고 검증 후 대상 시스템으로 전송합니다.', 'Change Request를 누가 만들고 몇 개로 관리하는지는 팀의 정책에 따릅니다. SI는 항상 Change Request 하나, SM은 여러 개라는 고정 규칙은 없습니다.')),
     section('Package와 Change Request', table(['항목', '의미'], [
       ['Package', '관련 개발 객체를 묶고 전송 속성 등을 관리하는 단위'], ['Workbench Request', 'Program·사전 객체 등 저장소 변경을 관리하는 Change Request'], ['Customizing Request', '커스터마이징 설정 변경을 관리하는 Change Request'], ['Task', 'Change Request 아래에서 작업자별 변경을 모으는 단위']
-    ]), text('SE80에서 객체와 Package를 탐색하고, SE09에서 Change Request와 Task를 관리합니다. 고객 객체에는 보통 Y/Z 접두어 또는 등록된 네임스페이스를 사용합니다.', 'Transport Layer는 전송 경로와 관련된 설정입니다. 이름의 첫 글자만으로 고객 객체와 SAP 객체를 판정하지 않습니다. 로컬 Package $TMP의 객체는 일반 Change Request에 기록되지 않습니다.')),
-    section('작성에서 전송까지', text('Package와 Change Request 확인 → Program 작성 → 문법 검사 → 활성화 → 실행·디버깅 → Task와 Change Request 릴리스 → 대상 시스템으로 임포트하는 흐름입니다.', '저장은 편집 내용을 보관하고, 활성화는 실행 가능한 활성 버전을 만드는 과정입니다. 릴리스만으로 운영 반영이 끝나는 것은 아니며, 임포트와 검증 절차가 따릅니다. 단축키는 [[sap-gui-shortcuts|단축키 모음]]을 참고하세요.')),
-    section('트랜잭션 코드 생성', text('SE93에서 실행 대상에 맞는 트랜잭션 유형을 선택합니다. 클래식 실행 가능 리포트는 리포트 트랜잭션, 화면 번호를 시작점으로 사용하는 Program은 대화형 트랜잭션을 검토합니다.', '선택 항목의 순서 번호 대신 유형 이름과 실행 대상을 확인하세요. Program 이름과 T-Code 이름을 같게 하는 것은 팀의 명명 관례이며 필수 조건은 아닙니다.')),
+    ]), text('SE80에서 객체와 Package를 탐색하고, SE09에서 Change Request와 Task를 관리합니다. 고객 객체에는 보통 Y/Z 접두어 또는 등록된 네임스페이스를 사용합니다.', 'Transport Layer는 전송 경로와 관련된 설정입니다. 이름의 첫 글자만으로 고객 객체와 SAP 객체를 판정하지 않습니다. 로컬 Package $TMP의 객체는 일반 Change Request에 기록되지 않습니다.'),
+      {
+        type: 'practice',
+        title: 'SE09에서 Change Request (CTS) 만드는 법',
+        steps: [
+          { step: '1', action: 'SE09 실행 → 상단 Create (F6) 클릭', detail: 'T-Code SE09(Transport Organizer)를 열고 툴바의 Create 아이콘(또는 F6)을 누릅니다.' },
+          { step: '2', action: 'Workbench request 선택', detail: 'Program·Package·ABAP Dictionary·Message Class 등 개발 저장소 객체는 반드시 Workbench request를 선택합니다(커스터마이징 설정은 Customizing request).' },
+          { step: '3', action: 'Short Description 입력 후 저장', detail: '요구된 네이밍 규칙에 맞춰 Short Description(예: Basic_ABAP1_F_##)을 적고 저장합니다. 프로젝트 지정이 필요 없다면 비워 두고 저장합니다.' },
+          { step: '4', action: '생성된 CTS 번호와 하위 Task 확인', detail: 'Request 번호 아래에 본인 계정(User)의 Development/Correction Task가 자동 생성됩니다. 이후 Package·Program·DDIC 저장 시 이 Request를 선택해 묶습니다.' }
+        ]
+      },
+      {
+        type: 'practice',
+        title: 'SE80에서 Package 만드는 법',
+        steps: [
+          { step: '1', action: 'SE80 실행 → Repository Browser에서 Package 선택', detail: '왼쪽 객체 유형 드롭다운을 Package로 바꾸고 Z 또는 Y로 시작하는 Package 이름(예: ZPAC_Basic_F_##)을 입력한 뒤 Enter를 누릅니다.' },
+          { step: '2', action: '생성 확인 팝업에서 Yes 클릭', detail: '존재하지 않는 Package 생성 여부 팝업이 뜨면 Yes를 눌러 생성 화면으로 진입합니다.' },
+          { step: '3', action: 'Short Description · Software Component · Transport Layer 확인', detail: '설명을 입력하고 Software Component(보통 HOME 또는 실습 환경 기본값)와 Transport Layer가 올바른지 확인합니다.' },
+          { step: '4', action: 'Change Request (CTS) 연결 후 저장', detail: '저장 팝업에서 SE09로 미리 만들어 둔 Workbench Request를 선택(Own Requests 버튼 활용)해 연결합니다.' }
+        ]
+      }
+    ),
+    section('작성에서 전송까지', text('Package와 Change Request 확인 → Program 작성 → 문법 검사 → 활성화 → 실행·디버깅 → Task와 Change Request 릴리스 → 대상 시스템으로 임포트하는 흐름입니다.', '저장은 편집 내용을 보관하고, 활성화는 실행 가능한 활성 버전을 만드는 과정입니다. 릴리스만으로 운영 반영이 끝나는 것은 아니며, 임포트와 검증 절차가 따릅니다. 단축키는 [[sap-gui-shortcuts|단축키 모음]]을 참고하세요.'),
+      {
+        type: 'practice',
+        title: 'SE38 / SE80에서 실행 가능 Report Program 만드는 법',
+        steps: [
+          { step: '1', action: 'SE38 실행 (또는 SE80 Package 우클릭 → Create → Program)', detail: 'SE38에서 Z/Y로 시작하는 Program 이름(예: ZPROG_BASIC_F_##)을 입력하고 Create를 클릭합니다. (SE80에서 만들 때는 TOP Include 체크 여부를 상황에 맞게 선택합니다.)' },
+          { step: '2', action: 'Attributes 입력: Title & Type = Executable program', detail: 'Title을 작성하고 Type은 반드시 Executable program(실행 가능 Report)으로 선택합니다. Status는 Test Program 등 실습 기준에 맞춰 지정하고 Save를 누릅니다.' },
+          { step: '3', action: 'Package와 Change Request (CTS) 지정', detail: '전송·제출 대상이라면 미리 만든 Z Package와 Workbench Request를 선택합니다(단순 연습용만 Local Object / $TMP 사용).' },
+          { step: '4', action: '코드 작성 → Pretty Printer → 문법 검사 → Activate → 실행', detail: 'Shift + F1(들여쓰기 정리) → Ctrl + S(저장) → Ctrl + F2(문법 검사) → Ctrl + F3(Activate) → F8(실행) 순서로 확인합니다.' }
+        ]
+      }
+    ),
+    section('Transaction Code 생성', text('SE93에서 실행 대상에 맞는 트랜잭션 유형을 선택합니다. 클래식 실행 가능 Report는 Report Transaction, 화면 번호를 시작점으로 사용하는 Program은 대화형 트랜잭션을 검토합니다.', '선택 항목의 순서 번호 대신 유형 이름과 실행 대상을 확인하세요. Program 이름과 T-Code 이름을 같게 하는 것은 팀의 명명 관례이며 필수 조건은 아닙니다.'),
+      {
+        type: 'practice',
+        title: 'SE93에서 Report Transaction Code (T-Code) 만드는 법',
+        steps: [
+          { step: '1', action: 'SE93 실행 → Z/Y T-Code 이름 입력 후 Create', detail: 'T-Code SE93(Transaction Maintenance)에서 고객 네임스페이스 이름(예: ZPROG_BASIC_F_## 또는 ZT_...)을 입력하고 Create를 누릅니다.' },
+          { step: '2', action: 'Short Text 입력 및 Start Object 선택', detail: '실행 가능 Report Program에는 반드시 Program and selection screen (report transaction) 라디오 버튼을 선택합니다.' },
+          { step: '3', action: 'Program 이름 · Selection Screen(1000) · GUI Support 확인', detail: 'Program 칸에 연결할 Report Program 이름을 입력하고, Selection screen은 기본값 1000을 유지합니다. 하단 GUI Support(HTML · Java · Windows) 체크 상태를 확인합니다.' },
+          { step: '4', action: '저장(Package · CTS 지정) 후 명령 필드로 테스트', detail: 'Ctrl + S로 저장하며 Package와 Change Request를 연결합니다. 완료 후 F8 또는 SAP GUI 명령 필드에 /n<T-Code>를 입력해 바로 실행되는지 확인합니다.' }
+        ]
+      }
+    ),
     section('SE80에서 Program이 안 보일 때', text('SE80 Object Navigator에서 Package 아래에 생성한 Program이 목록에 바로 보이지 않을 때가 있습니다.', '해당 Package 또는 객체 목록에서 우클릭 → Additional Functions → Rebuild Object List를 실행하면 저장소 객체 트리가 갱신되어 정상적으로 표시됩니다.'))
   ], '11/11 · 11/12 · 11/20');
 
@@ -43,12 +86,12 @@ CONSTANTS lc_limit TYPE i VALUE 20.
 lv_copy = lv_count.
 CLEAR lv_count.
 WRITE: / lv_count, / lv_copy, / lc_limit.`), text('TYPE은 타입을, LIKE는 기존 데이터 객체의 타입을 참조합니다. VALUE는 선언 시 값을 지정합니다. 대입은 = 로 표현할 수 있으며 MOVE 원본 TO 대상도 기존 코드에서 볼 수 있습니다.', 'CLEAR는 빈 문자열을 일괄 대입하는 명령이 아니라 타입별 초기값으로 되돌리는 명령입니다. 자세한 값은 [[abap-types|자료형과 초기값]]을 참고하세요.')),
-    section('입력과 출력', code('선택 화면에서 숫자 입력받기', `REPORT zabap_f##_##.
+    section('입력과 출력', code('Selection Screen에서 숫자 입력받기', `REPORT zabap_f##_##.
 PARAMETERS p_count TYPE i DEFAULT 3.
 START-OF-SELECTION.
   DATA(lv_double) = p_count * 2.
   WRITE: / '입력:', p_count,
-         / '두 배:', lv_double.`), text('PARAMETERS는 리포트의 선택 화면 입력 필드를 정의합니다. WRITE는 클래식 리스트 출력을 만듭니다. 문자열 함수와 조건 표현은 [[abap-useful-syntax|유용한 함수 · 문법 모음]]으로 연결됩니다.'))
+         / '두 배:', lv_double.`), text('PARAMETERS는 Report의 Selection Screen 입력 필드를 정의합니다. WRITE는 클래식 리스트 출력을 만듭니다. 문자열 함수와 조건 표현은 [[abap-useful-syntax|유용한 함수 · 문법 모음]]으로 연결됩니다.'))
   ], '11/11 · 11/12', [
     ['`ZABAP_F##_01`', 'ABAP Write statement'],
     ['`ZABAP_F##_02`', 'ABAP Syntax'],
@@ -73,7 +116,18 @@ IF lv_number IS INITIAL.
   WRITE / '정수 초기값은 0'.
 ENDIF.
 WRITE / lv_digits.`), text('숫자형은 0, c는 공백, n은 길이만큼의 숫자 문자 0, string/xstring은 길이 0이 초기 상태입니다. IS INITIAL은 SQL의 NULL 검사와 다릅니다.')),
-    section('텍스트 심볼과 번역', text('화면 문구는 텍스트 심볼로 분리할 수 있습니다. text-001 또는 문자열 리터럴 뒤의 텍스트 심볼 ID를 사용하는 방식이 있습니다.', '텍스트 요소에서 문구를 관리하고 필요한 언어로 번역합니다. Program과 텍스트 요소의 저장·활성화 상태를 함께 확인하세요.'), code('텍스트 심볼 사용', `WRITE / text-001.
+    section('Text Symbol과 번역', text('화면 문구는 Text Symbol로 분리할 수 있습니다. text-001 또는 문자열 리터럴 뒤의 Text Symbol ID를 사용하는 방식이 있습니다.', 'Text Element에서 Text Symbols(화면 문구)와 Selection Texts(PARAMETERS · SELECT-OPTIONS 라벨)를 함께 관리하고 필요한 언어로 번역합니다. Program과 Text Element의 저장·활성화 상태를 함께 확인하세요.'),
+      {
+        type: 'practice',
+        title: 'SE38에서 Text Element (Text Symbols · Selection Texts) 만드는 법',
+        steps: [
+          { step: '1', action: 'SE38 편집 화면에서 Goto → Text Elements 진입', detail: '상단 메뉴 Goto → Text Elements(또는 편집 화면의 F5 · Text Elements 버튼)를 눌러 Text Element 관리 화면을 엽니다.' },
+          { step: '2', action: 'Text Symbols 탭: 3자리 ID(001 등)와 문구 입력', detail: 'Sym 열에 001, 002 같은 3자리 키를, Text 열에 출력 문구를 입력합니다. 코드에서는 text-001 또는 \'기본문구\'(001)로 참조합니다.' },
+          { step: '3', action: 'Selection Texts 탭: PARAMETERS · SELECT-OPTIONS 라벨 입력', detail: 'Selection Screen 변수(예: PA_CAR, PA_CON, SO_FDT) 옆에 표시할 라벨(Airline, Connection Number, Flight Date 등)을 직접 적거나, DDIC Ref.를 체크해 Data Element의 Field Label을 자동 가져옵니다.' },
+          { step: '4', action: 'Text Element 화면에서 별도로 Activate (Ctrl + F3)', detail: 'Program만 Activate하고 Text Element를 Activate하지 않으면 Selection Screen에 변수명(PA_CAR 등)이 그대로 보입니다. 반드시 Text Element 화면에서 Ctrl + F3으로 활성화하세요.' }
+        ]
+      },
+      code('Text Symbol 사용', `WRITE / text-001.
 WRITE / '안녕하세요'(002).`))
   ], '11/12', [
     ['`ZABAP_F##_03`', 'ABAP Data Type & Elementary Data Objects'],
@@ -83,7 +137,7 @@ WRITE / '안녕하세요'(002).`))
 
   put('abap-loops', '반복문과 시스템 필드', '반복 종류에 맞는 시스템 필드를 읽고 CONTINUE와 EXIT를 구분합니다.', ['DO', 'WHILE', 'sy-index', 'sy-tabix', 'sy-subrc', 'sy-dbcnt', 'sy-uname', '시스템 필드'], [
     section('반복문 비교', table(['문장', '용도', '참고'], [
-      ['DO n TIMES', '정해진 횟수 반복', '현재 회차는 sy-index'], ['DO ... ENDDO', '종료 조건을 내부에 둔 반복', 'EXIT 등 종료 경로 필요'], ['WHILE ... ENDWHILE', '조건이 참인 동안 반복', '조건을 바꾸는 코드 필요'], ['LOOP AT ... ENDLOOP', '내부 테이블 행 순회', 'sy-tabix는 테이블 종류와 접근 방식에 따라 해석'], ['SELECT ... ENDSELECT', '조회 결과 행별 처리', 'sy-dbcnt는 처리된 DB 행 수; 일반 루프 인덱스가 아님']
+      ['DO n TIMES', '정해진 횟수 반복', '현재 회차는 sy-index'], ['DO ... ENDDO', '종료 조건을 내부에 둔 반복', 'EXIT 등 종료 경로 필요'], ['WHILE ... ENDWHILE', '조건이 참인 동안 반복', '조건을 바꾸는 코드 필요'], ['LOOP AT ... ENDLOOP', 'Internal Table 행 순회', 'sy-tabix는 테이블 종류와 접근 방식에 따라 해석'], ['SELECT ... ENDSELECT', '조회 결과 행별 처리', 'sy-dbcnt는 처리된 DB 행 수; 일반 루프 인덱스가 아님']
     ])),
     section('CONTINUE와 EXIT', code('짝수는 건너뛰고 7에서 종료', `REPORT zabap_f##_##.
 DO 10 TIMES.
@@ -96,7 +150,7 @@ DO 10 TIMES.
   WRITE / sy-index.
 ENDDO.`), text('출력은 1, 3, 5입니다. CONTINUE는 현재 반복의 남은 문장을 건너뛰고 다음 회차로 진행합니다. EXIT는 현재 반복문을 끝냅니다.')),
     section('자주 보는 시스템 필드', table(['필드', '의미'], [
-      ['sy-mandt', '현재 클라이언트 번호'], ['sy-uname', '현재 로그온 사용자 이름; 클라이언트 이름이 아님'], ['sy-langu', '로그온 언어 키'], ['sy-datum / sy-uzeit', '애플리케이션 서버 기준 시스템 날짜 / 시간'], ['sy-tcode', '현재 트랜잭션 코드'], ['sy-repid', '현재 ABAP Program 이름'], ['sy-index', 'DO / WHILE 반복 회차'], ['sy-tabix', '인덱스 테이블 작업의 행 인덱스. 해시 테이블은 일반적으로 0'], ['sy-subrc', '해당 문장이 설정한 반환 코드'], ['sy-dbcnt', '해당 SQL 문장이 처리한 행 수']
+      ['sy-mandt', '현재 클라이언트 번호'], ['sy-uname', '현재 로그온 사용자 이름; 클라이언트 이름이 아님'], ['sy-langu', '로그온 언어 키'], ['sy-datum / sy-uzeit', '애플리케이션 서버 기준 시스템 날짜 / 시간'], ['sy-tcode', '현재 Transaction Code'], ['sy-repid', '현재 ABAP Program 이름'], ['sy-index', 'DO / WHILE 반복 회차'], ['sy-tabix', '인덱스 테이블 작업의 행 인덱스. 해시 테이블은 일반적으로 0'], ['sy-subrc', '해당 문장이 설정한 반환 코드'], ['sy-dbcnt', '해당 SQL 문장이 처리한 행 수']
     ]), text('sy-subrc의 0은 흔히 성공을 뜻하지만 값과 의미는 문장마다 다릅니다. 0/4/8만 존재하는 것은 아닙니다. 다음 문장에서 덮어쓸 수 있으므로 결과를 설정하는 문장 바로 뒤에서 검사하세요.'))
   ], '11/13', [
     ['`ZABAP_F##_06`', 'ABAP Loop Statement'],
@@ -104,22 +158,57 @@ ENDDO.`), text('출력은 1, 3, 5입니다. CONTINUE는 현재 반복의 남은 
     ['`ZBC400_F##_LOOP`', 'Program ZBC400_F##_LOOP']
   ]);
 
-  put('abap-debug-messages', '디버깅과 메시지', '중단점에서 값을 추적하고 메시지와 예외의 목적을 구분합니다.', ['디버깅', 'Debugger', '중단점', '메시지 클래스', 'MESSAGE'], [
-    section('디버깅 순서', text('SE38 또는 SE80에서 중단점을 설정하고 실행합니다. 중단된 위치에서 변수 값, 호출 스택, 조건식의 결과를 확인합니다.', '디버거의 F5는 한 단계 실행(Single Step)입니다. 편집 화면의 F5는 텍스트 요소 등 다른 기능일 수 있으므로 화면 맥락을 확인하세요. 런타임 오류는 ST22에서 덤프를 확인합니다.')),
+  put('abap-debug-messages', '디버깅과 메시지', '중단점에서 값을 추적하고 Message Class 생성·REPORT 선언과 예외의 목적을 구분합니다.', ['디버깅', 'Debugger', '중단점', 'Message Class', 'MESSAGE-ID', '메시지 클래스', 'MESSAGE'], [
+    section('디버깅 순서', text('SE38 또는 SE80에서 중단점을 설정하고 실행합니다. 중단된 위치에서 변수 값, 호출 스택, 조건식의 결과를 확인합니다.', '디버거의 F5는 한 단계 실행(Single Step)입니다. 편집 화면의 F5는 Text Element 등 다른 기능일 수 있으므로 화면 맥락을 확인하세요. 런타임 오류는 ST22에서 덤프를 확인합니다.')),
     section('메시지 유형', table(['유형', '의도와 동작'], [
       ['S', '성공 또는 상태 안내'], ['I', '정보 안내'], ['W', '경고'], ['E', '오류 처리'], ['A', '처리 중단'], ['X', '런타임 오류와 숏덤프 발생']
-    ]), text('팝업·상태바 표시와 이후 제어 흐름은 메시지 유형뿐 아니라 선택 화면, 화면 PAI, 배치 등 실행 맥락에 따라 달라집니다. E/W를 “항상 하단 바에만 표시”라고 외우지 않습니다.')),
-    section('직접 문구와 메시지 클래스', code('직접 문구', `MESSAGE '입력값을 확인하세요' TYPE 'I'.`), code('메시지 클래스 예시 — ZCW와 001을 먼저 생성', `MESSAGE i001(zcw) WITH sy-uname.`), text('메시지 클래스는 000~999 번호로 문구를 관리하고 번역할 수 있습니다. 문구의 & 자리표시자에 WITH의 값을 전달하며 최대 네 개의 값을 사용할 수 있습니다.')),
+    ]), text('팝업·상태바 표시와 이후 제어 흐름은 메시지 유형뿐 아니라 Selection Screen, 화면 PAI, 배치 등 실행 맥락에 따라 달라집니다. E/W를 “항상 하단 바에만 표시”라고 외우지 않습니다.')),
+    section('직접 문구와 Message Class (SE91 · REPORT 선언)',
+      text('`Message Class`는 `SE91`에서 `000`~`999` 번호로 메시지 문구를 중앙 관리하고 다국어 번역까지 지원하는 저장소 객체입니다. 문구 안의 `&` 자리표시자(또는 `&1`~`&4`)에 `WITH`의 값을 최대 4개까지 전달할 수 있습니다.'),
+      {
+        type: 'practice',
+        title: 'SE91에서 Message Class 생성 절차 (4단계)',
+        steps: [
+          { step: '1', action: 'SE91 실행 → Z/Y 이름 입력 후 Create', detail: 'T-Code SE91(Message Maintenance)을 열고 고객 네임스페이스 규칙에 따라 Z 또는 Y로 시작하는 Message Class 이름(예: ZCW, ZBASIC_MSG_F_##)을 입력한 뒤 Create를 클릭합니다.' },
+          { step: '2', action: 'Short Text 입력 후 Messages 탭 이동', detail: 'Message Class 설명(Short Text)을 입력하고 Messages 탭으로 이동합니다.' },
+          { step: '3', action: '000~999 번호별 메시지 문구 작성 (& 자리표시자 활용)', detail: '예: 000 = 입력값을 입력해주세요., 001 = 안녕하세요 & 처럼 번호별 문구를 작성합니다. &는 문장당 최대 4개까지 WITH 값으로 치환할 수 있습니다.' },
+          { step: '4', action: '저장(Ctrl + S) 시 Package · Change Request 지정', detail: 'Package와 Change Request(CTS)를 지정해 저장합니다. SE91의 Message Class 항목은 별도 Activate 버튼 없이 저장으로 반영됩니다.' }
+        ]
+      },
+      table(['Report Program에서 Message Class 선언 · 호출 방식', '문법 예시', '언제 사용하는가'], [
+        ['**방법 1 · `REPORT` 선언부 `MESSAGE-ID` 지정 (권장)**', '`REPORT zabap_f##_## MESSAGE-ID zcw.`<br>본문: `MESSAGE e000.` / `MESSAGE i001 WITH sy-uname.`', 'Program 전체에서 같은 `Message Class`를 반복 사용할 때. 호출할 때마다 `(zcw)`를 생략할 수 있어 가장 깔끔합니다.'],
+        ['**방법 2 · 개별 `MESSAGE` 문에 직접 지정**', '`MESSAGE i001(zcw) WITH sy-uname.`<br>또는 `MESSAGE ID \'ZCW\' TYPE \'E\' NUMBER \'000\'.`', '`REPORT` 줄에 `MESSAGE-ID`를 선언하지 않았거나, 다른 `Message Class`의 번호를 일회성으로 호출할 때 사용합니다.'],
+        ['**직접 문구 (하드코딩)**', '`MESSAGE \'입력값을 확인하세요\' TYPE \'I\'.`', '간단한 임시 테스트용. 번역·공통 관리가 불가능하므로 실무와 시험에서는 `Message Class` 사용을 권장합니다.']
+      ]),
+      code('직접 문구', `MESSAGE '입력값을 확인하세요' TYPE 'I'.`),
+      code('Message Class 예시 — ZCW와 001을 먼저 생성', `MESSAGE i001(zcw) WITH sy-uname.`),
+      code('REPORT 선언부 MESSAGE-ID로 Message Class 연결', `REPORT zabap_f##_## MESSAGE-ID zcw.
+
+PARAMETERS p_carr TYPE s_carr_id.
+
+AT SELECTION-SCREEN.
+  IF p_carr IS INITIAL.
+    MESSAGE e000. " REPORT 선언부 MESSAGE-ID(zcw)의 000번 오류 메시지
+  ENDIF.
+
+START-OF-SELECTION.
+  MESSAGE i001 WITH sy-uname. " zcw의 001번 문구(&)에 sy-uname 전달`)
+    ),
     section('예외와 반환 코드', text('클래식 예외는 호출 시 EXCEPTIONS에 번호를 매핑하고 sy-subrc로 처리하는 방식을 볼 수 있습니다. Class 기반 예외는 TRY … CATCH … ENDTRY로 처리합니다.', '같은 인터페이스의 예외 선언 방식은 해당 문법의 제약을 따릅니다. Program 전체에서 두 방식이 절대 공존할 수 없다는 뜻은 아닙니다.'))
   ], '11/12 · 11/13 · 11/16 · 11/17');
 
-  put('abap-modularization', '프로그램 모듈화', '서브루틴, 함수 모듈, 메서드를 구분하고 매개변수 전달 방향을 읽습니다.', ['프로그램 모듈화', '서브루틴', 'FORM', 'PERFORM', 'Function Module', '함수 모듈'], [
+  put('abap-modularization', '프로그램 모듈화', 'Subroutine, Function Module, Method를 구분하고 매개변수 전달 방향을 읽습니다.', ['프로그램 모듈화', '서브루틴', 'FORM', 'PERFORM', 'Function Module', '함수 모듈'], [
     section('모듈화 방식', table(['단위', '호출', '주요 용도'], [
-      ['서브루틴', 'PERFORM', '클래식 Program 내 절차 분리'], ['함수 모듈', 'CALL FUNCTION', '함수 그룹에 속하는 재사용 단위'], ['메서드', 'Class=>메서드 / 참조->메서드', 'Class의 동작을 캡슐화']
+      ['Subroutine', 'PERFORM', '클래식 Program 내 절차 분리'], ['Function Module', 'CALL FUNCTION', 'Function Group에 속하는 재사용 단위'], ['Method', 'Class=>Method / 참조->Method', 'Class의 동작을 캡슐화']
     ])),
-    section('서브루틴 매개변수', table(['선언 방식', '전달과 반영'], [
+    section('Subroutine 매개변수', table(['선언 방식', '전달과 반영'], [
       ['USING VALUE(p)', '값 복사. 내부 변경은 호출자에게 복사되지 않음'], ['CHANGING VALUE(p)', '값을 복사하고 정상 종료 시 결과를 호출자에게 반영'], ['USING p / CHANGING p', '참조 전달. 같은 실제 데이터를 가리키므로 변경이 호출자에 반영']
-    ]), text('참조 전달에서 USING은 읽기 전용을 보장하지 않습니다. 입력용은 USING, 변경 의도가 있는 값은 CHANGING으로 드러내는 관례가 중요합니다.', 'FORM의 형식 매개변수에 LENGTH/DECIMALS를 직접 붙이는 대신 미리 정의한 완전 타입을 사용합니다. TYPE ANY 같은 제네릭 타입은 유연하지만 정적 검사와 사용 가능한 연산이 제한됩니다.'), code('입력은 복사하고 결과는 반영', `REPORT zabap_f##_##.
+    ]), text('참조 전달에서 USING은 읽기 전용을 보장하지 않습니다. 입력용은 USING, 변경 의도가 있는 값은 CHANGING으로 드러내는 관례가 중요합니다.', 'FORM의 형식 매개변수에 LENGTH/DECIMALS를 직접 붙이는 대신 미리 정의한 완전 타입을 사용합니다. TYPE ANY 같은 제네릭 타입은 유연하지만 정적 검사와 사용 가능한 연산이 제한됩니다.'),
+      {
+        type: 'callout', style: 'point', title: 'SELECT-OPTIONS를 Subroutine 파라미터로 넘길 때 (so_date[] 주의)',
+        body: '`SELECT-OPTIONS` 변수는 Header Line과 Table Body를 함께 가지므로 `PERFORM` 호출 시 **`so_fdt[]`**처럼 `[]`를 붙여 바디만 전달해야 합니다. `FORM` 쪽에서는 `TYPES tt_fdt TYPE RANGE OF s_date.`로 Range Table Type을 먼저 선언한 뒤 **`USING pt_fdt TYPE tt_fdt`**로 받으면 깔끔합니다. 자세한 리뷰 예제는 [[basic-session-review|Basic Session Review]]를 참고하세요.'
+      },
+      code('입력은 복사하고 결과는 반영', `REPORT zabap_f##_##.
 DATA lv_result TYPE i.
 PERFORM double_number USING 3 CHANGING lv_result.
 WRITE / lv_result.
@@ -127,7 +216,28 @@ FORM double_number USING VALUE(iv_number) TYPE i
                    CHANGING cv_result TYPE i.
   cv_result = iv_number * 2.
 ENDFORM.`)),
-    section('함수 그룹과 함수 모듈', text('SE37에서 함수 모듈의 인터페이스와 테스트 기능을 확인합니다. 함수 그룹은 관련 함수 모듈과 공유 글로벌 데이터를 담습니다.', '함수 그룹 ZDEMO의 생성된 메인 Program은 SAPLZDEMO입니다. 그룹 이름 자체에 SAPL을 붙이는 뜻은 아닙니다. LZDEMOTOP은 글로벌 선언을, LZDEMOUXX는 함수 모듈 구현 Include들을 포함하는 역할을 합니다.', '한 그룹에 넣는 함수 모듈 수는 고정 규칙이 아닙니다. 함께 쓰는 목적과 상태를 기준으로 묶고 활성화 상태를 확인합니다.')),
+    section('Function Group과 Function Module', text('SE37에서 Function Module의 인터페이스와 테스트 기능을 확인합니다. Function Group은 관련 Function Module과 공유 글로벌 데이터를 담습니다.', 'Function Group ZDEMO의 생성된 메인 Program은 SAPLZDEMO입니다. 그룹 이름 자체에 SAPL을 붙이는 뜻은 아닙니다. LZDEMOTOP은 글로벌 선언을, LZDEMOUXX는 Function Module 구현 Include들을 포함하는 역할을 합니다.', '한 그룹에 넣는 Function Module 수는 고정 규칙이 아닙니다. 함께 쓰는 목적과 상태를 기준으로 묶고 활성화 상태를 확인합니다.'),
+      {
+        type: 'practice',
+        title: 'SE80에서 Function Group 만드는 법 (Function Module보다 먼저 생성)',
+        steps: [
+          { step: '1', action: 'SE80 실행 → Repository Browser에서 Function Group 선택', detail: '객체 유형을 Function Group으로 선택하고 Z/Y 이름(예: ZFG_FLIGHT_##)을 입력한 뒤 Enter → 생성 팝업에서 Yes를 누릅니다.' },
+          { step: '2', action: 'Short Text 입력 후 Package · Change Request 연결', detail: '설명을 입력하고 저장 시 본인 Package와 Workbench Request(CTS)를 지정합니다.' },
+          { step: '3', action: 'Function Group 최상위 노드 우클릭 → Activate', detail: '생성 직후 SAPL... 마스터 Program과 TOP/UXX Include가 비활성 상태이므로, Function Group 노드에서 먼저 Activate(Ctrl + F3)해 두어야 내부 Function Module 호출 시 오류가 나지 않습니다.' }
+        ]
+      },
+      {
+        type: 'practice',
+        title: 'SE37에서 Function Module 만드는 법 · 테스트 · 호출',
+        steps: [
+          { step: '1', action: 'SE37 실행 → Z_/Y_ Function Module 이름 입력 후 Create', detail: 'T-Code SE37(Function Builder)에서 Z_ 또는 Y_로 시작하는 이름(예: Z_GET_FLIGHT_##)을 입력하고 Create를 클릭합니다.' },
+          { step: '2', action: '미리 만든 Function Group과 Short Text 지정', detail: '팝업에서 소속 Function Group 이름과 설명을 입력하고 Save를 누릅니다.' },
+          { step: '3', action: '인터페이스 탭 정의 (Import · Export · Changing · Exceptions)', detail: 'Import(입력), Export(출력), Changing(입출력), Exceptions(예외 이름)를 등록합니다. Associated Type에는 Local Type을 쓸 수 없으므로 반드시 ABAP Dictionary Global Type(Data Element · Global Structure · Table Type)이나 Built-in Type을 지정하세요.' },
+          { step: '4', action: 'Source Code 작성 후 Activate (Function Group 함께 활성)', detail: 'Source Code 탭에 로직을 작성하고 필요 시 RAISE <예외명>.을 넣은 뒤, Ctrl + F3으로 Function Module과 Function Group 관련 Include를 모두 활성화합니다.' },
+          { step: '5', action: 'F8 단독 테스트 및 SE38 Pattern(Ctrl + F6)으로 호출', detail: 'SE37에서 F8로 값을 직접 넣어 테스트합니다. Report에서 호출할 때는 SE38 툴바의 Pattern 버튼(Ctrl + F6) → CALL FUNCTION을 이용하면 파라미터 방향(EXPORTING/IMPORTING)과 EXCEPTIONS 틀이 자동 생성됩니다.' }
+        ]
+      }
+    ),
     section('호출자와 함수의 방향', table(['함수 인터페이스', '호출 문장', '방향'], [
       ['IMPORTING', 'EXPORTING', '호출자가 함수에 입력 전달'], ['EXPORTING', 'IMPORTING', '함수 결과를 호출자가 수신'], ['CHANGING', 'CHANGING', '값을 전달하고 변경 결과 수신']
     ]), text('호출 예제를 입력할 때는 해당 함수의 실제 매개변수 이름과 타입을 SE37에서 확인하세요.'))
@@ -141,15 +251,27 @@ ENDFORM.`)),
   ]);
 
   put('abap-bapi', 'BAPI와 RFC', '원격 호출 기술인 RFC와 업무 API인 BAPI를 구분합니다.', ['BAPI', 'RFC', 'RETURN'], [
-    section('BAPI와 RFC의 관계', text('RFC는 시스템 간 함수 호출 기술입니다. BAPI는 표준화된 업무 객체 인터페이스이며 전통적인 BAPI 구현에는 원격 호출 가능 함수 모듈이 사용됩니다. 모든 RFC 함수가 BAPI인 것은 아닙니다.', 'GetList, GetDetail, Create, Change 등은 업무 동작의 예입니다. 실제 제공 메서드와 이름은 업무 객체별로 확인합니다.')),
+    section('BAPI와 RFC의 관계', text('RFC는 시스템 간 함수 호출 기술입니다. BAPI는 표준화된 업무 객체 인터페이스이며 전통적인 BAPI 구현에는 원격 호출 가능 Function Module이 사용됩니다. 모든 RFC 함수가 BAPI인 것은 아닙니다.', 'GetList, GetDetail, Create, Change 등은 업무 동작의 예입니다. 실제 제공 Method와 이름은 업무 객체별로 확인합니다.')),
     section('입출력과 오류 처리', text('BAPI는 화면 팝업 대신 RETURN 구조 또는 테이블로 성공·오류 메시지를 전달하도록 설계합니다. 호출자는 RETURN의 TYPE과 메시지 내용을 확인해야 합니다.', '원격 함수의 인터페이스는 RFC 지원 타입과 값 전달 제약을 따릅니다. 일반 로컬 함수의 모든 설정에 그대로 적용할 규칙으로 이해하지 마세요.', '변경 BAPI의 커밋·롤백 책임은 개별 BAPI 문서를 확인해야 합니다. 호출 성공 여부만 보고 저장 완료라고 판단하지 않습니다.'))
   ], '11/17');
 
-  put('abap-objects', 'Class와 메서드', 'Class 자체의 Static 메서드와 객체의 Instance 메서드를 구분합니다.', ['Global Class', 'Local Class', 'Static Method', 'Instance Method', '정적 메서드', '인스턴스 메서드', '참조 변수', 'TYPE REF TO'], [
-    section('Global Class와 Local Class', text('Global Class는 저장소 객체로 관리하며 SE24에서 확인할 수 있습니다. Local Class는 Program 안에 정의합니다. Class는 속성과 메서드를 함께 묶는 단위입니다.')),
+  put('abap-objects', 'Class와 Method', 'Class 자체의 Static Method와 객체의 Instance Method를 구분합니다.', ['Global Class', 'Local Class', 'Static Method', 'Instance Method', '정적 메서드', '인스턴스 메서드', '참조 변수', 'TYPE REF TO'], [
+    section('Global Class와 Local Class', text('Global Class는 저장소 객체로 관리하며 SE24에서 확인할 수 있습니다. Local Class는 Program 안에 정의합니다. Class는 속성과 Method를 함께 묶는 단위입니다.'),
+      {
+        type: 'practice',
+        title: 'SE24에서 Global Class · Method 만드는 법',
+        steps: [
+          { step: '1', action: 'SE24 실행 → ZCL_/YCL_ 이름 입력 후 Create → Class', detail: 'T-Code SE24(Class Builder)에서 ZCL_ 또는 YCL_로 시작하는 이름을 입력하고 Create → Object Type에서 Class를 선택합니다.' },
+          { step: '2', action: 'Description · Instantiation 확인 후 Package · CTS 저장', detail: '설명을 적고 Instantiation(일반적으로 Public)을 확인한 뒤 Package와 Change Request에 저장합니다.' },
+          { step: '3', action: 'Attributes / Methods 탭에서 멤버와 Level · Visibility 정의', detail: 'Methods 탭에 Method 이름을 적고 Level(Instance Method / Static Method)과 Visibility(Public / Protected / Private)를 설정합니다.' },
+          { step: '4', action: 'Parameters 버튼으로 매개변수 정의 후 Method 구현', detail: 'Method 행을 선택한 채 Parameters 버튼을 눌러 Importing / Exporting / Changing / Returning 파라미터를 지정한 뒤, Method 이름을 더블클릭해 로직을 작성합니다.' },
+          { step: '5', action: 'Activate (Ctrl + F3) 후 F8 테스트', detail: 'Class 전체를 활성화하고 F8로 Static Method 또는 Instance 생성 후 Method 동작을 바로 검증합니다.' }
+        ]
+      }
+    ),
     section('Static 호출과 Instance 호출', table(['종류', '표기', '특징'], [
-      ['Static 메서드', 'Class명=>메서드명( )', '객체 생성 없이 Class에 호출'], ['Instance 메서드', '참조변수->메서드명( )', '생성된 객체를 참조하여 호출']
-    ]), text('TYPE REF TO는 객체 참조를 보관할 변수를 선언합니다. 선언만으로 객체가 생기지는 않으며 CREATE OBJECT 또는 NEW로 생성합니다.'), code('Local Class의 Instance 메서드', `REPORT zabap_f##_##.
+      ['Static Method', 'Class명=>Method명( )', '객체 생성 없이 Class에 호출'], ['Instance Method', '참조변수->Method명( )', '생성된 객체를 참조하여 호출']
+    ]), text('TYPE REF TO는 객체 참조를 보관할 변수를 선언합니다. 선언만으로 객체가 생기지는 않으며 CREATE OBJECT 또는 NEW로 생성합니다.'), code('Local Class의 Instance Method', `REPORT zabap_f##_##.
 CLASS lcl_greeter DEFINITION.
   PUBLIC SECTION.
     METHODS greet.
@@ -165,17 +287,17 @@ START-OF-SELECTION.
   lo_greeter->greet( ).`))
   ], '11/17');
 
-  put('abap-program-types', 'Program 종류와 Include', '실행 가능한 리포트와 다른 Program에 포함되는 소스 단위를 구분합니다.', ['Include Program', 'Include 프로그램', '리포트 프로그램', 'Module Pool'], [
+  put('abap-program-types', 'Program 종류와 Include', '실행 가능한 Report와 다른 Program에 포함되는 소스 단위를 구분합니다.', ['Include Program', 'Include 프로그램', '리포트 프로그램', 'Module Pool'], [
     section('Program과 저장소 객체', table(['종류', '역할'], [
-      ['실행 가능 Program / Report', '선택 화면과 이벤트를 사용해 실행·출력'], ['Module Pool', '클래식 Dynpro 화면과 대화형 흐름 처리'], ['Function Pool', '함수 그룹의 런타임 Program'], ['Class Pool', 'Global Class의 런타임 Program'], ['Interface Pool', 'Global Interface의 런타임 Program'], ['Include', '다른 Program에 포함되는 소스. 독립 실행 대상이 아님']
+      ['실행 가능 Program / Report', 'Selection Screen과 이벤트를 사용해 실행·출력'], ['Module Pool', '클래식 Dynpro 화면과 대화형 흐름 처리'], ['Function Pool', 'Function Group의 런타임 Program'], ['Class Pool', 'Global Class의 런타임 Program'], ['Interface Pool', 'Global Interface의 런타임 Program'], ['Include', '다른 Program에 포함되는 소스. 독립 실행 대상이 아님']
     ]), text('“Screen”은 화면 객체를, “OOP”는 객체지향 프로그래밍 방식을 가리킵니다. 이를 그대로 공식 Program 유형 이름과 일대일 대응시키지 않습니다.')),
-    section('Include와 모듈화', text('Include는 소스를 나누는 수단입니다. Include 자체가 별도 매개변수나 호출 경계를 만드는 함수는 아닙니다. 동작 단위의 재사용은 서브루틴·함수 모듈·메서드와 구분해서 설계합니다.'))
+    section('Include와 모듈화', text('Include는 소스를 나누는 수단입니다. Include 자체가 별도 매개변수나 호출 경계를 만드는 함수는 아닙니다. 동작 단위의 재사용은 Subroutine·Function Module·Method와 구분해서 설계합니다.'))
   ], '11/17');
 
   // 11/18: retain earlier sections so their curated daily pages stay unchanged.
   raw['abap-objects'].sections.splice(-1, 1,
-    section('Local Class의 정의와 구현', text('12번 Program 필기: DEFINITION에서 속성과 메서드의 인터페이스를 선언하고 IMPLEMENTATION에서 메서드의 동작을 작성합니다. 속성만 선언하고 구현할 메서드가 없다면 구현부를 생략할 수 있습니다.', '접근 영역은 PUBLIC → PROTECTED → PRIVATE 순서입니다. 수업에서는 PUBLIC과 PRIVATE를 사용했지만 영역이 두 종류뿐인 것은 아닙니다. CLASS-METHODS는 Static 메서드, METHODS는 Instance 메서드 선언입니다.'),
-      code('Local Class의 Static 메서드', `REPORT zabap_f##_##.
+    section('Local Class의 정의와 구현', text('12번 Program 필기: DEFINITION에서 속성과 Method의 인터페이스를 선언하고 IMPLEMENTATION에서 Method의 동작을 작성합니다. 속성만 선언하고 구현할 Method가 없다면 구현부를 생략할 수 있습니다.', '접근 영역은 PUBLIC → PROTECTED → PRIVATE 순서입니다. 수업에서는 PUBLIC과 PRIVATE를 사용했지만 영역이 두 종류뿐인 것은 아닙니다. CLASS-METHODS는 Static Method, METHODS는 Instance Method 선언입니다.'),
+      code('Local Class의 Static Method', `REPORT zabap_f##_##.
 CLASS lcl_calculator DEFINITION.
   PUBLIC SECTION.
     CLASS-METHODS double
@@ -194,7 +316,7 @@ ENDCLASS.
 START-OF-SELECTION.
   DATA lv_result TYPE i.
   lv_result = lcl_calculator=>double( iv_number = 5 ).
-  WRITE / lv_result.`), text('Class 외부에서는 공개된 double 메서드를 호출하고, PRIVATE 영역의 c_factor는 Class 내부에서 사용합니다. 호출 방식은 [[unit-04|Unit 4 · ABAP 모듈화 기법]]의 서브루틴·함수 모듈과 비교해 보세요.')),
+  WRITE / lv_result.`), text('Class 외부에서는 공개된 double Method를 호출하고, PRIVATE 영역의 c_factor는 Class 내부에서 사용합니다. 호출 방식은 [[unit-04|Unit 4 · ABAP 모듈화 기법]]의 Subroutine·Function Module과 비교해 보세요.')),
     source('11/17 · 11/18', [
       ['`ZABAP_F##_11`', 'ABAP Call Class Method'],
       ['`ZABAP_F##_12`', 'ABAP Local Class'],
@@ -205,8 +327,8 @@ START-OF-SELECTION.
   raw['abap-types'].aliases.push('구조체', 'Structure', 'MOVE-CORRESPONDING');
   const typeSource = raw['abap-types'].sections.pop();
   raw['abap-types'].sections.push(
-    section('구조체 선언과 컴포넌트', text('구조체는 서로 다른 타입의 컴포넌트를 하나로 묶습니다. ABAP Dictionary의 글로벌 구조를 참조하거나 Program 안에서 TYPES로 로컬 구조 타입을 정의할 수 있습니다.', 'ts_는 구조 타입, gs_는 구조 변수에 붙인 학습용 명명 관례입니다. 필드에 접근할 때는 구조변수-컴포넌트 형식을 사용합니다. 구조 하나는 한 건의 데이터를, [[unit-05|내부 테이블]]은 여러 행을 담습니다.'),
-      code('구조 타입과 구조 변수', `TYPES: BEGIN OF ts_carrier,
+    section('Structure 선언과 컴포넌트', text('Structure는 서로 다른 타입의 컴포넌트를 하나로 묶습니다. ABAP Dictionary의 글로벌 구조를 참조하거나 Program 안에서 TYPES로 로컬 Structure Type을 정의할 수 있습니다.', 'ts_는 Structure Type, gs_는 Structure Variable에 붙인 학습용 명명 관례입니다. 필드에 접근할 때는 Structure Variable-컴포넌트 형식을 사용합니다. 구조 하나는 한 건의 데이터를, [[unit-05|Internal Table]]은 여러 행을 담습니다.'),
+      code('Structure Type과 Structure Variable', `TYPES: BEGIN OF ts_carrier,
          carrid   TYPE scarr-carrid,
          carrname TYPE scarr-carrname,
        END OF ts_carrier.
@@ -216,8 +338,8 @@ DATA lv_carrname TYPE ts_carrier-carrname.
 gs_carrier-carrid = 'LH'.
 gs_carrier-carrname = 'Lufthansa'.
 lv_carrname = gs_carrier-carrname.
-WRITE: / gs_carrier-carrid, gs_carrier-carrname, / lv_carrname.`), text('TYPE ts_carrier-carrname은 구조 타입의 컴포넌트 타입을 참조합니다. ABAP Dictionary의 구조·테이블 필드도 TYPE scarr-carrid, TYPE spfli-connid처럼 글로벌타입-필드명으로 참조할 수 있습니다. 기존 변수의 컴포넌트를 기준으로 선언할 때는 LIKE gs_carrier-carrname을 사용합니다.')),
-    section('구조체 간 MOVE-CORRESPONDING', text('이름이 같은 컴포넌트끼리 값을 전달합니다. 이름이 다른 대상 컴포넌트는 그대로 남으며, 같은 이름이어도 타입이 다르면 변환 가능 여부를 확인해야 합니다.'),
+WRITE: / gs_carrier-carrid, gs_carrier-carrname, / lv_carrname.`), text('TYPE ts_carrier-carrname은 Structure Type의 컴포넌트 타입을 참조합니다. ABAP Dictionary의 구조·테이블 필드도 TYPE scarr-carrid, TYPE spfli-connid처럼 글로벌타입-필드명으로 참조할 수 있습니다. 기존 변수의 컴포넌트를 기준으로 선언할 때는 LIKE gs_carrier-carrname을 사용합니다.')),
+    section('Structure 간 MOVE-CORRESPONDING', text('이름이 같은 컴포넌트끼리 값을 전달합니다. 이름이 다른 대상 컴포넌트는 그대로 남으며, 같은 이름이어도 타입이 다르면 변환 가능 여부를 확인해야 합니다.'),
       code('같은 이름의 필드만 복사', `TYPES: BEGIN OF ts_spfli,
          carrid   TYPE spfli-carrid,
          connid   TYPE spfli-connid,
@@ -240,21 +362,21 @@ WRITE: / gs_flight-carrid, gs_flight-connid, gs_flight-seatsocc.`)));
   typeSource.blocks[0].paragraphs[0] = typeSource.blocks[0].paragraphs[0].replace('11/12.', '11/12 · 11/18.');
   raw['abap-types'].sections.push(typeSource);
 
-  put('abap-data-report', '데이터 처리와 리포트', '구조체를 행 타입으로 사용하는 Internal Table과 Classic ABAP Report의 Selection Screen·처리 순서를 정리합니다.', ['내부 테이블', 'Internal Table', 'STANDARD TABLE', 'SORTED TABLE', 'HASHED TABLE', 'Header Line', 'OCCURS', 'Classic ABAP Report', 'Selection Screen', 'SELECT-OPTIONS', 'INITIALIZATION', 'AT SELECTION-SCREEN', 'START-OF-SELECTION', 'cl_demo_output'], [
-    section('내부 테이블의 종류와 접근', text('14번 Program 필기: 내부 테이블은 Program 실행 중 여러 행을 메모리에 보관합니다. 데이터베이스 테이블에 저장하는 것과는 다릅니다. 아래는 기본 키와 기본 인덱스를 기준으로 한 비교입니다.'), table(['구분', 'STANDARD TABLE', 'SORTED TABLE', 'HASHED TABLE'], [
+  put('abap-data-report', '데이터 처리와 Report', 'Structure를 행 타입으로 사용하는 Internal Table과 Classic ABAP Report의 Selection Screen·처리 순서를 정리합니다.', ['내부 테이블', 'Internal Table', 'STANDARD TABLE', 'SORTED TABLE', 'HASHED TABLE', 'Header Line', 'OCCURS', 'Classic ABAP Report', 'Selection Screen', 'SELECT-OPTIONS', 'INITIALIZATION', 'AT SELECTION-SCREEN', 'START-OF-SELECTION', 'cl_demo_output'], [
+    section('Internal Table의 종류와 접근', text('14번 Program 필기: Internal Table은 Program 실행 중 여러 행을 메모리에 보관합니다. 데이터베이스 테이블에 저장하는 것과는 다릅니다. 아래는 기본 키와 기본 인덱스를 기준으로 한 비교입니다.'), table(['구분', 'STANDARD TABLE', 'SORTED TABLE', 'HASHED TABLE'], [
       ['분류', 'Index Table', 'Index Table', 'Hashed Table'],
       ['인덱스 접근', '가능', '가능', '기본 인덱스 없음'],
       ['키 접근', '가능', '가능', '가능'],
       ['기본 키 중복', 'NON-UNIQUE', 'UNIQUE / NON-UNIQUE', 'UNIQUE'],
       ['행 관리', '추가된 순서, SORT로 정렬 가능', '키 순서로 자동 정렬', '키의 해시로 관리']
     ]), text("INDEX 2는 두 번째 행에 접근한다는 뜻입니다. 열 번호가 아닙니다. 키 접근은 carrid = 'LH'처럼 필드 값으로 행을 찾습니다. 보조 키는 이후 학습 범위로 남겨 둡니다.")),
-    section('내부 테이블 타입과 변수 선언', text('먼저 [[abap-types|구조체]]로 행 타입을 만들고 TYPES로 재사용할 테이블 타입을 정의합니다. DATA에서 테이블 종류와 행 타입을 바로 지정할 수도 있습니다.'),
+    section('Internal Table 타입과 변수 선언', text('먼저 [[abap-types|Structure]]로 행 타입을 만들고 TYPES로 재사용할 테이블 타입을 정의합니다. DATA에서 테이블 종류와 행 타입을 바로 지정할 수도 있습니다.'),
       {
         type: 'callout', style: 'point', title: '선언 방법별 비교',
         body: '**타입을 기준으로 하면 TYPE**, **이미 선언한 변수를 기준으로 하면 LIKE**를 사용합니다. **TABLE OF**는 여러 행을 담을 테이블을 만들고, **LINE OF**는 테이블의 행 타입으로 Work area를 만듭니다.'
       },
-      text('**먼저 준비할 로컬 타입**', '아래 표는 `bc400_t_flights`·`bc400_s_flight`와 S_* 데이터 요소가 있는 수업 실습 시스템을 기준으로 합니다. 로컬 타입 `ts_flight`와 `tt_flights`는 먼저 아래처럼 정의합니다.'),
-      code('비교 예제의 로컬 타입 선언', `*로컬 스트럭쳐 선언
+      text('**먼저 준비할 Local Type**', '아래 표는 `bc400_t_flights`·`bc400_s_flight`와 S_* Data Element가 있는 수업 실습 시스템을 기준으로 합니다. Local Type `ts_flight`와 `tt_flights`는 먼저 아래처럼 정의합니다.'),
+      code('비교 예제의 Local Type 선언', `*로컬 스트럭쳐 선언
 TYPES: BEGIN OF ts_flight,
          carrid     TYPE s_carr_id,
          connid     TYPE s_conn_id,
@@ -267,7 +389,7 @@ TYPES: BEGIN OF ts_flight,
 *structure를 이용한 로컬 table type 선언
 TYPES tt_flights TYPE TABLE OF bc400_s_flight
                  WITH NON-UNIQUE KEY carrid connid fldate.`),
-      text('**1. Internal table 선언 · 4가지**', '표의 **글로벌 / 로컬은 참조하는 타입의 구분**입니다. 글로벌은 데이터 사전에 정의된 타입, 로컬은 이 Program에서 TYPES로 정의한 타입입니다. 아래 네 경우 모두 Internal table 변수를 만듭니다.'),
+      text('**1. Internal table 선언 · 4가지**', '표의 **글로벌 / 로컬은 참조하는 타입의 구분**입니다. 글로벌은 ABAP Dictionary에 정의된 타입, 로컬은 이 Program에서 TYPES로 정의한 타입입니다. 아래 네 경우 모두 Internal table 변수를 만듭니다.'),
       table(['기준', '글로벌', '로컬'], [
         ['<span data-no-autolink>table type<br><strong>TYPE</strong></span>', '`DATA gt_flights TYPE bc400_t_flights.`', '`DATA lt_flights1 TYPE tt_flights.`'],
         ['<span data-no-autolink>structure<br><strong>TYPE TABLE OF</strong></span>', '<code>DATA lt_flights2 TYPE <mark class="declaration-modifier">TABLE OF</mark> bc400_s_flight.</code>', '<code>DATA lt_flights3 TYPE <mark class="declaration-modifier">TABLE OF</mark> ts_flight.</code>']
@@ -301,11 +423,11 @@ DATA gt_hashed TYPE HASHED TABLE OF ts_spfli
     section('행 추가·조회·수정·삭제', table(['문장', '역할'], [
       ['APPEND ... TO', 'Standard Table의 끝에 행 추가'],
       ['INSERT ... INTO TABLE', '테이블 종류와 키 규칙에 따라 행 추가'],
-      ['READ TABLE ... INTO', '조건에 맞는 행을 작업 영역에 복사'],
+      ['READ TABLE ... INTO', '조건에 맞는 행을 Work Area에 복사'],
       ['MODIFY TABLE ... FROM', '기본 키로 찾은 행 수정'],
       ['DELETE TABLE ... WITH TABLE KEY', '기본 키로 찾은 행 삭제']
     ]), text('INSERT INTO TABLE을 항상 특정 위치에 넣는 명령이라고 생각하지 마세요. Index Table에서 위치를 지정하는 형식은 INSERT ... INTO ... INDEX n입니다. Sorted Table은 정렬 순서를 지켜야 합니다. READ TABLE 후에는 [[abap-loops|sy-subrc]]를 확인합니다.'),
-      code('내부 테이블 조작 전체 예제', `REPORT zabap_f##_##.
+      code('Internal Table 조작 전체 예제', `REPORT zabap_f##_##.
 TYPES: BEGIN OF ts_spfli,
          carrid   TYPE spfli-carrid,
          connid   TYPE spfli-connid,
@@ -338,17 +460,17 @@ DELETE TABLE gt_spfli WITH TABLE KEY carrid = 'AA' connid = '0017'.
 LOOP AT gt_spfli INTO gs_spfli.
   WRITE: / gs_spfli-carrid, gs_spfli-connid, gs_spfli-cityfrom, gs_spfli-fltime.
 ENDLOOP.`), text('이 예제의 기본 키는 carrid와 connid입니다. 키가 중복되면 MODIFY TABLE은 일치하는 첫 행을 바꿉니다. 여러 행을 조건으로 지울 때는 DELETE gt_spfli WHERE fltime < 300.처럼 WHERE를 사용합니다.')),
-    section('내부 테이블 정렬', text('Standard Table에서 SORT로 행 순서를 바꿉니다. BY 뒤에는 정렬할 필드가 필요하며, SORT gt_spfli BY.처럼 비워 두면 안 됩니다. Sorted Table은 선언된 키 순서를 자동으로 유지합니다.'),
+    section('Internal Table 정렬', text('Standard Table에서 SORT로 행 순서를 바꿉니다. BY 뒤에는 정렬할 필드가 필요하며, SORT gt_spfli BY.처럼 비워 두면 안 됩니다. Sorted Table은 선언된 키 순서를 자동으로 유지합니다.'),
       code('비행시간 내림차순·항공사 오름차순', `SORT gt_spfli BY fltime DESCENDING
                  carrid ASCENDING.`), text('비행시간(fltime)이 긴 행이 먼저 오고, 비행시간이 같으면 항공사 코드(carrid) 오름차순으로 정렬됩니다. SORT gt_spfli.는 기본 키 기준 정렬이므로 여기서는 carrid와 connid를 기준으로 정렬합니다.')),
     section('CLEAR·REFRESH·FREE', table(['문장', '의미'], [
-      ['CLEAR gs_spfli-fltime.', '구조체의 한 필드를 초기값으로 변경'],
-      ['CLEAR gs_spfli.', '구조체 전체 필드를 초기값으로 변경'],
-      ['CLEAR gt_spfli.', 'Header Line이 없는 내부 테이블의 행을 모두 비움'],
+      ['CLEAR gs_spfli-fltime.', 'Structure의 한 필드를 초기값으로 변경'],
+      ['CLEAR gs_spfli.', 'Structure 전체 필드를 초기값으로 변경'],
+      ['CLEAR gt_spfli.', 'Header Line이 없는 Internal Table의 행을 모두 비움'],
       ['REFRESH gt_spfli.', '테이블 본문을 비우는 기존 문법'],
       ['FREE gt_spfli.', '행을 비우고 테이블 본문에 할당된 메모리도 해제']
-    ]), text('CLEAR는 변수 선언 자체를 삭제하지 않습니다. 초기화한 구조체와 테이블은 다시 사용할 수 있습니다. 새 코드에서 Header Line 없는 테이블을 비울 때는 CLEAR를 사용할 수 있습니다.')),
-    section('Header Line과 OCCURS — 기존 코드 읽기', text('15번 Program 필기: WITH HEADER LINE을 사용한 옛 문법에서는 테이블과 같은 이름의 작업 영역이 함께 생깁니다. 문장에 따라 같은 이름이 작업 영역 또는 본문을 가리켜 혼동하기 쉽습니다. 새 코드에서는 gs_ 작업 영역과 gt_ 테이블을 분리하세요.'),
+    ]), text('CLEAR는 변수 선언 자체를 삭제하지 않습니다. 초기화한 Structure와 테이블은 다시 사용할 수 있습니다. 새 코드에서 Header Line 없는 테이블을 비울 때는 CLEAR를 사용할 수 있습니다.')),
+    section('Header Line과 OCCURS — 기존 코드 읽기', text('15번 Program 필기: WITH HEADER LINE을 사용한 옛 문법에서는 테이블과 같은 이름의 Work Area가 함께 생깁니다. 문장에 따라 같은 이름이 Work Area 또는 본문을 가리켜 혼동하기 쉽습니다. 새 코드에서는 gs_ Work Area와 gt_ 테이블을 분리하세요.'),
       code('Header Line과 테이블 본문 구분', `REPORT zabap_f##_##.
 DATA gt_scarr TYPE STANDARD TABLE OF scarr WITH HEADER LINE.
 gt_scarr-carrid   = 'LH'.       " Header Line에 값 대입
@@ -358,7 +480,7 @@ CLEAR gt_scarr.                 " Header Line만 초기화, 본문 1행 유지
 WRITE / lines( gt_scarr[] ).
 CLEAR gt_scarr[].               " 테이블 본문 초기화
 WRITE / lines( gt_scarr[] ).`),
-      text('OCCURS n은 과거 내부 테이블 선언에서 초기 메모리 할당 규모를 지정하던 문법입니다. 최대 n건까지만 저장한다는 의미가 아니며 필요하면 테이블은 늘어납니다. 단순 구조 타입 선언에 저장 건수 제한으로 붙이지 않습니다. Header Line과 OCCURS는 기존 Standard ABAP 코드를 읽기 위한 내용입니다.')),
+      text('OCCURS n은 과거 Internal Table 선언에서 초기 메모리 할당 규모를 지정하던 문법입니다. 최대 n건까지만 저장한다는 의미가 아니며 필요하면 테이블은 늘어납니다. 단순 Structure Type 선언에 저장 건수 제한으로 붙이지 않습니다. Header Line과 OCCURS는 기존 Standard ABAP 코드를 읽기 위한 내용입니다.')),
     section('Classic ABAP Report와 Selection Screen', text(
       'Classic ABAP Report는 실행 시 사용자 입력을 받는 Selection Screen을 제공합니다. 입력 방식은 단일 값을 받는 Single Value(PARAMETERS)와 범위·복수 조건을 받는 Selection Condition(SELECT-OPTIONS)으로 구분합니다.'),
       table(['구분', '문장 예', 'Selection Screen 동작과 WHERE 절 사용'], [
@@ -369,7 +491,7 @@ WRITE / lines( gt_scarr[] ).`),
       table(['Sign', 'Option', 'Low', 'High'], [
         ['I (포함) 또는 E (제외)', '부등호 · 비교 연산자 (EQ, NE, BT, CP, GT 등)', '~부터 (단일 값 또는 하한)', '~까지 (상한 값)']
       ]),
-      text('FOR 뒤에는 타입 이름이 아니라 이미 선언된 데이터 객체(변수 또는 TABLES 선언 필드)를 지정합니다. 화면 입력을 비워 두면 WHERE ... IN @so_carr 조건은 제한 없이 전체 데이터를 통과시킵니다.'),
+      text('FOR 뒤에는 타입 이름이 아니라 이미 선언된 데이터 객체(변수 또는 TABLES 선언 필드)를 지정합니다. 화면 입력을 비워 두면 WHERE ... IN @so_carr 조건은 제한 없이 전체 데이터를 통과시킵니다.', 'Selection Screen에 변수명 대신 의미 있는 라벨(예: Airline, Flight Date)을 표시하려면 SE38 메뉴 `Goto → Text Elements → Selection Texts`에서 라벨을 입력하거나 `DDIC Ref.`를 체크한 뒤 활성화하세요. 또한 `SELECT-OPTIONS`를 `PERFORM` Subroutine으로 전달할 때는 헤더(`so_carr`)가 아니라 바디(`so_carr[]`)를 넘겨야 합니다([[basic-session-review|Basic Session Review]] 참고).'),
       code('SELECT-OPTIONS와 cl_demo_output 출력', `REPORT zabap_f##_##.
 
 DATA gv_carrid TYPE spfli-carrid.
@@ -381,7 +503,7 @@ SELECT carrid, connid, cityfrom, cityto
   INTO TABLE @DATA(gt_connections).
 
 cl_demo_output=>display( gt_connections ).`),
-      text('cl_demo_output=>display( gt_connections ).은 학습·테스트용으로 Internal Table을 빠르게 화면에 출력하는 Static 메서드입니다. 실무 조회 화면용 ALV와는 구분해서 사용하세요.')),
+      text('cl_demo_output=>display( gt_connections ).은 학습·테스트용으로 Internal Table을 빠르게 화면에 출력하는 Static Method입니다. 실무 조회 화면용 ALV와는 구분해서 사용하세요.')),
     section('Report 처리 순서', text('Classic ABAP Report는 REPORT 선언 이후 PARAMETERS·SELECT-OPTIONS·DATA 선언을 거쳐 아래 이벤트 순서대로 처리됩니다.'),
       table(['단계', '역할'], [
         ['1. 선언부 (REPORT · PARAMETERS · SELECT-OPTIONS · DATA)', 'Program 헤더, Selection Screen 입력 항목, 데이터 변수 선언'],
@@ -416,7 +538,7 @@ START-OF-SELECTION.
       text('so_carr는 Header Line과 Internal Table 본문을 함께 가지므로 INITIALIZATION에서는 Header Line(so_carr-sign 등)에 값을 채운 뒤 APPEND so_carr.로 본문에 넣고, AT SELECTION-SCREEN에서는 본문이 비었는지 so_carr[] IS INITIAL로 검사합니다.')),
     section('리스트 아이콘과 컬럼 서식 참고', text(
       '클래식 리스트 출력에 사용하는 SAP 아이콘 목록과 코드는 ICON 테이블(SE11 · SE16 조회)에서 확인할 수 있습니다.',
-      '아이콘 출력과 컬럼 서식(색상·강조·정렬 등)을 적용한 클래식 리포트 구현 예시는 표준 데모/해답 Program인 BC400_RPS_REP_A에서 확인할 수 있습니다(SE38 · SE80 조회). 현재 실습 시스템 버전은 ABAP 7.5 기준입니다.')),
+      '아이콘 출력과 컬럼 서식(색상·강조·정렬 등)을 적용한 Classic Report 구현 예시는 표준 데모/해답 Program인 BC400_RPS_REP_A에서 확인할 수 있습니다(SE38 · SE80 조회). 현재 실습 시스템 버전은 ABAP 7.5 기준입니다.')),
     section('이후 학습', text('DB에서 데이터를 읽고 변경하는 문법은 [[abap-open-sql|Open SQL]]에서, 전역 타입과 테이블 정의는 [[abap-dictionary|ABAP Dictionary]]에서 이어집니다. 이 문서는 11월 18일 Internal Table과 11월 20·23일 Classic ABAP Report 필기를 정리한 범위이며, ALV 화면 구성은 준비 중입니다.'))
   ], '11/18 · 11/20 · 11/23', [
     ['`ZABAP_F##_14`', 'ABAP Internal Table'],
@@ -435,12 +557,12 @@ START-OF-SELECTION.
       '예제 기준은 Standard ABAP 7.52입니다. @ 호스트 변수, 쉼표로 구분한 필드 목록, 인라인 DATA 선언을 사용합니다. 구버전이나 ABAP Cloud에서는 사용 가능한 문법·테이블·API가 다르므로 시스템의 F1 도움말을 확인하세요. SCARR·SPFLI·SFLIGHT는 교육용 항공 데이터가 설치된 환경을 전제로 하며, 현재 클라이언트에 데이터가 없으면 조회 결과가 비어 있을 수 있습니다.'),
       table(['구분', '의미', '예'], [
         ['Transparent Table', 'DDIC에서 정의하며 DB에 실제 행을 저장하는 테이블', 'SCARR'],
-        ['행의 구조 타입', 'DB 테이블 이름을 TYPE 뒤에 쓰면 한 행의 구조로 사용', 'DATA gs_carrier TYPE scarr.'],
+        ['행의 Structure Type', 'DB 테이블 이름을 TYPE 뒤에 쓰면 한 행의 구조로 사용', 'DATA gs_carrier TYPE scarr.'],
         ['Internal Table', 'Program 메모리에 여러 행을 보관하는 변수', 'DATA gt_carriers TYPE STANDARD TABLE OF scarr WITH EMPTY KEY.']
-      ]), text('Transparent Table 자체가 단순 구조체라는 뜻은 아닙니다. DB 테이블의 행 구조를 ABAP 변수의 타입으로 활용하는 것입니다. SELECT의 FROM은 DB 데이터 소스, INTO는 결과를 받을 ABAP 변수를 지정합니다.')),
+      ]), text('Transparent Table 자체가 단순 Structure라는 뜻은 아닙니다. DB 테이블의 행 구조를 ABAP 변수의 타입으로 활용하는 것입니다. SELECT의 FROM은 DB 데이터 소스, INTO는 결과를 받을 ABAP 변수를 지정합니다.')),
     section('SELECT 기본 구조와 호스트 변수', text(
       'SELECT는 열, FROM은 데이터 소스, WHERE는 행 조건, INTO는 결과 저장 위치입니다. SQL 안에서 ABAP 변수는 @로 구분합니다. WHERE carrid = @p_carr의 carrid는 DB 열이고 p_carr는 Program 변수입니다. 여기서 =는 대입이 아닌 비교입니다.',
-      '예제는 INTO를 뒤에 쓰는 문법으로 통일합니다. 과거 코드의 INTO ... WHERE ... 순서와 섞지 마세요. 한 열은 단일 변수로, 여러 열은 구조체로, 여러 행은 내부 테이블로 받을 수 있습니다.'),
+      '예제는 INTO를 뒤에 쓰는 문법으로 통일합니다. 과거 코드의 INTO ... WHERE ... 순서와 섞지 마세요. 한 열은 단일 변수로, 여러 열은 Structure로, 여러 행은 Internal Table로 받을 수 있습니다.'),
       code('Open SQL 기본 조회', `REPORT zabap_f##_##.
 PARAMETERS p_carr TYPE scarr-carrid DEFAULT 'LH'.
 
@@ -481,10 +603,10 @@ SELECT carrid, connid, fldate FROM sflight
 LOOP AT gt_first INTO DATA(gs_first).
   WRITE: / gs_first-carrid, gs_first-connid, gs_first-fldate.
 ENDLOOP.`), text('SINGLE은 최대 한 행이며 결과가 없으면 0행입니다. 기존 변수에 INTO 했을 때 조회 실패로 이전 값이 남을 수 있으므로 반환 코드를 확인하세요. 단일 값을 변수에 받는 것은 가능하지만 SELECT를 VALUE 생성자의 내부 표현식처럼 넣는 것은 아닙니다.')),
-    section('작업 영역·내부 테이블·CORRESPONDING', text(
-      '일반 다중 행 SELECT를 작업 영역으로 받으면 SELECT ... ENDSELECT에서 한 행씩 처리합니다. INTO TABLE은 결과를 내부 테이블에 모으므로 일반적으로 ENDSELECT가 없습니다. PACKAGE SIZE를 쓰는 패키지 처리에는 별도 반복 규칙이 적용됩니다.',
-      '명시한 열들을 CORRESPONDING 없이 구조체로 받으면 열 순서와 대상 컴포넌트의 타입이 맞아야 합니다. CORRESPONDING FIELDS OF는 결과 열의 이름(AS 별칭 포함)과 대상 컴포넌트 이름을 연결합니다. OF 뒤는 필드명이 아니라 대상 작업 영역 또는 내부 테이블입니다.'),
-      code('이름 기준으로 작업 영역과 테이블에 받기', `REPORT zabap_f##_##.
+    section('Work Area·Internal Table·CORRESPONDING', text(
+      '일반 다중 행 SELECT를 Work Area로 받으면 SELECT ... ENDSELECT에서 한 행씩 처리합니다. INTO TABLE은 결과를 Internal Table에 모으므로 일반적으로 ENDSELECT가 없습니다. PACKAGE SIZE를 쓰는 단위(패킷) 처리에는 별도 반복 규칙이 적용됩니다.',
+      '명시한 열들을 CORRESPONDING 없이 Structure로 받으면 열 순서와 대상 컴포넌트의 타입이 맞아야 합니다. CORRESPONDING FIELDS OF는 결과 열의 이름(AS 별칭 포함)과 대상 컴포넌트 이름을 연결합니다. OF 뒤는 필드명이 아니라 대상 Work Area 또는 Internal Table입니다.'),
+      code('이름 기준으로 Work Area와 테이블에 받기', `REPORT zabap_f##_##.
 TYPES: BEGIN OF ts_carrier,
          carrname TYPE scarr-carrname,
          carrid   TYPE scarr-carrid,
@@ -501,9 +623,9 @@ ENDSELECT.
 SELECT carrid, carrname FROM scarr
   WHERE carrid = 'LH'
   INTO CORRESPONDING FIELDS OF TABLE @gt_carriers.
-WRITE: / '테이블 행 수:', lines( gt_carriers ).`), text('작업 영역에서 매칭되지 않은 필드는 이전 값이 남을 수 있습니다. 재사용할 때 필요한 초기화를 하세요. 여러 행을 보관하려는 목적이라면 SELECT 루프에서 APPEND를 반복하기보다 INTO TABLE이 간결합니다. 대량 조회는 메모리 크기도 고려합니다.')),
+WRITE: / '테이블 행 수:', lines( gt_carriers ).`), text('Work Area에서 매칭되지 않은 필드는 이전 값이 남을 수 있습니다. 재사용할 때 필요한 초기화를 하세요. 여러 행을 보관하려는 목적이라면 SELECT 루프에서 APPEND를 반복하기보다 INTO TABLE이 간결합니다. 대량 조회는 메모리 크기도 고려합니다.')),
     section('INTO TABLE과 APPENDING TABLE', text(
-      '일반 SELECT ... INTO TABLE은 대상 내부 테이블의 기존 행을 비운 뒤 조회 결과로 채웁니다. APPENDING TABLE은 기존 행을 유지하고 조회한 행을 추가합니다. 변수를 두 번 정의해서 덮어쓰는 현상과는 다릅니다.',
+      '일반 SELECT ... INTO TABLE은 대상 Internal Table의 기존 행을 비운 뒤 조회 결과로 채웁니다. APPENDING TABLE은 기존 행을 유지하고 조회한 행을 추가합니다. 변수를 두 번 정의해서 덮어쓰는 현상과는 다릅니다.',
       'APPENDING이 중복을 자동 제거하지는 않습니다. 아래 Standard Table에는 같은 행이 두 번 들어갈 수 있고, UNIQUE 키를 가진 대상은 키 충돌도 고려해야 합니다.'),
       code('조회 결과를 이어 담기', `REPORT zabap_f##_##.
 DATA gt_carriers TYPE STANDARD TABLE OF scarr WITH EMPTY KEY.
@@ -606,7 +728,7 @@ SELECT a~carrid, a~carrname FROM scarr AS a
   INTO TABLE @DATA(gt_carriers).
 LOOP AT gt_carriers INTO DATA(gs_carrier).
   WRITE: / gs_carrier-carrid, gs_carrier-carrname.
-ENDLOOP.`), text('FOR ALL ENTRIES는 이미 가진 내부 테이블의 각 행을 조건으로 조회하고 결과의 중복 행을 제거합니다. 기준 테이블이 비어 있으면 WHERE 전체가 무시될 수 있으므로 반드시 비어 있지 않은지 먼저 검사합니다.'),
+ENDLOOP.`), text('FOR ALL ENTRIES는 이미 가진 Internal Table의 각 행을 조건으로 조회하고 결과의 중복 행을 제거합니다. 기준 테이블이 비어 있으면 WHERE 전체가 무시될 수 있으므로 반드시 비어 있지 않은지 먼저 검사합니다.'),
       code('빈 기준 테이블을 막는 FOR ALL ENTRIES', `REPORT zabap_f##_##.
 SELECT carrid, connid FROM spfli
   WHERE countryfr = 'DE'
@@ -627,10 +749,10 @@ ENDIF.`), text('SELECT 열에 키를 빼면 원래 서로 다른 행이 같은 �
       ['UPDATE dbtab SET ... WHERE ...', '기존 행의 지정 열 변경', '조건과 실제 변경 행 수'],
       ['MODIFY dbtab FROM @wa', '기본 키가 있으면 덮어쓰고 없으면 삽입', '전달한 행의 초기값도 덮어쓸 수 있음'],
       ['DELETE FROM dbtab WHERE ...', '조건에 맞는 행 삭제', 'WHERE 누락·과도한 범위 주의']
-    ]), text('이 문장들은 DB 테이블을 대상으로 합니다. [[abap-data-report|내부 테이블]]의 INSERT·MODIFY·DELETE와 문장이 비슷해도 저장 위치와 트랜잭션이 다릅니다. 일부 필드만 바꾸려면 완성되지 않은 작업 영역으로 MODIFY하기보다 UPDATE ... SET으로 의도를 드러내세요.',
+    ]), text('이 문장들은 DB 테이블을 대상으로 합니다. [[abap-data-report|Internal Table]]의 INSERT·MODIFY·DELETE와 문장이 비슷해도 저장 위치와 트랜잭션이 다릅니다. 일부 필드만 바꾸려면 완성되지 않은 Work Area로 MODIFY하기보다 UPDATE ... SET으로 의도를 드러내세요.',
       '변경 예제는 별도 Z 연습용 테이블을 정의한 뒤 실습해야 합니다. SCARR·SFLIGHT나 업무 표준 테이블을 실습용으로 직접 변경하지 마세요. 결과 코드는 문장·단일/일괄 처리별로 다르며 DB 오류는 예외로 발생할 수도 있습니다. sy-subrc와 sy-dbcnt를 바로 확인하고 예외 처리도 설계합니다.'),
       table(['문법 형태 — 그대로 실행하는 코드가 아님', '전제'], [
-        ['INSERT zcw_scarr_demo FROM @gs_scarr.', 'ZCW_SCARR_DEMO의 키(carrid 등)와 모든 필수 값이 준비된 작업 영역'],
+        ['INSERT zcw_scarr_demo FROM @gs_scarr.', 'ZCW_SCARR_DEMO의 키(carrid 등)와 모든 필수 값이 준비된 Work Area'],
         ['UPDATE zcw_scarr_demo SET carrname = @gv_carrname WHERE carrid = @gv_carrid.', '정확한 키 조건과 입력 검증'],
         ['MODIFY zcw_scarr_demo FROM @gs_scarr.', '초기값까지 포함한 행 전체를 저장하려는 경우'],
         ['DELETE FROM zcw_scarr_demo WHERE carrid = @gv_carrid.', '삭제 권한·대상 확인·복구 계획']
@@ -643,11 +765,11 @@ ENDIF.`), text('SELECT 열에 키를 빼면 원래 서로 다른 행이 같은 �
       ['가져올 데이터', '필요한 열과 WHERE 조건을 지정. 화면용 목록은 건수 제한·페이지 처리 고려'],
       ['반복 DB 호출', 'LOOP 안의 반복 SELECT를 JOIN·집합 조회로 줄일 수 있는지 확인'],
       ['키와 인덱스', '키 조건은 유리할 수 있지만 자동으로 빠르지는 않음. 조건의 선택도·인덱스·실행 계획에 따라 판단'],
-      ['정렬', '결과 순서가 필요하면 ORDER BY. 내부 테이블 순서는 SORT와 구분'],
+      ['정렬', '결과 순서가 필요하면 ORDER BY. Internal Table 순서는 SORT와 구분'],
       ['측정', 'ST05 SQL Trace 등으로 호출 횟수·실행 시간 확인. JOIN이 항상 최선이라고 단정하지 않음'],
       ['입력과 권한', '값은 @변수로 전달. 동적 테이블/열/WHERE 문자열은 별도 검증. Open SQL 자체가 업무 권한을 자동 보장하지 않음']
     ]), text('추가 문법은 필요할 때 확장하세요. CASE·COALESCE는 SQL 안의 조건/NULL 처리, UNION·UNION ALL은 조회 결과 결합, WITH는 공통 테이블 식, OFFSET은 정렬된 결과의 앞부분 건너뛰기에 사용됩니다. UNION은 중복 제거, UNION ALL은 중복 유지입니다. 필드 수와 타입 호환성도 맞춰야 합니다.',
-      '이들 문법과 최신 SQL 함수·내부 테이블을 FROM에 사용하는 기능은 릴리스별 지원 범위가 다릅니다. 이 페이지의 기본 예제와 구분해 대상 시스템의 키워드 문서를 확인하세요.')),
+      '이들 문법과 최신 SQL 함수·Internal Table을 FROM에 사용하는 기능은 릴리스별 지원 범위가 다릅니다. 이 페이지의 기본 예제와 구분해 대상 시스템의 키워드 문서를 확인하세요.')),
     section('최신 문법(Strict Mode)과 쉼표·@ 규칙', text(
       'Open SQL에서 INTO 절을 SELECT 문의 마지막에 작성하거나, SELECT 절에 일반 컬럼과 집계 함수를 함께 쓰는 등 최신 문법 요소가 들어가면 컴파일러가 최신 문법(Strict Mode)으로 간주합니다.',
       '최신 문법으로 판정되면 SELECT 컬럼 목록에 쉼표(,)를 붙여 구분하고 ABAP 호스트 변수 앞에도 모두 @를 붙여야 합니다. 한 SELECT 문 안에서 구문법과 최신 문법을 섞어 쓰면 문법 오류가 발생합니다.'),
@@ -658,11 +780,11 @@ ENDIF.`), text('SELECT 열에 키를 빼면 원래 서로 다른 행이 같은 �
   ], '11/19 · 11/20');
 
   put('abap-dictionary', 'ABAP Dictionary', 'SE11에서 관리하는 Type Definitions·DB Objects·Services와 Domain, Data Element, Structure, Table Type, Transparent Table, Index, Table Buffer, Input Checks(Fixed Values · Foreign Keys), Text Table, Table Conversion(SE14), Append Structure, Views · Maintenance View(SM30) · Dynamic Attachment를 정리합니다.',
-    ['데이터 사전', 'DDIC', 'DATA ELEMENT', '데이터 요소', 'Domain', '도메인', '데이터베이스 테이블', 'Transparent Table', 'Technical Attribute', 'Semantic Attribute', 'Search Help', 'SET/GET Parameters', 'Flat structure', 'Simple structure', 'Nested structure', 'Deep structure', 'Table Type', 'Line Type', 'Database view', 'Projection view', 'Help view', 'Maintenance view', 'Delivery Class', 'Technical Settings', 'Secondary Index', 'Table Buffer', 'Full Buffering', 'Generic Buffering', 'Single-Record Buffering', 'Synchronization Table', 'Input Checks', 'Fixed Values', 'Value Table', 'Check Table', 'Foreign Key', 'Cardinality', 'BYPASSING BUFFER', 'Text Table', 'SPRAS', 'Where-Used List', 'Table Conversion', 'QCM', 'Database Utility', 'Append Structure', 'Table Maintenance Generator', 'Maintenance Dialog', 'Dynamic Attachment'], [
+    ['ABAP Dictionary', 'DDIC', 'DATA ELEMENT', 'Data Element', 'Domain', 'Domain', '데이터베이스 테이블', 'Transparent Table', 'Technical Attribute', 'Semantic Attribute', 'Search Help', 'SET/GET Parameters', 'Flat structure', 'Simple structure', 'Nested structure', 'Deep structure', 'Table Type', 'Line Type', 'Database view', 'Projection view', 'Help view', 'Maintenance view', 'Delivery Class', 'Technical Settings', 'Secondary Index', 'Table Buffer', 'Full Buffering', 'Generic Buffering', 'Single-Record Buffering', 'Synchronization Table', 'Input Checks', 'Fixed Values', 'Value Table', 'Check Table', 'Foreign Key', 'Cardinality', 'BYPASSING BUFFER', 'Text Table', 'SPRAS', 'Where-Used List', 'Table Conversion', 'QCM', 'Database Utility', 'Append Structure', 'Table Maintenance Generator', 'Maintenance Dialog', 'Dynamic Attachment'], [
     section('ABAP Dictionary의 역할과 3가지 기능', text(
       'ABAP Dictionary(SE11)는 시스템 전체의 Program과 화면이 공유하는 전역 타입, 데이터베이스 객체, 입력 도움말 서비스를 중앙에서 정의·관리하는 저장소입니다. 현재 수업 실습 시스템은 ABAP 7.5 기준입니다.'),
       table(['기능 구분', '포함 객체 · 역할'], [
-        ['1. Type Definitions', 'Data Element(기본 타입), Structure(구조 타입), Table Type(내부 테이블 타입) 등 전역 타입 정의'],
+        ['1. Type Definitions', 'Data Element(기본 타입), Structure(Structure Type), Table Type(Internal Table 타입) 등 전역 타입 정의'],
         ['2. DB Objects', 'Transparent Table, View 등 실제 데이터베이스 객체 정의'],
         ['3. Services', 'Search Help(F4 입력 도움말), Lock Object 등 화면·Program 지원 서비스']
       ])),
@@ -724,7 +846,7 @@ ENDIF.`), text('SELECT 열에 키를 빼면 원래 서로 다른 행이 같은 �
     section('Data Element — Semantic Attribute와 SE11 절차', text(
       'Data Element는 필드의 의미적 속성(Semantic Attribute)을 담는 틀입니다. 기술 속성은 주로 Domain을 등록해 가져오며, 아래 세 가지 대표 의미·부가 속성을 설정할 수 있습니다.'),
       table(['속성', '역할'], [
-        ['1. Field Label / Translation', '선택 화면·리스트·ALV 컬럼에 표시할 단어를 길이별(Short · Medium · Long · Heading)로 설정하고 각 언어별로 번역해 표시되게 할 수 있습니다(필기의 Field ID / Translation).'],
+        ['1. Field Label / Translation', 'Selection Screen·리스트·ALV 컬럼에 표시할 단어를 길이별(Short · Medium · Long · Heading)로 설정하고 각 언어별로 번역해 표시되게 할 수 있습니다(필기의 Field ID / Translation).'],
         ['2. Search Help', 'Further Characteristics 탭에 Search Help를 연결해 입력 필드에서 F4 Help 항목을 제공하게 할 수 있습니다.'],
         ['3. SET/GET Parameters', 'Further Characteristics 탭에 Parameter ID를 지정해 SAP Memory에 값을 저장(SET)하고 다른 스크린·트랜잭션으로 이동할 때 기본값을 불러오는(GET) 기능을 연결할 수 있습니다.']
       ]),
@@ -759,14 +881,14 @@ START-OF-SELECTION.
   ELSE.
     WRITE / '일치하는 노선이 없습니다.'.
   ENDIF.`),
-      text('p_carr와 p_conn은 Data Element(S_CARR_ID, S_CONN_ID)를 참조하므로 Domain에 정의된 길이·타입뿐 아니라 Data Element의 Field Label, F4 Search Help, Parameter ID(CAR, CON) 특성까지 선택 화면에 그대로 반영됩니다.')),
+      text('p_carr와 p_conn은 Data Element(S_CARR_ID, S_CONN_ID)를 참조하므로 Domain에 정의된 길이·타입뿐 아니라 Data Element의 Field Label, F4 Search Help, Parameter ID(CAR, CON) 특성까지 Selection Screen에 그대로 반영됩니다.')),
     section('Structure — 종류(Flat · Deep)와 .INCLUDE', text(
       'Structure는 여러 컴포넌트(필드)를 묶어 하나의 행 모양을 정의하는 데이터 타입이자 다른 Structure·Table의 재료입니다. 데이터베이스에 실제 저장 공간을 만들지 않고 구조 모양만 정의합니다.',
       '수업의 계층 예시처럼 ‘사람’이라는 구조가 ‘이름’과 ‘주소’ 속성으로 이루어지고, ‘이름’은 다시 ‘성’·‘이름’, ‘주소’는 ‘나라’·‘시’·‘구’·‘도로명 주소’로 이루어지면 사람-이름-성처럼 하이픈(-)을 이어 하위 속성에 접근(access)합니다.'),
       table(['분류', '세부 종류', '구성 기준과 특징'], [
         ['1. Flat structure', '1-1. Simple structure', '길이가 정해진 고정 길이 구조 중 Component Type이 모두 Elementary Type(기본 타입 · Data Element)으로만 구성된 일반적인 Structure입니다.'],
         ['1. Flat structure', '1-2. Nested structure', 'Component Type 안에 다른 Structure Type이 포함된 중첩 구조입니다(구조-하위구조-필드 형태로 접근; 하위 끝단 필드가 모두 고정 길이면 Flat에 속함).'],
-        ['2. Deep structure', '길이가 정해지지 않은 구조', 'Component Type에 Table Type(내부 테이블)이나 string · xstring · 참조 변수 등 동적 요소가 하나라도 포함된 구조입니다.']
+        ['2. Deep structure', '길이가 정해지지 않은 구조', 'Component Type에 Table Type(Internal Table)이나 string · xstring · 참조 변수 등 동적 요소가 하나라도 포함된 구조입니다.']
       ]),
       {
         type: 'callout', style: 'tip', title: 'Nested structure보다 .INCLUDE를 더 많이 쓰는 이유',
@@ -816,11 +938,15 @@ WRITE: / 'Nested  :', gs_nested-carrid, gs_nested-route-cityfrom, gs_nested-rout
           { step: '2', action: 'Data Type 선택 및 이름 설정 후 Display / Create', detail: 'Data Type 라디오 버튼을 선택하고 이름(표준 예: BC400_S_FLIGHT, 신규 예: ZST_FLIGHT_##)을 입력한 뒤 Display 또는 Create를 누릅니다(필기의 Data Element 칸 위치가 SE11에서는 Data Type 통합 라디오 버튼입니다).' },
           { step: '3', action: 'Structure 선택', detail: '유형 선택 팝업에서 Structure를 선택하고 Short Description을 입력합니다.' },
           { step: '4', action: '컬럼명(Component) · Component Type 표 채우기', detail: 'Components 탭에서 필드명과 참조할 Data Element/Structure를 입력합니다. 다른 구조의 필드를 평탄하게 합칠 때는 Component에 .INCLUDE를 입력합니다.' },
-          { step: '5', action: 'Activate', detail: '필요 시 통화·수량 필드의 Currency/Quantity Fields 참조 탭을 확인한 뒤 Activate(Ctrl + F3)합니다.' }
+          { step: '5', action: 'Currency/quantity fields 확인 후 Activate', detail: '금액(CURR)·수량(QUAN) 필드가 있으면 반드시 Currency/quantity fields 탭에서 참조 테이블·필드를 연결한 뒤 Activate(Ctrl + F3)합니다.' }
         ]
+      },
+      {
+        type: 'callout', style: 'warning', title: 'Global Structure Activate 오류 — CURR / QUAN 필드의 Currency/quantity fields 참조 필수',
+        body: 'Global Structure(예: `ZBS_FLIGHT_?_##`)에 `PRICE`(`CURR` 타입) 같은 금액 필드나 `QUAN` 수량 필드를 추가하고 그대로 활성화하면 **Reference table/field 누락 오류**가 발생합니다. `SE11`의 **`Currency/quantity fields`** 탭에서 `PRICE` 행에 **Reference Table = 자기 자신(`ZBS_FLIGHT_?_##`)**, **Reference Field = `CURRENCY`**(통화 키 `CUKY` 필드)를 지정한 뒤 Activate하세요([[basic-session-review|Basic Session Review]] 함정 1 참고).'
       }),
-    section('Table Type — SE11 전역 내부 테이블 타입', text(
-      'Table Type은 Program 안에서 TYPES ... TYPE TABLE OF ...로 선언하던 내부 테이블 타입을 ABAP Dictionary에 전역으로 등록한 객체입니다(예: BC400_T_FLIGHTS). 행의 모양(Line Type), 접근 방식(Access Mode), 기본 키(Primary Key)를 함께 정의합니다.'),
+    section('Table Type — SE11 전역 Internal Table 타입', text(
+      'Table Type은 Program 안에서 TYPES ... TYPE TABLE OF ...로 선언하던 Internal Table 타입을 ABAP Dictionary에 전역으로 등록한 객체입니다(예: BC400_T_FLIGHTS). 행의 모양(Line Type), 접근 방식(Access Mode), 기본 키(Primary Key)를 함께 정의합니다.'),
       {
         type: 'practice',
         title: 'SE11에서 Table Type 조회 · 생성 방법',
@@ -865,7 +991,7 @@ START-OF-SELECTION.
 
   WRITE: / gs_carrier-carrid, gs_carrier-carrname,
          / '보유 노선 수:', lines( gs_carrier-routes ).`),
-      text('위 예제의 tt_routes처럼 내부 테이블 타입을 SE11에 전역 Table Type(예: BC400_T_FLIGHTS)으로 만들어 두면 여러 Program과 글로벌 Structure(Deep structure 컴포넌트)·함수/메서드 인터페이스에서 그대로 재사용할 수 있습니다.')),
+      text('위 예제의 tt_routes처럼 Internal Table 타입을 SE11에 전역 Table Type(예: BC400_T_FLIGHTS)으로 만들어 두면 여러 Program과 글로벌 Structure(Deep structure 컴포넌트)·함수/Method 인터페이스에서 그대로 재사용할 수 있습니다.')),
     section('Transparent Table 생성과 Technical Settings', text(
       'SE11에서 Database Table(Transparent Table)을 생성할 때는 Delivery Class와 Data Browser(SE16) 유지보수 설정, Key·일반 Fields, Currency/Quantity 참조, Technical Settings를 순서대로 지정한 뒤 Activate합니다.'),
       {
@@ -1178,10 +1304,10 @@ ENDLOOP.`)),
   const normalizeLegacyLinks = obj => JSON.parse(
     JSON.stringify(obj)
       .replaceAll('[[abap-types|자료형과 초기값]]', '[[unit-03|Unit 3 · ABAP 기본 언어 요소]]')
-      .replaceAll('[[abap-types|구조체]]', '[[unit-05|Unit 5 · 구조체]]')
+      .replaceAll('[[abap-types|Structure]]', '[[unit-05|Unit 5 · Structure]]')
       .replaceAll('[[abap-loops|sy-subrc]]', '[[unit-03|sy-subrc]]')
       .replaceAll('[[abap-modularization|프로그램 모듈화]]', '[[unit-04|Unit 4 · ABAP 모듈화 기법]]')
-      .replaceAll('[[abap-data-report|내부 테이블]]', '[[unit-05|Unit 5 · 내부 테이블]]')
+      .replaceAll('[[abap-data-report|Internal Table]]', '[[unit-05|Unit 5 · Internal Table]]')
       .replaceAll('[[abap-open-sql|Open SQL]]', '[[unit-06|BC400 Unit 6 · Open SQL]]')
       .replaceAll('[[abap-dictionary|ABAP Dictionary]]', '[[bc430-01|BC430 · ABAP Dictionary]]')
   );
@@ -1251,7 +1377,7 @@ ENDLOOP.`)),
     ],
     [
       take('sap-architecture', '요청 처리 흐름', 'l1', 'Lesson 1', 'p. 3'),
-      take('sap-architecture', '워크 프로세스와 잠금', 'l1', 'Lesson 1', 'p. 3'),
+      take('sap-architecture', 'Work Process와 잠금', 'l1', 'Lesson 1', 'p. 3'),
       take('sap-architecture', '통신 구성 요소', 'l1', 'Lesson 1', 'p. 3'),
       take('abap-program-types', 'Program과 저장소 객체', 'l1', 'Lesson 1', 'p. 3'),
       take('abap-program-types', 'Include와 모듈화', 'l1', 'Lesson 1', 'p. 3')
@@ -1261,12 +1387,12 @@ ENDLOOP.`)),
 
   putUnit(2, 'ABAP Workbench', 'ABAP Workbench', 19,
     'ABAP Workbench(SE80·SE38·SE09·SE93) 탐색, Package와 Change Request 관리, Program 기본 작성·전송, 트랜잭션 생성과 Exercise 1–3 실습 가이드를 정리합니다.',
-    ['개발 객체와 전송 관리', 'ABAP Workbench', '패키지', 'Package', 'Change Request', 'Workbench Request', 'Customizing Request', 'Transport'],
+    ['개발 객체와 전송 관리', 'ABAP Workbench', '패키지', 'Package', 'Change Request', 'CTS', 'Transport Request', 'Workbench Request', 'Customizing Request', 'Transport'],
     [
       { id: 'l1', kind: 'lesson', badge: 'L1', page: 'p. 21', label: 'Workbench 소개', desc: 'Lesson: Introducing the ABAP Workbench (p. 21) — DEV·QAS·PRD 시스템 구성과 SE80 Object Navigator 활용을 정리합니다.' },
       { id: 'l2', kind: 'lesson', badge: 'L2', page: 'p. 30', label: '개발 프로젝트 구성', desc: 'Lesson: Organizing ABAP Development Projects (p. 30) — Package와 Change Request·Task 관리 원칙을 정리합니다.' },
       { id: 'l3', kind: 'lesson', badge: 'L3', page: 'p. 40', label: 'ABAP 프로그램 개발', desc: 'Lesson: Developing ABAP Programs (p. 40) — ABAP 문장·주석 기초와 작성 → 검사 → 활성화 → 전송 흐름을 정리합니다.' },
-      { id: 'l4', kind: 'lesson', badge: 'L4', page: 'p. 55', label: '프로젝트 마무리 · T-Code', desc: 'Lesson: Finalizing ABAP Development Projects (p. 55) — SE93 트랜잭션 코드 생성과 릴리스 절차를 정리합니다.' },
+      { id: 'l4', kind: 'lesson', badge: 'L4', page: 'p. 55', label: '프로젝트 마무리 · T-Code', desc: 'Lesson: Finalizing ABAP Development Projects (p. 55) — SE93 Transaction Code 생성과 릴리스 절차를 정리합니다.' },
       { id: 'ex', kind: 'exercise', badge: 'Ex 1–3', page: 'p. 37–59', label: 'Exercise 1–3', desc: '교재 Exercise 1(Package 생성), Exercise 2(간단한 Program 개발), Exercise 3(Transaction 생성) 실습 체크포인트를 정리합니다.' }
     ],
     [
@@ -1275,7 +1401,7 @@ ENDLOOP.`)),
       take('abap-development', 'Package와 Change Request', 'l2', 'Lesson 2', 'p. 30'),
       take('abap-basics', '문장과 주석', 'l3', 'Lesson 3', 'p. 40'),
       take('abap-development', '작성에서 전송까지', 'l3', 'Lesson 3', 'p. 40'),
-      take('abap-development', '트랜잭션 코드 생성', 'l4', 'Lesson 4', 'p. 55'),
+      take('abap-development', 'Transaction Code 생성', 'l4', 'Lesson 4', 'p. 55'),
       exSec('ex', 'Exercise 1', 'p. 37', 'Exercise 1: Create a Package',
         text('SE80(Object Navigator)에서 본인 실습용 Package(`ZBC400_F##`)를 생성하고 Workbench Change Request에 연결하는 실습입니다.'),
         { type: 'practice', title: 'Exercise 1 핵심 확인 포인트', steps: [
@@ -1289,8 +1415,8 @@ ENDLOOP.`)),
           ['`ZABAP_F##_01` · `ZABAP_F##_02`', '`WRITE` 출력, 마침표(`.`), 주석(`*`, `"`), 체인 문법(`:`)']
         ])),
       exSec('ex', 'Exercise 3', 'p. 59', 'Exercise 3: Create a Transaction',
-        text('SE93(Transaction Maintenance)에서 작성한 리포트 Program을 실행하는 리포트 트랜잭션(Report Transaction)을 생성하고 SAP GUI 명령 필드에서 직접 호출해 봅니다.'),
-        { type: 'callout', style: 'tip', title: 'SE93 유형 선택 주의', body: '실행 가능 리포트 Program에는 **Program and selection screen (report transaction)** 유형을 선택합니다. 생성 후 명령 필드(`/nZ...`)로 바로 실행되는지 확인하세요.' })
+        text('SE93(Transaction Maintenance)에서 작성한 Report Program을 실행하는 Report Transaction을 생성하고 SAP GUI 명령 필드에서 직접 호출해 봅니다.'),
+        { type: 'callout', style: 'tip', title: 'SE93 유형 선택 주의', body: '실행 가능 Report Program에는 **Program and selection screen (report transaction)** 유형을 선택합니다. 생성 후 명령 필드(`/nZ...`)로 바로 실행되는지 확인하세요.' })
     ],
     '11/11 · 11/12 · 11/20',
     [
@@ -1301,26 +1427,26 @@ ENDLOOP.`)),
   );
 
   putUnit(3, 'ABAP 기본 언어 요소', 'Basic ABAP Language Elements', 73,
-    '기본 데이터 객체(자료형·길이·초기값·텍스트 심볼), 조건·반복문·시스템 필드·메시지·예외, ABAP 디버거와 Exercise 4–5 실습 가이드를 정리합니다.',
-    ['ABAP 기초', '자료형과 초기값', '반복문과 시스템 필드', '디버깅과 메시지', 'DATA', 'PARAMETERS', 'CLEAR', 'TYPE', 'LIKE', '자료형', 'DATA TYPE', '초기값', 'DECFLOAT16', 'DECFLOAT34', 'XSTRING', 'DO', 'WHILE', 'sy-index', 'sy-tabix', 'sy-subrc', 'sy-dbcnt', 'sy-uname', '시스템 필드', '디버깅', 'Debugger', '중단점', '메시지 클래스', 'MESSAGE'],
+    '기본 데이터 객체(자료형·길이·초기값·Text Symbol), 조건·반복문·시스템 필드·Message Class·예외, ABAP Debugger와 Exercise 4–5 실습 가이드를 정리합니다.',
+    ['ABAP 기초', '자료형과 초기값', '반복문과 시스템 필드', '디버깅과 메시지', 'DATA', 'PARAMETERS', 'CLEAR', 'TYPE', 'LIKE', '자료형', 'DATA TYPE', '초기값', 'DECFLOAT16', 'DECFLOAT34', 'XSTRING', 'DO', 'WHILE', 'sy-index', 'sy-tabix', 'sy-subrc', 'sy-dbcnt', 'sy-uname', '시스템 필드', '디버깅', 'Debugger', '중단점', 'Text Symbol', 'Text Element', 'Selection Texts', 'Message Class', 'MESSAGE-ID', '메시지 클래스', 'MESSAGE'],
     [
-      { id: 'l1', kind: 'lesson', badge: 'L1', page: 'p. 75', label: '기본 데이터 객체', desc: 'Lesson: Defining Elementary Data Objects (p. 75) — 변수 선언, 기본/길이 지정 자료형, 초기값, 텍스트 심볼을 정리합니다.' },
-      { id: 'l2', kind: 'lesson', badge: 'L2', page: 'p. 87', label: '기본 ABAP 문장', desc: 'Lesson: Using Basic ABAP Statements (p. 87) — 입출력, 반복문(DO/WHILE), 시스템 필드, 메시지 유형과 예외를 정리합니다.' },
-      { id: 'l3', kind: 'lesson', badge: 'L3', page: 'p. 104', label: 'ABAP 디버거 분석', desc: 'Lesson: Analyzing Programs with the ABAP Debugger (p. 104) — 중단점 설정, F5 단계 실행, ST22 덤프 확인을 정리합니다.' },
-      { id: 'ex', kind: 'exercise', badge: 'Ex 4–5', page: 'p. 97–113', label: 'Exercise 4–5', desc: '교재 Exercise 4(기본 ABAP 문장 활용)와 Exercise 5(디버거 단계 실행) 실습 체크포인트를 정리합니다.' }
+      { id: 'l1', kind: 'lesson', badge: 'L1', page: 'p. 75', label: '기본 데이터 객체', desc: 'Lesson: Defining Elementary Data Objects (p. 75) — 변수 선언, 기본/길이 지정 자료형, 초기값, Text Symbol을 정리합니다.' },
+      { id: 'l2', kind: 'lesson', badge: 'L2', page: 'p. 87', label: '기본 ABAP 문장', desc: 'Lesson: Using Basic ABAP Statements (p. 87) — 입출력, 반복문(DO/WHILE), 시스템 필드, Message Class(SE91 · REPORT MESSAGE-ID)와 예외를 정리합니다.' },
+      { id: 'l3', kind: 'lesson', badge: 'L3', page: 'p. 104', label: 'ABAP Debugger 분석', desc: 'Lesson: Analyzing Programs with the ABAP Debugger (p. 104) — 중단점 설정, F5 단계 실행, ST22 덤프 확인을 정리합니다.' },
+      { id: 'ex', kind: 'exercise', badge: 'Ex 4–5', page: 'p. 97–113', label: 'Exercise 4–5', desc: '교재 Exercise 4(기본 ABAP 문장 활용)와 Exercise 5(Debugger 단계 실행) 실습 체크포인트를 정리합니다.' }
     ],
     [
       take('abap-basics', '변수 선언과 대입', 'l1', 'Lesson 1', 'p. 75'),
       take('abap-types', '주요 기본 타입', 'l1', 'Lesson 1', 'p. 75'),
       take('abap-types', '길이를 지정하는 타입', 'l1', 'Lesson 1', 'p. 75'),
       take('abap-types', '초기값 확인', 'l1', 'Lesson 1', 'p. 75'),
-      take('abap-types', '텍스트 심볼과 번역', 'l1', 'Lesson 1', 'p. 75'),
+      take('abap-types', 'Text Symbol과 번역', 'l1', 'Lesson 1', 'p. 75'),
       take('abap-basics', '입력과 출력', 'l2', 'Lesson 2', 'p. 87'),
       take('abap-loops', '반복문 비교', 'l2', 'Lesson 2', 'p. 87'),
       take('abap-loops', 'CONTINUE와 EXIT', 'l2', 'Lesson 2', 'p. 87'),
       take('abap-loops', '자주 보는 시스템 필드', 'l2', 'Lesson 2', 'p. 87'),
       take('abap-debug-messages', '메시지 유형', 'l2', 'Lesson 2', 'p. 87'),
-      take('abap-debug-messages', '직접 문구와 메시지 클래스', 'l2', 'Lesson 2', 'p. 87'),
+      take('abap-debug-messages', '직접 문구와 Message Class (SE91 · REPORT 선언)', 'l2', 'Lesson 2', 'p. 87'),
       take('abap-debug-messages', '예외와 반환 코드', 'l2', 'Lesson 2', 'p. 87'),
       take('abap-debug-messages', '디버깅 순서', 'l3', 'Lesson 3', 'p. 104'),
       exSec('ex', 'Exercise 4', 'p. 97', 'Exercise 4: Use Basic ABAP Statements',
@@ -1350,21 +1476,21 @@ ENDLOOP.`)),
   );
 
   putUnit(4, 'ABAP 모듈화 기법', 'Modularization Techniques in ABAP', 125,
-    '서브루틴(FORM/PERFORM), Function Group·Function Module(SE37), BAPI와 RFC, Global·Local Class(SE24)와 Exercise 6–12 실습 가이드를 정리합니다.',
-    ['프로그램 모듈화', 'BAPI와 RFC', '클래스와 메서드', '서브루틴', 'FORM', 'PERFORM', 'Function Module', '함수 모듈', 'BAPI', 'RFC', 'RETURN', 'Global Class', 'Local Class', 'Static Method', 'Instance Method', '글로벌 클래스', '로컬 클래스', '정적 메서드', '인스턴스 메서드', '참조 변수', 'TYPE REF TO'],
+    'Subroutine(FORM/PERFORM), Function Group·Function Module(SE37), BAPI와 RFC, Global·Local Class(SE24)와 Exercise 6–12 실습 가이드를 정리합니다.',
+    ['프로그램 모듈화', 'BAPI와 RFC', '클래스와 메서드', 'Subroutine', '서브루틴', 'FORM', 'PERFORM', 'Function Group', 'Function Module', '함수 모듈', 'BAPI', 'RFC', 'RETURN', 'Global Class', 'Local Class', 'Static Method', 'Instance Method', '글로벌 클래스', '로컬 클래스', '정적 메서드', '인스턴스 메서드', '참조 변수', 'TYPE REF TO'],
     [
-      { id: 'l1', kind: 'lesson', badge: 'L1', page: 'p. 127', label: '모듈화 개요', desc: 'Lesson: Explaining Modularization (p. 127) — 서브루틴·함수 모듈·메서드 3가지 모듈화 방식을 비교합니다.' },
-      { id: 'l2', kind: 'lesson', badge: 'L2', page: 'p. 134', label: '서브루틴 (FORM)', desc: 'Lesson: Defining and Calling Subroutines (p. 134) — USING/CHANGING과 VALUE(...) 값·참조 전달을 정리합니다.' },
-      { id: 'l3', kind: 'lesson', badge: 'L3–4', page: 'p. 155 · 172', label: '함수 모듈 호출·생성', desc: 'Lesson: Calling & Creating Function Modules (p. 155 · p. 172) — Function Group(SAPL/TOP/UXX)과 호출 방향을 정리합니다.' },
+      { id: 'l1', kind: 'lesson', badge: 'L1', page: 'p. 127', label: '모듈화 개요', desc: 'Lesson: Explaining Modularization (p. 127) — Subroutine·Function Module·Method 3가지 모듈화 방식을 비교합니다.' },
+      { id: 'l2', kind: 'lesson', badge: 'L2', page: 'p. 134', label: 'Subroutine (FORM)', desc: 'Lesson: Defining and Calling Subroutines (p. 134) — USING/CHANGING과 VALUE(...) 값·참조 전달을 정리합니다.' },
+      { id: 'l3', kind: 'lesson', badge: 'L3–4', page: 'p. 155 · 172', label: 'Function Module 호출·생성', desc: 'Lesson: Calling & Creating Function Modules (p. 155 · p. 172) — Function Group(SAPL/TOP/UXX)과 호출 방향을 정리합니다.' },
       { id: 'l5', kind: 'lesson', badge: 'L5', page: 'p. 187', label: 'BAPI와 RFC', desc: 'Lesson: Describing Business Application Programming Interfaces (p. 187) — RFC와 BAPI의 관계 및 RETURN 오류 처리를 정리합니다.' },
-      { id: 'l6', kind: 'lesson', badge: 'L6–7', page: 'p. 193 · 212', label: 'Global Class · 메서드', desc: 'Lesson: Calling & Creating Global Classes and Static Methods (p. 193 · p. 212) — Static(`=>`)·Instance(`->`) 호출과 SE24 Class를 정리합니다.' },
+      { id: 'l6', kind: 'lesson', badge: 'L6–7', page: 'p. 193 · 212', label: 'Global Class · Method', desc: 'Lesson: Calling & Creating Global Classes and Static Methods (p. 193 · p. 212) — Static(`=>`)·Instance(`->`) 호출과 SE24 Class를 정리합니다.' },
       { id: 'l8', kind: 'lesson', badge: 'L8', page: 'p. 225', label: 'Local Class', desc: 'Lesson: Using Local Classes (p. 225) — DEFINITION/IMPLEMENTATION과 PUBLIC·PROTECTED·PRIVATE 접근 제어를 정리합니다.' },
-      { id: 'ex', kind: 'exercise', badge: 'Ex 6–12', page: 'p. 149–219', label: 'Exercise 6–12', desc: '교재 Exercise 6(서브루틴), Exercise 7–9(함수 그룹·함수 모듈), Exercise 10–12(Global Class·Static 메서드) 실습 가이드를 정리합니다.' }
+      { id: 'ex', kind: 'exercise', badge: 'Ex 6–12', page: 'p. 149–219', label: 'Exercise 6–12', desc: '교재 Exercise 6(Subroutine), Exercise 7–9(Function Group·Function Module), Exercise 10–12(Global Class·Static Method) 실습 가이드를 정리합니다.' }
     ],
     [
       take('abap-modularization', '모듈화 방식', 'l1', 'Lesson 1', 'p. 127'),
-      take('abap-modularization', '서브루틴 매개변수', 'l2', 'Lesson 2', 'p. 134'),
-      take('abap-modularization', '함수 그룹과 함수 모듈', 'l3', 'Lesson 3–4', 'p. 155 · 172'),
+      take('abap-modularization', 'Subroutine 매개변수', 'l2', 'Lesson 2', 'p. 134'),
+      take('abap-modularization', 'Function Group과 Function Module', 'l3', 'Lesson 3–4', 'p. 155 · 172'),
       take('abap-modularization', '호출자와 함수의 방향', 'l3', 'Lesson 3–4', 'p. 155 · 172'),
       take('abap-bapi', 'BAPI와 RFC의 관계', 'l5', 'Lesson 5', 'p. 187'),
       take('abap-bapi', '입출력과 오류 처리', 'l5', 'Lesson 5', 'p. 187'),
@@ -1374,19 +1500,19 @@ ENDLOOP.`)),
       exSec('ex', 'Exercise 6', 'p. 149', 'Exercise 6: Implement Subroutines',
         text('`FORM ... ENDFORM`과 `PERFORM`으로 계산 로직을 분리하고 `USING VALUE(...)` vs `CHANGING` 전달 방식 차이를 확인합니다.'),
         table(['연계 실습 Program', '핵심 연습 포인트'], [
-          ['`ZBC400_F##_SUBROUTINE`', '교재 Exercise 6: 서브루틴 정의·호출 및 매개변수 매핑'],
-          ['`ZABAP_F##_08` · `ZABAP_F##_09`', '서브루틴 생성과 값 전달 vs 참조 전달 비교']
+          ['`ZBC400_F##_SUBROUTINE`', '교재 Exercise 6: Subroutine 정의·호출 및 매개변수 매핑'],
+          ['`ZABAP_F##_08` · `ZABAP_F##_09`', 'Subroutine 생성과 값 전달 vs 참조 전달 비교']
         ])),
       exSec('ex', 'Exercise 7–9', 'p. 165 · 175 · 179', 'Exercise 7–9: Call · Create Function Group & Function Module',
-        text('SE37에서 기존 함수 모듈을 호출(Ex 7)한 뒤, 직접 Function Group(Ex 8)과 Function Module(Ex 9)을 생성·활성화해 리포트에서 `CALL FUNCTION`으로 호출합니다.'),
+        text('SE37에서 기존 Function Module을 호출(Ex 7)한 뒤, 직접 Function Group(Ex 8)과 Function Module(Ex 9)을 생성·활성화해 Report에서 `CALL FUNCTION`으로 호출합니다.'),
         table(['Exercise / Program', '핵심 확인 포인트'], [
           ['Ex 7 (`ZBC400_F##_FUNCTION_MODULE`, `ZABAP_F##_10`)', 'SE37 인터페이스(`IMPORTING`↔`EXPORTING`) 방향 확인 및 `EXCEPTIONS` `sy-subrc` 처리'],
-          ['Ex 8–9 (`ZBC400_F##_FUNCTION_MODULE_2`)', 'Function Group 생성(`SAPL...`, `TOP`/`UXX` Include 활성화) 후 직접 만든 함수 모듈 호출·테스트']
+          ['Ex 8–9 (`ZBC400_F##_FUNCTION_MODULE_2`)', 'Function Group 생성(`SAPL...`, `TOP`/`UXX` Include 활성화) 후 직접 만든 Function Module 호출·테스트']
         ])),
       exSec('ex', 'Exercise 10–12', 'p. 205 · 217 · 219', 'Exercise 10–12: Global Class & Static Method',
-        text('SE24 Global Class의 Static 메서드를 호출(Ex 10)하고, 직접 Simple Global Class(Ex 11)와 Static Method(Ex 12)를 구현·활성화합니다.'),
+        text('SE24 Global Class의 Static Method를 호출(Ex 10)하고, 직접 Simple Global Class(Ex 11)와 Static Method(Ex 12)를 구현·활성화합니다.'),
         table(['Exercise / Program', '핵심 확인 포인트'], [
-          ['Ex 10 (`ZBC400_F##_GLOBAL_CLASS_1`, `ZABAP_F##_11`)', 'Static 메서드(`Class=>메서드( )`)와 Instance 메서드(`참조->메서드( )`) 구분'],
+          ['Ex 10 (`ZBC400_F##_GLOBAL_CLASS_1`, `ZABAP_F##_11`)', 'Static Method(`Class=>Method( )`)와 Instance Method(`참조->Method( )`) 구분'],
           ['Ex 11–12 (`ZBC400_F##_GLOBAL_CLASS_2`, `ZABAP_F##_12`)', 'SE24 Global Class 생성·`PUBLIC`/`PRIVATE` 가시성 설정과 Local Class 구현 비교']
         ]))
     ],
@@ -1406,26 +1532,26 @@ ENDLOOP.`)),
   );
 
   putUnit(5, '복합 데이터 객체', 'Complex Data Objects', 239,
-    '구조체(Structure · MOVE-CORRESPONDING)와 Internal Table(STANDARD · SORTED · HASHED, 선언 10가지, 행 조작, 정렬, CLEAR/Header Line) 및 Exercise 13–14를 정리합니다.',
-    ['복합 데이터 객체', '구조체', 'Structure', 'MOVE-CORRESPONDING', '내부 테이블', 'Internal Table', 'STANDARD TABLE', 'SORTED TABLE', 'HASHED TABLE', 'Header Line', 'OCCURS'],
+    'Structure(MOVE-CORRESPONDING)와 Internal Table(STANDARD · SORTED · HASHED, 선언 10가지, 행 조작, 정렬, CLEAR/Header Line) 및 Exercise 13–14를 정리합니다.',
+    ['복합 데이터 객체', '구조체', 'Structure', 'Work Area', 'MOVE-CORRESPONDING', '내부 테이블', 'Internal Table', 'STANDARD TABLE', 'SORTED TABLE', 'HASHED TABLE', 'Header Line', 'OCCURS'],
     [
-      { id: 'l1', kind: 'lesson', badge: 'L1', page: 'p. 240', label: '구조체 (Structure)', desc: 'Lesson: Using Structured Data Objects (p. 240) — 로컬·글로벌 구조 타입 선언과 MOVE-CORRESPONDING을 정리합니다.' },
-      { id: 'l2', kind: 'lesson', badge: 'L2', page: 'p. 253', label: '내부 테이블 (Internal Table)', desc: 'Lesson: Using Internal Tables (p. 253) — 3가지 테이블 종류, TYPE/LIKE 10가지 선언, CRUD·SORT·CLEAR·Header Line을 정리합니다.' },
-      { id: 'ex', kind: 'exercise', badge: 'Ex 13–14', page: 'p. 247 · 273', label: 'Exercise 13–14', desc: '교재 Exercise 13(구조체 활용)과 Exercise 14(Internal Table 활용) 실습 체크포인트를 정리합니다.' }
+      { id: 'l1', kind: 'lesson', badge: 'L1', page: 'p. 240', label: 'Structure', desc: 'Lesson: Using Structured Data Objects (p. 240) — 로컬·글로벌 Structure Type 선언과 MOVE-CORRESPONDING을 정리합니다.' },
+      { id: 'l2', kind: 'lesson', badge: 'L2', page: 'p. 253', label: 'Internal Table', desc: 'Lesson: Using Internal Tables (p. 253) — 3가지 테이블 종류, TYPE/LIKE 10가지 선언, CRUD·SORT·CLEAR·Header Line을 정리합니다.' },
+      { id: 'ex', kind: 'exercise', badge: 'Ex 13–14', page: 'p. 247 · 273', label: 'Exercise 13–14', desc: '교재 Exercise 13(Structure 활용)과 Exercise 14(Internal Table 활용) 실습 체크포인트를 정리합니다.' }
     ],
     [
-      take('abap-types', '구조체 선언과 컴포넌트', 'l1', 'Lesson 1', 'p. 240'),
-      take('abap-types', '구조체 간 MOVE-CORRESPONDING', 'l1', 'Lesson 1', 'p. 240'),
-      take('abap-data-report', '내부 테이블의 종류와 접근', 'l2', 'Lesson 2', 'p. 253'),
-      take('abap-data-report', '내부 테이블 타입과 변수 선언', 'l2', 'Lesson 2', 'p. 253'),
+      take('abap-types', 'Structure 선언과 컴포넌트', 'l1', 'Lesson 1', 'p. 240'),
+      take('abap-types', 'Structure 간 MOVE-CORRESPONDING', 'l1', 'Lesson 1', 'p. 240'),
+      take('abap-data-report', 'Internal Table의 종류와 접근', 'l2', 'Lesson 2', 'p. 253'),
+      take('abap-data-report', 'Internal Table 타입과 변수 선언', 'l2', 'Lesson 2', 'p. 253'),
       take('abap-data-report', '행 추가·조회·수정·삭제', 'l2', 'Lesson 2', 'p. 253'),
-      take('abap-data-report', '내부 테이블 정렬', 'l2', 'Lesson 2', 'p. 253'),
+      take('abap-data-report', 'Internal Table 정렬', 'l2', 'Lesson 2', 'p. 253'),
       take('abap-data-report', 'CLEAR·REFRESH·FREE', 'l2', 'Lesson 2', 'p. 253'),
       take('abap-data-report', 'Header Line과 OCCURS — 기존 코드 읽기', 'l2', 'Lesson 2', 'p. 253'),
       exSec('ex', 'Exercise 13', 'p. 247', 'Exercise 13: Use Structured Data Objects',
-        text('로컬 구조 타입(`ts_`)과 글로벌 구조(`BC400_S_FLIGHT`)를 참조해 구조 변수(`gs_`)를 선언하고 `MOVE-CORRESPONDING`으로 컴포넌트를 복사합니다.'),
+        text('로컬 Structure Type(`ts_`)과 글로벌 구조(`BC400_S_FLIGHT`)를 참조해 Structure Variable(`gs_`)를 선언하고 `MOVE-CORRESPONDING`으로 컴포넌트를 복사합니다.'),
         table(['연계 실습 Program', '핵심 연습 포인트'], [
-          ['`ZBC400_F##_STRUCTURE` · `ZABAP_F##_13`', '구조체 컴포넌트 접근(`gs_carrier-carrid`)과 `MOVE-CORRESPONDING` 필드명 매칭 확인']
+          ['`ZBC400_F##_STRUCTURE` · `ZABAP_F##_13`', 'Structure 컴포넌트 접근(`gs_carrier-carrid`)과 `MOVE-CORRESPONDING` 필드명 매칭 확인']
         ])),
       exSec('ex', 'Exercise 14', 'p. 273', 'Exercise 14: Use Internal Tables',
         text('`STANDARD` · `SORTED` · `HASHED` Internal Table과 Work Area 선언을 비교하고 `APPEND`/`INSERT`/`READ TABLE`/`MODIFY`/`DELETE`/`SORT`를 실습합니다.'),
@@ -1473,7 +1599,7 @@ ENDLOOP.`)),
       take('abap-open-sql', 'Open SQL과 Transparent Table', 'l2', 'Lesson 2', 'p. 301'),
       take('abap-open-sql', 'SELECT 기본 구조와 호스트 변수', 'l2', 'Lesson 2', 'p. 301'),
       take('abap-open-sql', '한 행 조회와 정렬된 첫 행', 'l2', 'Lesson 2', 'p. 301'),
-      take('abap-open-sql', '작업 영역·내부 테이블·CORRESPONDING', 'l3', 'Lesson 3', 'p. 315'),
+      take('abap-open-sql', 'Work Area·Internal Table·CORRESPONDING', 'l3', 'Lesson 3', 'p. 315'),
       take('abap-open-sql', 'INTO TABLE과 APPENDING TABLE', 'l3', 'Lesson 3', 'p. 315'),
       take('abap-open-sql', 'WHERE 조건과 NULL', 'l3', 'Lesson 3', 'p. 315'),
       take('abap-open-sql', 'DISTINCT·집계·GROUP BY·HAVING', 'l3', 'Lesson 3', 'p. 315'),
@@ -1522,7 +1648,7 @@ ENDLOOP.`)),
           ['`ZBC400_F##_REP_A` · `BC400_RPS_REP_A`', 'Classic List 출력, `ICON` 테이블 아이콘 표시, 컬럼 색상·정렬 서식']
         ])),
       exSec('ex', 'Exercise 21', 'p. 395', 'Exercise 21: Implement Events of ABAP Reports',
-        text('`INITIALIZATION`, `AT SELECTION-SCREEN`, `START-OF-SELECTION` 이벤트 블록으로 리포트 흐름을 구조화합니다. 고객별 예약 건수 리포트의 전체 설계 흐름은 [[abap-thinking-flow|ABAP 사고 흐름]]에서도 도식으로 볼 수 있습니다.'),
+        text('`INITIALIZATION`, `AT SELECTION-SCREEN`, `START-OF-SELECTION` 이벤트 블록으로 Report 흐름을 구조화합니다. 고객별 예약 건수 Report의 전체 설계 흐름은 [[abap-thinking-flow|ABAP 사고 흐름]]에서도 도식으로 볼 수 있습니다.'),
         table(['연계 실습 Program', '핵심 연습 포인트'], [
           ['`ZBC400_F##_REP_B`', '초기값 설정(`INITIALIZATION`), 입력 검증(`AT SELECTION-SCREEN` `so_carr[] IS INITIAL`), 메인 조회 분리']
         ]))
@@ -1656,10 +1782,10 @@ ENDLOOP.`)),
       take('abap-dictionary', 'Domain — Technical Attribute와 SE11 절차', 'l1', 'Lesson 1', 'p. 12'),
       take('abap-dictionary', 'Data Element — Semantic Attribute와 SE11 절차', 'l1', 'Lesson 1', 'p. 12'),
       take('abap-dictionary', 'Structure — 종류(Flat · Deep)와 .INCLUDE', 'l2', 'Lesson 2', 'p. 25'),
-      take('abap-dictionary', 'Table Type — SE11 전역 내부 테이블 타입', 'l3', 'Lesson 3', 'p. 34'),
+      take('abap-dictionary', 'Table Type — SE11 전역 Internal Table 타입', 'l3', 'Lesson 3', 'p. 34'),
       pendingSec('l4', 'Lesson 4', 'p. 47', 'Creating Type Groups (준비 중)', '준비 중 · BC430 교재 p. 47 (Creating Type Groups) 수업 진도에 맞춰 정리할 예정입니다.'),
       exSec('ex', 'Exercise 1', 'p. 19', 'Exercise 1: Create Elementary Data Types',
-        text('SE11에서 Domain(Data Type · 길이 · Value Range)과 Data Element(Domain 참조 · Field Label · Parameter ID)를 만들고 리포트에서 참조합니다.'),
+        text('SE11에서 Domain(Data Type · 길이 · Value Range)과 Data Element(Domain 참조 · Field Label · Parameter ID)를 만들고 Report에서 참조합니다.'),
         table(['연계 실습 Program', '핵심 연습 포인트'], [
           ['`ZBC430S_DATA_ELEMENTS`', 'Program `SAPBC430S_DATA_ELEMENTS` 기반 Data Element·Field Label·F4 Help 확인']
         ])),
@@ -2039,7 +2165,7 @@ ENDLOOP.`)
             ['**Structure**', 'Structure의 **`Input Help`**(`Entry help/check`)에서 **`Srch Help`**를 등록합니다.'],
             ['**Data Element**', 'Data Element의 **`Further Characteristics`** 탭에서 **`Search Help`**를 등록합니다. *(원문 필기의 `Furthure Characteristics` 오타를 SAP SE11 표준 탭명 `Further Characteristics`로 교정했습니다.)*']
           ]),
-          text('ABAP 리포트의 Selection Screen에서는 Dictionary 객체에 Search Help를 붙이지 않았거나 다른 Search Help를 적용하고 싶을 때 **`MATCHCODE OBJECT <서치헬프명>.`** 또는 **`AS LISTBOX VISIBLE LENGTH <개수>.`** 옵션을 사용해 코드에서 직접 적용할 수 있습니다. `SELECT-OPTIONS`에도 `MATCHCODE OBJECT`를 붙일 수 있으며, `AS LISTBOX`는 `PARAMETERS` 필드를 드롭다운 목록 형태로 표시합니다.'),
+          text('ABAP Report의 Selection Screen에서는 Dictionary 객체에 Search Help를 붙이지 않았거나 다른 Search Help를 적용하고 싶을 때 **`MATCHCODE OBJECT <Search Help명>.`** 또는 **`AS LISTBOX VISIBLE LENGTH <개수>.`** 옵션을 사용해 코드에서 직접 적용할 수 있습니다. `SELECT-OPTIONS`에도 `MATCHCODE OBJECT`를 붙일 수 있으며, `AS LISTBOX`는 `PARAMETERS` 필드를 드롭다운 목록 형태로 표시합니다.'),
           code('MATCHCODE OBJECT와 AS LISTBOX로 Search Help 적용', `REPORT zabap_f##_##.
 
 PARAMETERS:
@@ -2105,11 +2231,11 @@ START-OF-SELECTION.
   const connections = {
     'unit-01': ['unit-02', 'sap-tcode-reference', 'sap-gui-shortcuts'],
     'unit-02': ['unit-01', 'unit-03', 'sap-tcode-reference', 'sap-gui-shortcuts'],
-    'unit-03': ['unit-02', 'unit-04', 'unit-05', 'abap-useful-syntax'],
+    'unit-03': ['unit-02', 'unit-04', 'unit-05', 'abap-useful-syntax', 'sap-tcode-reference'],
     'unit-04': ['unit-03', 'unit-05', 'sap-tcode-reference'],
     'unit-05': ['unit-03', 'unit-06', 'unit-07', 'bc430-02'],
     'unit-06': ['unit-05', 'unit-07', 'bc430-01', 'bc430-03', 'bc430-04'],
-    'unit-07': ['unit-05', 'unit-06', 'unit-08', 'unit-09'],
+    'unit-07': ['unit-05', 'unit-06', 'unit-08', 'unit-09', 'bc430-09'],
     'unit-08': ['unit-07', 'unit-09'],
     'unit-09': ['unit-07', 'unit-08'],
     'unit-10': ['unit-08', 'unit-09'],
@@ -2124,7 +2250,7 @@ START-OF-SELECTION.
     'bc430-06': ['bc430-02', 'bc430-07', 'sap-tcode-reference'],
     'bc430-07': ['bc430-03', 'bc430-06', 'unit-13', 'sap-tcode-reference'],
     'bc430-08': ['bc430-01', 'bc430-05', 'bc430-09', 'sap-tcode-reference'],
-    'bc430-09': ['bc430-02', 'bc430-05', 'bc430-08']
+    'bc430-09': ['bc430-02', 'bc430-05', 'bc430-08', 'unit-07', 'sap-tcode-reference']
   };
   for (const [id, targets] of Object.entries(connections)) docs[id].sections.push(related(targets));
 
@@ -2190,7 +2316,7 @@ START-OF-SELECTION.
           type: 'flow',
           steps: [
             { badge: '1', title: '파라미터 받기', desc: '검색 조건 입력 (`PARAMETERS`, `SELECT-OPTIONS`)' },
-            { badge: '2', title: '변수 · Type 선언', desc: '`ts_`로 구조를 정하고 `gt_` 테이블 → `gs_` 워크에어리어 순서로 선언 (`FOR` 참조 변수 먼저 선언)' },
+            { badge: '2', title: '변수 · Type 선언', desc: '`ts_`로 구조를 정하고 `gt_` 테이블 → `gs_` Work Area 순서로 선언 (`FOR` 참조 변수 먼저 선언)' },
             { badge: '3', title: 'Data 삽입', desc: '조건에 맞는 DB 데이터 `SELECT`' },
             { badge: '4', title: 'Manipulate', desc: '`LOOP`, `READ TABLE`, `INSERT`, `MODIFY`, `MOVE-CORRESPONDING`' }
           ]
@@ -2210,7 +2336,7 @@ START-OF-SELECTION.
                 badge: '선언부',
                 title: '출력용 · 계산용 · 검색조건 선언',
                 code: 'TYPES · DATA · SELECT-OPTIONS',
-                desc: '어떤 오븐(`gt_`)·트레이(`gs_`)·검색조건(`so_`)이 필요한지 3덩어리로 준비. [[unit-05|다른 선언 방법 보기]] — Unit 5 내부 테이블 타입과 변수 선언의 ‘선언 방법별 비교’',
+                desc: '어떤 오븐(`gt_`)·트레이(`gs_`)·검색조건(`so_`)이 필요한지 3덩어리로 준비. [[unit-05|다른 선언 방법 보기]] — Unit 5 Internal Table 타입과 변수 선언의 ‘선언 방법별 비교’',
                 layout: 'wide',
                 items: [
                   {
@@ -2352,7 +2478,7 @@ ENDLOOP.`
       ),
       section(
         '전체 코드 (SCUSTOM · SBOOK)',
-        code('고객별 예약 건수 조회 리포트 사고 흐름 전체 예제', `REPORT zabap_f##_##.
+        code('고객별 예약 건수 조회 Report 사고 흐름 전체 예제', `REPORT zabap_f##_##.
 
 " [선언부] 출력용 테이블 (표시할 뼈대)
 TYPES: BEGIN OF ts_output,
@@ -2464,9 +2590,9 @@ END-OF-SELECTION.
           ['Unit 2 · Workbench · 기초 문법', '[[unit-02|Unit 2 · ABAP Workbench]]', '`ZABAP_F##_01`, `02`<br>`ZBC400_F##_HELLO`'],
           ['Unit 3 · 자료형 · 연산 · 반복문 · 시스템 필드', '[[unit-03|Unit 3 · ABAP 기본 언어 요소]]', '`ZABAP_F##_03`, `04`, `05`, `06`, `07`<br>`ZBC400_F##_COMPUTE`, `ZBC400_F##_LOOP`'],
           ['Unit 4 · 모듈화 (FORM · Function Module · Class)', '[[unit-04|Unit 4 · ABAP 모듈화 기법]]', '`ZABAP_F##_08`, `09`, `10`, `11`, `12`<br>`ZBC400_F##_SUBROUTINE`, `ZBC400_F##_FUNCTION_MODULE`, `ZBC400_F##_FUNCTION_MODULE_2`, `ZBC400_F##_GLOBAL_CLASS_1`, `ZBC400_F##_GLOBAL_CLASS_2`'],
-          ['Unit 5 · 구조체 · Internal Table', '[[unit-05|Unit 5 · 복합 데이터 객체]]', '`ZABAP_F##_13`, `14`, `15`, `16`<br>`ZBC400_F##_STRUCTURE`, `ZBC430S_ITAB_SORTED`'],
+          ['Unit 5 · Structure · Internal Table', '[[unit-05|Unit 5 · 복합 데이터 객체]]', '`ZABAP_F##_13`, `14`, `15`, `16`<br>`ZBC400_F##_STRUCTURE`, `ZBC430S_ITAB_SORTED`'],
           ['BC400 Unit 6 · Open SQL', '[[unit-06|BC400 Unit 6 · 데이터 모델링과 데이터 조회]]', '[[abap-sql-guide|ABAP SQL 가이드]] 연계'],
-          ['BC430 Unit 2 · ABAP Dictionary 타입 · 구조체', '[[bc430-02|BC430 Unit 2 · ABAP Dictionary 데이터 타입]]', '`ZABAP_F##_18`, `19`<br>`ZBC430S_DATA_ELEMENTS`, `ZBC430S_F##_STRUCT_NESTED`, `ZBC430S_F##_STRUCT_DEEP`'],
+          ['BC430 Unit 2 · ABAP Dictionary 타입 · Structure', '[[bc430-02|BC430 Unit 2 · ABAP Dictionary 데이터 타입]]', '`ZABAP_F##_18`, `19`<br>`ZBC430S_DATA_ELEMENTS`, `ZBC430S_F##_STRUCT_NESTED`, `ZBC430S_F##_STRUCT_DEEP`'],
           ['Unit 7 · Classic ABAP Report · Select-Options', '[[unit-07|Unit 7 · Classic ABAP Reports]]', '`ZABAP_F##_17`<br>`ZBC400_F##_REP_A`, `ZBC400_F##_REP_B`']
         ])
       ),
@@ -2482,10 +2608,10 @@ END-OF-SELECTION.
           ['`ZABAP_F##_07`', 'ABAP sy-subrc System Field', '[[unit-03|Unit 3]]', '문장 실행 결과 반환 코드 `sy-subrc` 판별'],
           ['`ZABAP_F##_08`', 'ABAP Subroutine', '[[unit-04|Unit 4]]', '`FORM ... ENDFORM` 정의와 `PERFORM` 호출'],
           ['`ZABAP_F##_09`', 'ABAP Subroutine Parameters', '[[unit-04|Unit 4]]', '`USING` / `CHANGING`, `VALUE(...)` 값 전달 vs 참조 전달'],
-          ['`ZABAP_F##_10`', 'ABAP Function Module', '[[unit-04|Unit 4]]', '`SE37` 함수 모듈 인터페이스와 `CALL FUNCTION` 호출 방향'],
-          ['`ZABAP_F##_11`', 'ABAP Call Class Method', '[[unit-04|Unit 4]]', 'Static 메서드(`=>`)와 Instance 메서드(`->`) 호출'],
+          ['`ZABAP_F##_10`', 'ABAP Function Module', '[[unit-04|Unit 4]]', '`SE37` Function Module 인터페이스와 `CALL FUNCTION` 호출 방향'],
+          ['`ZABAP_F##_11`', 'ABAP Call Class Method', '[[unit-04|Unit 4]]', 'Static Method(`=>`)와 Instance Method(`->`) 호출'],
           ['`ZABAP_F##_12`', 'ABAP Local Class', '[[unit-04|Unit 4]]', '`CLASS ... DEFINITION / IMPLEMENTATION`, `PUBLIC`/`PRIVATE`'],
-          ['`ZABAP_F##_13`', 'ABAP Structure Variable', '[[unit-05|Unit 5]]', '로컬 구조 타입(`ts_`)·구조 변수(`gs_`) 선언과 `MOVE-CORRESPONDING`'],
+          ['`ZABAP_F##_13`', 'ABAP Structure Variable', '[[unit-05|Unit 5]]', '로컬 Structure Type(`ts_`)·Structure Variable(`gs_`) 선언과 `MOVE-CORRESPONDING`'],
           ['`ZABAP_F##_14`', 'ABAP Internal Table', '[[unit-05|Unit 5]]', '`STANDARD`/`SORTED`/`HASHED` Internal Table 선언·행 조작(`APPEND`, `INSERT`, `READ`, `MODIFY`, `DELETE`, `SORT`)'],
           ['`ZABAP_F##_15`', 'ABAP Header Line', '[[unit-05|Unit 5]]', '기존 코드의 `WITH HEADER LINE`과 `CLEAR itab` vs `CLEAR itab[]` 구분'],
           ['`ZABAP_F##_16`', 'ABAP Internal table & Work area', '[[unit-05|Unit 5]]', '글로벌/로컬 `TYPE`, `TYPE TABLE OF`, `TYPE LINE OF`, `LIKE` 선언 비교'],
@@ -2503,8 +2629,8 @@ END-OF-SELECTION.
           ['`ZBC400_F##_SUBROUTINE`', '[[unit-04|Unit 4]]', 'Subroutine(`FORM` / `PERFORM`) 구현 실습 (Exercise 6)'],
           ['`ZBC400_F##_FUNCTION_MODULE`', '[[unit-04|Unit 4]]', 'Function Module 호출 실습 1 (Exercise 7)'],
           ['`ZBC400_F##_FUNCTION_MODULE_2`', '[[unit-04|Unit 4]]', '직접 만든 Function Module 호출 실습 2 (Exercise 9)'],
-          ['`ZBC400_F##_GLOBAL_CLASS_1`', '[[unit-04|Unit 4]]', 'Global Class Static 메서드 호출 실습 1 (Exercise 10)'],
-          ['`ZBC400_F##_GLOBAL_CLASS_2`', '[[unit-04|Unit 4]]', 'Global Class 생성 및 메서드 호출 실습 2 (Exercise 11–12)'],
+          ['`ZBC400_F##_GLOBAL_CLASS_1`', '[[unit-04|Unit 4]]', 'Global Class Static Method 호출 실습 1 (Exercise 10)'],
+          ['`ZBC400_F##_GLOBAL_CLASS_2`', '[[unit-04|Unit 4]]', 'Global Class 생성 및 Method 호출 실습 2 (Exercise 11–12)'],
           ['`ZBC400_F##_STRUCTURE`', '[[unit-05|Unit 5]]', 'Structured Data Objects 실습 (Exercise 13)'],
           ['`ZBC400_F##_REP_A`', '[[unit-07|Unit 7]]', 'Select-Options·Classic List·아이콘·컬럼 서식 실습 템플릿 A (Exercise 20)'],
           ['`ZBC400_F##_REP_B`', '[[unit-07|Unit 7]]', 'Select-Options·Classic List·Report 이벤트 실습 템플릿 B (Exercise 21)']
@@ -2515,9 +2641,527 @@ END-OF-SELECTION.
         table(['Program', '원본 / 설명', '교재 Unit', '확인 포인트'], [
           ['`ZBC430S_DATA_ELEMENTS`', 'Program `SAPBC430S_DATA_ELEMENTS`', '[[bc430-02|BC430 Unit 2]]', '`Data Element`·`Domain` 참조와 `Field Label`·`F4 Help` 동작 확인 (Ex 1)'],
           ['`ZBC430S_F##_STRUCT_NESTED`', 'Report `SAPBC430S_STRUCT_NESTED`', '[[bc430-02|BC430 Unit 2]]', '`Nested structure`와 `.INCLUDE` 컴포넌트 접근 방식 확인 (Ex 2)'],
-          ['`ZBC430S_F##_STRUCT_DEEP`', 'Deep Structure 실습', '[[bc430-02|BC430 Unit 2]]', '내부 테이블(`Table Type`)을 포함하는 `Deep structure` 확인 (Ex 4)'],
+          ['`ZBC430S_F##_STRUCT_DEEP`', 'Deep Structure 실습', '[[bc430-02|BC430 Unit 2]]', 'Internal Table(`Table Type`)을 포함하는 `Deep structure` 확인 (Ex 4)'],
           ['`ZBC430S_ITAB_SORTED`', 'Program `SAPBC430S_ITAB_SORTED`', '[[unit-05|BC400 Unit 5]]', '`Sorted Table` 선언·정렬 유지·키 접근 확인']
         ])
+      )
+    ]
+  };
+  const basicSec = (tab, badge, title, ...blocks) => ({ tab, badge, title, blocks });
+  docs['basic-session-review'] = {
+    id: 'basic-session-review',
+    track: 'abap',
+    studentOnly: true,
+    stepNum: '',
+    categoryId: '학습 가이드',
+    hideSectionNumbers: true,
+    filterTocByTab: true,
+    defaultTab: 'all',
+    title: 'Basic Session Review',
+    subtitle: '2026-11-26 ABAP 시험 대비 Basic Session 핵심 강조점 · 실전 코드 리뷰 · 사내 강사님 공식 답안',
+    aliases: ['Basic Session Review', 'Basic Session', 'ABAP 시험 대비', 'ZPROG_BASIC_F_##', 'ZPROG_CL5_T14_005', 'ZBS_FLIGHT_F_##', 'ZBASIC_MSG_F_##', 'so_date[]'],
+    tcodes: ['SE09', 'SE11', 'SE37', 'SE38', 'SE80', 'SE91', 'SE93'],
+    specs: {
+      '세션 일자': '2026-11-26 (목) · 수업 후 Basic Session',
+      '실습 모델': 'SFLIGHT · SCARR (항공 실습 모델)',
+      '네이밍 규칙': '`?_##` (`E`=5반 / `F`=6반 · `##`=본인 번호)',
+      '핵심 범위': 'DDIC · Event · Subroutine · Open SQL · LOOP'
+    },
+    summary: '사내 강사님이 출제한 **ABAP 시험 대비 Basic Session** 문제의 핵심 강조 포인트와, 직접 작성한 Report 코드에서 놓치기 쉬운 **8가지 치명적·실무적 함정**, 그리고 **사내 강사님 공식 답안(`ZPROG_CL5_T14_005`)**을 원문 주석과 함께 한눈에 복습할 수 있게 정리했습니다.',
+    sectionTabs: [
+      {
+        id: 'highlights',
+        kind: 'lesson',
+        badge: '핵심',
+        label: '강사님 강조점',
+        desc: 'Basic Session 문제 1~4의 전체 구조, 네이밍 룰, 그리고 사내 강사님이 시험 단골 함정으로 콕 짚은 5가지 포인트를 정리합니다.'
+      },
+      {
+        id: 'review',
+        kind: 'exercise',
+        badge: '리뷰',
+        label: '놓친 포인트 8선',
+        desc: '직접 구현한 코드에서 발생한 구조적 오류(Event 누락 · so_fdt[] · WHERE IN · USING/CHANGING · 변수 덮어쓰기)와 실무 디테일을 원인·해결책과 함께 분석합니다.'
+      },
+      {
+        id: 'solution',
+        kind: 'lesson',
+        badge: '답안',
+        label: '강사님 공식 답안',
+        desc: '사내 강사님의 공식 답안(ZPROG_CL5_T14_005) 전체 원문과 코드에 담긴 핵심 실무 포인트 6가지를 정리합니다.'
+      },
+      {
+        id: 'checklist',
+        kind: 'exercise',
+        badge: '점검',
+        label: '시험 직전 체크리스트',
+        desc: '강사님이 제시한 13개 이해도 체크리스트와 관련 CodeWiki 문서 연결, 심화 실습(Function Module 전환) 가이드입니다.'
+      }
+    ],
+    sections: [
+      /* ===================== TAB 1: 강사님 핵심 강조점 ===================== */
+      basicSec('highlights', '구조', 'Basic Session 문제 1–4 전체 설계 흐름과 네이밍 룰',
+        text(
+          '이번 Basic Session은 시험에 자주 출제되는 **Workbench 세팅 → DDIC(Domain · Data Element · Structure) → Message Class → Report Event · Subroutine → Open SQL JOIN · LOOP 출력**의 전 과정을 하나의 프로그램으로 꿰는 종합 점검 과제입니다.',
+          '강사님이 안내사항에서 가장 먼저 강조한 두 가지는 **1) AI에 의존하지 않고 내가 막히는 지점을 직접 찾아 개념으로 메우는 것**, **2) 객체명뿐 아니라 변수 Prefix(`gt_`, `gs_`, `pa_`, `so_`, `pv_`, `pt_`, `gv_`, `lv_`)까지 네이밍 룰을 철저히 지키는 것**입니다.'
+        ),
+        {
+          type: 'flow',
+          caption: 'Basic Session 4단계 구현 흐름 (? = E:5반 / F:6반, ## = 본인 번호)',
+          steps: [
+            { badge: '문제 1', title: 'Workbench 기본 세팅', desc: 'CTS → Package → Program → T-Code 생성' },
+            { badge: '문제 2', title: 'DDIC · Message Class', desc: 'Domain/DE · Global/Local Structure · ITAB · SE91' },
+            { badge: '문제 3', title: 'Event · 입력/데이터 검증', desc: 'INITIALIZATION · AT SELECTION-SCREEN · MESSAGE E' },
+            { badge: '문제 4', title: 'JOIN 조회 · LOOP 가공 · 출력', desc: 'START-OF-SELECTION · GET_DATA(USING/CHANGING) · cl_demo_output' }
+          ]
+        },
+        table(['구분', '네이밍 룰 (`?`: E/F, `##`: 번호)', '생성 T-Code · 핵심 조건'], [
+          ['CTS (Change Request)', '`Basic_ABAP1_?_##` (Short Description)', '`SE09` — 이후 생성하는 Package · DDIC · Program을 모두 연결'],
+          ['Package', '`ZPAC_Basic_?_##`', '`SE80` — 로컬 `$TMP`가 아닌 전송 가능한 Package로 생성'],
+          ['Program / T-Code', '`ZPROG_BASIC_?_##` / 기본 T-Code 룰', '`SE38` · `SE93` (Report Transaction 연결)'],
+          ['Domain / Data Element', 'DO: `ZDO_SEATRE_?_##` / DE: `ZD_SEATRE_?_##`', '`SE11` — `INT4`, 길이 `10`, Description `Seats Remain` (DO·DE 혼동 주의)'],
+          ['Global Structure', '`ZBS_FLIGHT_?_##`', '`SE11` — `SFLIGHT`·`SCARR` 기존 DE 8개 + `SEATS_REMAIN` 1개 (총 9필드)'],
+          ['Local Structure & ITAB', '`ts_*` (`BEGIN OF ~ END OF`) → `gt_*`', 'Global Structure를 `INCLUDE TYPE`으로 포함하고 `status TYPE char10` 추가'],
+          ['Message Class', '`ZBASIC_MSG_?_##`', '`SE91` — 모든 검증 오류를 하드코딩 문구가 아닌 Message Class로 출력']
+        ])
+      ),
+      basicSec('highlights', 'SE91 · 선언', 'Message Class (SE91) 생성과 Report Program 선언 방법',
+        text('Basic Session 문제 2-3과 문제 3에서는 모든 오류 처리를 하드코딩 문자열이 아닌 **`Message Class`(`SE91`)**로 작성해야 합니다. 자세한 원리는 [[unit-03|BC400 Unit 3 · ABAP 기본 언어 요소]]의 `직접 문구와 Message Class (SE91 · REPORT 선언)`에서도 함께 복습할 수 있습니다.'),
+        {
+          type: 'practice',
+          title: 'SE91 Message Class 생성 → Report Program 선언 4단계',
+          steps: [
+            { step: '1', action: 'SE91에서 Message Class 생성 (ZBASIC_MSG_?_##)', detail: 'T-Code SE91을 열고 Message Class 이름 ZBASIC_MSG_?_##을 입력한 뒤 Create를 누릅니다.' },
+            { step: '2', action: 'Short Text 입력 후 Messages 탭에 번호별 문구 등록', detail: '000: 입력값을 입력해주세요. / 001: 작년과 내년 데이터만 조회 가능합니다. / 002: 조회되는 데이터 없습니다. 를 등록하고 Ctrl + S로 저장(Package · CTS 연결)합니다.' },
+            { step: '3', action: 'Report Program 첫 줄에 MESSAGE-ID 선언', detail: 'REPORT zprog_basic_?_## MESSAGE-ID zbasic_msg_?_##. 처럼 Program 헤더에 기본 Message Class를 선언합니다.' },
+            { step: '4', action: 'AT SELECTION-SCREEN에서 MESSAGE e000. 형태로 호출', detail: 'MESSAGE-ID를 선언해 두면 (zbasic_msg_?_##)를 매번 쓰지 않고 MESSAGE e000. / MESSAGE e002. 만으로 오류 메시지를 띄워 다음 화면 진입을 막을 수 있습니다.' }
+          ]
+        },
+        table(['선언 · 호출 패턴', '코드 표기', '장점 · 참고'], [
+          ['**`REPORT` 헤더 `MESSAGE-ID` 선언 (권장)**', '`REPORT zprog_basic_f_## MESSAGE-ID zbasic_msg_f_##.`<br>호출: `MESSAGE e000.`', 'Program 내 모든 `MESSAGE` 호출에서 `Message Class` 이름 반복 생략'],
+          ['**개별 `MESSAGE` 문에 직접 지정**', '`MESSAGE e000(zbasic_msg_f_##).`', '`REPORT` 줄에 `MESSAGE-ID`가 없거나 다른 `Message Class`를 섞어 쓸 때 사용'],
+          ['**자리표시자 `&` 전달**', '`MESSAGE i001 WITH sy-uname.`', '문구의 `&` 위치에 변수 값을 최대 4개까지 동적으로 삽입']
+        ])
+      ),
+      basicSec('highlights', '핵심 함정', '사내 강사님이 콕 짚은 시험 단골 함정 5가지',
+        {
+          type: 'callout',
+          style: 'warning',
+          title: '함정 1 · Global Structure Activate 오류 ("힌트: 금액")',
+          body: '`ZBS_FLIGHT_?_##`에 금액 필드 `PRICE`(데이터 타입 `CURR`)를 넣고 그냥 활성화하면 오류가 발생합니다. `SE11`의 **`Currency/quantity fields`** 탭으로 이동해 `PRICE` 행의 **Reference Table = `ZBS_FLIGHT_?_##`(자기 자신)**, **Reference Field = `CURRENCY`**를 연결해야 정상 활성화됩니다.'
+        },
+        {
+          type: 'callout',
+          style: 'point',
+          title: '함정 2 · SELECT-OPTIONS를 PERFORM 파라미터로 넘길 때 `so_date` vs `so_date[]`',
+          body: '`SELECT-OPTIONS`로 선언한 `so_fdt`는 **Header(1행 Structure)**와 **Body(Internal Table)**를 함께 가집니다. `PERFORM ... USING so_fdt`처럼 `[]` 없이 넘기면 **헤더 1행만** 넘어가고, `FORM`에서도 테이블로 받을 수 없습니다. 반드시 **`so_fdt[]`**로 바디만 넘기고 `FORM`에서는 `TYPES tt_fdt TYPE RANGE OF s_date.` 같은 **Range Table Type**으로 받으세요.'
+        },
+        {
+          type: 'compare',
+          items: [
+            {
+              tag: '함정 3 · 구문법 (Classic Open SQL)',
+              title: 'FROM → INTO → WHERE (@ · 쉼표 없음)',
+              points: [
+                '컬럼은 **공백**으로 구분하고 ABAP 변수 앞에 **`@`를 쓰지 않음**',
+                '**`INTO TABLE`**이 **`WHERE` 앞**에 위치',
+                '구문법 안에 `@`나 쉼표 `,`를 하나라도 섞으면 즉시 문법 에러 발생'
+              ]
+            },
+            {
+              tag: '함정 3 · 신문법 (ABAP 7.40+ Strict Mode)',
+              title: 'FROM → JOIN ON → WHERE → ORDER BY → INTO',
+              points: [
+                '컬럼은 **쉼표 `,`**로 구분하고 모든 ABAP 변수 앞에 **`@` 필수**',
+                '**`INTO TABLE @gt_tab`**은 **무조건 문장 맨 마지막**에 위치',
+                '구문법과 신문법을 한 `SELECT` 안에서 절대 혼용하지 말 것'
+              ]
+            }
+          ]
+        },
+        table(['추가 강조 함정', '시험 핵심 원리', '꼭 지켜야 할 구현 규칙'], [
+          ['**함정 4 · Message Type & Event 위치**', '검증 실패 시 **다음 화면으로 넘어가면 안 됨**', '`AT SELECTION-SCREEN` 이벤트에서 **`MESSAGE E`**를 발생시켜 Selection Screen에 머무르며 재입력 유도'],
+          ['**함정 5 · Subroutine 책임 분리**', '`USING`(입력) · `CHANGING`(결과) 분리 및 **내부 출력 금지**', '`GET_DATA`는 데이터 조회·가공만 수행해 `CHANGING`으로 ITAB을 돌려주고, `cl_demo_output=>display( )`는 **`START-OF-SELECTION` 호출부 아래**에서 실행 *(원문 노션의 `cl_demo_ouptut⇒display( )`는 오타 `output` · 연산자 `=>` 주의)*']
+        ])
+      ),
+
+      /* ===================== TAB 2: 실전 코드 리뷰 (놓친 8가지) ===================== */
+      basicSec('review', '치명 · 필수', '작성 코드 정밀 리뷰 ① — 구조적 오류 4가지 (반드시 수정)',
+        text('직접 작성한 풀이 코드를 사내 강사님 요구사항과 ABAP 런타임 동작 기준으로 대조했을 때, 가장 먼저 잡아야 할 **치명적·필수 수정 포인트 4가지**입니다.'),
+        table(['심각도 · 항목', '작성 코드에서 놓친 부분', '왜 문제가 되는가 (원인)', '올바른 수정 방향'], [
+          [
+            '**1. `[치명]`<br>AT SELECTION-SCREEN 누락**',
+            '`SELECT-OPTIONS:` 직후 `INITIALIZATION.` 위에 `PERFORM input_check / data_check` 배치',
+            '명시적 이벤트 없이 적은 실행문은 암묵적 `START-OF-SELECTION`으로 처리되므로, 아래 `INITIALIZATION.` · `START-OF-SELECTION.`과 충돌해 구문 오류가 나거나 Selection Screen 검증이 작동하지 않음',
+            '**`AT SELECTION-SCREEN.`** 블록을 명시하고 `INITIALIZATION.` 아래, `START-OF-SELECTION.` 위에 검증 `PERFORM`을 배치'
+          ],
+          [
+            '**2. `[치명]`<br>`so_fdt` 헤더 전달 + `BETWEEN` 사용**',
+            '`USING so_fdt` + `VALUE(sv_fdt) LIKE so_fdt`("type으로 안받아짐") + `WHERE fldate BETWEEN so_fdt-low AND so_fdt-high`',
+            '`so_fdt`는 헤더 1행만 넘어가 복수/제외 조건이 유실됨. 특히 `BETWEEN`은 사용자가 날짜를 **비워 뒀을 때**(`00000000`) 전체 조회가 아닌 **0건**을 반환하며, 단일 날짜(`EQ`) 조회도 깨짐',
+            '`TYPES tt_fdt TYPE RANGE OF s_date.`를 선언해 **`USING so_fdt[]`** → **`pt_fdt TYPE tt_fdt`**로 받고, `WHERE` 절은 반드시 **`fldate IN pt_fdt`** 사용'
+          ],
+          [
+            '**3. `[필수]`<br>`USING`/`CHANGING` 누락 및 전역변수 직접 참조**',
+            '`PERFORM get_data.` (파라미터 없음), `FORM data_check`가 `pv_car` 대신 전역 `pa_car`·`so_fdt` 직접 참조',
+            '강사님이 강조한 `USING`/`CHANGING` 파라미터 설계 요구사항 미충족. Formal Parameter를 받아 놓고 전역변수를 쓰면 Subroutine 재사용·독립성이 사라짐',
+            '`PERFORM get_data USING pa_car pa_con so_fdt[] CHANGING gt_basic.`로 명시하고 모든 `FORM` 내부는 **Formal Parameter와 지역 변수(`lv_`, `ls_`)만** 사용'
+          ],
+          [
+            '**4. `[필수]`<br>`INTO pa_car` 덮어쓰기 & 취약한 `sy-subrc` 체크**',
+            '`SELECT SINGLE carrid ... INTO pa_car`, 그리고 `PERFORM data_check` 바깥에서 `IF sy-subrc <> 0` 판별',
+            '조회 결과로 사용자 입력 변수 `pa_car`를 덮어씀. 또한 `ENDFORM` 뒤 암묵적 `sy-subrc` 참조는 `FORM` 내부에 다른 명령이 한 줄만 추가되어도 깨지는 취약한 패턴',
+            '지역 변수 `DATA lv_carrid TYPE s_carr_id.`로 `INTO lv_carrid` 처리하고, **`CHANGING cv_subrc TYPE sy-subrc`**로 명시 반환(또는 `FORM` 안에서 즉시 `MESSAGE e002.`)'
+          ]
+        ]),
+        {
+          type: 'callout',
+          style: 'tip',
+          title: '왜 주석에 적은 것처럼 "type으로 안받아짐" 오류가 났을까?',
+          body: '`so_fdt`는 **타입(Type)**이 아니라 **데이터 객체(Variable)**이기 때문에 `USING sv_fdt TYPE so_fdt`라고 쓰면 문법 오류가 납니다. `TYPE` 뒤에는 반드시 타입명이 와야 하므로, 상단에 **`TYPES tt_fdt TYPE RANGE OF s_date.`**를 먼저 선언한 뒤 **`USING pt_fdt TYPE tt_fdt`**로 받으면 깔끔하게 해결됩니다!'
+        }
+      ),
+      basicSec('review', '주의 · 개선', '작성 코드 정밀 리뷰 ② — 실무 디테일 · 경계값 4가지',
+        text('동작은 되는 것처럼 보이지만 시험 채점이나 실무 예외 상황에서 발목을 잡는 **4가지 디테일 인사이트**입니다.'),
+        table(['항목', '작성 코드 패턴', '숨어 있는 함정 · 인사이트', '권장 개선 패턴'], [
+          [
+            '**5. `[주의]`<br>`= \'\'` vs `IS INITIAL` (`NUMC` 함정)**',
+            '`IF pv_car = \'\' AND pv_con = \'\'.`',
+            '`pa_con`의 타입 `S_CONN_ID`는 `NUMC 4`여서 비어 있을 때 내부 초기값이 공백이 아닌 **`\'0000\'`**입니다. 타입마다 다른 초기값을 안전하게 검사하는 ABAP 표준은 `IS INITIAL`입니다.',
+            '`IF pv_car IS INITIAL AND pv_con IS INITIAL.`'
+          ],
+          [
+            '**6. `[주의]`<br>부분 입력 논리 불일치**',
+            '`INPUT_CHECK`는 `AND` (둘 다 비었을 때만 차단), `WHERE`는 `carrid = pv_car AND connid = pv_con`',
+            '사용자가 `CARRID = \'LH\'`만 넣고 `CONNID`를 비워 실행하면 `INPUT_CHECK`는 통과하지만, `WHERE`에서 `connid = \'0000\'`인 행을 찾아 0건 오류가 발생합니다.',
+            '시험 기본 조건(`=` vs `IN` 구분)에 맞춰 둘 다 입력을 전제하되, **둘 중 하나만 입력해도 조회되게 하려면** 로컬 Range로 변환해 `IN` 조건을 쓰거나, 둘 다 필수라면 `INPUT_CHECK`를 `OR`로 일치시켜야 합니다.'
+          ],
+          [
+            '**7. `[주의]`<br>연도 하드코딩과 경계값 오류**',
+            '`IF sv_fdt-low(4) < 2025 OR sv_fdt-high(4) > 2028.`',
+            '2026년 기준 `±1년`은 **`2025 ~ 2027`**인데 `> 2028`은 2028년을 통과시킵니다. 또한 단건(`EQ`, `high` 미입력)이나 빈 Range일 때 `low(4)`가 `\'0000\'`이 되어 오탐합니다. *(노션에서 취소선으로 선택 사항 처리)*',
+            '`sy-datum(4) - 1`, `sy-datum(4) + 1`로 동적 계산하고 `LOOP AT pt_fdt` 안에서 `IS NOT INITIAL` 검사 후 범위 비교'
+          ],
+          [
+            '**8. `[개선]`<br>`SELECT *` · `LOOP MODIFY` · 출력문 간결화**',
+            '`SELECT * ... INTO CORRESPONDING FIELDS`, `MODIFY gt_basic FROM gs_basic.`, `CALL METHOD cl_demo_output=>display EXPORTING ...`',
+            '두 테이블 전체 컬럼(`*`)을 DB에서 전송하면 불필요한 네트워크 비용이 생깁니다. `LOOP` 내 `MODIFY`는 변경된 2개 필드만 지정하거나 `FIELD-SYMBOL`을 쓰는 것이 깔끔합니다.',
+            '필요한 **8개 컬럼만 명시**해 `SELECT`, `MODIFY pt_basic FROM ls_basic TRANSPORTING seats_remain status.`, 출력은 **`cl_demo_output=>display( gt_basic ).`**'
+          ]
+        ])
+      ),
+      basicSec('review', 'Before / After', '핵심 습관 Before vs After 한눈에 비교',
+        {
+          type: 'compare',
+          items: [
+            {
+              tag: 'Before · 놓치기 쉬운 패턴',
+              title: '이벤트 누락 · 헤더 전달 · 전역 변수 직접 조작',
+              points: [
+                '`SELECT-OPTIONS` 바로 밑에 이벤트 없이 `PERFORM` 호출',
+                '`PERFORM input_check USING pa_car pa_con so_fdt.` (헤더 1행)',
+                '`WHERE a~fldate BETWEEN so_fdt-low AND so_fdt-high`',
+                '`PERFORM get_data.` (파라미터 없이 `gt_basic` 직접 수정)',
+                '`SELECT SINGLE carrid INTO pa_car` (입력 변수 덮어쓰기)'
+              ]
+            },
+            {
+              tag: 'After · 시험·실무 권장 패턴',
+              title: '이벤트 분리 · 바디(`[]`) 전달 · 명시적 인터페이스',
+              points: [
+                '`INITIALIZATION` → `AT SELECTION-SCREEN` → `START-OF-SELECTION` 순서 고정',
+                '`TYPES tt_fdt TYPE RANGE OF s_date.` + `USING so_fdt[]` → `pt_fdt TYPE tt_fdt`',
+                '`WHERE a~fldate IN pt_fdt` (빈 조건·단건·다건·제외 모두 자동 지원)',
+                '`PERFORM get_data USING pa_car pa_con so_fdt[] CHANGING gt_basic.`',
+                '`INTO lv_carrid` 지역 변수 수신 + `CHANGING cv_subrc` 명시 반환'
+              ]
+            }
+          ]
+        }
+      ),
+
+      /* ===================== TAB 3: 사내 강사님 공식 답안 ===================== */
+      basicSec('solution', '공식 답안', '사내 강사님 공식 답안 (ZPROG_CL5_T14_005)',
+        text('사내 강사님이 작성·공유한 **Basic Session 공식 답안 원문**입니다. `READ-ME` 헤더 양식과 주석 설명까지 그대로 담았습니다. 본인 계정에서 직접 실행할 때는 `zmc_t14`와 `zbs_flight_t_14`를 본인이 생성한 `Message Class`(`ZBASIC_MSG_?_##`)와 `Global Structure`(`ZBS_FLIGHT_?_##`) 이름으로 맞춰 테스트하세요.'),
+        code('사내 강사님 공식 답안 (ZPROG_CL5_T14_005)', `*&---------------------------------------------------------------------*
+*& Report ZPROG_CL5_T14_005
+*&---------------------------------------------------------------------*
+*&
+*&---------------------------------------------------------------------*
+REPORT zprog_cl5_t14_005 MESSAGE-ID zmc_t14.
+
+*&---------------------------------------------------------------------*
+*& Program     : ZPROG_CL5_T14_005
+*& Title       : ABAP1_시험직전_실습문제
+*&---------------------------------------------------------------------*
+*& Description :
+*&   - CL5 & 6 ABAP 시험직전 실습문제
+*&---------------------------------------------------------------------*
+*& Author      : 천승환
+*& Created     : 2026.11.25
+*&---------------------------------------------------------------------*
+*& 위는 READ-ME 라는 양식입니다. 본인이 개발한 굵직한 내용의 프로그램이 존재한다면
+*& 해당 양식에 따라 정리해두시면 좋습니다. 이유는 본인이 나중에 봤을 때 + 유지보수 입장에서 타인이 프로그램을 처음 봤을 때를 위함
+************************************************************************
+
+**----------------------------------------------------------------------*
+** 문제 2-1 , 2-2 Structure 및 Internal Table 만들기
+**----------------------------------------------------------------------*
+DATA : BEGIN OF gs_flight.
+         INCLUDE TYPE zbs_flight_t_14.
+DATA :   status TYPE c LENGTH 10,
+       END OF gs_flight,                  "Local Structure 생성
+       gt_flight LIKE TABLE OF gs_flight. "위 구조로 된 Internal tab 생성
+
+DATA : gv_subrc TYPE sy-subrc.            "아래에서 sy-subrc 의 값을 담을 flag 변수 선언
+**----------------------------------------------------------------------*
+** 문제 3-1 Selection-Screen 구성
+**----------------------------------------------------------------------*
+PARAMETERS : pa_car TYPE zbs_flight_t_14-carrid,
+             pa_con TYPE zbs_flight_t_14-connid.
+"parameter -> 단일 입력값
+
+
+SELECT-OPTIONS : so_date FOR gs_flight-fldate.
+"select-options -> 범위 입력값 설정 가능하고 internal table 구조로 이뤄짐
+
+**----------------------------------------------------------------------*
+** 문제 3-2 초기값 할당
+**----------------------------------------------------------------------*
+INITIALIZATION.   "selection screen 안의 초기 입력값을 설정해주는 역할을 한다.
+  "초기값 세팅 - Java Script 상 onInit( ) 과 비슷한 느낌
+
+  pa_car = 'LH'.
+  pa_con = '0400'.
+
+  so_date-sign = 'I'.
+  so_date-option = 'BT'.
+  so_date-low    = '20260531'.
+  so_date-high   = '20270619'.
+  APPEND so_date TO so_date[].   "아래 설명
+  CLEAR so_date.
+
+  "본래 Table에 데이터를 추가하기 위해서는 Structure 구조를 가지고 Append/Modify/Delete 해야함
+  "select-options는 "Header" 를 가진 Table 구조를 가지고 있음
+  " => 본래 테이블 구조를 가진 Structure를 별도로 선언해줘야하는데 이럴 필요가 없고
+  " so_date라는 테이블 명과 동일한 이름으로 Header를 가지고 있음
+  " 그래서 APPEND so_date. 하면 축약으로 가능하나, 헷갈리지 말라고 위와 같이 작성하였고
+  "[ ]이 표시는 위와같은 Header를 가진 테이블의 경우에 구분을 해주기 위해 사용. 없어도 무방.
+
+**----------------------------------------------------------------------*
+** 문제 3-2-2) Subroutine으로 메시지 처리
+**----------------------------------------------------------------------*
+AT SELECTION-SCREEN. "START-OF-SELECTION 에서 본격적인 코드가 시작되기 전에 유효성 처리를 하는 이벤트
+                     "유효성 처리라는 말은 내가 작성한 여러 로직들이 실행되는 최소 조건이 갖춰지지 않았을 때
+                     "그 아래로 못가게 막는 역할이라고 생각하면 됩니다.
+
+  "입력값 유효성 체크
+  PERFORM input_check USING pa_car
+                            pa_con
+                            so_date
+                      CHANGING gv_subrc.
+
+  "입력값에 따른 데이터 조회 유효성 체크
+  IF gv_subrc IS INITIAL.
+  PERFORM data_check USING pa_car
+                           pa_con
+                           so_date[]
+                     CHANGING gv_subrc.
+  ENDIF.
+
+"해당 코드는 취향차이입니다. 저는 하나에 모으고 싶어서 이렇게 진행했고 꼭 이렇게 해야하는 것은 아닙니다.
+"이러다보니 위 data_check 라는 subroutine 호출 전 IF 문으로 감싸줘야했습니다. 이유는 각자 디버깅으로 찾아보시길 바랍니다!
+"gv_subrc라는 변수를 선언한 뒤, chainging parameter를 사용하여 메시지 처리를 하고자 함.
+  IF gv_subrc = 1.
+    MESSAGE e000.
+  ELSEIF gv_subrc = 2.
+    MESSAGE e001 WITH '작년과 내년 데이터만 조회 가능합니다.'.
+  ELSEIF gv_subrc = 3.
+    MESSAGE e001 WITH '조회되는 데이터 없습니다.'.
+  ENDIF.
+
+START-OF-SELECTION. "본격적인 로직 시작
+**----------------------------------------------------------------------*
+** 문제 4 Subroutine 이용하여 데이터 출력
+**----------------------------------------------------------------------*
+  PERFORM get_data USING      pa_car
+                              pa_con
+                              so_date[]
+                   CHANGING   gt_flight.
+
+  IF gt_flight IS NOT INITIAL.
+    cl_demo_output=>display( gt_flight ).
+  ENDIF.
+
+
+
+**********************************************************************
+*&---------------------------------------------------------------------*
+*& Form INPUT_CHECK
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*&      --> PA_CAR
+*&      --> PA_CON
+*&      --> SO_DATE
+*&---------------------------------------------------------------------*
+FORM input_check  USING VALUE(pv_car) LIKE pa_car     "LIKE 로 사용할 수도 있고
+                        VALUE(pv_con) TYPE s_conn_id  "TYPE 으로 사용하려면 이렇게
+                        VALUE(ps_date) LIKE so_date  "얘는 LIKE만 되네요 TYPE 으로 선언하면 에러납니다.
+
+                  CHANGING pv_subrc LIKE gv_subrc.
+
+  DATA : pv_year_low  TYPE i,   "select-options 의 low 값에서 년도 추출할 변수
+         pv_year_high TYPE i.   "select-options 의 high 값에서 년도 추출할 변수
+
+  CLEAR : pv_subrc.
+
+  pv_year_low = ps_date-low(4).
+  "pv_date는 20261031 이런식으로 나오는데 (4)를 통해 앞에서 4자리 자르겠다라는 의미입니다
+  "그래서 2026 과 같이 연도만 추출하여 현재 날짜(sy-datum) 년도와 비교하고자 함입니다.
+  pv_year_high = ps_date-high(4).
+
+
+  IF pv_car IS INITIAL OR pv_con IS INITIAL.
+    "제가 노션문제에는 AND 조건을 써야하는 것처럼 적어놨더라구요. 제가 모호하게 작성했기 때문에 AND로 설정하셨어도 상관없습니다
+    pv_subrc = 1.
+      "MESSAGE e000.
+    RETURN.
+  ELSEIF pv_year_low < sy-datum(4) - 1 OR pv_year_high > sy-datum(4) + 1.
+    pv_subrc = 2.
+    "MESSAGE e001 WITH '작년과 내년 데이터만 조회 가능합니다.'.
+    RETURN.
+  ENDIF.
+
+"return 구문 => 해당 에러가 발생하면 아래쪽 추가 로직을 타지 않고 바로 subroutine을 빠져나가
+"             호출부에 있는 IF 문쪽으로 가게 됩니다.
+ENDFORM.
+
+*&---------------------------------------------------------------------*
+*& Form DATA_CHECK
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*&      --> PA_CAR
+*&      --> PA_CON
+*&      <-- GV_SUBRC
+*&---------------------------------------------------------------------*
+FORM data_check  USING  VALUE(pv_car)
+                        VALUE(pv_con)
+                        VALUE(pt_date) LIKE so_date[]
+                 CHANGING VALUE(pv_subrc).
+
+
+  DATA : ls_data LIKE LINE OF gt_flight.
+
+  CLEAR pv_subrc.
+
+  SELECT SINGLE carrid connid fldate
+    FROM sflight
+    INTO CORRESPONDING FIELDS OF ls_data
+    WHERE carrid = pv_car
+      AND connid = pv_con
+      AND fldate IN pt_date.
+
+"데이터가 있는 지 없는 지 확인할 때는 한건만 확인해도 됨 -> select single 사용
+
+  IF sy-subrc <> 0.  "정상적으로 데이터 조회 시, sy-subrc 에 0 값이 담기기 때문에
+                     "해당 조건을 통해 pv_subrc 에 값을 임시로 주고 호출부에서 메시지 처리.
+    pv_subrc = 3.
+  ENDIF.
+
+ENDFORM.
+
+*&---------------------------------------------------------------------*
+*& Form GET_DATA
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*&      --> PA_CAR
+*&      --> PA_CON
+*&      <-- GT_FLIGHT
+*&---------------------------------------------------------------------*
+FORM get_data  USING VALUE(pv_car)  LIKE pa_car
+                     VALUE(pv_con)  LIKE pa_con
+                     VALUE(pt_date) LIKE so_date[]
+               CHANGING VALUE(ct_flight) LIKE gt_flight.
+
+**----------------------------------------------------------------------*
+** 문제 4-1) INNER JOIN 이용하여 데이터 출력
+**----------------------------------------------------------------------*
+  SELECT a~carrid, a~connid, b~carrname,
+         a~fldate, a~price, a~currency,
+         a~seatsmax, a~seatsocc
+    FROM sflight AS a
+    INNER JOIN scarr AS b
+    ON a~carrid = b~carrid
+    WHERE a~carrid = @pv_car
+      AND a~connid = @pv_con
+      AND a~fldate IN @pt_date
+    INTO CORRESPONDING FIELDS OF TABLE @ct_flight.
+
+**----------------------------------------------------------------------*
+** 문제 4-2) SEATS_REMAIN = SEATSMAX - SEATSOCC.
+**----------------------------------------------------------------------*
+  LOOP AT ct_flight INTO DATA(ls_flight).
+    ls_flight-seats_remain = ls_flight-seatsmax - ls_flight-seatsocc.
+
+    IF ls_flight-seats_remain < 10.
+      ls_flight-status = '매진임박'.
+    ELSEIF ls_flight-seats_remain < 30.
+      ls_flight-status = '보통'.
+    ELSE.
+      ls_flight-status = '여유'.
+    ENDIF.
+
+    MODIFY ct_flight FROM ls_flight TRANSPORTING seats_remain status.
+  ENDLOOP.
+
+
+ENDFORM.`)
+      ),
+      basicSec('solution', '핵심 해설', '강사님 공식 답안에서 꼭 챙겨야 할 실무 포인트 6가지',
+        table(['답안 핵심 패턴', '동작 원리와 실무 의도'], [
+          ['**1. `READ-ME` 헤더 주석 양식**', 'Program 상단에 `Program` · `Title` · `Description` · `Author` · `Created` 블록을 남겨 본인 복습과 타인 유지보수 시 파악 속도를 높입니다.'],
+          ['**2. `APPEND so_date TO so_date[].` + `CLEAR so_date.`**', '`SELECT-OPTIONS`는 Header와 Table Body(`[]`)가 함께 있으므로 `APPEND so_date.` 축약 대신 대상을 명시하고 Header를 비워 혼동을 방지합니다.'],
+          ['**3. `gv_subrc` 중앙 처리 + `IF gv_subrc IS INITIAL.` 보호**', '`INPUT_CHECK`에서 `gv_subrc = 1` 또는 `2`가 세팅됐을 때 `IF` 없이 `DATA_CHECK`를 호출하면 `DATA_CHECK` 첫 줄의 `CLEAR pv_subrc.`가 이전 에러 코드를 지워 버리기 때문에 반드시 `IF gv_subrc IS INITIAL.`로 감싸야 합니다.'],
+          ['**4. `MESSAGE e001 WITH \'...\'` 범용 메시지 재사용**', '`SE91` `Message Class`에 `&`만 등록한 메시지 `001` 하나를 두고 `WITH`로 문구를 동적 전달해 여러 오류 상황에 재사용할 수 있습니다.'],
+          ['**5. `LIKE so_date` (Header) vs `LIKE so_date[]` (Body)**', '`INPUT_CHECK`에서는 `ps_date-low(4)`/`high(4)` 추출을 위해 `so_date`를, `DATA_CHECK` · `GET_DATA`에서는 `WHERE fldate IN pt_date` 조건을 위해 반드시 바디 `so_date[]`를 전달합니다.'],
+          ['**6. 문장 단위 구문법(`DATA_CHECK`) · 신문법(`GET_DATA`) 분리**', '한 `SELECT` 안에서는 구/신문법을 절대 섞지 않고, `DATA_CHECK`는 구문법(`INTO ... WHERE`), `GET_DATA`는 신문법(쉼표 · `@` · 맨 끝 `INTO`)으로 문장 단위로 깔끔히 작성했습니다. 출력 전 `IF gt_flight IS NOT INITIAL.` 검사도 실무 필수 습관입니다.']
+        ])
+      ),
+
+      /* ===================== TAB 4: 시험 직전 체크리스트 ===================== */
+      basicSec('checklist', '13항목', '시험 직전 이해도 체크리스트 13항목 & 연결 복습 문서',
+        text('강사님이 Basic Session 페이지 하단에 제시한 **13개 이해도 체크리스트**입니다. 각 항목의 핵심 확인 질문에 스스로 답할 수 있는지 점검하고, 헷갈리는 항목은 연결 문서로 바로 이동해 복습하세요.'),
+        table(['#', '체크리스트 항목', '시험 직전 자가 점검 질문', '복습 문서'], [
+          ['1', 'CTS (`Transport Request`)', 'Workbench Request를 생성하고 모든 객체를 동일 CTS에 묶어 관리했는가?', '[[unit-02|Unit 2 · Workbench]]'],
+          ['2', 'Package', '`$TMP`가 아닌 `ZPAC_Basic_?_##` Package를 생성해 객체를 담았는가?', '[[unit-02|Unit 2 · Workbench]]'],
+          ['3', 'Transaction Code', '`SE93`에서 Report Transaction으로 프로그램을 실행 연결했는가?', '[[unit-02|Unit 2 · Workbench]]'],
+          ['4', 'Message Class', '`SE91`에 메시지 번호를 등록하고 `REPORT ... MESSAGE-ID` + `MESSAGE e000`으로 처리했는가?', '[[unit-03|Unit 3 · 기본 언어 요소]]'],
+          ['5', 'Domain (신규 1개)', '`SE11`에서 `ZDO_SEATRE_?_##`(`INT4`, 길이 `10`)의 기술 속성을 정의·활성화했는가?', '[[bc430-02|BC430 Unit 2 · DDIC 타입]]'],
+          ['6', 'Data Element (신규 1개)', '`ZD_SEATRE_?_##`에 Domain을 연결하고 Field Label(Description)을 입력했는가?', '[[bc430-02|BC430 Unit 2 · DDIC 타입]]'],
+          ['7', 'Global Structure', '`ZBS_FLIGHT_?_##`에 `PRICE`의 `Currency/quantity fields` 참조(`CURRENCY`)를 연결해 활성화했는가?', '[[bc430-02|BC430 Unit 2 · DDIC 타입]]'],
+          ['8', 'Local Structure', '`BEGIN OF ~ END OF` 안에서 `INCLUDE TYPE`으로 Global Structure를 포함하고 `STATUS`를 추가했는가?', '[[unit-05|Unit 5 · 복합 데이터 객체]]'],
+          ['9', 'Text Element', 'Selection Texts에서 `pa_car`, `pa_con`, `so_fdt` 라벨(`Airline` 등)을 활성화했는가?', '[[unit-07|Unit 7 · Classic Reports]]'],
+          ['10', 'JOIN 구문 이해', '`SFLIGHT AS a INNER JOIN SCARR AS b ON a~carrid = b~carrid`와 구/신문법 `INTO` 위치를 구분하는가?', '[[abap-sql-guide|ABAP SQL 가이드]]'],
+          ['11', 'LOOP문 이해', '`LOOP AT`으로 `SEATS_REMAIN` 계산·`STATUS` 분기 후 `MODIFY ... TRANSPORTING`으로 반영할 수 있는가?', '[[unit-05|Unit 5 · 복합 데이터 객체]]'],
+          ['12', 'Subroutine (`USING`/`CHANGING`)', '`so_fdt[]` 바디 전달, Formal Parameter 전용 사용, 호출부 출력 원칙을 지켰는가?', '[[unit-04|Unit 4 · 모듈화 기법]]'],
+          ['13', '`WHERE`절 `PARAMETERS` vs `SELECT-OPTIONS`', '단일 값(`PARAMETERS`)은 `=`, 범위 테이블(`SELECT-OPTIONS`)은 `IN`으로 비교하는 이유를 설명할 수 있는가?', '[[abap-thinking-flow|ABAP 사고 흐름]]']
+        ])
+      ),
+      basicSec('checklist', '추가 실습', '심화 확장 — GET_DATA를 Function Module로 전환하기',
+        text('기본 과제를 완료한 뒤 강사님이 추천한 **추가 실습(Function Module 전환 · 코드 리팩터링)** 체크포인트입니다.'),
+        {
+          type: 'practice',
+          title: 'Subroutine → Function Module 전환 4단계',
+          steps: [
+            { step: '1', action: 'SE11에서 Global Structure · Table Type 준비', detail: 'Function Module 인터페이스는 Local Type(`ts_structure`, `tt_fdt`)을 직접 참조할 수 없으므로, `STATUS`까지 포함된 Global Structure(또는 `Table Type`)와 표준 Range Table Type(예: `RANGE_T_DATS` 또는 커스텀 `ZTT_FDATE_?_##`)을 DDIC에 준비합니다.' },
+            { step: '2', action: 'SE80 / SE37에서 Function Group · Function Module 생성', detail: 'Import 파라미터(`IV_CARRID`, `IV_CONNID`, `IT_FLDATE`), Export 파라미터(`ET_FLIGHT`), Exceptions(`NO_DATA_FOUND` 등)를 정의합니다.' },
+            { step: '3', action: 'GET_DATA 로직 이관 및 CALL FUNCTION 교체', detail: '기존 `PERFORM get_data`를 주석 처리하고 `CALL FUNCTION`으로 교체한 뒤 `sy-subrc` 예외 분기를 확인합니다.' },
+            { step: '4', action: '리팩터링 점검 (단순화 · 가독성)', detail: '중복 `WHERE` 조건, 불필요한 `CLEAR`, `IS INITIAL` 일관성, 변수 네이밍 Prefix를 한 번 더 점검합니다.' }
+          ]
+        }
       )
     ]
   };
@@ -2683,11 +3327,11 @@ ENDIF.`)
       sqlSection('select', 'new', '다건 조회 — INTO TABLE · APPENDING · CORRESPONDING',
         text(
           '여러 행을 읽을 때는 `SELECT ... ENDSELECT` 루프보다 **한 번에 Internal Table로 받는 `INTO TABLE`**이 성능과 가독성 모두 유리합니다. 신문법에서는 필요한 컬럼만 쉼표로 나열해 `@DATA(gt_...)` 인라인 선언으로 받으면 별도 `TYPES` 선언 없이 바로 구조가 맞춰집니다.',
-          '이미 선언해 둔 커스텀 구조체/Internal Table에 담을 때 컬럼 순서가 다르면 `INTO CORRESPONDING FIELDS OF TABLE @gt_out`으로 이름(`AS` 별칭 포함) 기준 매핑을 사용합니다. 기존 행을 유지하면서 결과를 덧붙여야 할 때만 `APPENDING TABLE`을 씁니다.'
+          '이미 선언해 둔 커스텀 Structure/Internal Table에 담을 때 컬럼 순서가 다르면 `INTO CORRESPONDING FIELDS OF TABLE @gt_out`으로 이름(`AS` 별칭 포함) 기준 매핑을 사용합니다. 기존 행을 유지하면서 결과를 덧붙여야 할 때만 `APPENDING TABLE`을 씁니다.'
         ),
         table(['신문법 INTO 절 형태', '기존 데이터 처리', '컬럼 매핑 기준'], [
           ['`INTO TABLE @DATA(gt_out)`', '새 Internal Table 인라인 생성·채움', 'SELECT 열 이름·별칭 그대로 컴포넌트 자동 생성'],
-          ['`INTO TABLE @gt_out`', '기존 행을 모두 비우고 새로 채움', '열 순서와 타입이 구조체와 일치해야 함'],
+          ['`INTO TABLE @gt_out`', '기존 행을 모두 비우고 새로 채움', '열 순서와 타입이 Structure와 일치해야 함'],
           ['`INTO CORRESPONDING FIELDS OF TABLE @gt_out`', '기존 행을 비우고 새로 채움', '컬럼명(`AS` 별칭)과 컴포넌트 이름이 같은 필드만 매핑'],
           ['`APPENDING [CORRESPONDING FIELDS OF] TABLE @gt_out`', '기존 행을 유지하고 뒤에 추가', '중복 자동 제거 안 함(UNIQUE 키 테이블은 충돌 주의)']
         ]),
@@ -2756,7 +3400,7 @@ ENDLOOP.`)
       ),
       sqlSection('select', 'classic', '단건 조회 — SELECT SINGLE vs UP TO 1 ROWS',
         text(
-          '구문법에서도 Primary Key 전체로 유일한 1건을 읽을 때는 `SELECT SINGLE`, 정렬 기준의 첫 1건이 필요할 때는 `UP TO 1 ROWS` + `ORDER BY`를 사용합니다. 단, 구문법에서는 `@DATA(...)` 인라인 선언이나 `@abap_true` 리터럴 조회를 쓸 수 없으므로 **받는 구조체·Internal Table·존재 확인용 변수를 반드시 `TYPES`와 `DATA`로 먼저 선언**해야 합니다.',
+          '구문법에서도 Primary Key 전체로 유일한 1건을 읽을 때는 `SELECT SINGLE`, 정렬 기준의 첫 1건이 필요할 때는 `UP TO 1 ROWS` + `ORDER BY`를 사용합니다. 단, 구문법에서는 `@DATA(...)` 인라인 선언이나 `@abap_true` 리터럴 조회를 쓸 수 없으므로 **받는 Structure·Internal Table·존재 확인용 변수를 반드시 `TYPES`와 `DATA`로 먼저 선언**해야 합니다.',
           '조회 결과가 0건(`sy-subrc = 4`)이면 기존 Work Area에 이전 값이 남을 수 있으므로 조회 전 `CLEAR` 하고 직후 `IF sy-subrc = 0.`을 확인하세요.'
         ),
         table(['구문법 패턴', '특징', '권장 상황'], [
@@ -2814,7 +3458,7 @@ ENDIF.`)
         ),
         table(['구문법 INTO 절 형태', '기존 데이터 처리', '컬럼 매핑 · 참고'], [
           ['`INTO TABLE gt_out`', '기존 행을 모두 비우고 새로 채움', '사전 선언된 `gt_out`의 열 순서·타입이 SELECT 목록과 일치해야 함'],
-          ['`INTO CORRESPONDING FIELDS OF TABLE gt_out`', '기존 행을 비우고 새로 채움', '컬럼명(`AS` 별칭)과 구조체 컴포넌트 이름이 같은 필드만 매핑'],
+          ['`INTO CORRESPONDING FIELDS OF TABLE gt_out`', '기존 행을 비우고 새로 채움', '컬럼명(`AS` 별칭)과 Structure 컴포넌트 이름이 같은 필드만 매핑'],
           ['`APPENDING [CORRESPONDING FIELDS OF] TABLE gt_out`', '기존 행을 유지하고 뒤에 추가', '중복 자동 제거 안 함(UNIQUE 키 테이블 충돌 주의)'],
           ['`SELECT ... INTO gs_row ... ENDSELECT.` (레거시)', '1행씩 반복 수신', '기존 코드 해석용으로만 알고, 신규 작성은 `INTO TABLE` 권장']
         ]),
@@ -2855,7 +3499,7 @@ SELECT carrid connid cityfrom cityto
 DESCRIBE TABLE gt_routes LINES lv_cnt.
 WRITE: / '합산 노선 수:', lv_cnt.
 
-" 3) 사전 선언한 구조체·Internal Table로 조회
+" 3) 사전 선언한 Structure·Internal Table로 조회
 SELECT carrid connid fltime
   FROM spfli
   INTO TABLE gt_lh_routes
@@ -3005,12 +3649,12 @@ ENDIF.`)
       ),
       sqlSection('filter', 'classic', '집계 함수 · DISTINCT · GROUP BY · HAVING · 0건 주의',
         text(
-          '구문법에서도 `COUNT`, `SUM`, `AVG`, `MIN`, `MAX`와 `GROUP BY`·`HAVING`을 사용할 수 있습니다. 다만 **`SELECT`·`GROUP BY`·`ORDER BY`의 컬럼을 쉼표 없이 공백으로 구분**하고, 결과를 담을 구조체 `TYPES`와 Internal Table `DATA`를 미리 선언해야 합니다.',
+          '구문법에서도 `COUNT`, `SUM`, `AVG`, `MIN`, `MAX`와 `GROUP BY`·`HAVING`을 사용할 수 있습니다. 다만 **`SELECT`·`GROUP BY`·`ORDER BY`의 컬럼을 쉼표 없이 공백으로 구분**하고, 결과를 담을 Structure `TYPES`와 Internal Table `DATA`를 미리 선언해야 합니다.',
           '구문법에서는 `SUM( price * seatsocc )`처럼 집계 함수 안에 산술식·`CASE` 같은 SQL 표현식을 넣을 수 없으며, 순수 컬럼명만 전달해야 합니다.'
         ),
         table(['집계 / 절 (구문법)', '역할', '구문법 주의사항'], [
           ['`DISTINCT`', 'SELECT 컬럼 조합 전체의 중복 제거', '공백으로 컬럼 나열 (`SELECT DISTINCT carrid connid`)'],
-          ['`COUNT( * )`', '조건에 맞는 전체 행 수', '결과 구조체에 `TYPE i` 컴포넌트 사전 선언 필요'],
+          ['`COUNT( * )`', '조건에 맞는 전체 행 수', '결과 Structure에 `TYPE i` 컴포넌트 사전 선언 필요'],
           ['`COUNT( DISTINCT col )`', 'NULL 제외한 서로 다른 값의 개수', '괄호 안쪽 공백(`COUNT( DISTINCT col )`) 지키기'],
           ['`SUM( col )` / `AVG( col )`', '합계 / 평균', '함수 안에 산술식·표현식 불가, 통화 컬럼 함께 `GROUP BY`'],
           ['`GROUP BY col1 col2` / `HAVING`', '공백 구분 그룹 묶기 · 집계 후 필터', '집계하지 않는 모든 일반 컬럼을 `GROUP BY`에 명시']
@@ -3291,7 +3935,7 @@ ENDIF.`)
       ),
       sqlSection('dml', 'classic', 'DB 변경 문법 — INSERT · UPDATE · MODIFY · DELETE',
         text(
-          '구문법의 DB 변경 문장(`INSERT`, `UPDATE`, `MODIFY`, `DELETE`)은 Work Area·Internal Table·조건 변수 앞에 **`@`를 붙이지 않습니다**. [[unit-05|내부 테이블]] 조작 문장과 이름이 비슷하므로 대상이 DB 테이블인지 Internal Table 변수인지 항상 구분하세요.',
+          '구문법의 DB 변경 문장(`INSERT`, `UPDATE`, `MODIFY`, `DELETE`)은 Work Area·Internal Table·조건 변수 앞에 **`@`를 붙이지 않습니다**. [[unit-05|Internal Table]] 조작 문장과 이름이 비슷하므로 대상이 DB 테이블인지 Internal Table 변수인지 항상 구분하세요.',
           '오래된 레거시 프로그램에서는 `TABLES zcarrier_##.`로 테이블명과 같은 암묵적 Work Area를 선언한 뒤 `FROM` 없이 `INSERT zcarrier_##.`처럼 쓰는 짧은 형태도 볼 수 있지만, 가독성과 안전을 위해 구문법에서도 **명시적인 `FROM gs_row`** 사용을 권장합니다.'
         ),
         {
@@ -3400,9 +4044,9 @@ ENDLOOP.`)
           '따라서 구문법에서는 **필요한 원본 컬럼만 `INTO [CORRESPONDING FIELDS OF] TABLE`로 먼저 조회**한 뒤, ABAP `LOOP AT` 내부에서 계산·조건 분기(`IF`/`CASE`)·초기값 치환(`IS INITIAL`)을 처리합니다. 아래 예제는 신문법의 `CASE·산술식·COALESCE` 예제와 동일한 결과를 구문법으로 구현한 패턴입니다.'
         ),
         table(['필요한 가공 작업', '구문법(Classic) 처리 패턴', '참고'], [
-          ['조건 분기 (`CASE` 대체)', '`LOOP AT` 안에서 `IF ... ELSEIF ... ELSE ... ENDIF.`', '결과를 구조체 추가 필드에 저장 후 `MODIFY gt_tab FROM gs_row.`'],
+          ['조건 분기 (`CASE` 대체)', '`LOOP AT` 안에서 `IF ... ELSEIF ... ELSE ... ENDIF.`', '결과를 Structure 추가 필드에 저장 후 `MODIFY gt_tab FROM gs_row.`'],
           ['`NULL`/미일치 기본값 (`COALESCE` 대체)', '`IF gs_row-dest_city IS INITIAL. gs_row-dest_city = \'미등록\'. ENDIF.`', '`LEFT OUTER JOIN` 미일치 열은 ABAP 초기값으로 들어옴'],
-          ['산술 계산 (`seatsmax - seatsocc`)', '`gs_row-seatsfree = gs_row-seatsmax - gs_row-seatsocc.`', '결과 구조체(`TYPES`)에 계산용 필드를 미리 정의'],
+          ['산술 계산 (`seatsmax - seatsocc`)', '`gs_row-seatsfree = gs_row-seatsmax - gs_row-seatsocc.`', '결과 Structure(`TYPES`)에 계산용 필드를 미리 정의'],
           ['두 조회 결과 합치기 (`UNION` 대체)', '첫 조회 `INTO TABLE gt_all` + 두 번째 조회 `APPENDING TABLE gt_all`', '중복 제거가 필요하면 `SORT` 후 `DELETE ADJACENT DUPLICATES`'],
           ['부분 건수 조회 (`OFFSET` 대체)', '`UP TO n ROWS` 조회 후 필요한 범위 처리', '대량 데이터는 키 조건(`WHERE key > lv_last_key`)으로 페이징']
         ]),
@@ -3478,11 +4122,30 @@ ENDLOOP.`)
           type: 'callout',
           style: 'tip',
           title: '관련 문서 함께 보기',
-          body: '수업 필기 원문과 연결 개념은 [[unit-06|BC400 Unit 6 · 데이터 모델링과 데이터 조회]] · [[bc430-01|BC430 Unit 1 · ABAP Dictionary]] · [[bc430-04|BC430 Unit 4 · 테이블 접근 성능]] · [[unit-05|BC400 Unit 5 · 복합 데이터 객체]] · [[sap-tcode-reference|자주 쓰는 T-Code 모음]]에서 바로 이어서 볼 수 있습니다.'
+          body: '수업 필기 원문과 연결 개념은 [[unit-06|BC400 Unit 6 · 데이터 모델링과 데이터 조회]] · [[bc430-01|BC430 Unit 1 · ABAP Dictionary]] · [[bc430-04|BC430 Unit 4 · 테이블 접근 성능]] · [[unit-05|BC400 Unit 5 · 복합 데이터 객체]] · [[abap-thinking-flow|ABAP 사고 흐름]] · [[basic-session-review|Basic Session Review]] · [[sap-tcode-reference|자주 쓰는 T-Code 모음]]에서 바로 이어서 볼 수 있습니다.'
         }
       )
     ]
   };
+  docs['abap-thinking-flow'].sections.push(
+    related(['unit-05', 'unit-06', 'unit-07', 'bc430-02', 'abap-sql-guide', 'basic-session-review', 'sap-tcode-reference'])
+  );
+  docs['sap-gui-programs'].sections.push(
+    related(['unit-02', 'unit-04', 'unit-05', 'unit-07', 'bc430-02', 'basic-session-review', 'abap-thinking-flow', 'abap-sql-guide', 'sap-tcode-reference'])
+  );
+  docs['basic-session-review'].sections.push(
+    related(['unit-02', 'unit-03', 'unit-04', 'unit-05', 'unit-06', 'unit-07', 'bc430-02', 'abap-sql-guide', 'abap-thinking-flow', 'sap-tcode-reference'])
+  );
+  const unit06Rel = docs['unit-06']?.sections?.find(s => s.title === '관련 문서');
+  if (unit06Rel?.blocks?.[0]?.paragraphs?.[0]) {
+    unit06Rel.blocks[0].paragraphs[0] += ' · [[abap-sql-guide|ABAP SQL 가이드]]';
+  }
+  for (const unitId of ['unit-02', 'unit-03', 'unit-04', 'unit-05', 'unit-06', 'unit-07', 'bc430-02']) {
+    const rel = docs[unitId]?.sections?.find(s => s.title === '관련 문서');
+    if (rel?.blocks?.[0]?.paragraphs?.[0]) {
+      rel.blocks[0].paragraphs[0] += ' · [[basic-session-review|Basic Session Review]]';
+    }
+  }
   const sortedIds = ['welcome-abap', ...unitOrder];
   const sorted = Object.fromEntries([...sortedIds, ...Object.keys(docs).filter(id => !sortedIds.includes(id))].map(id => [id, docs[id]]));
   window.WIKI_DOCS = sorted;

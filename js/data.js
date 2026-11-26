@@ -67,7 +67,7 @@ window.WIKI_DOCS = {
       ] },
       { title: "메시지 · MESSAGE TYPE 'E'", blocks: [
         { type: "code", label: "오류 메시지", code: "MESSAGE '입력 내용을 확인해 주세요.' TYPE 'E'." },
-        { type: "text", paragraphs: ["'E'는 오류(Error) 메시지 유형이며, 문자열 값은 대문자로 지정합니다. E 메시지 이후의 처리 흐름은 선택 화면·Dynpro·백그라운드 등 실행 문맥에 따라 달라집니다.", "ABAP에서 줄 중간 주석은 큰따옴표(\")로 시작합니다. 별표(*) 주석은 행의 첫 번째 칸에서 시작하므로, MESSAGE 문 뒤에 *를 붙여 주석을 적지 않습니다."] }
+        { type: "text", paragraphs: ["'E'는 오류(Error) 메시지 유형이며, 문자열 값은 대문자로 지정합니다. E 메시지 이후의 처리 흐름은 Selection Screen·Dynpro·백그라운드 등 실행 문맥에 따라 달라집니다.", "ABAP에서 줄 중간 주석은 큰따옴표(\")로 시작합니다. 별표(*) 주석은 행의 첫 번째 칸에서 시작하므로, MESSAGE 문 뒤에 *를 붙여 주석을 적지 않습니다."] }
       ] }
     ]
   },
@@ -123,7 +123,7 @@ window.WIKI_DOCS = {
             ["Shift + F1", "Pretty Printer", "들여쓰기와 코드 형식 정리"],
             ["Ctrl + ,", "주석 처리", "선택한 코드 줄을 주석으로 전환"],
             ["Ctrl + .", "주석 해제", "선택한 코드 줄의 주석 해제"],
-            ["F5", "Text Elements", "텍스트 요소 화면으로 이동 · 해당 편집기 화면 기준"]
+            ["F5", "Text Elements", "Text Element 화면으로 이동 · 해당 편집기 화면 기준"]
           ] },
           { type: "text", paragraphs: ["중복된 항목은 한 번씩 정리했습니다. 위 표는 수업에서 사용하는 SAP GUI 기반 ABAP Editor 기준입니다. 편집기 종류·키보드 설정·현재 화면에 따라 키 배정이 다를 수 있으므로 메뉴에 표시된 단축키를 우선 확인하세요. 예를 들어 디버거에서는 F5가 다른 기능으로 동작합니다."] }
         ]
@@ -149,7 +149,8 @@ window.WIKI_DOCS = {
           ["[[abap-sql-guide|ABAP SQL 가이드]]", "Open SQL 구문법(Classic) · 신문법(7.40+) 분리 레퍼런스"],
           ["[[abap-thinking-flow|ABAP 사고 흐름]]", "전체 그림 · Process · Report 구조별 사고 프로세스"],
           ["[[sap-gui-programs|SAP GUI 프로그램 정리표]]", "SE80 · Package ZBC400_F## 실습 Program 파트별 가이드"],
-          ["[[sap-tcode-reference|T-Code 모음]]", "개발 도구 · 데이터 사전 · 시스템 조회 · 전송 관리"],
+          ["[[basic-session-review|Basic Session Review]]", "ABAP 시험 대비 Basic Session 핵심 강조점 · 실전 코드 리뷰 · 모범 개선안"],
+          ["[[sap-tcode-reference|T-Code 모음]]", "개발 도구 · ABAP Dictionary · 시스템 조회 · 전송 관리"],
           ["[[sap-gui-shortcuts|단축키 모음]]", "명령 필드 · 화면 이동 · ABAP 편집기"],
           ["[[abap-useful-syntax|유용한 함수 · 문법 모음]]", "문자열 · 계산 · 조건식 · 반복문"]
         ] }
@@ -207,32 +208,33 @@ window.WIKI_DOC_REDIRECT_TABS = {
 };
 
 
-/** 수업에서 자주 쓰는 SAP GUI 트랜잭션 코드. */
+/** 수업에서 자주 쓰는 SAP GUI T-Code. */
 (function () {
   const groups = [
     ["시스템 상태와 오류 확인", [
-      ["SM50", "Work Process Overview", "현재 애플리케이션 서버의 워크 프로세스 상태와 실행 작업 확인"],
+      ["SM50", "Work Process Overview", "현재 애플리케이션 서버의 Work Process 상태와 실행 작업 확인"],
       ["SM04", "User Overview", "현재 애플리케이션 서버의 로그인 사용자와 세션 확인"],
       ["ST22", "ABAP Dump Analysis", "런타임 오류의 덤프·발생 위치·원인 확인"]
     ]],
     ["데이터와 개발 객체 탐색", [
       ["SE16", "Data Browser", "테이블 이름과 조회 조건을 입력하여 저장된 데이터 조회"],
       ["SE84", "Repository Information System", "Program 등 저장소의 개발 객체를 조건별로 검색"],
-      ["SE80", "Object Navigator", "Package·Program·함수 그룹·Class 등 개발 객체를 통합 탐색"],
-      ["SE11", "ABAP Dictionary", "테이블·구조·데이터 요소·View 등 데이터 사전 객체 정의와 유지보수"],
+      ["SE80", "Object Navigator", "Package·Program·Function Group·Class 등 개발 객체를 통합 탐색"],
+      ["SE11", "ABAP Dictionary", "Table·Structure·Data Element·Domain·View·Search Help 등 ABAP Dictionary 객체 정의와 유지보수"],
       ["SE14", "Database Utility", "테이블 구조 변경·축소 시 Activate and adjust database 수행 및 Table Conversion(QCM) 수습"],
       ["SM30", "Maintain Table Views", "Maintenance View 및 Table Maintenance Generator로 생성한 Customer Table 데이터 유지보수"]
     ]],
     ["Program과 화면 개발", [
       ["SE38", "ABAP Editor", "ABAP Program 생성·소스 편집·검사·활성화·실행"],
-      ["SE37", "Function Builder", "함수 모듈 생성·유지보수·테스트"],
+      ["SE37", "Function Builder", "Function Module 생성·유지보수·테스트"],
       ["SE24", "Class Builder", "Global Class와 Interface 등 객체지향 개발 객체 관리"],
+      ["SE91", "Message Maintenance", "Message Class 생성·메시지 번호(000~999)·문구 관리"],
       ["SE41", "Menu Painter", "메뉴·툴바·기능 키를 구성하는 GUI 상태와 제목 관리"],
       ["SE51", "Screen Painter", "Dynpro 화면의 레이아웃과 흐름 로직 편집"]
     ]],
     ["Change Request와 실행 코드 관리", [
       ["SE09", "Transport Organizer", "Change Request와 Task 생성·조회·관리"],
-      ["SE93", "Transaction Maintenance", "트랜잭션 코드 생성·변경 및 실행 대상 연결"]
+      ["SE93", "Transaction Maintenance", "Transaction Code(T-Code) 생성·변경 및 실행 대상 연결"]
     ]]
   ];
   const entries = groups.flatMap(([, rows]) => rows);
@@ -259,7 +261,7 @@ window.WIKI_DOC_REDIRECT_TABS = {
   const connections = {
     "abap-useful-syntax": [[], ["unit-03", "unit-05", "sap-gui-shortcuts"]],
     "sap-gui-shortcuts": [["명령 필드", "Pretty Printer", "Activate"], ["sap-tcode-reference", "unit-01", "unit-02", "abap-useful-syntax"]],
-    "sap-tcode-reference": [["T-Code", "ABAP Editor", "Function Builder", "Data Browser"], ["unit-02", "unit-04", "unit-06", "bc430-01", "sap-gui-shortcuts"]]
+    "sap-tcode-reference": [["T-Code", "ABAP Editor", "Function Builder", "Class Builder", "Message Maintenance", "Transaction Maintenance", "Transport Organizer", "Data Browser"], ["unit-02", "unit-03", "unit-04", "unit-06", "bc430-01", "sap-gui-shortcuts"]]
   };
   for (const [id, [aliases, related]] of Object.entries(connections)) {
     const doc = window.WIKI_DOCS[id];

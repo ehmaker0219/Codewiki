@@ -53,16 +53,26 @@ const read = name => fs.readFileSync(name, 'utf8');
   const slice = app.slice(app.indexOf('  // When the hash changes, render once'), app.indexOf('  window.CodeWikiApp = {'));
   const renders = [];
   let adminHomeCalls = 0, currentRole = 'student';
+  const scrolled = [], appliedViews = [];
+  const targetSection = { hidden: true, dataset: { sectionTab: 'l2' }, offsetWidth: 1,
+    classList: { add(c){ this.added = c; }, remove(){} }, scrollIntoView(opts){ scrolled.push(opts); } };
   const nav = {window:{location:{hash:'#study'}, WIKI_DOCS:{'abap-basics':{}, 'welcome-abap':{isHome:true}, 'abap-thinking-flow':{studentOnly:true}}, scrollTo(){},
       CodeWikiAuth:{getCurrentUser:()=>({role:currentRole})}, CodeWikiAdminMembers:{openHome(){adminHomeCalls++;}}},
+    document:{getElementById:id=>id==='sec-3'?targetSection:null, querySelectorAll:()=>[]},
+    articleContainer:{_applyDocView(tab, mode){ appliedViews.push([tab, mode]); if (tab === 'l2') targetSection.hidden = false; }, querySelector:()=>({hidden:false})},
+    currentDocId:'abap-basics', history:{replaceState(_a,_b,h){ nav.window.location.hash = h; }},
     getHomeDocId:()=>'welcome-abap', renderDocument:id=>renders.push(id), sessionStorage:{setItem(){}}, TRACK_SESSION_KEY:'k', currentTrack:'abap'};
-  vm.runInNewContext(slice + '\nwindow.navigateTo = navigateTo; window.isDocAccessible = isDocAccessible; window.pending = () => pendingNavigation;', nav);
+  vm.runInNewContext(slice + '\nwindow.navigateTo = navigateTo; window.isDocAccessible = isDocAccessible; window.pending = () => pendingNavigation; window.consumeSection = consumePendingSection;', nav);
   nav.window.navigateTo('abap-basics');
   assert.equal(nav.window.location.hash, '#doc/abap-basics');
   assert.deepEqual(renders, [], 'a hash change must not also render synchronously');
   assert.equal(nav.window.pending(), 'abap-basics');
   nav.window.navigateTo('abap-basics');
   assert.deepEqual(renders, ['abap-basics'], 'same-hash navigation renders immediately');
+  nav.window.navigateTo('abap-basics', 'l2', null, 'sec-3');
+  assert.deepEqual(appliedViews, [['l2', null]], 'hidden target section activates its tab before scrolling');
+  assert.equal(scrolled.length, 1, 'same-doc section jump scrolls directly to target section');
+  assert.equal(targetSection.classList.added, 'search-jump-highlight', 'target section receives jump highlight');
   currentRole = 'admin';
   assert.equal(nav.window.isDocAccessible(nav.window.WIKI_DOCS['welcome-abap']), false, 'student home must not be accessible to admin');
   assert.equal(nav.window.isDocAccessible(nav.window.WIKI_DOCS['abap-thinking-flow']), false, 'studentOnly docs must not be accessible to admin');

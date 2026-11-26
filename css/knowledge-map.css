@@ -157,9 +157,9 @@
 .kmap-zoom-label {
   min-width: 44px;
   text-align: center;
-  font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+  font-family: var(--font-sans);
   font-size: 11px;
-  font-weight: 500;
+  font-weight: 600;
   font-variant-numeric: tabular-nums;
   letter-spacing: -0.02em;
   color: var(--text-muted);
@@ -385,10 +385,11 @@
 }
 
 .kmap-cluster-index {
-  font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+  font-family: var(--font-sans);
+  font-variant-numeric: tabular-nums;
   font-size: 10px;
-  font-weight: 500;
-  letter-spacing: 0.16em;
+  font-weight: 600;
+  letter-spacing: 0.12em;
   line-height: 1;
   color: var(--toss-blue);
   opacity: 0.72;
@@ -536,10 +537,11 @@
 }
 
 .kmap-topic-step {
-  font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+  font-family: var(--font-sans);
+  font-variant-numeric: tabular-nums;
   font-size: 10px;
-  font-weight: 500;
-  letter-spacing: 0.08em;
+  font-weight: 600;
+  letter-spacing: 0.04em;
   line-height: 1;
   color: var(--toss-blue);
   opacity: 0.78;
@@ -818,10 +820,11 @@
 }
 
 .kmap-home-entry-eyebrow {
-  font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
-  font-size: 10px;
-  font-weight: 500;
-  letter-spacing: 0.14em;
+  font-family: var(--font-sans);
+  font-variant-numeric: tabular-nums;
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
   color: var(--toss-blue);
 }
 

@@ -1,17 +1,17 @@
 /* One-time login announcement modal for approved student accounts. */
 (() => {
   const ACTIVE_NOTICE = Object.freeze({
-    id: '2026-11-26-textbook-rebuild',
-    badge: '공지사항',
-    title: '교재 기준 목차 개편 안내',
+    id: '2026-11-26-basic-session-review',
+    badge: '업데이트 공지',
+    title: 'Basic Session Review · 시험 대비 업데이트 안내',
     items: Object.freeze([
       Object.freeze({
-        heading: '목차 기준이 교재 순서로 변경되었습니다',
-        body: 'BC400(ABAP 기초)과 BC430(ABAP Dictionary)의 Unit · Lesson · Exercise 흐름에 맞춰 목차를 재편했습니다. 기존 수업일별 보기도 목차 상단 버튼으로 그대로 이용하실 수 있습니다.'
+        heading: 'Basic Session Review 탭 신규 추가',
+        body: '오늘 진행한 Basic Session 시험 대비 문제의 강사님 핵심 강조점, 자주 놓치는 포인트 8선, 사내 강사님 공식 답안(ZPROG_CL5_T14_005), 이해도 체크리스트 13항목을 좌측 사이드바 Basic Session Review 탭에 정리했습니다.'
       }),
       Object.freeze({
-        heading: '주말 중 내용 보강 예정',
-        body: '세부 보완이 필요한 단원과 실습 내용은 주말 중으로 좀 더 면밀히 업데이트할 예정입니다.'
+        heading: '객체 생성 가이드 보강 & 검색 섹션 바로 이동',
+        body: 'Change Request(SE09), Package(SE80), Report Program(SE38), T-Code(SE93), Message Class(SE91 · REPORT MESSAGE-ID), Text Element, Function Group · Function Module(SE37), Global Class(SE24) 생성 절차를 단원별로 채웠고, 검색창에서 결과를 누르면 일치한 파트까지 바로 이동하도록 개선했습니다.'
       })
     ]),
     cheer: '다음 주 월요일 시험공부 화이팅입니다!'

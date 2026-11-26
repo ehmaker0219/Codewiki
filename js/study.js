@@ -49,7 +49,7 @@
     const open=visible();
     host.hidden=!open;shell.classList.toggle('study-hidden',open);
     document.getElementById('openStudyBtn')?.classList.toggle('active',open);
-    if(open){window.CodeWikiBoard?.closeIfActive();document.getElementById('quizModeBtn')?.classList.add('hidden');document.getElementById('sbHomeItem')?.classList.remove('active');document.getElementById('sbScheduleItem')?.classList.remove('active');document.getElementById('sbThinkingFlowItem')?.classList.remove('active');document.getElementById('sbProgramCatalogItem')?.classList.remove('active');document.getElementById('sbSqlGuideItem')?.classList.remove('active');document.querySelectorAll('.nav-doc-link.active').forEach(el=>el.classList.remove('active'));if(!window.CodeWikiStudyEditor){loadEditor();return;}if(!mounted)mount();else void folders?.load();void list();}
+    if(open){window.CodeWikiBoard?.closeIfActive();document.getElementById('quizModeBtn')?.classList.add('hidden');document.getElementById('sbHomeItem')?.classList.remove('active');document.getElementById('sbScheduleItem')?.classList.remove('active');document.getElementById('sbThinkingFlowItem')?.classList.remove('active');document.getElementById('sbProgramCatalogItem')?.classList.remove('active');document.getElementById('sbBasicSessionItem')?.classList.remove('active');document.getElementById('sbSqlGuideItem')?.classList.remove('active');document.querySelectorAll('.nav-doc-link.active').forEach(el=>el.classList.remove('active'));if(!window.CodeWikiStudyEditor){loadEditor();return;}if(!mounted)mount();else void folders?.load();void list();}
   }
   function loadEditor() {
     if(editorLoad)return;

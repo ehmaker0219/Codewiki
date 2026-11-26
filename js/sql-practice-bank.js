@@ -337,7 +337,7 @@
     {
       id: 'sql-10', num: '10', category: 'flight-basic', categoryLabel: '항공사 기초', level: '기본', syntax: 'either',
       requireSingle: true,
-      prompt: 'SCARR 테이블에서 **Primary Key `carrid = \'LH\'`인 1건**을 `SELECT SINGLE`로 조회해 구조 변수 `gs_scarr`에 담으세요.',
+      prompt: 'SCARR 테이블에서 **Primary Key `carrid = \'LH\'`인 1건**을 `SELECT SINGLE`로 조회해 Structure Variable `gs_scarr`에 담으세요.',
       tables: ['SCARR'],
       declarations: 'DATA gs_scarr TYPE scarr.',
       target: { name: 'gs_scarr', kind: 'struct', label: 'Work Area gs_scarr', fields: [
@@ -345,7 +345,7 @@
       ] },
       hints: [
         '단건 조회는 `SELECT SINGLE *`와 `INTO gs_scarr`(또는 `INTO @gs_scarr`)를 사용합니다.',
-        '단건 구조 변수에 받을 때는 `INTO TABLE`이 아니라 `INTO`를 사용하세요.'
+        '단건 Structure Variable(Work Area)에 받을 때는 `INTO TABLE`이 아니라 `INTO`를 사용하세요.'
       ],
       answers: {
         classic: "SELECT SINGLE *\n  FROM scarr\n  INTO gs_scarr\n  WHERE carrid = 'LH'.",
@@ -712,7 +712,7 @@
       requireOrder: true,
       requireInline: true,
       prompt: '**[신문법 종합]** MARA(`a`)를 기준으로 MAKT(`b`, `b~spras = \'KO\'`)와 EKPO(`c`)를 모두 `LEFT OUTER JOIN`해, 자재별 `a~matnr`, **`COALESCE( b~maktx, \'미등록\' ) AS maktx`**, **`COALESCE( SUM( c~netwr ), 0 ) AS total_amt`**를 `a~matnr` 오름차순으로 `@DATA(gt_summary)`에 담으세요.',
-      note: '한국어 내역이 없는 자재는 `\'미등록\'`, 발주 이력이 없는 자재는 합계 `0`으로 표시되는 실무형 리포트 쿼리입니다.',
+      note: '한국어 내역이 없는 자재는 `\'미등록\'`, 발주 이력이 없는 자재는 합계 `0`으로 표시되는 실무형 Report 쿼리입니다.',
       tables: ['MARA', 'MAKT', 'EKPO'],
       declarations: '" 다중 LEFT OUTER JOIN + COALESCE + SUM + @DATA(gt_summary)를 한 문장으로 작성하세요.',
       target: { name: 'gt_summary', kind: 'table', inline: true, label: 'Inline Table @DATA(gt_summary)', fields: [

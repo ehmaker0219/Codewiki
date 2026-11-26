@@ -11,8 +11,8 @@
       docs: ['unit-01', 'unit-02', 'unit-03', 'unit-04']
     },
     {
-      id: 'data', step: '02', title: 'BC400 · 데이터 · 리포트',
-      subtitle: 'Unit 5–7 · 13 · 구조체 · ITAB · Open SQL · Report',
+      id: 'data', step: '02', title: 'BC400 · 데이터 · Report',
+      subtitle: 'Unit 5–7 · 13 · Structure · ITAB · Open SQL · Report',
       x: 900, y: 260, angles: [-145, -35, 35, 145],
       docs: ['unit-05', 'unit-06', 'unit-07', 'unit-13']
     },
@@ -589,7 +589,7 @@
     window.CodeWikiStudy?.leave?.();
     window.CodeWikiMentoring?.leave?.();
     window.CodeWikiObjectGame?.leave?.();
-    document.querySelectorAll('#sbHomeItem.active, #sbScheduleItem.active, #sbThinkingFlowItem.active, #sbProgramCatalogItem.active, #sbSqlGuideItem.active, .nav-doc-link.active').forEach(el => el.classList.remove('active'));
+    document.querySelectorAll('#sbHomeItem.active, #sbScheduleItem.active, #sbThinkingFlowItem.active, #sbProgramCatalogItem.active, #sbBasicSessionItem.active, #sbSqlGuideItem.active, .nav-doc-link.active').forEach(el => el.classList.remove('active'));
     document.getElementById('quizModeBtn')?.classList.add('hidden');
     if (!mounted) {
       mounted = true;

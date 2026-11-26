@@ -197,6 +197,8 @@
     if (thinkingFlow) thinkingFlow.hidden = !isApprovedStudent;
     const programCatalog = document.getElementById('sbProgramCatalogItem');
     if (programCatalog) programCatalog.hidden = !isApprovedStudent;
+    const basicSession = document.getElementById('sbBasicSessionItem');
+    if (basicSession) basicSession.hidden = !isApprovedStudent;
     const sqlGuide = document.getElementById('sbSqlGuideItem');
     if (sqlGuide) sqlGuide.hidden = !isApprovedStudent;
     const learningContents = document.getElementById('learningContentsGroup');

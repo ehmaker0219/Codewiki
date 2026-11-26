@@ -252,7 +252,7 @@ body { background-image: none; }
 .block-code-wrap { border:1px solid #9aafbf; border-radius:0; box-shadow:inset 1px 1px #fff; }
 .code-top-bar { background:linear-gradient(#e0ebf3,#c3d5e3); color:#183c55; border-bottom:1px solid #a0b7c8; padding:6px 10px; font-size:11px; }
 .block-code-wrap pre { background:#fff; color:#141414; padding:8px 0; margin:0; overflow:auto; }
-.block-code-wrap pre code { display:block; min-width:max-content; font:13px/1.65 'Courier New',Consolas,monospace; background:transparent; color:inherit; }
+.block-code-wrap pre code { display:block; min-width:max-content; font-family:var(--font-mono); font-size:13px; line-height:1.65; background:transparent; color:inherit; }
 .sap-code-line { display:inline-flex; min-width:100%; }
 .sap-code-number { width:44px; flex:0 0 44px; text-align:right; padding:0 8px 0 4px; margin-right:12px; color:#48909c; background:#f2f0e3; border-right:1px dotted #94a5af; user-select:none; }
 .sap-code-source { padding-right:16px; white-space:pre; }

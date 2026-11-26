@@ -6,7 +6,7 @@ window.WIKI_PRACTICE = [
     "questions": [
       {
         "title": "상품 금액 계산",
-        "body": "단가와 수량을 입력받아 총금액을 출력하는 실행 가능 리포트를 작성하세요.",
+        "body": "단가와 수량을 입력받아 총금액을 출력하는 실행 가능 Report를 작성하세요.",
         "conditions": [
           "단가는 소수 둘째 자리까지 저장할 수 있는 타입을 사용하세요.",
           "수량은 정수형 PARAMETERS로 입력받으세요.",
@@ -115,7 +115,7 @@ window.WIKI_PRACTICE = [
       },
       {
         "title": "사용자 소개 문장",
-        "body": "이름과 소속을 입력받아 소개 문장을 만드는 리포트를 작성하세요.",
+        "body": "이름과 소속을 입력받아 소개 문장을 만드는 Report를 작성하세요.",
         "conditions": [
           "최종 문장을 string 변수에 저장하세요.",
           "완성한 문자열의 길이도 함께 출력하세요.",
@@ -324,12 +324,12 @@ window.WIKI_PRACTICE = [
         "id": "debug-02"
       },
       {
-        "title": "메시지 클래스 연습",
-        "body": "직접 만든 메시지 클래스의 문구에 사용자 이름을 전달하세요.",
+        "title": "Message Class 연습",
+        "body": "직접 만든 Message Class의 문구에 사용자 이름을 전달하세요.",
         "conditions": [
-          "고객 네임스페이스의 메시지 클래스를 생성하세요.",
-          "문구에 자리표시자를 넣고 WITH로 값을 전달하세요.",
-          "메시지 클래스와 번호를 호출 코드에서 확인하세요."
+          "고객 네임스페이스의 Message Class를 SE91에서 생성하세요.",
+          "문구에 자리표시자(&)를 넣고 WITH로 값을 전달하세요.",
+          "REPORT ... MESSAGE-ID 선언 또는 호출 코드에서 Message Class와 번호를 확인하세요."
         ],
         "id": "debug-03"
       },
@@ -400,7 +400,7 @@ window.WIKI_PRACTICE = [
     "id": "debug"
   },
   {
-    "title": "모듈화 · 서브루틴",
+    "title": "모듈화 · Subroutine",
     "doc": "unit-04",
     "questions": [
       {
@@ -415,9 +415,9 @@ window.WIKI_PRACTICE = [
       },
       {
         "title": "값 전달 비교",
-        "body": "USING VALUE와 CHANGING VALUE의 차이를 확인하는 두 서브루틴을 작성하세요.",
+        "body": "USING VALUE와 CHANGING VALUE의 차이를 확인하는 두 Subroutine을 작성하세요.",
         "conditions": [
-          "각 서브루틴 내부에서 매개변수에 10을 더하세요.",
+          "각 Subroutine 내부에서 매개변수에 10을 더하세요.",
           "호출 전후 원본 값을 출력하세요.",
           "두 실험의 초기값을 같게 맞추세요."
         ],
@@ -425,7 +425,7 @@ window.WIKI_PRACTICE = [
       },
       {
         "title": "함수 인터페이스 읽기",
-        "body": "실습 시스템에서 조회·계산용 함수 모듈 하나를 찾아 호출 인터페이스를 정리하세요.",
+        "body": "실습 시스템에서 조회·계산용 Function Module 하나를 찾아 호출 인터페이스를 정리하세요.",
         "conditions": [
           "데이터를 생성·변경·삭제하는 함수는 선택하지 마세요.",
           "IMPORTING과 EXPORTING 항목을 확인하세요.",
@@ -434,7 +434,7 @@ window.WIKI_PRACTICE = [
         "id": "forms-03"
       },
       {
-        "title": "인사 서브루틴",
+        "title": "인사 Subroutine",
         "body": "안녕하세요를 출력하는 FORM을 만들고 호출하세요.",
         "conditions": [
           "FORM과 ENDFORM 사이에 WRITE를 작성하세요.",
@@ -500,22 +500,22 @@ window.WIKI_PRACTICE = [
     "id": "forms"
   },
   {
-    "title": "Class · 메서드",
+    "title": "Class · Method",
     "doc": "unit-04",
     "questions": [
       {
         "title": "인사 객체",
         "body": "이름을 받아 인사 문장을 반환하는 Local Class를 작성하세요.",
         "conditions": [
-          "PUBLIC SECTION에 Instance 메서드를 선언하세요.",
+          "PUBLIC SECTION에 Instance Method를 선언하세요.",
           "TYPE REF TO로 참조 변수를 선언하고 객체를 생성하세요.",
           "반환받은 문장은 호출부에서 출력하세요."
         ],
         "id": "objects-01"
       },
       {
-        "title": "Static 계산 메서드",
-        "body": "두 정수를 더해 결과를 반환하는 Static 메서드를 작성하세요.",
+        "title": "Static 계산 Method",
+        "body": "두 정수를 더해 결과를 반환하는 Static Method를 작성하세요.",
         "conditions": [
           "CLASS-METHODS를 사용하세요.",
           "객체를 생성하지 않고 =>로 호출하세요.",
@@ -528,7 +528,7 @@ window.WIKI_PRACTICE = [
         "body": "숫자를 하나씩 증가시키는 카운터 Class를 만들고 객체를 두 개 생성하세요.",
         "conditions": [
           "카운터 값은 Instance 속성으로 두세요.",
-          "증가 메서드와 값 조회 메서드를 분리하세요.",
+          "증가 Method와 값 조회 Method를 분리하세요.",
           "각 객체를 다른 횟수로 증가시켜 상태가 독립적인지 확인하세요."
         ],
         "id": "objects-03"
@@ -537,14 +537,14 @@ window.WIKI_PRACTICE = [
         "title": "첫 번째 Local Class",
         "body": "화면에 안녕하세요를 출력하는 Local Class를 작성하세요.",
         "conditions": [
-          "PUBLIC SECTION에 매개변수 없는 Instance 메서드를 선언하세요.",
-          "객체를 생성한 뒤 ->로 메서드를 호출하세요."
+          "PUBLIC SECTION에 매개변수 없는 Instance Method를 선언하세요.",
+          "객체를 생성한 뒤 ->로 Method를 호출하세요."
         ],
         "id": "objects-04"
       },
       {
-        "title": "제곱 계산 메서드",
-        "body": "정수 하나를 받아 그 수의 제곱을 반환하는 메서드를 작성하세요.",
+        "title": "제곱 계산 Method",
+        "body": "정수 하나를 받아 그 수의 제곱을 반환하는 Method를 작성하세요.",
         "conditions": [
           "입력 하나와 RETURNING VALUE 매개변수 하나를 선언하세요.",
           "3과 5를 전달한 결과를 호출부에서 출력하세요."
@@ -565,7 +565,7 @@ window.WIKI_PRACTICE = [
         "body": "객체 생성 시 이름을 받아 저장하는 Local Class를 작성하세요.",
         "conditions": [
           "CONSTRUCTOR의 IMPORTING 매개변수로 이름을 받으세요.",
-          "저장된 이름을 출력하는 Instance 메서드를 호출하세요."
+          "저장된 이름을 출력하는 Instance Method를 호출하세요."
         ],
         "id": "objects-07"
       },
@@ -574,7 +574,7 @@ window.WIKI_PRACTICE = [
         "body": "정수 값을 저장하고 돌려주는 Local Class를 작성하세요.",
         "conditions": [
           "값은 PRIVATE SECTION의 Instance 속성으로 선언하세요.",
-          "공개 설정 메서드와 조회 메서드로 7을 저장하고 읽으세요."
+          "공개 설정 Method와 조회 Method로 7을 저장하고 읽으세요."
         ],
         "id": "objects-08"
       },
@@ -582,14 +582,14 @@ window.WIKI_PRACTICE = [
         "title": "카운터 초기화",
         "body": "증가와 초기화 기능이 있는 간단한 카운터 Class를 작성하세요.",
         "conditions": [
-          "Instance 속성을 0에서 시작하고 증가 메서드에서 1을 더하세요.",
-          "두 번 증가한 뒤 초기화 메서드를 호출하고 값이 0인지 확인하세요."
+          "Instance 속성을 0에서 시작하고 증가 Method에서 1을 더하세요.",
+          "두 번 증가한 뒤 초기화 Method를 호출하고 값이 0인지 확인하세요."
         ],
         "id": "objects-09"
       },
       {
         "title": "두 수 중 작은 값 반환",
-        "body": "정수 두 개 중 작은 값을 반환하는 Static 메서드를 작성하세요.",
+        "body": "정수 두 개 중 작은 값을 반환하는 Static Method를 작성하세요.",
         "conditions": [
           "CLASS-METHODS와 IF문을 사용하세요.",
           "객체 생성 없이 =>로 호출해 4와 9를 비교한 결과를 출력하세요."

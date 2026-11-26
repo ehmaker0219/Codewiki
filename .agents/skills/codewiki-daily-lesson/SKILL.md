@@ -22,9 +22,10 @@ description: >-
 3. **빈칸 · 약칭 보완**:
    - 수업 중 필기 속도로 인해 번호만 적혀 비어 있는 항목(예: `SE11`의 4가지 View 중 2·3번 누락)이나 명백한 철자 오타는 SAP 공식 문서 기준(실습 시스템 Standard ABAP `7.5` / `7.52`)으로 정확히 보완하고, 보완한 항목임을 본문에 짧게 밝힌다.
 
-## 2. 용어 및 ABAP 예제 작성 규칙 (`AGENTS.md` 준수)
+## 2. 핵심 대원칙 — 원서 표현 준수 · 유기적 문서 연동 · ABAP 예제 규칙 (`AGENTS.md` 준수)
 
-- **원어 · 사용자 표기 유지**: 사용자가 필기에 적었거나 수업에서 사용하는 영문·한글 SAP/ABAP 용어 표기를 임의로 번역하지 않고 그대로 유지한다(예: `Change Request`, `Task`, `Package`, `Program`, `ABAP Dictionary`, `Type Definitions`, `DB Objects`, `Services`, `Search Help`, `Domain`, `Data Element`, `Technical Attribute`, `Semantic Attribute`, `Field Label`, `SET/GET Parameters`, `Structure`, `Flat structure`, `Simple structure`, `Nested structure`, `Deep structure`, `.INCLUDE`, `Table Type`, `Line Type` 등). 한글 검색 편의를 위한 표현은 `aliases` 배열에만 추가한다.
+- **원서(SAP/ABAP 원어) 표현 준수 · 임의 한국어 번역 금지**: 사용자가 필기에 적었거나 SAP/ABAP 원서·교재·GUI에서 사용하는 영문 전문 용어를 임의로 한국어로 해석·번역하지 않고 보이는 본문·제목·표·예제 안내·학습툴 전체에 원어 표기를 유지한다(`Change Request`, `Task`, `Package`, `Program`, `Report`, `Class`, `Local Class`, `Global Class`, `Static`, `Instance`, `Method`, `Message Class`, `Subroutine`, `Function Module`, `Function Group`, `Structure`, `Internal Table`, `Work Area`, `Selection Screen`, `ABAP Dictionary`, `Type Definitions`, `DB Objects`, `Services`, `Search Help`, `Domain`, `Data Element`, `Text Symbol`, `Text Element`, `Work Process`, `Table Buffer`, `Technical Attribute`, `Semantic Attribute`, `Field Label`, `SET/GET Parameters`, `Flat structure`, `Simple structure`, `Nested structure`, `Deep structure`, `.INCLUDE`, `Table Type`, `Line Type` 등). 한글 검색 편의를 위한 표현은 오직 `aliases` 배열에만 추가한다.
+- **문서의 유기적 연동 (사이트 전역 점검)**: 새 내용을 추가할 때 단독 섹션으로 고립시키지 말고, 관련 Unit·가이드 문서(`Basic Session Review`, `ABAP 사고 흐름`, `ABAP SQL 가이드`, `자주 쓰는 T-Code 모음` 등)와의 양방향 `[[docId|라벨]]` · `관련 문서` · 충돌 없는 `aliases` · 백링크 연결을 함께 점검한다. 새 T-Code나 객체 생성 절차가 나오면 `js/data.js`(`sap-tcode-reference`)와 `practice` 단계별 생성 가이드도 함께 보강한다.
 - **SAP 항공 실습 모델 사용**: 수업 중 이해를 돕기 위해 든 개념 비유(예: `사람-이름-성` 접근, 오븐·트레이 비유)는 설명 문단에 살리되, **ABAP `TYPES`·`DATA`·`SELECT` 코드 예제는 학생/더미 데이터 대신 반드시 SAP 항공 실습 모델(`SCARR`, `SPFLI`, `SFLIGHT`, `SBOOK`, `SCUSTOM`, `SAPLANE`, `S_CARR_ID`, `S_CONN_ID`, `BC400_*` 등)로 작성**한다.
 - **Report 선언 규칙**: 실행 가능한 ABAP Report 전체 예제는 첫 줄을 `REPORT zabap_f##_##.`으로 작성한다.
 

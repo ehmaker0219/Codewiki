@@ -14,12 +14,23 @@
 
 이 절차는 배포 요청에 적용되는 작업 규칙이다. 예약 작업이나 반복 실행 자동화를 만들라는 뜻은 아니다. 사용자의 이후 명시적 지시가 우선한다.
 
-## 수업 필기 · 용어 작성 규칙
+## CodeWiki 핵심 대원칙 — 문서의 유기적 연동 & 원서 표현 준수
+
+1. **문서의 유기적 연동 (사이트 전역 핵심 기능)**
+   - CodeWiki의 핵심 가치는 단일 페이지 나열이 아니라 **검색창 · 자동 키워드 링크 · 수동 명시 링크(`[[docId|라벨]]`) · 우측 `연결된 문서`(백링크) · `관련 문서` 섹션**이 사이트 전역에서 거미줄처럼 유기적으로 이어지는 것이다.
+   - Basic Session뿐 아니라 **어떤 문서·섹션·가이드를 추가하거나 수정할 때도 절대 고립된 문서로 두지 말고**, 관련된 `BC400`/`BC430` Unit · `Basic Session Review` · `ABAP 사고 흐름` · `ABAP SQL 가이드` · `SAP GUI 프로그램 정리표` · `자주 쓰는 T-Code 모음` · `단축키 모음` · `교재 목차`와의 양방향 연결(`[[...]]`, `connections`/`관련 문서`)과 충돌 없는 검색 별칭(`aliases`)을 함께 점검·갱신한다.
+   - 새로운 T-Code(`SE09`, `SE11`, `SE24`, `SE37`, `SE38`, `SE80`, `SE91`, `SE93`, `SM30`, `SE14` 등)나 객체 생성 절차(`Change Request`, `Package`, `Program`, `Message Class`, `Function Module` 등)가 등장하면 `자주 쓰는 T-Code 모음`(`js/data.js`)과 해당 단원의 단계별 생성 가이드(`practice` 블록)까지 연동해 시험·실습 중 검색창에서 즉시 찾아 이동할 수 있게 유지한다.
+2. **원서(SAP/ABAP 원어) 표현 준수 — 임의 한국어 번역 금지**
+   - 사용자가 작성한 필기나 SAP/ABAP 원서·교재·GUI 화면의 영문 전문 용어를 **임의로 한국어로 해석·번역해서 기입하지 않는다.**
+   - 금지 예시: `Class`→`클래스`, `Method`→`메서드`, `Message Class`→`메시지 클래스`, `Subroutine`→`서브루틴`, `Function Module`→`함수 모듈`, `Function Group`→`함수 그룹`, `Internal Table`→`내부 테이블`/`인터널 테이블`, `Work Area`→`작업 영역`/`워크에어리어`, `Structure`→`구조체`, `Structure Type`→`구조 타입`, `Structure Variable`→`구조 변수`, `Selection Screen`→`선택 화면`, `Data Element`→`데이터 요소`, `Domain`→`도메인`, `Text Symbol`→`텍스트 심볼`, `Text Element`→`텍스트 요소`, `Transaction Code`→`트랜잭션 코드`, `ABAP Dictionary`→`데이터 사전`, `Search Help`→`서치헬프`, `Work Process`→`워크 프로세스`, `Table Buffer`→`테이블 버퍼`, `Report`→`리포트`.
+   - 제목·소제목·본문·표·콜아웃·예제 안내·연습문제·미니게임 등 **사용자에게 보이는 모든 콘텐츠는 원어 표기를 유지**한다(`Change Request`, `Task`, `Package`, `Program`, `Report`, `Class`, `Local Class`, `Global Class`, `Static`, `Instance`, `Method`, `Message Class`, `Subroutine`, `Function Module`, `Function Group`, `Structure`, `Internal Table`, `Work Area`, `Selection Screen`, `Data Element`, `Domain`, `Text Symbol`, `Text Element`, `ABAP Dictionary`, `Search Help`, `Work Process`, `Table Buffer` 등).
+   - 한글 검색 편의를 위한 표현은 오직 `aliases` 배열에만 선택적으로 유지한다.
+
+## 수업 필기 · 예제 작성 규칙
 
 - 사용자가 작성한 필기나 요청의 영문·한글 용어 표기를 임의로 번역하거나 바꾸지 말고, **작성한 그대로** 반영한다.
-- SAP/ABAP 용어는 수업에서 사용하는 원어 표기를 유지한다(예: `Change Request`, `Task`, `Package`, `Package` 안에서 생성하는 저장소 객체 개념의 `Program`, `Class`, `Local Class`, `Global Class`, `Static`, `Instance`). 한글 검색 편의를 위한 별칭(`aliases`)은 필요 시 유지할 수 있다.
-- ABAP 테이블·구조체 예시는 학생/더미 데이터 대신 SAP 항공 실습 모델(`SCARR`, `SPFLI`, `SFLIGHT`, `SBOOK`, `SCUSTOM`, `SAPLANE` 등)을 기준으로 작성한다.
-- 실행 가능 ABAP Report 예제의 `REPORT` 선언 이름은 수업 규칙에 맞춰 `REPORT zabap_f##_##.` 형식을 사용한다.
+- ABAP Table·Structure 예시는 학생/더미 데이터 대신 SAP 항공 실습 모델(`SCARR`, `SPFLI`, `SFLIGHT`, `SBOOK`, `SCUSTOM`, `SAPLANE` 등)을 기준으로 작성한다.
+- 실행 가능 ABAP Report 예제의 `REPORT` 선언 이름은 수업 규칙에 맞춰 `REPORT zabap_f##_##.` 형식을 사용한다(별도 과제 네이밍 규칙이 명시된 경우에는 개인 번호만 `##`으로 일반화한다).
 
 ## 일일 수업 필기 반영 규칙
 

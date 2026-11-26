@@ -373,6 +373,7 @@
     document.getElementById('sbScheduleItem')?.classList.toggle('active', currentDocId === 'education-schedule');
     document.getElementById('sbThinkingFlowItem')?.classList.toggle('active', currentDocId === 'abap-thinking-flow');
     document.getElementById('sbProgramCatalogItem')?.classList.toggle('active', currentDocId === 'sap-gui-programs');
+    document.getElementById('sbBasicSessionItem')?.classList.toggle('active', currentDocId === 'basic-session-review');
     syncSqlSidebarActive();
     document.getElementById('sbTextbookItem')?.classList.toggle('active', currentDocId === 'abap-textbook');
     syncTrackChrome();
@@ -472,7 +473,7 @@
 
   function renderEditorCode(raw, abap = true, numbered = true) {
     const escape = value => value.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-    const keywords = new Set(('REPORT DATA TYPES TYPE LIKE VALUE CONSTANTS CLEAR WRITE PARAMETERS MATCHCODE LISTBOX VISIBLE SELECT-OPTIONS FOR IN INITIALIZATION TABLES START-OF-SELECTION END-OF-SELECTION AT SELECTION-SCREEN OUTPUT BEGIN OF END INCLUDE TABLE LINE STANDARD SORTED HASHED KEY UNIQUE NON-UNIQUE APPEND INSERT READ MODIFY DELETE SORT ASCENDING DESCENDING CORRESPONDING FIELDS GROUP AS COUNT SUM AVG MIN MAX ORDER HAVING JOIN LEFT OUTER INNER ON IF ELSE ELSEIF ENDIF DO TIMES ENDDO WHILE ENDWHILE LOOP AT ENDLOOP EXIT CONTINUE MOD DIV IS NOT INITIAL AND OR BETWEEN CA CS NE EQ CONCATENATE INTO SEPARATED BY FORM ENDFORM PERFORM USING CHANGING SELECT SINGLE BYPASSING BUFFER FROM WHERE ENDSELECT CALL FUNCTION METHOD CLASS DEFINITION IMPLEMENTATION PUBLIC PRIVATE PROTECTED SECTION METHODS CLASS-METHODS ENDMETHOD ENDCLASS CREATE OBJECT REF TO IMPORTING EXPORTING RETURNING EXCEPTIONS TRY CATCH ENDTRY MESSAGE WITH LENGTH DECIMALS DEFAULT MOVE TRANSLATE CONDENSE ULINE').split(' '));
+    const keywords = new Set(('REPORT MESSAGE-ID DATA TYPES TYPE LIKE VALUE CONSTANTS CLEAR WRITE PARAMETERS MATCHCODE LISTBOX VISIBLE SELECT-OPTIONS RANGE FOR IN INITIALIZATION TABLES START-OF-SELECTION END-OF-SELECTION AT SELECTION-SCREEN OUTPUT BEGIN OF END INCLUDE TABLE LINE STANDARD SORTED HASHED KEY UNIQUE NON-UNIQUE APPEND INSERT READ MODIFY TRANSPORTING ASSIGNING FIELD-SYMBOL DELETE SORT ASCENDING DESCENDING CORRESPONDING FIELDS GROUP AS COUNT SUM AVG MIN MAX ORDER HAVING JOIN LEFT OUTER INNER ON IF ELSE ELSEIF ENDIF DO TIMES ENDDO WHILE ENDWHILE LOOP AT ENDLOOP EXIT CONTINUE RETURN MOD DIV IS NOT INITIAL AND OR BETWEEN CA CS NE EQ CONCATENATE INTO SEPARATED BY FORM ENDFORM PERFORM USING CHANGING SELECT SINGLE BYPASSING BUFFER FROM WHERE ENDSELECT CALL FUNCTION METHOD CLASS DEFINITION IMPLEMENTATION PUBLIC PRIVATE PROTECTED SECTION METHODS CLASS-METHODS ENDMETHOD ENDCLASS CREATE OBJECT REF TO IMPORTING EXPORTING RETURNING EXCEPTIONS TRY CATCH ENDTRY MESSAGE WITH LENGTH DECIMALS DEFAULT MOVE TRANSLATE CONDENSE ULINE').split(' '));
     return String(raw).split('\n').map((line,i) => {
       let body = escape(line);
       if (abap) {
@@ -1193,7 +1194,42 @@
   }
 
   let pendingNavigation = null;
+  let pendingSectionTarget = null;
+  let sectionHighlightTimer = null;
   let renderedAdminRole = null;
+
+  function focusDocumentSection(sectionId, tabId = null, modeId = null) {
+    if (!sectionId || typeof document === "undefined") return false;
+    const articleEl = typeof articleContainer !== "undefined" ? articleContainer : null;
+    const wrapHidden = Boolean(articleEl?.querySelector?.(".doc-sections-wrap")?.hidden);
+    const activeMode = modeId || (wrapHidden && typeof currentDocId !== "undefined" ? (window.WIKI_DOCS?.[currentDocId]?.defaultSyntaxMode || "new") : null);
+    if (activeMode && typeof articleEl?._applyDocView === "function") {
+      articleEl._applyDocView(null, activeMode);
+    }
+    const el = document.getElementById(sectionId);
+    if (!el) return false;
+    if ((el.hidden || wrapHidden) && typeof articleEl?._applyDocView === "function") {
+      articleEl._applyDocView(el.dataset.sectionTab || tabId || "all", activeMode);
+    }
+    if (el.hidden) return false;
+    el.scrollIntoView?.({ behavior: "smooth", block: "start" });
+    document.querySelectorAll?.(".doc-section.search-jump-highlight").forEach(node => node.classList.remove("search-jump-highlight"));
+    void el.offsetWidth;
+    el.classList?.add("search-jump-highlight");
+    if (typeof clearTimeout === "function") clearTimeout(sectionHighlightTimer);
+    if (typeof setTimeout === "function") {
+      sectionHighlightTimer = setTimeout(() => el.classList?.remove("search-jump-highlight"), 2200);
+    }
+    return true;
+  }
+
+  function consumePendingSection(docId) {
+    const target = pendingSectionTarget;
+    if (!target || target.docId !== docId) return false;
+    pendingSectionTarget = null;
+    return focusDocumentSection(target.sectionId, target.tabId, target.modeId);
+  }
+
   function showDocument(docId, modeId = null) {
     if (window.CodeWikiBoard) window.CodeWikiBoard.closeIfActive();
     const targetDoc = window.WIKI_DOCS[docId];
@@ -1202,11 +1238,18 @@
     const shellEl = typeof appShell !== "undefined" ? appShell : null;
     const articleEl = typeof articleContainer !== "undefined" ? articleContainer : null;
     const appHidden = shellEl?.classList.contains('object-game-hidden') || shellEl?.classList.contains('mentoring-hidden') || shellEl?.classList.contains('study-hidden') || shellEl?.classList.contains('members-hidden') || shellEl?.classList.contains('board-mode-shell') || shellEl?.classList.contains('map-hidden');
-    if (validMode && typeof currentDocId !== "undefined" && docId === currentDocId && !appHidden && typeof articleEl?._applyDocView === "function") {
-      if (window.location.hash !== hash) history.replaceState(null, "", hash);
-      articleEl._applyDocView(null, validMode);
-      window.scrollTo({ top: 0, behavior: "smooth" });
-      return;
+    if (typeof currentDocId !== "undefined" && docId === currentDocId && !appHidden) {
+      if (validMode && typeof articleEl?._applyDocView === "function") {
+        if (window.location.hash !== hash) history.replaceState(null, "", hash);
+        articleEl._applyDocView(null, validMode);
+        if (!consumePendingSection(docId)) window.scrollTo({ top: 0, behavior: "smooth" });
+        return;
+      }
+      if (pendingSectionTarget?.docId === docId) {
+        if (window.location.hash !== hash) history.replaceState(null, "", hash);
+        if (!consumePendingSection(docId)) window.scrollTo({ top: 0, behavior: "smooth" });
+        return;
+      }
     }
     if (window.location.hash !== hash) {
       pendingNavigation = validMode ? `${docId}/${validMode}` : docId;
@@ -1214,20 +1257,22 @@
       return;
     }
     renderDocument(validMode ? `${docId}/${validMode}` : docId);
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    if (!consumePendingSection(docId)) window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
-  function navigateTo(docId, tabId = null, modeId = null) {
+  function navigateTo(docId, tabId = null, modeId = null, sectionId = null) {
     const parsed = parseDocHash(docId);
     docId = parsed.docId;
     if (!window.WIKI_DOCS[docId]) return;
     if (!isDocAccessible(window.WIKI_DOCS[docId])) {
+      pendingSectionTarget = null;
       window.CodeWikiAdminMembers?.openHome?.();
       return;
     }
     const nextTab = tabId || parsed.redirectTab;
     const nextMode = modeId || parsed.modeHint;
-    if (nextTab && typeof activeDocTabs !== "undefined") activeDocTabs.set(docId, nextTab);
+    pendingSectionTarget = sectionId ? { docId, sectionId, tabId: nextTab || null, modeId: nextMode || null } : null;
+    if (nextTab && !sectionId && typeof activeDocTabs !== "undefined") activeDocTabs.set(docId, nextTab);
     if (nextMode && typeof activeDocModes !== "undefined" && window.WIKI_DOCS[docId].syntaxModes?.some(m => m.id === nextMode)) {
       activeDocModes.set(docId, nextMode);
     }
@@ -1370,12 +1415,20 @@
         searchDropdown.innerHTML = '<div class="search-item">일치하는 문서가 없습니다.</div>';
       } else {
         const {escape:esc, highlight} = window.CodeWikiLearning;
-        searchDropdown.innerHTML = results.map(({doc:d, snippet}) =>
-          '<button type="button" class="search-item" data-search-doc="' + esc(d.id) + '"><span><span class="search-item-title">' + highlight(d.title,q) +
-          '</span><span class="search-item-sub">' + highlight(snippet,q) + '</span></span><span class="tcode-pill-badge">' + (d.isDailyLesson ? '수업일' : '주제') + '</span></button>'
+        searchDropdown.innerHTML = results.map(({doc:d, snippet, sectionId, sectionTitle, sectionTab, sectionMode}) =>
+          '<button type="button" class="search-item" data-search-doc="' + esc(d.id) + '"' +
+          (sectionId ? ' data-search-section="' + esc(sectionId) + '"' : '') +
+          (sectionTab ? ' data-search-tab="' + esc(sectionTab) + '"' : '') +
+          (sectionMode ? ' data-search-mode="' + esc(sectionMode) + '"' : '') +
+          '><span><span class="search-item-title">' + highlight(d.title,q) +
+          '</span>' +
+          (sectionTitle ? '<span class="search-item-section">↳ ' + highlight(sectionTitle,q) + '</span>' : '') +
+          '<span class="search-item-sub">' + highlight(snippet,q) + '</span></span><span class="tcode-pill-badge">' + (d.isDailyLesson ? '수업일' : '주제') + '</span></button>'
         ).join('');
         searchDropdown.querySelectorAll('[data-search-doc]').forEach(item => item.addEventListener('click', () => {
-          searchDropdown.classList.add('hidden'); searchInput.value = ''; navigateTo(item.dataset.searchDoc);
+          searchDropdown.classList.add('hidden');
+          searchInput.value = '';
+          navigateTo(item.dataset.searchDoc, item.dataset.searchTab || null, item.dataset.searchMode || null, item.dataset.searchSection || null);
         }));
       }
       searchDropdown.classList.remove("hidden");
@@ -1443,13 +1496,13 @@
         }
         if (targetDoc && validMode && resolved === currentDocId && !appHidden && typeof articleContainer._applyDocView === "function") {
           articleContainer._applyDocView(null, validMode);
-          window.scrollTo({ top: 0, behavior: "smooth" });
+          if (!consumePendingSection(resolved)) window.scrollTo({ top: 0, behavior: "smooth" });
           return;
         }
         if (targetDoc && (resolved !== currentDocId || appHidden || requested === resolved || requested === target || Boolean(parsed.redirectTab) || Boolean(validMode))) {
           if (window.CodeWikiBoard) window.CodeWikiBoard.closeIfActive();
           renderDocument(target);
-          window.scrollTo({ top: 0, behavior: "smooth" });
+          if (!consumePendingSection(resolved)) window.scrollTo({ top: 0, behavior: "smooth" });
         }
       } else if (!h) {
         if (isAdmin) {

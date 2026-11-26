@@ -12,7 +12,7 @@
   const days = [
     {date: '2026-11-11', source: '261111WED.md', sections: [
       from('unit-01', '요청 처리 흐름'),
-      from('unit-01', '워크 프로세스와 잠금'),
+      from('unit-01', 'Work Process와 잠금'),
       from('unit-01', '통신 구성 요소'),
       section('sap-gui-shortcuts', 'SAP GUI 명령과 도움말', table(['입력 / 키', '용도'], [
         ['/nend', '확인 후 로그오프'], ['/nex', '확인 없이 로그오프'],
@@ -31,52 +31,52 @@
       from('unit-02', 'Package와 Change Request'),
       from('unit-02', '문장과 주석'),
       section('unit-03', '입력·변수·대입·출력', table(['문장', '역할'], [
-        ['PARAMETERS', '선택 화면의 입력 필드'], ['DATA', '변수 선언'],
+        ['PARAMETERS', 'Selection Screen의 입력 필드'], ['DATA', '변수 선언'],
         ['MOVE 원본 TO 대상 / 대상 = 원본', '값 대입'], ['WRITE', '클래식 리스트 출력']
       ]), text('SE80에서 Program을 생성하고 활성화한 뒤 실행합니다. 문법을 확인할 때는 F1 도움말을 사용하고 obsolete로 표시된 구문의 대안을 확인합니다.'))
     ]},
     {date: '2026-11-12', source: '261112THU.txt', sections: [
-      from('unit-02', '트랜잭션 코드 생성'),
+      from('unit-02', 'Transaction Code 생성'),
       section('unit-02', '릴리스와 Package 변경', text('문법 검사와 활성화·실행 확인을 거친 뒤 SE09에서 Task와 Change Request를 릴리스합니다. 대상 시스템 반영에는 임포트 절차가 이어집니다.', 'Package 이동은 객체의 Additional Functions → Change Package에서 확인합니다. 새 Package와 Change Request의 전송 설정도 확인하세요.')),
       section('unit-03', '런타임 오류 조회', text('ST22에서 ABAP 런타임 오류의 덤프 내역을 확인합니다. 발생 시각, Program과 오류 위치를 살펴봅니다.')),
       from('unit-03', '주요 기본 타입'), from('unit-03', '길이를 지정하는 타입'),
       from('unit-03', '변수 선언과 대입'),
       from('unit-03', '초기값 확인'),
-      from('unit-03', '텍스트 심볼과 번역')
+      from('unit-03', 'Text Symbol과 번역')
     ]},
     {date: '2026-11-13', source: '261113FRI.txt', sections: [
       from('unit-03', '반복문 비교'),
-      section('unit-03', '반복 종료와 횟수', text('DO ... ENDDO는 내부에 종료 조건을 두고 EXIT로 종료할 수 있습니다. DO n TIMES는 지정한 횟수만 반복하고, WHILE은 조건이 참인 동안 반복합니다.', 'SELECT ... ENDSELECT는 조회 결과를, LOOP AT ... ENDLOOP는 내부 테이블의 행을 처리합니다. sy-dbcnt와 sy-tabix를 일반 반복 회차인 sy-index와 구분하세요.')),
+      section('unit-03', '반복 종료와 횟수', text('DO ... ENDDO는 내부에 종료 조건을 두고 EXIT로 종료할 수 있습니다. DO n TIMES는 지정한 횟수만 반복하고, WHILE은 조건이 참인 동안 반복합니다.', 'SELECT ... ENDSELECT는 조회 결과를, LOOP AT ... ENDLOOP는 Internal Table의 행을 처리합니다. sy-dbcnt와 sy-tabix를 일반 반복 회차인 sy-index와 구분하세요.')),
       from('unit-03', '자주 보는 시스템 필드'),
       section('unit-03', '중단점과 한 단계 실행', text('편집기에서 중단점을 설정하고 Program을 실행하면 해당 위치에서 디버거가 열립니다. F5로 한 단계씩 실행하며 변수와 시스템 필드의 변화를 확인합니다.')),
       from('unit-03', '메시지 유형'),
-      from('unit-03', '직접 문구와 메시지 클래스')
+      from('unit-03', '직접 문구와 Message Class (SE91 · REPORT 선언)')
     ]},
     {date: '2026-11-16', source: '261116MON.txt', sections: [
       section('unit-03', '디버깅으로 실행', text('Program의 Execute → Debugging 메뉴 또는 중단점을 이용해 실행 흐름을 확인합니다.')),
-      section('unit-04', '서브루틴 생성과 호출', text('FORM ... ENDFORM으로 처리 단위를 정의하고 PERFORM으로 호출합니다. 편집기의 서브루틴 생성 기능이나 드래그 앤 드롭으로 호출 틀을 만들 수 있습니다.')),
-      from('unit-04', '서브루틴 매개변수'),
-      section('unit-04', '함수 모듈 호출', text('SE37에서 함수 모듈과 인터페이스를 확인하고 CALL FUNCTION으로 호출합니다.')),
+      section('unit-04', 'Subroutine 생성과 호출', text('FORM ... ENDFORM으로 처리 단위를 정의하고 PERFORM으로 호출합니다. 편집기의 Subroutine 생성 기능이나 드래그 앤 드롭으로 호출 틀을 만들 수 있습니다.')),
+      from('unit-04', 'Subroutine 매개변수'),
+      section('unit-04', 'Function Module 호출', text('SE37에서 Function Module과 인터페이스를 확인하고 CALL FUNCTION으로 호출합니다.')),
       from('unit-04', '호출자와 함수의 방향')
     ]},
     {date: '2026-11-17', source: '261117TUE.txt', sections: [
-      from('unit-04', '함수 그룹과 함수 모듈'),
-      section('unit-04', '함수 모듈 테스트 입력', text('함수 그룹의 글로벌 데이터와 상수는 TOP Include에서 관리합니다. 함수 모듈과 관련 Include의 활성화 상태를 확인하세요.', 'SE37 테스트에서 문자 입력의 대소문자를 보존해야 한다면 해당 테스트 화면의 대소문자 구분 설정을 확인합니다.')),
+      from('unit-04', 'Function Group과 Function Module'),
+      section('unit-04', 'Function Module 테스트 입력', text('Function Group의 글로벌 데이터와 상수는 TOP Include에서 관리합니다. Function Module과 관련 Include의 활성화 상태를 확인하세요.', 'SE37 테스트에서 문자 입력의 대소문자를 보존해야 한다면 해당 테스트 화면의 대소문자 구분 설정을 확인합니다.')),
       from('unit-04', 'BAPI와 RFC의 관계'), from('unit-04', '입출력과 오류 처리'),
-      section('unit-04', 'BAPI 탐색', text('BAPI Explorer에서 업무 객체별 메서드를 확인합니다. GetList, GetDetail, Create, Change, Delete 등은 기능 이름의 예이며 실제 제공 여부는 객체마다 다릅니다.')),
+      section('unit-04', 'BAPI 탐색', text('BAPI Explorer에서 업무 객체별 Method를 확인합니다. GetList, GetDetail, Create, Change, Delete 등은 기능 이름의 예이며 실제 제공 여부는 객체마다 다릅니다.')),
       from('unit-04', 'Global Class와 Local Class'), from('unit-04', 'Static 호출과 Instance 호출'),
-      section('unit-04', 'Global Class 생성과 접근 범위', text('SE24에서 Class를 생성하고 메서드 이름과 매개변수를 정의합니다. PRIVATE 메서드는 Class 외부에서 직접 호출할 수 없으므로 외부에 공개할 동작은 접근 범위를 확인합니다.')),
+      section('unit-04', 'Global Class 생성과 접근 범위', text('SE24에서 Class를 생성하고 Method 이름과 매개변수를 정의합니다. PRIVATE Method는 Class 외부에서 직접 호출할 수 없으므로 외부에 공개할 동작은 접근 범위를 확인합니다.')),
       from('unit-03', '예외와 반환 코드'),
       from('unit-01', 'Program과 저장소 객체'), from('unit-01', 'Include와 모듈화')
     ]},
     {date: '2026-11-18', source: '261118 수요일 (2).md', sections: [
       from('unit-04', 'Local Class의 정의와 구현'),
-      from('unit-05', '구조체 선언과 컴포넌트'),
-      from('unit-05', '구조체 간 MOVE-CORRESPONDING'),
-      from('unit-05', '내부 테이블의 종류와 접근'),
-      from('unit-05', '내부 테이블 타입과 변수 선언'),
+      from('unit-05', 'Structure 선언과 컴포넌트'),
+      from('unit-05', 'Structure 간 MOVE-CORRESPONDING'),
+      from('unit-05', 'Internal Table의 종류와 접근'),
+      from('unit-05', 'Internal Table 타입과 변수 선언'),
       from('unit-05', '행 추가·조회·수정·삭제'),
-      from('unit-05', '내부 테이블 정렬'),
+      from('unit-05', 'Internal Table 정렬'),
       from('unit-05', 'CLEAR·REFRESH·FREE'),
       from('unit-05', 'Header Line과 OCCURS — 기존 코드 읽기')
     ]},
@@ -84,7 +84,7 @@
       from('unit-06', 'Open SQL과 Transparent Table'),
       from('unit-06', 'SELECT 기본 구조와 호스트 변수'),
       from('unit-06', '한 행 조회와 정렬된 첫 행'),
-      from('unit-06', '작업 영역·내부 테이블·CORRESPONDING'),
+      from('unit-06', 'Work Area·Internal Table·CORRESPONDING'),
       from('unit-06', 'INTO TABLE과 APPENDING TABLE'),
       from('unit-06', 'WHERE 조건과 NULL'),
       from('unit-06', 'DISTINCT·집계·GROUP BY·HAVING'),
@@ -110,7 +110,7 @@
       from('bc430-02', 'Domain — Technical Attribute와 SE11 절차'),
       from('bc430-02', 'Data Element — Semantic Attribute와 SE11 절차'),
       from('bc430-02', 'Structure — 종류(Flat · Deep)와 .INCLUDE'),
-      from('bc430-02', 'Table Type — SE11 전역 내부 테이블 타입'),
+      from('bc430-02', 'Table Type — SE11 전역 Internal Table 타입'),
       from('bc430-02', '필기와 참고 자료')
     ]},
     {date: '2026-11-24', source: '261124 화요일.md', sections: [

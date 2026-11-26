@@ -100,7 +100,7 @@
 .mentoring-section-title {display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:18px;}
 .mentoring-page textarea {resize:vertical;min-height:116px;}
 #mentoringPage textarea[data-field="task"] {min-height:180px;}
-#mentoringPage textarea[data-field="code"] {font-family:Consolas,monospace;font-size:13px;min-height:160px;tab-size:2;background:var(--bg-subtle);}
+#mentoringPage textarea[data-field="code"] {font-family:var(--font-mono);font-size:13px;min-height:160px;tab-size:2;background:var(--bg-subtle);}
 .mentoring-help {color:var(--text-sub);font-size:12px;line-height:1.7;overflow-wrap:anywhere;}
 .mentoring-upload {display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center;font-size:14px;padding:16px;border:1px dashed var(--border-subtle,var(--border-hairline));border-radius:7px;background:var(--bg-subtle);}
 .mentoring-upload label {font-weight:600;}
@@ -124,7 +124,7 @@
 .mentoring-report-info dd {margin:4px 0 0;white-space:pre-wrap;}
 .mentoring-report section {margin-top:28px;}
 .mentoring-report-text,.mentoring-report pre {white-space:pre-wrap;}
-.mentoring-report pre {padding:16px;background:var(--bg-subtle);font:12px/1.8 Consolas,monospace;overflow-wrap:anywhere;}
+.mentoring-report pre {padding:16px;background:var(--bg-subtle);font-family:var(--font-mono);font-size:12px;line-height:1.8;overflow-wrap:anywhere;}
 .mentoring-report figure {margin:0;break-inside:avoid;}
 .mentoring-report img {display:block;max-width:100%;max-height:520px;width:auto;height:auto;object-fit:contain;margin:0 auto;}
 .mentoring-report figcaption,.mentoring-report footer {font-size:11px;color:var(--text-sub);}
@@ -157,7 +157,7 @@
 .mentoring-form-section>.mentoring-field:last-child,.mentoring-form-section>.mentoring-fields:last-child {margin-bottom:0;}
 .mentoring-text-block {line-height:1.8;overflow-wrap:anywhere;margin:18px 0;}
 .mentoring-text-block h3 {font-size:13px;margin:0 0 8px;break-after:avoid;}
-.mentoring-text-block pre {font:12px/1.8 Consolas,monospace;padding:14px;background:var(--bg-subtle);white-space:pre-wrap;overflow-wrap:anywhere;}
+.mentoring-text-block pre {font-family:var(--font-mono);font-size:12px;line-height:1.8;padding:14px;background:var(--bg-subtle);white-space:pre-wrap;overflow-wrap:anywhere;}
 .mentoring-inline-actions {display:flex;gap:6px;flex-wrap:wrap;}
 .mentoring-inline-actions .toss-chip-btn {font-size:12px;}
 #mentoringUpdates {padding:12px 20px;margin:0;background:var(--toss-blue-soft);}
