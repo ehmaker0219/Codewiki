@@ -150,9 +150,9 @@
       [253, 'Exercise 17: Create a View Cluster', ['bc430-08'], '준비 중']
     ]],
     [9, 265, 'bc430-09', 'Search Help', 'Search Helps', [
-      [266, 'Lesson: Creating Search Helps', ['bc430-09'], '준비 중'],
-      [281, 'Exercise 18: Create Search Helps', ['bc430-09'], '준비 중'],
-      [285, 'Lesson: Applying Advanced Search Help Techniques', ['bc430-09'], '준비 중'],
+      [266, 'Lesson: Creating Search Helps', ['bc430-09'], '완료'],
+      [281, 'Exercise 18: Create Search Helps', ['bc430-09'], '실습 정리'],
+      [285, 'Lesson: Applying Advanced Search Help Techniques', ['bc430-09'], '진행 중'],
       [289, 'Exercise 19: Create Collective Search Helps', ['bc430-09'], '준비 중'],
       [293, 'Exercise 20: Create Append Search Helps', ['bc430-09'], '준비 중']
     ]]
@@ -238,7 +238,7 @@
     id: 'abap-textbook', track: 'abap', categoryId: '', stepNum: '',
     title: '교재 목차', subtitle: 'BC400 · ABAP 기초 (Unit 1–13 · Ex 1–28) / BC430 · ABAP Dictionary (Unit 1–9 · Ex 1–20)',
     aliases: ['교재 목차', 'BC400 교재 목차', 'BC430 교재 목차', '학습 로드맵', '전체 학습 목차'], tcodes: [],
-    specs: { 'BC400': 'Course Overview p. ix · Unit 1–13', 'BC430': 'Course Overview p. vii · Unit 1–9', '반영 범위': '2026-11-11 ~ 25' },
+    specs: { 'BC400': 'Course Overview p. ix · Unit 1–13', 'BC430': 'Course Overview p. vii · Unit 1–9', '반영 범위': '2026-11-11 ~ 26' },
     defaultTab: 'bc400',
     hideAllTab: true,
     tabsAboveToc: true,
@@ -282,7 +282,7 @@
           ['테이블 · 성능', '[[bc430-03|Unit 3]] · [[bc430-04|Unit 4]]', 'Transparent Table · Technical Settings · Primary/Secondary Index · Table Buffer (Ex 5–7)', '진행 중 (Cluster/Pooled 예정)'],
           ['검사 · 종속성', '[[bc430-05|Unit 5]] · [[bc430-06|Unit 6]]', 'Fixed Values · Foreign Keys · Text Table(SPRAS) · Where-Used List (Ex 8–12)', '진행 중 (Active/Inactive 예정)'],
           ['변경 · View', '[[bc430-07|Unit 7]] · [[bc430-08|Unit 8]]', 'Table Conversion(SE14) · Append Structure(ZZ/YY) · Views · SM30 · Dynamic Attachment (Ex 13–17)', '진행 중 (View Cluster 예정)'],
-          ['Search Help', '[[bc430-09|Unit 9]]', 'Elementary · Collective · Append Search Help (Ex 18–20)', '준비 중']
+          ['Search Help', '[[bc430-09|Unit 9]]', 'Elementary · Collective · Append Search Help · HANA Full-Text/Fuzzy · MATCHCODE/LISTBOX (Ex 18–20)', '진행 중 (Collective · Append 예정)']
         ]
       }
     ];

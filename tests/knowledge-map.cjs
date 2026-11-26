@@ -116,8 +116,8 @@ assert.equal(graph.clusterById.get('foundations').doneCount, 2);
 assert.equal(graph.topicById.get('unit-03').done, true);
 assert.equal(graph.topicById.get('bc430-01').done, false);
 assert.ok(graph.topicById.get('unit-06').relatedIds.includes('bc430-01'));
-assert.ok(graph.stepOrder.includes('unit-01') && graph.stepOrder.includes('unit-06') && graph.stepOrder.includes('bc430-01') && graph.stepOrder.includes('bc430-08'));
-assert.ok(!graph.stepOrder.includes('unit-08') && !graph.stepOrder.includes('bc430-09'), 'pending Unit stubs excluded from active learning path');
+assert.ok(graph.stepOrder.includes('unit-01') && graph.stepOrder.includes('unit-06') && graph.stepOrder.includes('bc430-01') && graph.stepOrder.includes('bc430-08') && graph.stepOrder.includes('bc430-09'));
+assert.ok(!graph.stepOrder.includes('unit-08') && !graph.stepOrder.includes('unit-09'), 'pending Unit stubs excluded from active learning path');
 
 // 2. Unapproved users and admins cannot access the map; approved students can.
 api.setUser({ id: 'pending-u', role: 'student', status: 'pending' });

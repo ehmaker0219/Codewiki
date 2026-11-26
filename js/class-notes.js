@@ -1,4 +1,4 @@
-/** 2026-11-11 ~ 25 수업 필기를 BC400 (Unit 1–13) · BC430 ABAP Dictionary (Unit 1–9) 구조로 정리한 문서. */
+/** 2026-11-11 ~ 26 수업 필기를 BC400 (Unit 1–13) · BC430 ABAP Dictionary (Unit 1–9) 구조로 정리한 문서. */
 (function () {
   const docs = window.WIKI_DOCS;
   const raw = {};
@@ -1991,20 +1991,111 @@ ENDLOOP.`)
   );
 
   putBc430(9, 'Search Help', 'Search Helps', 265,
-    '입력 필드 F4 도움말을 구성하는 Elementary · Collective · Append Search Help 개념과 고급 기법, Exercise 18–20을 다룹니다.',
-    ['Search Help'],
+    'SE11 Search Help 생성(Elementary · Collective · Selection Method · Dialog Behavior · LPos/SPos), Table · Structure · Data Element · ABAP 코드 연결, SAP HANA Enhanced Options(Full-Text · Linguistic · Fuzzy Search)와 Exercise 18–20을 정리합니다.',
+    ['Search Help', 'Elementary Search Help', 'Collective Search Help', 'Selection Method', 'Dialog Behavior', 'LPos', 'SPos', 'Fuzzy Search', 'Linguistic Search', 'Enhanced Options', 'MATCHCODE OBJECT', 'AS LISTBOX'],
     [
-      { id: 'l1', kind: 'lesson', badge: 'L1', page: 'p. 266', pending: true, label: 'Search Help 생성', desc: 'Lesson: Creating Search Helps (p. 266) — 준비 중' },
-      { id: 'l2', kind: 'lesson', badge: 'L2', page: 'p. 285', pending: true, label: '고급 Search Help 기법', desc: 'Lesson: Applying Advanced Search Help Techniques (p. 285) — 준비 중' },
-      { id: 'ex', kind: 'exercise', badge: 'Ex 18–20', page: 'p. 281–293', pending: true, label: 'Exercise 18–20', desc: 'BC430 Exercise 18–20 (Search Help · Collective · Append) — 준비 중' }
+      { id: 'l1', kind: 'lesson', badge: 'L1', page: 'p. 266', label: 'Search Help 생성 · 연결', desc: 'Lesson: Creating Search Helps (p. 266) — SE11 생성 6단계, Dialog Behavior 3종, Parameter(LPos · SPos), Table · Structure · Data Element · ABAP 코드 연결을 정리합니다.' },
+      { id: 'l2', kind: 'lesson', badge: 'L2', page: 'p. 285', label: '고급 Search Help · HANA', desc: 'Lesson: Applying Advanced Search Help Techniques (p. 285) — SAP HANA DB의 Full-Text · Linguistic · Fuzzy Search(Enhanced Options)를 정리합니다. Collective · Append Search Help는 후속 진도에 맞춰 보강할 예정입니다.' },
+      { id: 'ex', kind: 'exercise', badge: 'Ex 18–20', page: 'p. 281–293', label: 'Exercise 18–20', desc: 'BC430 Exercise 18(Create Search Helps) 실습 체크포인트를 정리합니다. Exercise 19–20은 후속 진도에 맞춰 정리할 예정입니다.' }
     ],
     [
-      pendingSec('l1', 'Lesson 1', 'p. 266', 'Creating Search Helps (Search Help 생성)'),
-      pendingSec('l2', 'Lesson 2', 'p. 285', 'Applying Advanced Search Help Techniques (고급 Search Help 기법)'),
-      pendingSec('ex', 'Exercise 18', 'p. 281', 'Exercise 18: Create Search Helps'),
-      pendingSec('ex', 'Exercise 19', 'p. 289', 'Exercise 19: Create Collective Search Helps'),
-      pendingSec('ex', 'Exercise 20', 'p. 293', 'Exercise 20: Create Append Search Helps')
-    ]
+      {
+        tab: 'l1', badge: 'Lesson 1', page: 'p. 266', title: 'Search Help 생성 절차와 Dialog Behavior · Parameter(LPos · SPos)',
+        blocks: [
+          text('**Search Help**는 SAP 화면 입력 필드에서 `F4`를 눌렀을 때 가능한 값 목록을 보여 주는 입력 도움말 객체입니다. `SE11`에서 **Elementary Search Help**(단일 검색 경로) 또는 **Collective Search Help**(여러 Elementary Search Help를 탭으로 묶은 형태) 중 유형을 선택해 생성합니다.'),
+          {
+            type: 'practice',
+            title: 'SE11 Search Help 생성 절차 (1–5단계)',
+            steps: [
+              { step: '1', action: 'SE11에서 Search help 선택 후 Z/Y 이름 입력 → Create', detail: '고객 객체 명명 규칙에 따라 Z 또는 Y로 시작하는 이름을 입력하고 Create를 클릭합니다.' },
+              { step: '2', action: 'Elementary or Collective 선택', detail: '단일 검색 기준을 정의할 때는 Elementary search help를, 여러 Search Help를 하나의 팝업 탭으로 묶을 때는 Collective search help를 선택합니다.' },
+              { step: '3', action: 'Selection Method에 대상 DB 테이블(또는 View) 지정', detail: 'Search Help 목록에 띄울 데이터가 들어 있는 DB 테이블(예: SCARR, SPFLI) 또는 View를 Selection Method에 지정합니다.' },
+              { step: '4', action: 'Dialog Behavior 선택', detail: 'F4를 눌렀을 때 제한 조건 팝업을 먼저 띄울지, 결과 리스트를 바로 보여 줄지, 데이터 건수에 따라 자동 결정할지 선택합니다.' },
+              { step: '5', action: 'Parameter에서 필드 선택 및 LPos · SPos 지정', detail: 'Selection Method의 필드 중 도움말에 포함할 필드를 선택하고, 결과 리스트 열 순서(LPos)와 제한 조건 화면 순서(SPos)를 번호로 지정합니다.' }
+            ]
+          },
+          table(['Dialog Behavior 옵션', '동작 방식'], [
+            ['`Dialog with value restriction`', '`Selection Options` 화면(제한 조건 입력 팝업)을 먼저 띄워 조건을 좁힌 뒤 조회합니다.'],
+            ['`Display values immediately`', '제한 조건 팝업 없이 결과 리스트(Hit List)를 바로 보여 줍니다.'],
+            ['`Dialog depends on set of values`', '조회 대상 데이터 양에 따라 1번(제한 조건 팝업)과 2번(리스트 즉시 표시) 중 자동으로 띄워 줍니다. *(참고 보완: SAP 표준 기준 100건 미만이면 바로 리스트를 표시하고 100건 이상이면 제한 조건 팝업을 표시합니다.)*']
+          ]),
+          table(['Parameter 설정 항목', '의미와 역할'], [
+            ['`LPos` (List Position)', 'F4 결과 리스트(Hit List)에 표시되는 **칼럼 열 번호** (1, 2, 3 … 순서대로 왼쪽부터 배치)'],
+            ['`SPos` (Screen Position)', '제한 조건 팝업(`Selection Options` 스크린)에 **표시되는 순서**'],
+            ['`IMP` / `EXP` *(참고 보완)*', '`IMP`(Import)는 화면 값을 Search Help 검색 조건으로 전달하고, `EXP`(Export)는 사용자가 선택한 행의 값을 입력 필드로 되돌려 줍니다.']
+          ]),
+          {
+            type: 'callout', style: 'point', title: 'LPos와 SPos 구분',
+            body: '`LPos`는 결과 목록의 **칼럼(열) 번호**, `SPos`는 제한 조건 **스크린(Screen Position)의 표시 순서**입니다. 값을 `0` 또는 빈칸으로 두면 해당 화면에서 숨길 수 있습니다.'
+          }
+        ]
+      },
+      {
+        tab: 'l1', badge: 'Lesson 1', page: 'p. 266', title: 'Search Help 연결 방법 — Table · Structure · Data Element · ABAP 코드',
+        blocks: [
+          text('Search Help를 생성·활성화한 뒤(6단계) 실제 입력 화면에서 `F4`로 동작하게 하려면 **Table**, **Structure**, **Data Element**에 등록하거나 **ABAP Selection Screen 코드**에서 직접 지정합니다.'),
+          table(['연결 대상', '등록 경로와 방법'], [
+            ['**Table**', '대상 DB 테이블로 돌아가 필드를 선택한 뒤 `Entry help/check` 탭에서 **`Srch Help`** 버튼을 눌러 Search Help를 등록하고 파라미터-필드 매핑을 하나하나 기입합니다.'],
+            ['**Structure**', 'Structure의 **`Input Help`**(`Entry help/check`)에서 **`Srch Help`**를 등록합니다.'],
+            ['**Data Element**', 'Data Element의 **`Further Characteristics`** 탭에서 **`Search Help`**를 등록합니다. *(원문 필기의 `Furthure Characteristics` 오타를 SAP SE11 표준 탭명 `Further Characteristics`로 교정했습니다.)*']
+          ]),
+          text('ABAP 리포트의 Selection Screen에서는 Dictionary 객체에 Search Help를 붙이지 않았거나 다른 Search Help를 적용하고 싶을 때 **`MATCHCODE OBJECT <서치헬프명>.`** 또는 **`AS LISTBOX VISIBLE LENGTH <개수>.`** 옵션을 사용해 코드에서 직접 적용할 수 있습니다. `SELECT-OPTIONS`에도 `MATCHCODE OBJECT`를 붙일 수 있으며, `AS LISTBOX`는 `PARAMETERS` 필드를 드롭다운 목록 형태로 표시합니다.'),
+          code('MATCHCODE OBJECT와 AS LISTBOX로 Search Help 적용', `REPORT zabap_f##_##.
+
+PARAMETERS:
+  p_carr   TYPE s_carr_id MATCHCODE OBJECT h_scarr, " 직접 만든 Z/Y Search Help명 지정 가능
+  p_carrlb TYPE s_carr_id AS LISTBOX VISIBLE LENGTH 20.
+
+DATA lv_carr TYPE s_carr_id.
+
+START-OF-SELECTION.
+  IF p_carr IS NOT INITIAL.
+    lv_carr = p_carr.
+  ELSE.
+    lv_carr = p_carrlb.
+  ENDIF.
+
+  SELECT SINGLE carrid, carrname, currcode
+    FROM scarr
+    INTO @DATA(ls_scarr)
+    WHERE carrid = @lv_carr.
+
+  IF sy-subrc = 0.
+    WRITE: / ls_scarr-carrid, ls_scarr-carrname, ls_scarr-currcode.
+  ELSE.
+    WRITE: / '조회된 항공사가 없습니다.'.
+  ENDIF.`)
+        ]
+      },
+      {
+        tab: 'l2', badge: 'Lesson 2', page: 'p. 285', title: 'SAP HANA Enhanced Options — Full-Text · Linguistic · Fuzzy Search',
+        blocks: [
+          text('**SAP HANA DB**에는 **FULL TEXT SEARCH** 기능이 내장되어 있습니다. `SE11` Search Help의 **`Enhanced Options`** 영역에서 아래 두 옵션을 함께 선택하면 HANA 기반의 향상된 검색(타입어헤드·유사 검색)이 Search Help에 적용됩니다.'),
+          table(['Enhanced Options 항목', '역할과 특징'], [
+            ['`Linguistic Search`', '언어적 변형(어형 변화 등)을 고려한 텍스트 검색을 지원합니다. *(원문 필기의 `Linguistic Searh` 오타를 `Linguistic Search`로 교정했습니다.)*'],
+            ['`Fuzzy Search` (유사성 검색)', '철자가 완전히 일치하지 않더라도 오타나 비슷한 단어를 모두 찾아 띄워 줍니다.']
+          ]),
+          {
+            type: 'callout', style: 'tip', title: 'Enhanced Options 적용 및 후속 학습 안내',
+            body: 'SE11 Search Help의 `Enhanced Options`에서 `Linguistic Search`와 `Fuzzy Search`를 **둘 다 선택**하면 적용됩니다. `Collective Search Help`와 `Append Search Help`의 상세 구성은 후속 수업 진도에 맞춰 이 탭에 보강할 예정입니다.'
+          }
+        ]
+      },
+      exSec('ex', 'Exercise 18', 'p. 281', 'Exercise 18: Create Search Helps',
+        text('`SE11`에서 `Z`/`Y` Elementary Search Help를 생성해 `Selection Method`, `Dialog Behavior`, `Parameter`(`LPos` · `SPos`)를 설정하고 Table · Structure · Data Element 또는 ABAP `MATCHCODE OBJECT` / `AS LISTBOX`로 연결해 `F4` 동작을 확인합니다.'),
+        {
+          type: 'practice',
+          title: 'Exercise 18 필수 체크포인트',
+          steps: [
+            { step: '1', action: 'Elementary Search Help 생성 및 Dialog Behavior 확인', detail: 'Selection Method에 DB 테이블/View를 지정하고 3가지 Dialog Behavior 차이를 F4 테스트로 확인합니다.' },
+            { step: '2', action: 'LPos · SPos 지정 후 Table / Structure / Data Element 연결', detail: '결과 열 번호(LPos)와 제한 조건 화면 순서(SPos)를 배치한 뒤 Table(Srch Help), Structure(Input Help), Data Element(Further Characteristics) 중 대상 위치에 등록합니다.' },
+            { step: '3', action: 'ABAP Selection Screen 적용 및 Enhanced Options 확인', detail: 'PARAMETERS에 MATCHCODE OBJECT 또는 AS LISTBOX VISIBLE LENGTH를 적용해 보고, HANA 환경에서는 Enhanced Options(Linguistic · Fuzzy Search)를 확인합니다.' }
+          ]
+        }),
+      pendingSec('ex', 'Exercise 19', 'p. 289', 'Exercise 19: Create Collective Search Helps (준비 중)', '준비 중 · BC430 교재 p. 289 실습은 Collective Search Help 진도에 맞춰 정리할 예정입니다.'),
+      pendingSec('ex', 'Exercise 20', 'p. 293', 'Exercise 20: Create Append Search Helps (준비 중)', '준비 중 · BC430 교재 p. 293 실습은 Append Search Help 진도에 맞춰 정리할 예정입니다.')
+    ],
+    '11/26'
   );
 
   const unitOrder = [

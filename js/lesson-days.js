@@ -127,6 +127,11 @@
       from('bc430-07', 'Enhancement — Standard Table과 Append Structure'),
       from('bc430-08', 'Creating Database Views — View 생성 · Join 규칙 · Dynamic Attachment'),
       from('bc430-08', 'Creating Maintenance Views — SM30과 Table Maintenance Generator')
+    ]},
+    {date: '2026-11-26', source: '261126 목요일.md', sections: [
+      from('bc430-09', 'Search Help 생성 절차와 Dialog Behavior · Parameter(LPos · SPos)'),
+      from('bc430-09', 'Search Help 연결 방법 — Table · Structure · Data Element · ABAP 코드'),
+      from('bc430-09', 'SAP HANA Enhanced Options — Full-Text · Linguistic · Fuzzy Search')
     ]}
   ];
   // Dates are rebuilt from explicit source associations, including split topics.

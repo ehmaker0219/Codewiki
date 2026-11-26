@@ -61,6 +61,7 @@ assert.deepEqual(Array.from(docs['bc430-05'].lessonDates),['2026-11-24','2026-11
 assert.deepEqual(Array.from(docs['bc430-06'].lessonDates),['2026-11-25']);
 assert.deepEqual(Array.from(docs['bc430-07'].lessonDates),['2026-11-25']);
 assert.deepEqual(Array.from(docs['bc430-08'].lessonDates),['2026-11-25']);
+assert.deepEqual(Array.from(docs['bc430-09'].lessonDates),['2026-11-26']);
 assert.equal(daily('20').sourceFile,'261120 금요일 (1).md');
 assert.equal(daily('20').title,'2026-11-20 (금)');
 assert.ok(daily('20').sections.some(s=>s.title==='Classic ABAP Report와 Selection Screen'));
@@ -91,6 +92,17 @@ assert.ok(daily('25').sections.some(s=>s.title==='Creating Database Views — Vi
 assert.ok(daily('25').sections.some(s=>s.title==='Creating Maintenance Views — SM30과 Table Maintenance Generator'));
 assert.ok(!JSON.stringify(daily('25')).includes('codewiki-rich-v1'));
 assert.ok(!JSON.stringify(daily('25')).includes('codewiki-table-v1'));
+assert.equal(daily('26').sourceFile,'261126 목요일.md');
+assert.equal(daily('26').title,'2026-11-26 (목)');
+assert.ok(daily('26').sections.some(s=>s.title==='Search Help 생성 절차와 Dialog Behavior · Parameter(LPos · SPos)'));
+assert.ok(daily('26').sections.some(s=>s.title==='Search Help 연결 방법 — Table · Structure · Data Element · ABAP 코드'));
+assert.ok(daily('26').sections.some(s=>s.title==='SAP HANA Enhanced Options — Full-Text · Linguistic · Fuzzy Search'));
+assert.ok(!JSON.stringify(daily('26')).includes('codewiki-rich-v1'));
+assert.ok(!JSON.stringify(daily('26')).includes('codewiki-table-v1'));
+assert.ok(tools.search(index,'Dialog Behavior').some(r=>r.doc.id==='bc430-09'));
+assert.ok(tools.search(index,'Fuzzy Search').some(r=>r.doc.id==='bc430-09'));
+assert.ok(tools.search(index,'MATCHCODE OBJECT').some(r=>r.doc.id==='bc430-09'));
+assert.ok(tools.search(index,'AS LISTBOX').some(r=>r.doc.id==='bc430-09'));
 assert.ok(tools.search(index,'Text Table').some(r=>r.doc.id==='bc430-05'));
 assert.ok(tools.search(index,'Where-Used List').some(r=>r.doc.id==='bc430-06'));
 assert.ok(tools.search(index,'Table Conversion').some(r=>r.doc.id==='bc430-07'));
