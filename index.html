@@ -7,7 +7,7 @@
   <link rel="icon" type="image/svg+xml" href="assets/logo-symbol.svg?v=32baec3f0703" />
   <link rel="stylesheet" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/style.css?v=48ce21767d3c" />
+  <link rel="stylesheet" href="css/style.css?v=9824c8d69228" />
   <link rel="stylesheet" href="css/theme.css?v=5cfae8466d19" />
   <link rel="stylesheet" href="css/profile.css?v=386bcc74d5e6" />
   <link rel="stylesheet" href="css/admin-members.css?v=d464a61444f8" />
@@ -17,6 +17,7 @@
   <link rel="stylesheet" href="css/mentoring.css?v=8fd2a4c693c5" />
   <link rel="stylesheet" href="css/object-game.css?v=4971b0ec708f" />
   <link rel="stylesheet" href="css/knowledge-map.css?v=bef6fb135a45" />
+  <link rel="stylesheet" href="css/sql-practice.css?v=f6ad7e583171" />
 </head>
 <body>
   <!-- 로그인 후 전체 레이아웃: 좌측 고정 일체형 사이드바 + 우측 워크스페이스 -->
@@ -78,11 +79,19 @@
               <svg class="sb-icon" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18M9 10v10"/></svg>
               <span>SAP GUI 프로그램 정리표</span>
             </a>
-            <a href="#doc/abap-sql-guide" class="sb-menu-item" id="sbSqlGuideItem" data-doc="abap-sql-guide" hidden>
+          </div>
+          <details class="sidebar-menu-group" id="sbSqlGuideItem" open hidden>
+            <summary class="sb-menu-item">
               <svg class="sb-icon" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v6c0 1.66 3.58 3 8 3s8-1.34 8-3V5"/><path d="M4 11v6c0 1.66 3.58 3 8 3s8-1.34 8-3v-6"/></svg>
               <span>ABAP SQL</span>
-            </a>
-          </div>
+              <svg class="sidebar-group-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m9 5 7 7-7 7"/></svg>
+            </summary>
+            <div class="sidebar-submenu">
+              <a href="#doc/abap-sql-guide/classic" class="sb-menu-item nav-doc-link sb-sql-mode-link" id="sbSqlClassicItem" data-doc="abap-sql-guide" data-doc-mode="classic"><svg class="sb-icon" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20M6.5 3H20v19H6.5A2.5 2.5 0 0 1 4 19.5v-14A2.5 2.5 0 0 1 6.5 3Z"/><path d="M9 8h6M9 12h4"/></svg><span>구문법</span></a>
+              <a href="#doc/abap-sql-guide/new" class="sb-menu-item nav-doc-link sb-sql-mode-link" id="sbSqlNewItem" data-doc="abap-sql-guide" data-doc-mode="new"><svg class="sb-icon" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m13 2-9 12h7l-1 8 9-12h-7z"/></svg><span>신문법</span></a>
+              <a href="#doc/abap-sql-guide/practice" class="sb-menu-item nav-doc-link sb-sql-mode-link" id="sbSqlPracticeItem" data-doc="abap-sql-guide" data-doc-mode="practice"><svg class="sb-icon" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg><span>연습문제</span></a>
+            </div>
+          </details>
           <details class="sidebar-menu-group" id="learningToolsGroup" open hidden>
             <summary class="sb-menu-item">
               <svg class="sb-icon" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v16M3 3h5a4 4 0 0 1 4 2 4 4 0 0 1 4-2h5v16h-5a4 4 0 0 0-4 2 4 4 0 0 0-4-2H3Z"/></svg>
@@ -93,6 +102,7 @@
               <div id="studySidebarSlot"></div>
               <button type="button" id="openObjectGameBtn" class="sb-menu-item" hidden><svg class="sb-icon" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 3 9 9-9 9-9-9Z"/><path d="M9 12h6M12 9v6"/></svg><span>DATA 미니게임</span></button>
               <button type="button" id="openMentoringBtn" class="sb-menu-item" hidden><svg class="sb-icon" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 4H5v17h14V4h-4M9 3h6v4H9zM8 12h8M8 16h5"/></svg><span>멘토링</span></button>
+              <a class="sb-menu-item" id="openTextbookSiteLink" href="https://abapsharebyreza.blogspot.com/" target="_blank" rel="noopener noreferrer" aria-label="교재 사이트 (새 탭에서 열기)"><svg class="sb-icon" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20M6.5 3H20v19H6.5A2.5 2.5 0 0 1 4 19.5v-14A2.5 2.5 0 0 1 6.5 3Z"/><path d="M9 8h6M9 12h4"/></svg><span>교재 사이트 ↗</span></a>
             </div>
           </details>
           <div class="sb-nav-section" id="campusNavSection">
@@ -221,7 +231,7 @@
           </div>
         </aside>
       </div>
-      <footer class="site-footer">최근 업데이트 <time id="siteUpdatedAt" datetime="2026-11-26T07:22:02.890Z" data-version="e4e710ae204ac576">2026.11.26 16:22 (KST)</time></footer>
+      <footer class="site-footer">최근 업데이트 <time id="siteUpdatedAt" datetime="2026-11-26T08:28:32.425Z" data-version="6fb8e7161f97a0f7">2026.11.26 17:28 (KST)</time></footer>
     </div>
   </div>
 
@@ -256,7 +266,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.119.2/dist/umd/supabase.js" integrity="sha384-A97u3Qnt9GZHURO9YJZRe7VQgGUeFzcv6I1oIGnUTxQrCxnpQMwR0/G8F2zt9abZ" crossorigin="anonymous"></script>
 
   <script src="js/data.js?v=ed545b799f97"></script>
-  <script src="js/class-notes.js?v=0c61012f97fa"></script>
+  <script src="js/class-notes.js?v=9395a5c98e94"></script>
   <script src="js/lesson-days.js?v=6b62a4f98766"></script>
   <script src="js/textbook.js?v=f1b2e308be3e"></script>
   <script src="js/example-notes.js?v=4f08ee83cd53"></script>
@@ -265,9 +275,11 @@
   <script src="js/birthdays.js?v=6a0a2208af45"></script>
   <script src="js/progress.js?v=b7f8969118e4"></script>
   <script src="js/visualizers.js?v=8d536050355f"></script>
+  <script src="js/sql-practice-bank.js?v=7ea32b8f4592"></script>
+  <script src="js/sql-practice.js?v=edb666e6ba0a"></script>
   <script src="js/schedule-data.js?v=03cf62a15b32"></script>
   <script src="js/schedule.js?v=c90d69ce0ad8"></script>
-  <script src="js/app.js?v=e3b548ce854a"></script>
+  <script src="js/app.js?v=40934cebea77"></script>
   <script src="js/admin.js?v=d70917d3f85c"></script>
   <script src="js/admin-members.js?v=302f95188b21"></script>
   <script src="js/presence.js?v=b095f08ea2a3"></script>
@@ -282,8 +294,8 @@
   <script src="js/mentoring.js?v=803343fb5f5a"></script>
   <script src="js/secure-auth.js?v=989ab8c4228a"></script>
   <script src="js/notice.js?v=9c6df55160b2"></script>
-  <script src="js/auth.js?v=e96f6b00db51"></script>
-  <script src="js/board.js?v=6214fd6d4221"></script>
+  <script src="js/auth.js?v=d66157d53cc9"></script>
+  <script src="js/board.js?v=401cac8dca82"></script>
   <script src="js/practice.js?v=b1c474ca303a"></script>
   <script src="js/practice-ui.js?v=a003c4c7695f"></script>
   <script type="application/json" id="objectGameBankSource" data-src="js/object-game-bank.js?v=48febe419bd7"></script>

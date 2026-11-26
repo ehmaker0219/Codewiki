@@ -2440,11 +2440,11 @@ END-OF-SELECTION.
     hideSectionNumbers: true,
     hideToc: true,
     title: 'ABAP SQL 가이드',
-    subtitle: 'ABAP 내에서 활용하는 Open SQL 실전 레퍼런스 — 구문법(Classic) · 신문법(7.40+) 분리 보기',
-    aliases: ['SQL 가이드', 'ABAP SQL 레퍼런스', 'SQL 표현식', 'DB LUW', 'SAP LUW', 'Lock Object', 'ST05'],
+    subtitle: 'Open SQL 구문법(Classic) · 신문법(7.40+) 레퍼런스와 브라우저 실습 30제',
+    aliases: ['SQL 가이드', 'ABAP SQL 레퍼런스', 'ABAP SQL 연습문제', 'SQL 표현식', 'DB LUW', 'SAP LUW', 'Lock Object', 'ST05'],
     tcodes: ['SE11', 'SE16', 'SE38', 'ST05'],
     specs: {},
-    summary: 'ABAP Program 안에서 데이터베이스를 읽고 변경할 때 사용하는 Open SQL 문법과 실전 패턴을 정리했습니다. 아래 버튼에서 **구문법(Classic)**과 **신문법(7.40+ · Strict Mode)**을 전환해 서로 섞이지 않게 따로 확인할 수 있으며, 모든 예제는 SAP 항공 모델(SCARR·SPFLI·SFLIGHT·SBOOK·SCUSTOM) 기준입니다.',
+    summary: 'ABAP Program 안에서 데이터베이스를 읽고 변경할 때 사용하는 Open SQL 문법을 **구문법(Classic)** · **신문법(7.40+ · Strict Mode)** 탭으로 나누어 정리했고, **연습문제** 탭에서 테이블과 기대 결과를 보며 직접 SQL을 작성·채점할 수 있습니다.',
     defaultSyntaxMode: 'new',
     syntaxModes: [
       {
@@ -2460,6 +2460,14 @@ END-OF-SELECTION.
         badge: '7.40+ · 권장',
         bannerTitle: '신문법 (ABAP 7.40+ / 7.5+ · Strict Mode)',
         desc: '현재 수업·실무 권장 기준입니다. 쉼표(,)로 컬럼을 구분하고 ABAP 변수 앞에 @를 붙이며, INTO 절을 문장 끝에 두고 @DATA(...) 인라인 선언·SQL 표현식을 활용합니다.'
+      },
+      {
+        id: 'practice',
+        label: '연습문제',
+        badge: '30제 · 실습',
+        bannerTitle: 'ABAP SQL 연습문제 30제',
+        desc: 'SE16N 형식 테이블과 기대 결과를 보며 ABAP Open SQL을 직접 작성하고 브라우저에서 즉시 채점합니다. 01~24번은 구문법·신문법 모두 채점하며, 25~30번은 신문법(Strict Mode) 전용 문제입니다.',
+        widgetId: 'abap-sql-practice'
       }
     ],
     sectionTabs: [

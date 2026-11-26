@@ -356,13 +356,24 @@
     </details>`;
   }
 
+  function syncSqlSidebarActive(modeId = null) {
+    const isSql = currentDocId === 'abap-sql-guide';
+    const sqlDoc = window.WIKI_DOCS?.['abap-sql-guide'];
+    const activeMode = isSql
+      ? (modeId || activeDocModes.get('abap-sql-guide') || sqlDoc?.defaultSyntaxMode || 'new')
+      : null;
+    document.querySelectorAll('.sb-sql-mode-link[data-doc-mode]').forEach(el => {
+      el.classList.toggle('active', Boolean(isSql && el.dataset.docMode === activeMode));
+    });
+  }
+
   // 좌측 고정 사이드바 렌더링 (불필요한 빈 요소 자동 숨김)
   function renderNavigation() {
     const esc = window.CodeWikiLearning.escape;
     document.getElementById('sbScheduleItem')?.classList.toggle('active', currentDocId === 'education-schedule');
     document.getElementById('sbThinkingFlowItem')?.classList.toggle('active', currentDocId === 'abap-thinking-flow');
     document.getElementById('sbProgramCatalogItem')?.classList.toggle('active', currentDocId === 'sap-gui-programs');
-    document.getElementById('sbSqlGuideItem')?.classList.toggle('active', currentDocId === 'abap-sql-guide');
+    syncSqlSidebarActive();
     document.getElementById('sbTextbookItem')?.classList.toggle('active', currentDocId === 'abap-textbook');
     syncTrackChrome();
 
@@ -656,9 +667,14 @@
   const activeDocTabs = new Map();
   const activeDocModes = new Map();
   function renderDocument(docId) {
+    const parsed = parseDocHash(docId);
+    if (parsed.modeHint && window.WIKI_DOCS[parsed.docId]?.syntaxModes?.some(m => m.id === parsed.modeHint)) {
+      activeDocModes.set(parsed.docId, parsed.modeHint);
+    }
+    docId = parsed.rawId;
     if ((docId === 'welcome-abap' || docId === 'welcome-ui5') && window.CodeWikiAdminMembers?.openHome()) return;
-    const redirectTab = window.WIKI_DOC_REDIRECT_TABS?.[docId];
-    const redirectedDocId = window.WIKI_DOC_REDIRECTS?.[docId];
+    const redirectTab = parsed.redirectTab;
+    const redirectedDocId = parsed.docId !== docId ? parsed.docId : null;
     if (redirectedDocId && window.WIKI_DOCS[redirectedDocId]) {
       if (redirectTab) activeDocTabs.set(redirectedDocId, redirectTab);
       docId = redirectedDocId;
@@ -724,6 +740,8 @@
 
     // Preserve the shared TOC node before replacing the current document.
     if (tocCardWrap) sidebarRight?.prepend(tocCardWrap);
+    appShell?.classList.remove("sql-practice-wide");
+    articleContainer.classList.remove("sql-practice-mode");
     articleContainer.innerHTML = `
       ${doc.topWidgetId ? `<div class="doc-top-widget" data-widget-id="${esc(doc.topWidgetId)}"></div>` : ""}
       ${
@@ -772,10 +790,10 @@
           ? `
         <div class="doc-syntax-panel" id="docSyntaxPanel" data-syntax-mode="${esc(initialMode)}">
           <div class="doc-syntax-header">
-            <div class="doc-syntax-switch" role="group" aria-label="${esc(doc.title)} 문법 선택">
+            <div class="doc-syntax-switch" role="tablist" aria-label="${esc(doc.title)} 탭 선택">
               ${doc.syntaxModes
                 .map(
-                  mode => `<button type="button" class="doc-syntax-btn" id="docSyntax-${esc(mode.id)}" data-doc-mode="${esc(mode.id)}" aria-pressed="false"><span class="doc-syntax-label">${esc(mode.label)}</span>${mode.badge ? `<span class="doc-syntax-badge">${esc(mode.badge)}</span>` : ""}</button>`
+                  mode => `<button type="button" class="doc-syntax-btn" role="tab" id="docSyntax-${esc(mode.id)}" data-doc-mode="${esc(mode.id)}" aria-selected="false" tabindex="-1"><span class="doc-syntax-label">${esc(mode.label)}</span>${mode.badge ? `<span class="doc-syntax-badge">${esc(mode.badge)}</span>` : ""}</button>`
                 )
                 .join("")}
             </div>
@@ -783,6 +801,10 @@
           </div>
           <p class="doc-syntax-desc" id="docSyntaxDesc"></p>
         </div>
+        ${doc.syntaxModes
+          .filter(m => m.widgetId)
+          .map(m => `<div class="doc-mode-widget-panel" role="tabpanel" aria-labelledby="docSyntax-${esc(m.id)}" data-mode-panel="${esc(m.id)}" data-lazy-widget-id="${esc(m.widgetId)}" hidden></div>`)
+          .join("")}
       `
           : ""
       }
@@ -870,7 +892,9 @@
     if (hasSectionTabs || hasSyntaxModes) {
       const tabButtons = [...articleContainer.querySelectorAll(".doc-tab-btn[data-doc-tab]")];
       const modeButtons = [...articleContainer.querySelectorAll(".doc-syntax-btn[data-doc-mode]")];
+      const modePanels = [...articleContainer.querySelectorAll(".doc-mode-widget-panel[data-mode-panel]")];
       const sectionNodes = [...articleContainer.querySelectorAll(".doc-section")];
+      const tabShell = articleContainer.querySelector(".doc-tab-shell");
       const sectionsWrap = articleContainer.querySelector(".doc-sections-wrap");
       const tabDesc = document.getElementById("docTabDesc");
       const tabPanel = document.getElementById("docTabPanel");
@@ -901,24 +925,55 @@
       };
 
       const applyDocView = (nextTabId, nextModeId, focusEl = null) => {
+        let activeModeMeta = null;
         if (hasSyntaxModes) {
           currentMode = syntaxModeMap.has(nextModeId) ? nextModeId : initialMode;
           activeDocModes.set(doc.id, currentMode);
-          const modeMeta = syntaxModeMap.get(currentMode);
+          activeModeMeta = syntaxModeMap.get(currentMode);
           if (syntaxPanel) syntaxPanel.dataset.syntaxMode = currentMode;
           if (sectionsWrap) sectionsWrap.dataset.activeMode = currentMode;
           modeButtons.forEach(btn => {
             const active = btn.dataset.docMode === currentMode;
             btn.classList.toggle("active", active);
-            btn.setAttribute("aria-pressed", String(active));
+            btn.setAttribute("aria-selected", String(active));
+            btn.tabIndex = active ? 0 : -1;
             if (active && focusEl === "mode") btn.focus();
           });
-          if (syntaxCurrent && modeMeta) {
-            syntaxCurrent.textContent = `현재 화면 · ${modeMeta.bannerTitle || modeMeta.label}`;
+          if (syntaxCurrent && activeModeMeta) {
+            syntaxCurrent.textContent = `현재 화면 · ${activeModeMeta.bannerTitle || activeModeMeta.label}`;
           }
-          if (syntaxDesc && modeMeta) {
-            syntaxDesc.textContent = modeMeta.desc || "";
+          if (syntaxDesc && activeModeMeta) {
+            syntaxDesc.textContent = activeModeMeta.desc || "";
           }
+          if (doc.id === "abap-sql-guide") {
+            syncSqlSidebarActive(currentMode);
+            const expectedHash = `#doc/${doc.id}/${currentMode}`;
+            if (window.location.hash.startsWith(`#doc/${doc.id}`) && window.location.hash !== expectedHash) {
+              history.replaceState(null, "", expectedHash);
+            }
+          }
+        }
+
+        const isWidgetMode = Boolean(activeModeMeta?.widgetId);
+        modePanels.forEach(panel => {
+          const active = isWidgetMode && panel.dataset.modePanel === currentMode;
+          panel.hidden = !active;
+          if (active && !panel.dataset.widgetMounted) {
+            const wId = panel.dataset.lazyWidgetId;
+            if (window.WIKI_WIDGETS && typeof window.WIKI_WIDGETS[wId] === "function") {
+              panel.dataset.widgetMounted = "1";
+              window.WIKI_WIDGETS[wId](panel);
+            }
+          }
+        });
+        if (tabShell) tabShell.hidden = isWidgetMode;
+        if (sectionsWrap) sectionsWrap.hidden = isWidgetMode;
+        const isPracticeWide = isWidgetMode && activeModeMeta?.widgetId === "abap-sql-practice";
+        articleContainer.classList.toggle("sql-practice-mode", isPracticeWide);
+        appShell?.classList.toggle("sql-practice-wide", isPracticeWide);
+        if (isWidgetMode) {
+          syncTocVisibility();
+          return;
         }
 
         const modeSections = sections.filter(sec => matchesMode(sec.mode || "both", currentMode));
@@ -962,7 +1017,7 @@
         });
         syncTocVisibility();
       };
-      articleContainer._applyDocView = (tabId) => applyDocView(tabId, currentMode);
+      articleContainer._applyDocView = (tabId, modeId) => applyDocView(tabId ?? currentTab, modeId ?? currentMode);
       articleContainer._syncTocVisibility = syncTocVisibility;
 
       modeButtons.forEach((btn, idx) => {
@@ -1122,6 +1177,14 @@
 
   // When the hash changes, render once from the hashchange handler (after every
   // other view has routed away) instead of rendering here and again there.
+  function parseDocHash(rawTarget) {
+    const parts = String(rawTarget || "").split("/");
+    const rawId = parts[0] || "";
+    const modeHint = parts[1] || null;
+    const redirectTab = window.WIKI_DOC_REDIRECT_TABS?.[rawId] || null;
+    const docId = window.WIKI_DOC_REDIRECTS?.[rawId] || rawId;
+    return { rawId, docId, redirectTab, modeHint };
+  }
   const STUDENT_ONLY_HASHES = new Set(["#map", "#study", "#mentoring", "#data-game"]);
   function isDocAccessible(doc) {
     if (!doc || doc.track === "ui5") return false;
@@ -1131,29 +1194,44 @@
 
   let pendingNavigation = null;
   let renderedAdminRole = null;
-  function showDocument(docId) {
+  function showDocument(docId, modeId = null) {
     if (window.CodeWikiBoard) window.CodeWikiBoard.closeIfActive();
-    const hash = `#doc/${docId}`;
+    const targetDoc = window.WIKI_DOCS[docId];
+    const validMode = modeId && targetDoc?.syntaxModes?.some(m => m.id === modeId) ? modeId : null;
+    const hash = validMode ? `#doc/${docId}/${validMode}` : `#doc/${docId}`;
+    const shellEl = typeof appShell !== "undefined" ? appShell : null;
+    const articleEl = typeof articleContainer !== "undefined" ? articleContainer : null;
+    const appHidden = shellEl?.classList.contains('object-game-hidden') || shellEl?.classList.contains('mentoring-hidden') || shellEl?.classList.contains('study-hidden') || shellEl?.classList.contains('members-hidden') || shellEl?.classList.contains('board-mode-shell') || shellEl?.classList.contains('map-hidden');
+    if (validMode && typeof currentDocId !== "undefined" && docId === currentDocId && !appHidden && typeof articleEl?._applyDocView === "function") {
+      if (window.location.hash !== hash) history.replaceState(null, "", hash);
+      articleEl._applyDocView(null, validMode);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+      return;
+    }
     if (window.location.hash !== hash) {
-      pendingNavigation = docId;
+      pendingNavigation = validMode ? `${docId}/${validMode}` : docId;
       window.location.hash = hash;
       return;
     }
-    renderDocument(docId);
+    renderDocument(validMode ? `${docId}/${validMode}` : docId);
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
-  function navigateTo(docId, tabId = null) {
-    const redirectTab = window.WIKI_DOC_REDIRECT_TABS?.[docId];
-    docId = window.WIKI_DOC_REDIRECTS?.[docId] || docId;
+  function navigateTo(docId, tabId = null, modeId = null) {
+    const parsed = parseDocHash(docId);
+    docId = parsed.docId;
     if (!window.WIKI_DOCS[docId]) return;
     if (!isDocAccessible(window.WIKI_DOCS[docId])) {
       window.CodeWikiAdminMembers?.openHome?.();
       return;
     }
-    const nextTab = tabId || redirectTab;
-    if (nextTab) activeDocTabs.set(docId, nextTab);
-    showDocument(docId);
+    const nextTab = tabId || parsed.redirectTab;
+    const nextMode = modeId || parsed.modeHint;
+    if (nextTab && typeof activeDocTabs !== "undefined") activeDocTabs.set(docId, nextTab);
+    if (nextMode && typeof activeDocModes !== "undefined" && window.WIKI_DOCS[docId].syntaxModes?.some(m => m.id === nextMode)) {
+      activeDocModes.set(docId, nextMode);
+    }
+    showDocument(docId, nextMode);
   }
 
   function selectTrack(track) {
@@ -1163,12 +1241,13 @@
     const h = window.location.hash;
     if (STUDENT_ONLY_HASHES.has(h)) return;
     if (h.startsWith("#doc/")) {
-      const target = h.replace("#doc/", "");
-      const redirectTab = window.WIKI_DOC_REDIRECT_TABS?.[target];
-      const resolved = window.WIKI_DOC_REDIRECTS?.[target] || target;
-      if (isDocAccessible(window.WIKI_DOCS[resolved])) {
-        if (redirectTab) activeDocTabs.set(resolved, redirectTab);
-        showDocument(resolved);
+      const parsed = parseDocHash(h.replace("#doc/", ""));
+      if (isDocAccessible(window.WIKI_DOCS[parsed.docId])) {
+        if (parsed.redirectTab) activeDocTabs.set(parsed.docId, parsed.redirectTab);
+        if (parsed.modeHint && window.WIKI_DOCS[parsed.docId]?.syntaxModes?.some(m => m.id === parsed.modeHint)) {
+          activeDocModes.set(parsed.docId, parsed.modeHint);
+        }
+        showDocument(parsed.docId, parsed.modeHint);
         return;
       }
     }
@@ -1207,7 +1286,7 @@
       e.preventDefault();
       hoverPreviewCard.classList.add('hidden');
       if (link.hasAttribute('data-missing-doc')) window.CodeWikiBoard?.openWriteModal('', link.getAttribute('data-missing-doc') || '');
-      else navigateTo(link.getAttribute('data-doc'), link.getAttribute('data-doc-tab'));
+      else navigateTo(link.getAttribute('data-doc'), link.getAttribute('data-doc-tab'), link.getAttribute('data-doc-mode'));
     });
     document.addEventListener('mouseover', e => {
       const link = e.target.closest?.('.wiki-link[data-doc]');
@@ -1353,15 +1432,21 @@
       const appHidden = appShell?.classList.contains('object-game-hidden') || appShell?.classList.contains('mentoring-hidden') || appShell?.classList.contains('study-hidden') || appShell?.classList.contains('members-hidden') || appShell?.classList.contains('board-mode-shell') || appShell?.classList.contains('map-hidden');
       if (h.startsWith("#doc/")) {
         const target = h.replace("#doc/", "");
-        const redirectTab = window.WIKI_DOC_REDIRECT_TABS?.[target];
-        const resolved = window.WIKI_DOC_REDIRECTS?.[target] || target;
+        const parsed = parseDocHash(target);
+        const resolved = parsed.docId;
         const targetDoc = window.WIKI_DOCS[resolved];
+        const validMode = parsed.modeHint && targetDoc?.syntaxModes?.some(m => m.id === parsed.modeHint) ? parsed.modeHint : null;
         if (isAdmin && (!targetDoc || !isDocAccessible(targetDoc))) {
           if (window.CodeWikiBoard) window.CodeWikiBoard.closeIfActive();
           window.CodeWikiAdminMembers?.openHome?.();
           return;
         }
-        if (targetDoc && (resolved !== currentDocId || appHidden || requested === resolved || requested === target || Boolean(redirectTab))) {
+        if (targetDoc && validMode && resolved === currentDocId && !appHidden && typeof articleContainer._applyDocView === "function") {
+          articleContainer._applyDocView(null, validMode);
+          window.scrollTo({ top: 0, behavior: "smooth" });
+          return;
+        }
+        if (targetDoc && (resolved !== currentDocId || appHidden || requested === resolved || requested === target || Boolean(parsed.redirectTab) || Boolean(validMode))) {
           if (window.CodeWikiBoard) window.CodeWikiBoard.closeIfActive();
           renderDocument(target);
           window.scrollTo({ top: 0, behavior: "smooth" });
@@ -1437,8 +1522,8 @@
     const hash = window.location.hash;
     if (hash.startsWith("#doc/")) {
       const target = hash.replace("#doc/", "");
-      const resolved = window.WIKI_DOC_REDIRECTS?.[target] || target;
-      if (window.WIKI_DOCS[resolved]) currentDocId = target;
+      const parsed = parseDocHash(target);
+      if (window.WIKI_DOCS[parsed.docId]) currentDocId = target;
     }
 
     renderDocument(currentDocId);

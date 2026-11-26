@@ -112,7 +112,8 @@
     window.CodeWikiKnowledgeMap?.leave?.();
     const version = ++viewVersion, token = window.CodeWikiAuth?.getSessionToken();
     const isCurrent = () => version === viewVersion && isBoardViewActive && token === window.CodeWikiAuth?.getSessionToken();
-    articleContainer.classList.remove('calendar-article');
+    articleContainer.classList.remove('calendar-article', 'sql-practice-mode');
+    document.querySelector(".app-shell")?.classList.remove("sql-practice-wide");
     document.getElementById('sbScheduleItem')?.classList.remove('active');
     document.getElementById('sbThinkingFlowItem')?.classList.remove('active');
     document.getElementById('sbProgramCatalogItem')?.classList.remove('active');
