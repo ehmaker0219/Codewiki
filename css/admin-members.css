@@ -1,6 +1,10 @@
 .members-hidden,#adminMembersPage[hidden] {display:none!important;}
 .members-page {margin:24px;padding:28px;background:var(--bg-card);border:1px solid var(--border-subtle);color:var(--text-body);}
 .members-heading {display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:24px;}
+.members-heading-actions {display:flex;align-items:center;gap:8px;flex-wrap:wrap;flex-shrink:0;}
+.members-danger-btn {border:1px solid var(--toss-red);background:var(--toss-red-soft);color:var(--toss-red);font-weight:700;}
+.members-danger-btn:hover:not(:disabled) {background:var(--toss-red);color:#fff;}
+.members-danger-btn:disabled {opacity:0.55;cursor:not-allowed;}
 .members-heading h1 {margin:0 0 8px;color:var(--text-strong);font-size:24px;}
 .members-presence {padding:16px;margin-bottom:20px;background:var(--bg-subtle);border:1px solid var(--border-subtle);border-radius:8px;}
 .members-presence>span {margin-left:12px;font-size:12px;color:var(--text-muted);}

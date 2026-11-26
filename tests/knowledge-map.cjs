@@ -89,7 +89,7 @@ const ctx = vm.createContext({
     scrollTo() {},
     addEventListener(name, fn) { winEvents[name] = fn; },
     CodeWikiApp: { openDoc: id => openedDocs.push(id), getCurrentDocId: () => 'welcome-abap' },
-    CodeWikiProgress: { getReadDocs: () => ['abap-basics', 'abap-types'] }
+    CodeWikiProgress: { getReadDocs: () => ['unit-01', 'unit-03'] }
   },
   document: {
     activeElement: null,
@@ -109,15 +109,15 @@ const api = ctx.window.CodeWikiKnowledgeMap;
 assert.ok(api && typeof api.buildGraph === 'function');
 
 // 1. Every cluster and topic maps to real WIKI_DOCS entries with valid coordinates and links.
-const graph = api.buildGraph(ctx.window.WIKI_DOCS, ['abap-basics', 'abap-types']);
+const graph = api.buildGraph(ctx.window.WIKI_DOCS, ['unit-01', 'unit-03']);
 assert.equal(graph.clusters.length, 6);
-assert.ok(graph.topics.length >= 20);
-assert.equal(graph.clusterById.get('basics').doneCount, 2);
-assert.equal(graph.topicById.get('abap-basics').done, true);
-assert.equal(graph.topicById.get('abap-open-sql').done, false);
-assert.ok(graph.topicById.get('abap-open-sql').relatedIds.includes('abap-data-report'));
-assert.ok(graph.stepOrder.includes('sap-architecture') && graph.stepOrder.includes('abap-open-sql'));
-assert.ok(!graph.stepOrder.includes('erp-fi'), 'pending ERP stubs excluded from active learning path');
+assert.equal(graph.topics.length, 26);
+assert.equal(graph.clusterById.get('foundations').doneCount, 2);
+assert.equal(graph.topicById.get('unit-03').done, true);
+assert.equal(graph.topicById.get('bc430-01').done, false);
+assert.ok(graph.topicById.get('unit-06').relatedIds.includes('bc430-01'));
+assert.ok(graph.stepOrder.includes('unit-01') && graph.stepOrder.includes('unit-06') && graph.stepOrder.includes('bc430-01') && graph.stepOrder.includes('bc430-08'));
+assert.ok(!graph.stepOrder.includes('unit-08') && !graph.stepOrder.includes('bc430-09'), 'pending Unit stubs excluded from active learning path');
 
 // 2. Unapproved users and admins cannot access the map; approved students can.
 api.setUser({ id: 'pending-u', role: 'student', status: 'pending' });
@@ -137,7 +137,7 @@ api.setUser({ id: 'student-1', role: 'student', status: 'approved' });
 assert.equal(trigger.hidden, false);
 assert.equal(host.hidden, false);
 assert.equal(shell.classList.contains('map-hidden'), true);
-assert.match(host.innerHTML, /ABAP 기본기/);
+assert.match(host.innerHTML, /BC400 · 기초 · 모듈화/);
 assert.match(breadcrumb.innerHTML, /전체 지도/);
 assert.equal(clusterElements.length, graph.clusters.length);
 assert.equal(topicElements.length, graph.topics.length);
@@ -181,17 +181,17 @@ const mapCss = fs.readFileSync('css/knowledge-map.css', 'utf8');
 assert.doesNotMatch(mapCss.match(/\.kmap-world\s*\{([^}]+)\}/)?.[1] || '', /\b(?:transform|will-change)\s*:/, 'CSS does not scale or rasterize the shared text layer');
 
 // 3. Clicking a cluster zooms into it; clicking a topic opens focus card with 1-line summary and doc CTA.
-host.events.click({ target: { closest: sel => sel === '[data-kmap-cluster]' ? { dataset: { kmapCluster: 'basics' } } : null } });
-assert.match(breadcrumb.innerHTML, /ABAP 기본기/);
+host.events.click({ target: { closest: sel => sel === '[data-kmap-cluster]' ? { dataset: { kmapCluster: 'foundations' } } : null } });
+assert.match(breadcrumb.innerHTML, /BC400 · 기초 · 모듈화/);
 assert.equal(focusSlot.innerHTML, '');
 assertProjectedNodes();
-assert.equal(clusterElements.find(el => el.dataset.kmapCluster === 'basics').classList.contains('is-open'), true);
+assert.equal(clusterElements.find(el => el.dataset.kmapCluster === 'foundations').classList.contains('is-open'), true);
 const visibleTopics = topicElements.filter(el => el.classList.contains('is-visible'));
-assert.equal(visibleTopics.length, graph.clusterById.get('basics').topics.length);
-assert.ok(visibleTopics.every(el => el.dataset.cluster === 'basics'));
+assert.equal(visibleTopics.length, graph.clusterById.get('foundations').topics.length);
+assert.ok(visibleTopics.every(el => el.dataset.cluster === 'foundations'));
 
-host.events.click({ target: { closest: sel => sel === '[data-kmap-topic]' ? { dataset: { kmapTopic: 'abap-types' } } : null } });
-assert.match(focusSlot.innerHTML, /자료형과 초기값/);
+host.events.click({ target: { closest: sel => sel === '[data-kmap-topic]' ? { dataset: { kmapTopic: 'unit-03' } } : null } });
+assert.match(focusSlot.innerHTML, /ABAP 기본 언어 요소/);
 assert.match(focusSlot.innerHTML, /문서 읽기/);
 assert.match(crossLayer.innerHTML, /kmap-cross-edge/);
 assertProjectedNodes();
@@ -200,16 +200,16 @@ assertProjectedNodes();
 let mapEscapeCalls = 0;
 winEvents.keydown({ key: 'Escape', defaultPrevented: true, preventDefault() { mapEscapeCalls++; } });
 assert.equal(mapEscapeCalls, 0, 'Escape already handled by search dropdown must not step up map');
-assert.match(focusSlot.innerHTML, /자료형과 초기값/);
+assert.match(focusSlot.innerHTML, /ABAP 기본 언어 요소/);
 winEvents.keydown({ key: 'Escape', preventDefault() {} });
 assert.equal(focusSlot.innerHTML, '');
-assert.match(breadcrumb.innerHTML, /ABAP 기본기/);
+assert.match(breadcrumb.innerHTML, /BC400 · 기초 · 모듈화/);
 winEvents.keydown({ key: 'Escape', preventDefault() {} });
-assert.doesNotMatch(breadcrumb.innerHTML, /ABAP 기본기/);
+assert.doesNotMatch(breadcrumb.innerHTML, /BC400 · 기초 · 모듈화/);
 
 // 5. Clicking open-doc CTA calls CodeWikiApp.openDoc.
-host.events.click({ target: { closest: sel => sel === '[data-kmap-open-doc]' ? { dataset: { kmapOpenDoc: 'abap-open-sql' } } : null } });
-assert.deepEqual(openedDocs, ['abap-open-sql']);
+host.events.click({ target: { closest: sel => sel === '[data-kmap-open-doc]' ? { dataset: { kmapOpenDoc: 'bc430-01' } } : null } });
+assert.deepEqual(openedDocs, ['bc430-01']);
 
 // Zoom and drag move projected nodes and vector edges together without shrinking labels.
 const beforeZoom = edgeCamera(), pointer = { x: 440, y: 280 };
@@ -245,8 +245,8 @@ assert.equal(trigger.hidden, true);
 assert.equal(shell.classList.contains('map-hidden'), false);
 
 // 7. Untrusted HTML in doc metadata is escaped.
-const unsafeDocs = { 'abap-basics': { id: 'abap-basics', title: '<img src=x>', summary: '<script>bad</script>', sections: [{ title: '본문', blocks: [{ type: 'text', paragraphs: ['ok'] }] }] } };
+const unsafeDocs = { 'unit-03': { id: 'unit-03', title: '<img src=x>', summary: '<script>bad</script>', sections: [{ title: '본문', blocks: [{ type: 'text', paragraphs: ['ok'] }] }] } };
 const escapedGraph = api.buildGraph(unsafeDocs, []);
-assert.equal(escapedGraph.topicById.get('abap-basics').summary, 'bad');
+assert.equal(escapedGraph.topicById.get('unit-03').summary, 'bad');
 
 console.log('PASS: knowledge map graph, native-size node projection, compact fit/non-overlap, cursor zoom/drag, Escape navigation, doc CTA and logout isolation');

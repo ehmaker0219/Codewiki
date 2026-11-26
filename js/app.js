@@ -16,7 +16,7 @@
   let currentDocId = "welcome-abap";
   let navigationView = 'topic';
   try { navigationView = localStorage.getItem('codewiki_nav_view') === 'date' ? 'date' : 'topic'; } catch {}
-  const expandedCategories = new Set();
+  const expandedCategories = new Set(["abap-curriculum", "abap-bc430"]);
   // 문서 데이터는 data.js 등에서 앱 시작 전에 로드됩니다. UI5 트랙(ui5-data.js)은
   // 준비 중이라 시작 시 로드하지 않습니다.
   const documents = Object.values(window.WIKI_DOCS || {});
@@ -156,16 +156,18 @@
 
     // 1) 수동 명시 링크 [[문서ID|표시이름]] 보호 및 변환
     out = out.replace(/\[\[([^\]|]+)(?:\|([^\]]+))?\]\]/g, (_, targetId, label) => {
-      const id = targetId.trim();
+      const rawId = targetId.trim();
+      const id = window.WIKI_DOC_REDIRECTS?.[rawId] || rawId;
+      const tabHint = window.WIKI_DOC_REDIRECT_TABS?.[rawId] || "";
       const targetDoc = window.WIKI_DOCS[id];
-      const textLabel = label ? label.trim() : targetDoc ? targetDoc.title : id;
+      const textLabel = label ? label.trim() : targetDoc ? targetDoc.title : rawId;
       if (targetDoc?.track === "ui5" || id === sourceDocId || (checkAccess && targetDoc && !canLinkDoc(targetDoc))) return stash(esc(textLabel));
       if (!targetDoc) {
         return stash(
-          `<a href="#missing/${esc(id)}" class="wiki-link missing-wiki-link" data-missing-doc="${esc(textLabel)}" title="아직 미작성된 문서입니다. 클릭하여 추가 건의하기">${esc(textLabel)}</a>`
+          `<a href="#missing/${esc(rawId)}" class="wiki-link missing-wiki-link" data-missing-doc="${esc(textLabel)}" title="아직 미작성된 문서입니다. 클릭하여 추가 건의하기">${esc(textLabel)}</a>`
         );
       }
-      return stash(`<a href="#doc/${esc(id)}" class="wiki-link" data-doc="${esc(id)}">${esc(textLabel)}</a>`);
+      return stash(`<a href="#doc/${esc(id)}" class="wiki-link" data-doc="${esc(id)}"${tabHint ? ` data-doc-tab="${esc(tabHint)}"` : ""}>${esc(textLabel)}</a>`);
     });
 
     // 2) 암기 모드 빈칸 토큰 {{키워드}} 보호
@@ -290,13 +292,23 @@
         : '';
       if (validWeek) lastWeek = day.week;
       return divider +
-        '<a href="#doc/' + esc(day.docId) + '" class="nav-doc-link ' + (day.docId === currentDocId ? 'active' : '') + '" data-doc="' + esc(day.docId) + '"><span>' + esc(day.title) + '</span>' +
+        '<a href="#doc/' + esc(day.docId) + '" class="nav-doc-link ' + (day.docId === currentDocId ? 'active' : '') + '" data-doc="' + esc(day.docId) + '" title="' + esc(day.title) + '"><span class="nav-doc-title-text">' + esc(day.title) + '</span>' +
         (readSet.has(day.docId) ? '<span class="read-check-mark" title="완료">✓</span>' : '') + '</a>';
     }).join('');
   }
 
   function textbookUnitLabel(doc) {
-    return doc.textbookParts?.length ? '교재 Unit ' + doc.textbookParts.map(part => part.unit).join(' · ') : '';
+    if (!doc.textbookParts?.length) return '';
+    const grouped = new Map();
+    for (const part of doc.textbookParts) {
+      const course = part.course || 'BC400';
+      if (!grouped.has(course)) grouped.set(course, []);
+      grouped.get(course).push(part.unit);
+    }
+    if (grouped.size === 1 && grouped.has('BC400')) {
+      return '교재 Unit ' + grouped.get('BC400').join(' · ');
+    }
+    return [...grouped.entries()].map(([course, units]) => `${course} Unit ${units.join(' · ')}`).join(' · ');
   }
 
   function renderTextbookNavLabel(doc) {
@@ -304,9 +316,34 @@
     return label ? `<small class="nav-textbook-label">${window.CodeWikiLearning.escape(label)}</small>` : '';
   }
 
-  function renderTextbookReferences(doc) {
-    if (!doc.textbookParts?.length) return '';
+  function renderUnitMetaBanner(doc) {
+    if (!doc.unitMeta) return '';
     const esc = window.CodeWikiLearning.escape;
+    const m = doc.unitMeta;
+    const pending = isDocumentPending(doc);
+    const coursePrefix = m.course ? `${m.course} · ` : '';
+    const unitPillClass = m.course === 'BC430' ? 'is-bc430' : 'is-unit';
+    const textbookTab = m.course === 'BC430' ? 'bc430' : 'bc400';
+    const textbookLinkLabel = m.course === 'BC430' ? 'BC430 교재 목차 →' : 'BC400 교재 목차 →';
+    return `<div class="unit-meta-banner">
+      <div class="unit-meta-pills">
+        <span class="unit-meta-pill ${unitPillClass}">${esc(coursePrefix)}Unit ${esc(m.number)} · p. ${esc(m.page)}</span>
+        <span class="unit-meta-pill">Lesson ${esc(m.lessonCount)}개</span>
+        ${m.exerciseRange ? `<span class="unit-meta-pill is-exercise">${esc(m.exerciseRange)}</span>` : ''}
+        ${m.dates ? `<span class="unit-meta-pill is-dates">수업일 ${esc(m.dates)}</span>` : (pending ? '<span class="unit-meta-pill is-pending">수업 예정 · 준비 중</span>' : '')}
+      </div>
+      <a href="#doc/abap-textbook" class="unit-meta-link wiki-link" data-doc="abap-textbook" data-doc-tab="${textbookTab}">${textbookLinkLabel}</a>
+    </div>`;
+  }
+
+  function renderTextbookReferences(doc) {
+    if (doc.unitMeta || !doc.textbookParts?.length) return '';
+    const esc = window.CodeWikiLearning.escape;
+    const courses = [...new Set(doc.textbookParts.map(part => part.course || 'BC400'))];
+    const textbookLinks = courses.map(course => {
+      const tab = course === 'BC430' ? 'bc430' : 'bc400';
+      return `<a href="#doc/abap-textbook" class="wiki-link" data-doc="abap-textbook" data-doc-tab="${tab}">${esc(course)} 교재 목차 보기</a>`;
+    }).join(' · ');
     return `<details class="textbook-references">
       <summary>${esc(textbookUnitLabel(doc))}<span class="textbook-reference-hint">Lesson · 페이지 보기</span></summary>
       <div class="textbook-reference-body">
@@ -314,7 +351,7 @@
           <h3>Unit ${esc(part.unit)}: ${esc(part.title)}</h3>
           <ul>${part.entries.map(entry => `<li><span>${esc(entry.title)}</span><span class="textbook-page">p. ${esc(entry.page)}</span></li>`).join('')}</ul>
         </div>`).join('')}
-        <a href="#doc/abap-textbook" class="wiki-link" data-doc="abap-textbook">전체 교재 목차 보기</a>
+        ${textbookLinks}
       </div>
     </details>`;
   }
@@ -339,11 +376,6 @@
       sbHomeItem.classList.toggle("active", currentDocId === homeId);
     }
 
-    const curDoc = window.WIKI_DOCS[currentDocId];
-    if (curDoc?.categoryId) {
-      expandedCategories.add(curDoc.categoryId);
-    }
-
     const trackCategories = (window.WIKI_CATEGORIES || []).filter(
       c => (c.track || "abap") === currentTrack
     );
@@ -358,17 +390,28 @@
       };
     });
     categoryNav.innerHTML = (navigationView === 'date' ? renderDateNavigation(allDocs, readSet) : '') + trackCategories
-      .filter(cat => navigationView !== 'date' || cat.id !== `${currentTrack}-curriculum`)
+      .filter(cat => navigationView !== 'date' || (cat.id !== `${currentTrack}-curriculum` && cat.id !== 'abap-bc430'))
       .map(cat => {
         const docsInCat = allDocs.filter(d => d.categoryId === cat.id);
-        if (cat.id === "abap-curriculum") {
-          return `<div class="curriculum-flat-list">${docsInCat.map(d => `
-            <a href="#doc/${esc(d.id)}" class="nav-doc-link ${d.id === currentDocId ? "active" : ""}" data-doc="${esc(d.id)}">
-              ${d.stepNum ? `<span class="step-num-badge">${esc(d.stepNum)}</span>` : ""}
-              <span class="nav-doc-title-text">${esc(d.title)}${isDocumentPending(d) ? ' <small class="pending-doc-badge">준비 중</small>' : ""}${renderTextbookNavLabel(d)}</span>
+        const renderNavRow = d => {
+          const pending = isDocumentPending(d);
+          const labelTitle = d.unitMeta ? d.unitMeta.koTitle : d.title;
+          const badgeClass = d.unitMeta?.course === "BC430" ? " is-bc430" : "";
+          const tooltip = d.unitMeta ? `${d.title} (${d.unitMeta.enTitle})` : d.title;
+          const unitDetail = d.unitMeta
+            ? `p. ${d.unitMeta.page}${d.unitMeta.exerciseRange ? ` · ${d.unitMeta.exerciseRange}` : (d.unitMeta.lessonCount ? ` · Lesson ${d.unitMeta.lessonCount}개` : "")}`
+            : "";
+          const subMeta = d.unitMeta
+            ? `<small class="nav-textbook-label">${esc(unitDetail)}${pending ? ' <span class="pending-doc-badge">준비 중</span>' : ""}</small>`
+            : renderTextbookNavLabel(d);
+          const titlePending = !d.unitMeta && pending ? ' <small class="pending-doc-badge">준비 중</small>' : "";
+          return `
+            <a href="#doc/${esc(d.id)}" class="nav-doc-link ${d.id === currentDocId ? "active" : ""}" data-doc="${esc(d.id)}" title="${esc(tooltip)}">
+              ${d.stepNum ? `<span class="step-num-badge${badgeClass}">${esc(d.stepNum)}</span>` : ""}
+              <span class="nav-doc-title-text"><span class="nav-doc-title-main">${esc(labelTitle)}${titlePending}</span>${subMeta}</span>
               ${readSet.has(d.id) ? `<span class="read-check-mark" title="완료">✓</span>` : ""}
-            </a>`).join("")}</div>`;
-        }
+            </a>`;
+        };
         const isOpen = expandedCategories.has(cat.id);
         const hasActiveChild = docsInCat.some(d => d.id === currentDocId);
 
@@ -391,17 +434,7 @@
               isOpen && docsInCat.length > 0
                 ? `
               <div class="sb-folder-children">
-                ${docsInCat
-                  .map(
-                    d => `
-                  <a href="#doc/${esc(d.id)}" class="nav-doc-link ${d.id === currentDocId ? "active" : ""}" data-doc="${esc(d.id)}">
-                    ${d.stepNum ? `<span class="step-num-badge">${esc(d.stepNum)}</span>` : ""}
-                    <span class="nav-doc-title-text">${esc(d.title)}${isDocumentPending(d) ? ' <small class="pending-doc-badge">준비 중</small>' : ""}${renderTextbookNavLabel(d)}</span>
-                    ${readSet.has(d.id) ? `<span class="read-check-mark" title="완료">✓</span>` : ""}
-                  </a>
-                `
-                  )
-                  .join("")}
+                ${docsInCat.map(renderNavRow).join("")}
               </div>
             `
                 : ""
@@ -624,9 +657,12 @@
   const activeDocModes = new Map();
   function renderDocument(docId) {
     if ((docId === 'welcome-abap' || docId === 'welcome-ui5') && window.CodeWikiAdminMembers?.openHome()) return;
-    if (docId === "erp-setup") {
-      docId = "sap-architecture";
-      history.replaceState(null, "", "#doc/sap-architecture");
+    const redirectTab = window.WIKI_DOC_REDIRECT_TABS?.[docId];
+    const redirectedDocId = window.WIKI_DOC_REDIRECTS?.[docId];
+    if (redirectedDocId && window.WIKI_DOCS[redirectedDocId]) {
+      if (redirectTab) activeDocTabs.set(redirectedDocId, redirectTab);
+      docId = redirectedDocId;
+      history.replaceState(null, "", `#doc/${docId}`);
     }
     if (window.WIKI_DOCS[docId]?.studentOnly && window.CodeWikiAuth?.getCurrentUser?.()?.role === "admin") {
       if (window.CodeWikiAdminMembers?.openHome()) return;
@@ -652,6 +688,11 @@
 
     const doc = targetDoc;
     currentDocId = doc.id;
+    if (doc.categoryId) {
+      expandedCategories.add(doc.categoryId);
+    }
+    articleContainer._applyDocView = null;
+    articleContainer._syncTocVisibility = null;
 
     articleContainer.classList.toggle('calendar-article', Boolean(doc.isCalendar));
     if (doc.isCalendar) {
@@ -711,6 +752,7 @@
 
       <h1 class="article-main-title">${esc(doc.title)}</h1>
       ${doc.subtitle ? `<div class="article-subtitle">${esc(doc.subtitle)}</div>` : `<div style="margin-bottom:20px;"></div>`}
+      ${renderUnitMetaBanner(doc)}
       ${renderTextbookReferences(doc)}
 
       ${
@@ -724,7 +766,7 @@
       }
 
       ${isDocumentPending(doc) ? '<div class="pending-doc-notice" role="status"><strong>준비 중</strong><p>아직 본문이 작성되지 않았습니다. 아래 학습 목차에 맞춰 내용을 보강할 예정입니다.</p></div>' : ""}
-      <div id="documentTocSlot"></div>
+      ${doc.tabsAboveToc ? "" : '<div id="documentTocSlot"></div>'}
       ${
         hasSyntaxModes
           ? `
@@ -749,11 +791,13 @@
           ? `
         <div class="doc-tab-shell">
           <div class="doc-tab-bar" role="tablist" aria-label="${esc(doc.title)} 주제 탭">
-            <button type="button" class="doc-tab-btn" role="tab" id="docTab-all" data-doc-tab="all" aria-selected="false" tabindex="-1"><span class="doc-tab-label">전체 보기</span><span class="doc-tab-count">${sections.length}</span></button>
+            ${doc.hideAllTab ? "" : `<button type="button" class="doc-tab-btn" role="tab" id="docTab-all" data-doc-tab="all" aria-selected="false" tabindex="-1"><span class="doc-tab-label">전체 보기</span><span class="doc-tab-count">${sections.filter(sec => sec.tab).length || sections.length}</span></button>`}
             ${doc.sectionTabs
               .map(tab => {
                 const count = sections.filter(sec => sec.tab === tab.id).length;
-                return `<button type="button" class="doc-tab-btn" role="tab" id="docTab-${esc(tab.id)}" data-doc-tab="${esc(tab.id)}" aria-selected="false" tabindex="-1"><span class="doc-tab-label">${esc(tab.label)}</span><span class="doc-tab-count">${count}</span></button>`;
+                const kindClass = tab.kind ? ` kind-${esc(tab.kind)}` : "";
+                const pendingClass = tab.pending ? " is-pending" : "";
+                return `<button type="button" class="doc-tab-btn${pendingClass}" role="tab" id="docTab-${esc(tab.id)}" data-doc-tab="${esc(tab.id)}" aria-selected="false" tabindex="-1">${tab.badge ? `<span class="doc-tab-kind${kindClass}${pendingClass}">${esc(tab.badge)}</span>` : ""}<span class="doc-tab-label">${esc(tab.label)}</span>${tab.hideCount ? "" : `<span class="doc-tab-count">${count}</span>`}</button>`;
               })
               .join("")}
           </div>
@@ -762,6 +806,7 @@
       `
           : ""
       }
+      ${doc.tabsAboveToc ? '<div id="documentTocSlot"></div>' : ""}
       <div class="doc-sections-wrap"${hasSectionTabs ? ' role="tabpanel" id="docTabPanel"' : ""}${hasSyntaxModes ? ` data-active-mode="${esc(initialMode)}"` : ""}>
         ${
           sections.length === 0
@@ -777,14 +822,18 @@
                     const modePill = hasSyntaxModes
                       ? `<span class="doc-sec-mode-pill mode-${esc(secMode)}">${esc(secMode === "both" ? "공통" : (syntaxModeMap.get(secMode)?.label || secMode))}</span>`
                       : "";
+                    const unitPill = (sec.badge || sec.page)
+                      ? `<span class="doc-sec-unit-pill${sec.kind === "exercise" ? " is-exercise" : ""}">${esc([sec.badge, sec.page].filter(Boolean).join(" · "))}</span>`
+                      : "";
                     return `
           <section class="doc-section" id="sec-${sIdx + 1}"${sec.tab ? ` data-section-tab="${esc(sec.tab)}"` : ""}${hasSyntaxModes ? ` data-section-mode="${esc(secMode)}"` : ""}>
             <h2 class="doc-sec-title">
               ${doc.hideSectionNumbers ? "" : `<span class="doc-sec-num">${sIdx + 1}.</span>`}
+              ${unitPill}
               <span>${esc(sec.title)}</span>
               ${modePill}
             </h2>
-            ${!(sec.blocks || []).length ? '<p class="pending-section-note">준비 중 · 본문을 작성하고 있습니다.</p>' : ""}
+            ${!(sec.blocks || []).length ? `<p class="pending-section-note">${esc(sec.pendingNote || "준비 중 · 본문을 작성하고 있습니다.")}</p>` : ""}
             ${(sec.blocks || [])
               .map(b => {
                 widgetCounter++;
@@ -819,8 +868,8 @@
     `;
 
     if (hasSectionTabs || hasSyntaxModes) {
-      const tabButtons = [...articleContainer.querySelectorAll("[data-doc-tab]")];
-      const modeButtons = [...articleContainer.querySelectorAll("[data-doc-mode]")];
+      const tabButtons = [...articleContainer.querySelectorAll(".doc-tab-btn[data-doc-tab]")];
+      const modeButtons = [...articleContainer.querySelectorAll(".doc-syntax-btn[data-doc-mode]")];
       const sectionNodes = [...articleContainer.querySelectorAll(".doc-section")];
       const sectionsWrap = articleContainer.querySelector(".doc-sections-wrap");
       const tabDesc = document.getElementById("docTabDesc");
@@ -829,11 +878,27 @@
       const syntaxCurrent = document.getElementById("docSyntaxCurrent");
       const syntaxDesc = document.getElementById("docSyntaxDesc");
       const tabMap = hasSectionTabs ? new Map(doc.sectionTabs.map(t => [t.id, t])) : new Map();
+      const allowAllTab = !doc.hideAllTab;
+      const defaultTabId = hasSectionTabs
+        ? ((allowAllTab && doc.defaultTab === "all") || tabMap.has(doc.defaultTab) ? doc.defaultTab : doc.sectionTabs[0].id)
+        : "all";
 
       let currentMode = initialMode;
-      let currentTab = hasSectionTabs ? (activeDocTabs.get(doc.id) || doc.sectionTabs[0].id) : "all";
+      let currentTab = hasSectionTabs
+        ? (activeDocTabs.has(doc.id) && ((allowAllTab && activeDocTabs.get(doc.id) === "all") || tabMap.has(activeDocTabs.get(doc.id)))
+            ? activeDocTabs.get(doc.id)
+            : defaultTabId)
+        : "all";
 
       const matchesMode = (secMode, modeId) => !hasSyntaxModes || !secMode || secMode === "both" || secMode === modeId;
+
+      const syncTocVisibility = () => {
+        if (!doc.filterTocByTab || !tocList) return;
+        tocList.querySelectorAll(".toc-link").forEach(link => {
+          const targetEl = document.getElementById(link.getAttribute("data-target"));
+          link.hidden = Boolean(targetEl?.hidden);
+        });
+      };
 
       const applyDocView = (nextTabId, nextModeId, focusEl = null) => {
         if (hasSyntaxModes) {
@@ -857,9 +922,11 @@
         }
 
         const modeSections = sections.filter(sec => matchesMode(sec.mode || "both", currentMode));
+        const tabbedModeSections = modeSections.filter(sec => sec.tab);
+        const totalAllCount = tabbedModeSections.length || modeSections.length;
 
         if (hasSectionTabs) {
-          currentTab = nextTabId === "all" || tabMap.has(nextTabId) ? nextTabId : doc.sectionTabs[0].id;
+          currentTab = (allowAllTab && nextTabId === "all") || tabMap.has(nextTabId) ? nextTabId : defaultTabId;
           activeDocTabs.set(doc.id, currentTab);
           tabButtons.forEach(btn => {
             const id = btn.dataset.docTab;
@@ -870,7 +937,7 @@
             const labelNode = btn.querySelector(".doc-tab-label");
             const countNode = btn.querySelector(".doc-tab-count");
             if (id === "all") {
-              if (countNode) countNode.textContent = String(modeSections.length);
+              if (countNode) countNode.textContent = String(totalAllCount);
             } else {
               const meta = tabMap.get(id);
               if (labelNode && meta) labelNode.textContent = (hasSyntaxModes && meta.labelByMode?.[currentMode]) || meta.label;
@@ -883,7 +950,7 @@
             const modePrefix = hasSyntaxModes ? `${syntaxModeMap.get(currentMode)?.label || ""} ` : "";
             const meta = tabMap.get(currentTab);
             tabDesc.textContent = currentTab === "all"
-              ? `${modePrefix}전체 ${modeSections.length}개 주제를 한 번에 보고 있습니다.`
+              ? `${modePrefix}전체 ${totalAllCount}개 항목을 한 번에 보고 있습니다.`
               : ((hasSyntaxModes && meta?.descByMode?.[currentMode]) || meta?.desc || "");
           }
         }
@@ -893,7 +960,10 @@
           const tabOk = !hasSectionTabs || currentTab === "all" || sec.dataset.sectionTab === currentTab;
           sec.hidden = !(modeOk && tabOk);
         });
+        syncTocVisibility();
       };
+      articleContainer._applyDocView = (tabId) => applyDocView(tabId, currentMode);
+      articleContainer._syncTocVisibility = syncTocVisibility;
 
       modeButtons.forEach((btn, idx) => {
         btn.addEventListener("click", () => applyDocView(currentTab, btn.dataset.docMode));
@@ -1013,9 +1083,17 @@
         link.addEventListener("click", e => {
           e.preventDefault();
           const el = document.getElementById(link.getAttribute("data-target"));
-          if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+          if (el) {
+            if (el.hidden && typeof articleContainer._applyDocView === "function") {
+              articleContainer._applyDocView(el.dataset.sectionTab || "all");
+            }
+            el.scrollIntoView({ behavior: "smooth", block: "start" });
+          }
         });
       });
+      if (typeof articleContainer._syncTocVisibility === "function") {
+        articleContainer._syncTocVisibility();
+      }
     }
 
     if (hasSpecs) {
@@ -1032,7 +1110,8 @@
     }
 
     if (hasBacklinks) {
-      const link = b => '<a href="#doc/' + esc(b.id) + '" class="backlink-pill wiki-link" data-doc="' + esc(b.id) + '">' + esc(b.title) + '</a>';
+      const backlinkLabel = b => (b.unitMeta ? b.unitMeta.koTitle : b.title);
+      const link = b => '<a href="#doc/' + esc(b.id) + '" class="backlink-pill wiki-link" data-doc="' + esc(b.id) + '" title="' + esc(b.title) + '">' + esc(backlinkLabel(b)) + '</a>';
       const group = (title, items) => !items.length ? '' : '<div class="related-group"><h3>' + title + '</h3>' + items.slice(0,5).map(link).join('') +
         (items.length > 5 ? '<details><summary>더 보기 (' + (items.length-5) + ')</summary>' + items.slice(5).map(link).join('') + '</details>' : '') + '</div>';
       backlinkBox.innerHTML = group('관련 개념', groups.concepts) + group('이 내용을 배운 날짜', groups.dates);
@@ -1064,13 +1143,16 @@
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
-  function navigateTo(docId) {
-    if (docId === "erp-setup") docId = "sap-architecture";
+  function navigateTo(docId, tabId = null) {
+    const redirectTab = window.WIKI_DOC_REDIRECT_TABS?.[docId];
+    docId = window.WIKI_DOC_REDIRECTS?.[docId] || docId;
     if (!window.WIKI_DOCS[docId]) return;
     if (!isDocAccessible(window.WIKI_DOCS[docId])) {
       window.CodeWikiAdminMembers?.openHome?.();
       return;
     }
+    const nextTab = tabId || redirectTab;
+    if (nextTab) activeDocTabs.set(docId, nextTab);
     showDocument(docId);
   }
 
@@ -1082,8 +1164,10 @@
     if (STUDENT_ONLY_HASHES.has(h)) return;
     if (h.startsWith("#doc/")) {
       const target = h.replace("#doc/", "");
-      const resolved = target === "erp-setup" ? "sap-architecture" : target;
+      const redirectTab = window.WIKI_DOC_REDIRECT_TABS?.[target];
+      const resolved = window.WIKI_DOC_REDIRECTS?.[target] || target;
       if (isDocAccessible(window.WIKI_DOCS[resolved])) {
+        if (redirectTab) activeDocTabs.set(resolved, redirectTab);
         showDocument(resolved);
         return;
       }
@@ -1123,7 +1207,7 @@
       e.preventDefault();
       hoverPreviewCard.classList.add('hidden');
       if (link.hasAttribute('data-missing-doc')) window.CodeWikiBoard?.openWriteModal('', link.getAttribute('data-missing-doc') || '');
-      else navigateTo(link.getAttribute('data-doc'));
+      else navigateTo(link.getAttribute('data-doc'), link.getAttribute('data-doc-tab'));
     });
     document.addEventListener('mouseover', e => {
       const link = e.target.closest?.('.wiki-link[data-doc]');
@@ -1269,14 +1353,15 @@
       const appHidden = appShell?.classList.contains('object-game-hidden') || appShell?.classList.contains('mentoring-hidden') || appShell?.classList.contains('study-hidden') || appShell?.classList.contains('members-hidden') || appShell?.classList.contains('board-mode-shell') || appShell?.classList.contains('map-hidden');
       if (h.startsWith("#doc/")) {
         const target = h.replace("#doc/", "");
-        const resolved = target === "erp-setup" ? "sap-architecture" : target;
+        const redirectTab = window.WIKI_DOC_REDIRECT_TABS?.[target];
+        const resolved = window.WIKI_DOC_REDIRECTS?.[target] || target;
         const targetDoc = window.WIKI_DOCS[resolved];
         if (isAdmin && (!targetDoc || !isDocAccessible(targetDoc))) {
           if (window.CodeWikiBoard) window.CodeWikiBoard.closeIfActive();
           window.CodeWikiAdminMembers?.openHome?.();
           return;
         }
-        if ((window.WIKI_DOCS[target] || target === "erp-setup") && (target !== currentDocId || appHidden || requested === target)) {
+        if (targetDoc && (resolved !== currentDocId || appHidden || requested === resolved || requested === target || Boolean(redirectTab))) {
           if (window.CodeWikiBoard) window.CodeWikiBoard.closeIfActive();
           renderDocument(target);
           window.scrollTo({ top: 0, behavior: "smooth" });
@@ -1352,7 +1437,8 @@
     const hash = window.location.hash;
     if (hash.startsWith("#doc/")) {
       const target = hash.replace("#doc/", "");
-      if (window.WIKI_DOCS[target] || target === "erp-setup") currentDocId = target;
+      const resolved = window.WIKI_DOC_REDIRECTS?.[target] || target;
+      if (window.WIKI_DOCS[resolved]) currentDocId = target;
     }
 
     renderDocument(currentDocId);

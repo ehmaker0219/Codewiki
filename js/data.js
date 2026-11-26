@@ -5,7 +5,8 @@
  */
 
 window.WIKI_CATEGORIES = [
-  { id: "abap-curriculum", track: "abap", name: "커리큘럼" },
+  { id: "abap-curriculum", track: "abap", name: "BC400 · ABAP 기초" },
+  { id: "abap-bc430", track: "abap", name: "BC430 · ABAP Dictionary" },
   { id: "abap-concept", track: "abap", name: "Syntax" },
   { id: "abap-tcode", track: "abap", name: "T-Code" },
   { id: "abap-shortcuts", track: "abap", name: "단축키" },
@@ -137,22 +138,18 @@ window.WIKI_DOCS = {
   },
   "welcome-abap": {
     id: "welcome-abap", track: "abap", isHome: true, stepNum: "",
-    title: "코드위키: 대문", subtitle: "ABAP · SAP 개발 지식 모음",
+    title: "코드위키: 대문", subtitle: "BC400 (Unit 1–13) · BC430 ABAP Dictionary (Unit 1–9) 교재 중심 학습 위키",
     categoryId: "", aliases: [], tcodes: [], specs: {},
-    summary: "ABAP 수업 노트와 개발 중 자주 찾는 내용을 모으는 위키입니다. 아래 목차에서 필요한 문서를 찾아보세요.",
+    summary: "SAP ABAP 두 교재(**BC400 Unit 1–13** · **BC430 ABAP Dictionary Unit 1–9**)의 Unit · Lesson · Exercise 순서로 수업 필기와 실습 예제를 정리한 학습 위키입니다.",
     sections: [
-      { title: "학습 목차", blocks: [
-        { type: "text", paragraphs: ["[[learning-roadmap|전체 학습 목차]]에서 ABAP 기초부터 SAP 모듈까지 살펴볼 수 있습니다. 일부 문서는 목차를 먼저 구성했으며 본문은 순차적으로 보강합니다."] },
-        { type: "table", headers: ["분야", "문서"], rows: [
-          ["시작하기", "[[erp-setup|실습 준비]] · [[abap-basics|ABAP 기초]]"],
-          ["ABAP 개발", "[[abap-dictionary|데이터 사전]] · [[abap-modularization|프로그램 모듈화]] · [[abap-data-report|데이터 처리와 리포트]]"],
-          ["SAP 모듈", "[[erp-fi|FI]] · [[erp-co|CO]] · [[erp-mm|MM]] · [[erp-sd|SD]] · [[erp-pp|PP]]"],
-          ["참고 자료", "[[erp-resources|부록과 참고 자료]]"]
-        ] }
-      ] },
+      { title: "교재 Unit별 학습 목차", blocks: [] },
       { title: "자주 찾는 문서", blocks: [
         { type: "table", headers: ["문서", "내용"], rows: [
-          ["[[sap-tcode-reference|T-Code 모음]]", "개발 도구 · 시스템 조회 · 전송 관리"],
+          ["[[abap-textbook|교재 목차 (BC400 · BC430)]]", "BC400 (Unit 1–13) · BC430 ABAP Dictionary (Unit 1–9) 교재별 탭 목차 및 페이지 색인"],
+          ["[[abap-sql-guide|ABAP SQL 가이드]]", "Open SQL 구문법(Classic) · 신문법(7.40+) 분리 레퍼런스"],
+          ["[[abap-thinking-flow|ABAP 사고 흐름]]", "전체 그림 · Process · Report 구조별 사고 프로세스"],
+          ["[[sap-gui-programs|SAP GUI 프로그램 정리표]]", "SE80 · Package ZBC400_F## 실습 Program 파트별 가이드"],
+          ["[[sap-tcode-reference|T-Code 모음]]", "개발 도구 · 데이터 사전 · 시스템 조회 · 전송 관리"],
           ["[[sap-gui-shortcuts|단축키 모음]]", "명령 필드 · 화면 이동 · ABAP 편집기"],
           ["[[abap-useful-syntax|유용한 함수 · 문법 모음]]", "문자열 · 계산 · 조건식 · 반복문"]
         ] }
@@ -177,47 +174,37 @@ window.WIKI_DOCS = {
 };
 
 
-/** 학습 목차 뼈대. 본문은 수업 내용에 맞춰 순차적으로 보강합니다. */
-(function () {
-  const chapters = [
-    ["erp-setup", "실습 준비", ["SAP 실습 환경 설치", "접속과 화면 탐색"]],
-    ["abap-basics", "ABAP 기초", ["ABAP과 개발 환경", "자료형·변수·상수", "연산과 조건 표현", "문자열 다루기", "날짜·시간과 출력 형식", "예외 처리"]],
-    ["abap-dictionary", "데이터 사전", ["ABAP Dictionary 개요", "데이터 요소", "데이터베이스 테이블", "구조와 뷰"]],
-    ["abap-modularization", "프로그램 모듈화", ["서브루틴 · FORM / PERFORM", "Function Module", "Include 프로그램"]],
-    ["abap-data-report", "데이터 처리와 리포트", ["Open SQL", "내부 테이블", "리포트 프로그램", "ALV 화면 구성"]],
-    ["erp-fi", "FI · 재무회계", ["FI 개요와 조직 설정", "계정과목 체계와 총계정원장", "회계 기간·환율·재무제표", "전표 유형·번호·입력 제어", "전표 입력과 역분개", "매출채권과 고객 관리", "매입채무와 공급업체 관리", "외화 거래"]],
-    ["erp-co", "CO · 관리회계", ["원가요소와 코스트센터", "배부·정산과 활동유형", "표준원가와 실제원가"]],
-    ["erp-mm", "MM · 자재관리", ["구매 기준정보와 공급원", "구매오더", "입고와 입고 취소", "재고 관리와 평가", "관련 트랜잭션 코드"]],
-    ["erp-sd", "SD · 판매관리", ["SD 개요와 영업 기준정보", "판매오더", "가격 결정", "관련 테이블과 트랜잭션"]],
-    ["erp-pp", "PP · 생산관리", ["BOM·작업장·라우팅", "장기계획 · LTP", "생산오더", "자재원장과 재고 조회", "관련 테이블"]],
-    ["erp-resources", "부록과 참고 자료", ["테이블 관계 정리", "학습 자료와 참고문헌"]]
-  ];
-  const reference = '<a href="https://wikidocs.net/226022" target="_blank" rel="noopener noreferrer">참고 목차 · SAP ERP 따라하기 (위키독스)</a>';
-  window.WIKI_DOCS["learning-roadmap"] = {
-    id: "learning-roadmap", track: "abap", stepNum: "00",
-    title: "전체 학습 목차", subtitle: "실습 준비부터 ABAP 개발과 ERP 업무 모듈까지",
-    categoryId: "abap-curriculum", aliases: ["학습 로드맵"], tcodes: [], specs: {},
-    summary: "학습 순서와 주제만 먼저 구성했습니다. 각 페이지의 설명과 실습 예제는 이후 보강합니다.",
-    sections: [
-      { title: "학습 순서", blocks: [{ type: "table", headers: ["순서", "학습 분야", "상태"], rows:
-        chapters.map(([id, title], i) => [String(i + 1).padStart(2, "0"), `[[${id}|${title}]]`, "목차 준비 · 본문 예정"])
-      }] },
-      { title: "지금 볼 수 있는 자료", blocks: [{ type: "text", paragraphs: [
-        "[[sap-gui-shortcuts|SAP GUI · ABAP 단축키]]", "[[abap-useful-syntax|유용한 함수 · 문법 모음]]"
-      ] }] },
-      { title: "참고", blocks: [{ type: "text", paragraphs: [reference, "참고 자료의 큰 흐름을 바탕으로 코드위키의 학습 단위에 맞게 재구성했습니다."] }] }
-    ]
-  };
-  chapters.forEach(([id, title, topics], i) => {
-    window.WIKI_DOCS[id] = {
-      id, track: "abap", stepNum: String(i + 1).padStart(2, "0"), title,
-      subtitle: "학습 목차 · 본문 준비 중", categoryId: "abap-curriculum",
-      aliases: [], tcodes: [], specs: {},
-      summary: "아래 주제 순서대로 설명과 실습 예제를 채울 예정입니다. [[learning-roadmap|전체 학습 목차]]에서 다른 분야도 확인할 수 있습니다.",
-      sections: topics.map(topic => ({ title: topic, blocks: [] }))
-    };
-  });
-})();
+/** 교재 Unit 1–13 기본 리다이렉트 맵(기존 주제별 링크 호환). */
+window.WIKI_DOC_REDIRECTS = {
+  "erp-setup": "unit-01",
+  "sap-architecture": "unit-01",
+  "abap-program-types": "unit-01",
+  "abap-development": "unit-02",
+  "abap-basics": "unit-03",
+  "abap-types": "unit-03",
+  "abap-loops": "unit-03",
+  "abap-debug-messages": "unit-03",
+  "abap-modularization": "unit-04",
+  "abap-bapi": "unit-04",
+  "abap-objects": "unit-04",
+  "abap-data-report": "unit-07",
+  "abap-open-sql": "unit-06",
+  "abap-dictionary": "bc430-01",
+  "bc400-textbook": "abap-textbook",
+  "bc430-textbook": "abap-textbook",
+  "learning-roadmap": "abap-textbook",
+  "erp-fi": "abap-textbook",
+  "erp-co": "abap-textbook",
+  "erp-mm": "abap-textbook",
+  "erp-sd": "abap-textbook",
+  "erp-pp": "abap-textbook",
+  "erp-resources": "abap-textbook"
+};
+
+window.WIKI_DOC_REDIRECT_TABS = {
+  "bc400-textbook": "bc400",
+  "bc430-textbook": "bc430"
+};
 
 
 /** 수업에서 자주 쓰는 SAP GUI 트랜잭션 코드. */
@@ -267,29 +254,19 @@ window.WIKI_DOCS = {
   };
 })();
 
-/** Topic names and editorial cross-references shared by the wiki renderer. */
+/** Reference documents aliases and cross-references. */
 (function () {
   const connections = {
-    "erp-setup": [["SAP GUI", "Easy Access", "실습 환경"], ["sap-gui-shortcuts", "sap-tcode-reference", "abap-basics"]],
-    "abap-basics": [["자료형", "변수", "상수", "조건식", "문자열"], ["abap-useful-syntax", "sap-gui-shortcuts", "abap-dictionary"]],
-    "abap-dictionary": [["ABAP Dictionary", "DATA ELEMENT", "Domain", "데이터 요소", "데이터베이스 테이블", "데이터 사전"], ["sap-tcode-reference", "abap-data-report"]],
-    "abap-modularization": [["Function Module", "함수 모듈", "서브루틴", "FORM", "PERFORM", "Include 프로그램"], ["sap-tcode-reference", "abap-basics"]],
-    "abap-data-report": [["Open SQL", "내부 테이블", "리포트 프로그램", "ALV"], ["abap-dictionary", "abap-useful-syntax", "abap-modularization"]],
-    "erp-fi": [["FI", "재무회계", "총계정원장"], ["erp-co", "erp-mm", "erp-sd"]],
-    "erp-co": [["CO", "관리회계", "코스트센터"], ["erp-fi", "erp-pp"]],
-    "erp-mm": [["MM", "자재관리", "구매오더"], ["erp-fi", "erp-pp", "erp-sd"]],
-    "erp-sd": [["SD", "판매관리", "판매오더"], ["erp-mm", "erp-fi"]],
-    "erp-pp": [["PP", "생산관리", "생산오더", "BOM"], ["erp-mm", "erp-co"]],
-    "erp-resources": [[], ["learning-roadmap", "sap-tcode-reference", "sap-gui-shortcuts", "abap-useful-syntax"]],
-    "abap-useful-syntax": [[], ["abap-basics", "abap-data-report", "sap-gui-shortcuts"]],
-    "sap-gui-shortcuts": [["명령 필드", "Pretty Printer", "Activate"], ["sap-tcode-reference", "erp-setup", "abap-useful-syntax"]],
-    "sap-tcode-reference": [["T-Code", "ABAP Editor", "Function Builder", "Data Browser"], ["abap-dictionary", "abap-modularization", "sap-gui-shortcuts"]]
+    "abap-useful-syntax": [[], ["unit-03", "unit-05", "sap-gui-shortcuts"]],
+    "sap-gui-shortcuts": [["명령 필드", "Pretty Printer", "Activate"], ["sap-tcode-reference", "unit-01", "unit-02", "abap-useful-syntax"]],
+    "sap-tcode-reference": [["T-Code", "ABAP Editor", "Function Builder", "Data Browser"], ["unit-02", "unit-04", "unit-06", "bc430-01", "sap-gui-shortcuts"]]
   };
   for (const [id, [aliases, related]] of Object.entries(connections)) {
     const doc = window.WIKI_DOCS[id];
+    if (!doc) continue;
     doc.aliases = [...new Set([...(doc.aliases || []), ...aliases])];
     doc.sections.push({ title: "관련 문서", blocks: [{ type: "text", paragraphs: [
-      related.map(target => `[[${target}|${window.WIKI_DOCS[target].title}]]`).join(" · ")
+      related.map(target => `[[${target}|${window.WIKI_DOCS[target]?.title || target}]]`).join(" · ")
     ] }] });
   }
 })();

@@ -1,7 +1,7 @@
 const fs = require('node:fs');
 const vm = require('node:vm');
 const assert = require('node:assert/strict');
-const ctx=vm.createContext({window:{},currentDocId:'abap-basics',isDocumentPending:()=>false,currentTrack:'abap'});
+const ctx=vm.createContext({window:{},currentDocId:'unit-03',isDocumentPending:()=>false,currentTrack:'abap'});
 for(const file of ['data','ui5-data','class-notes','lesson-days']) vm.runInContext(fs.readFileSync(`js/${file}.js`,'utf8'),ctx);
 const src=fs.readFileSync('js/app.js','utf8');
 vm.runInContext(src.slice(src.indexOf('  function renderDateNavigation'),src.indexOf('  // 좌측 고정 사이드바 렌더링')),ctx);
@@ -9,7 +9,7 @@ const docs=Object.values(ctx.window.WIKI_DOCS).filter(d=>d.track==='abap');
 const html=ctx.renderDateNavigation(docs,new Set());
 for(const day of ['11','12','13','16','17','18','19','20','23','24','25']) assert.ok(html.includes('2026-11-'+day));
 assert.equal((html.match(/href=/g)||[]).length,11);
-assert.ok(!html.includes('abap-basics'));
+assert.ok(!html.includes('unit-03'));
 assert.ok(ctx.window.WIKI_DOCS['lesson-2026-11-11'].sections.length > 0);
 assert.ok(!html.includes('날짜 미지정'));
 assert.ok(!html.includes('href="#doc/welcome-abap"'));

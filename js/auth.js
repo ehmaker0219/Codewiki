@@ -110,6 +110,7 @@
   const authGateOverlay = document.getElementById("authGateOverlay");
   const trackSelectOverlay = document.getElementById("trackSelectOverlay");
   const adminModal = document.getElementById("adminModal");
+  const forcedLogoutModal = document.getElementById("forcedLogoutModal");
   const adminSidebarSlot = document.getElementById("adminSidebarSlot");
   const sidebarProfileSlot = document.getElementById("sidebarProfileSlot");
 
@@ -117,6 +118,69 @@
   let authMessage = "";
   let activeUserCache = null;
   let authStateVersion = 0;
+  let forcedLogoutKeydown = null;
+
+  function closeForcedLogoutPopup() {
+    if (forcedLogoutKeydown) {
+      document.removeEventListener?.("keydown", forcedLogoutKeydown);
+      forcedLogoutKeydown = null;
+    }
+    if (forcedLogoutModal) {
+      forcedLogoutModal.classList.add("hidden");
+      forcedLogoutModal.innerHTML = "";
+    }
+  }
+
+  function showForcedLogoutPopup(message = "관리자에 의해 로그아웃되었습니다.") {
+    if (!forcedLogoutModal) return;
+    closeForcedLogoutPopup();
+    forcedLogoutModal.innerHTML = `
+      <div class="toss-card forced-logout-card" role="alertdialog" aria-modal="true" aria-labelledby="forcedLogoutTitle">
+        <div class="forced-logout-icon" aria-hidden="true">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+            <polyline points="16 17 21 12 16 7"></polyline>
+            <line x1="21" y1="12" x2="9" y2="12"></line>
+          </svg>
+        </div>
+        <h2 id="forcedLogoutTitle" class="forced-logout-title">${escapeHtml(message)}</h2>
+        <p class="forced-logout-desc">사이트 업데이트 또는 세션 정리를 위해 접속이 종료되었습니다.<br>다시 로그인해 이용해 주세요.</p>
+        <button type="button" id="forcedLogoutConfirmBtn" class="toss-primary-btn forced-logout-confirm-btn">로그인 화면으로</button>
+      </div>
+    `;
+    forcedLogoutModal.classList.remove("hidden");
+    const confirmBtn = document.getElementById("forcedLogoutConfirmBtn");
+    confirmBtn?.addEventListener?.("click", closeForcedLogoutPopup);
+    forcedLogoutModal.onclick = e => {
+      if (e.target === forcedLogoutModal) closeForcedLogoutPopup();
+    };
+    forcedLogoutKeydown = e => {
+      if (e.key === "Escape") {
+        e.preventDefault();
+        closeForcedLogoutPopup();
+      }
+    };
+    document.addEventListener?.("keydown", forcedLogoutKeydown);
+    confirmBtn?.focus?.();
+  }
+
+  function handleForcedLogout(message = "관리자에 의해 로그아웃되었습니다.") {
+    if (!getSupaToken() && !activeUserCache) return;
+    authStateVersion++;
+    authFormMode = "login";
+    authMessage = "";
+    setSupaToken("");
+    activeUserCache = null;
+    syncUserFeatures(null);
+    window.CodeWikiApp?.resetTrackChoice?.();
+    adminModal?.classList.add("hidden");
+    document.getElementById("boardWriteModal")?.classList.add("hidden");
+    document.body.classList.remove("authenticated", "track-selecting");
+    trackSelectOverlay?.classList.add("hidden");
+    authGateOverlay?.classList.remove("hidden");
+    renderPreLoginLanding(message);
+    showForcedLogoutPopup(message);
+  }
   const adminApproval = window.CodeWikiAdmin?.create({
     modal: adminModal, getToken: getSupaToken, getUser: () => activeUserCache,
     client: supabaseClient, onChange: renderAuthState
@@ -157,6 +221,7 @@
     adminApproval?.setUser(user);
     window.CodeWikiAdminMembers?.setUser(user);
     window.CodeWikiPresence?.setUser(user);
+    window.CodeWikiNotice?.setUser?.(user);
     window.CodeWikiApp?.syncAccess?.();
   }
   syncUserFeatures(null);
@@ -167,6 +232,7 @@
     isSupabaseConfigured: () => isSupabaseConfigured,
     getSupabaseClient: () => supabaseClient,
     logout,
+    handleForcedLogout,
     refresh: () => renderAuthState(),
     credentialRequest: (name,args) => {
       if (!credentialOperations.has(name)) return Promise.reject(Error('unsupported-auth-operation'));
@@ -193,12 +259,13 @@
     } else {
       document.body.classList.remove("track-selecting");
       trackSelectOverlay?.classList.add("hidden");
+      window.CodeWikiNotice?.maybeShow?.(user);
     }
     window.scrollTo({ top: 0 });
   }
 
   // [로그인 직후 트랙 대형 선택 화면]: 군더더기 없는 미니멀 2버튼 구성
-  function renderTrackSelectGate() {
+  function renderTrackSelectGate(user) {
     if (!trackSelectOverlay) return;
 
     trackSelectOverlay.innerHTML = `
@@ -236,6 +303,7 @@
         window.CodeWikiApp?.selectTrack(chosen);
         document.body.classList.remove("track-selecting");
         trackSelectOverlay.classList.add("hidden");
+        window.CodeWikiNotice?.maybeShow?.(user || activeUserCache);
       });
     });
   }
@@ -305,6 +373,11 @@
       return;
     }
 
+    if (profile?.forced_logout) {
+      handleForcedLogout("관리자에 의해 로그아웃되었습니다.");
+      return;
+    }
+
     if (!profile) {
       setSupaToken("");
       activeUserCache = null;
@@ -316,6 +389,7 @@
       return;
     }
 
+    closeForcedLogoutPopup();
     activeUserCache = profile;
     syncUserFeatures(profile);
 
@@ -775,6 +849,7 @@
 
   window.addEventListener?.('storage', event => {
     if (event.key !== null && event.key !== SUPA_TOKEN_KEY) return;
+    closeForcedLogoutPopup();
     activeUserCache = null;
     syncUserFeatures(null);
     window.CodeWikiBoard?.closeIfActive();

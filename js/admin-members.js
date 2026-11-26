@@ -8,7 +8,7 @@
   let sortKey='full_name',sortDirection=1;
   let session=null,active=false,rows=[],rowsLoaded=false,version=0,loading=false,rowsMessage='';
   let logins=[],loginsLoaded=false,loginsVersion=0,loginsLoading=false,loginsMessage='',loginsUserId='';
-  let query='',classFilter='',statusFilter='',selectedUserId='',dialog=null,resetBusy=false;
+  let query='',classFilter='',statusFilter='',selectedUserId='',dialog=null,resetBusy=false,logoutAllBusy=false;
   let online=null;
   const isAdminRoute=()=>window.location.hash==='#admin/students'||window.location.hash==='#admin/logins';
   const currentTab=()=>window.location.hash==='#admin/logins'?'logins':'students';
@@ -20,7 +20,7 @@
     document.getElementById('openStudentDirectoryBtn')?.classList[active&&tab==='students'?'add':'remove']('active');
     document.getElementById('openLoginHistoryBtn')?.classList[active&&tab==='logins'?'add':'remove']('active');
   }
-  function closeReset(){if(dialog){dialog.close();dialog.innerHTML='';}resetBusy=false;}
+  function closeReset(){if(dialog){dialog.close();dialog.innerHTML='';}resetBusy=false;logoutAllBusy=false;const lb=host.querySelector('[data-logout-all]');if(lb)lb.disabled=false;}
   function clear(){
     version++;loginsVersion++;
     rows=[];rowsLoaded=false;loading=false;rowsMessage='';
@@ -68,7 +68,7 @@
     const title=tab==='logins'?'학생 로그인 내역':'학생 정보';
     const desc=tab==='logins'?'학생들의 최근 로그인 기록을 시간순으로 확인합니다.':'가입한 학생의 계정과 프로필을 관리합니다.';
     const statusText=tab==='logins'?(loginsLoading?'로그인 내역을 불러오는 중…':loginsMessage):(loading?'학생 정보를 불러오는 중…':rowsMessage);
-    host.innerHTML=`<header class="members-heading"><div><h1>${title}</h1><p>${desc}</p></div><button type="button" class="toss-chip-btn" data-members-refresh ${busy?'disabled':''}>새로고침</button></header><section id="membersPresence" class="members-presence" aria-label="현재 접속자"></section>
+    host.innerHTML=`<header class="members-heading"><div><h1>${title}</h1><p>${desc}</p></div><div class="members-heading-actions"><button type="button" class="toss-chip-btn members-danger-btn" data-logout-all ${logoutAllBusy?'disabled':''}>전원 로그아웃</button><button type="button" class="toss-chip-btn" data-members-refresh ${busy?'disabled':''}>새로고침</button></div></header><section id="membersPresence" class="members-presence" aria-label="현재 접속자"></section>
       <div class="members-tabs" role="tablist" aria-label="학생 관리 보기"><button type="button" class="members-tab" role="tab" aria-selected="${tab==='students'}" data-members-tab="students">학생 목록</button><button type="button" class="members-tab" role="tab" aria-selected="${tab==='logins'}" data-members-tab="logins">로그인 내역</button></div>
       <div class="members-filters"><label>검색<input id="membersSearch" type="search" placeholder="이름 또는 아이디" value="${esc(query)}"></label><label>반<select id="membersClass"><option value="">전체 반</option>${classes.map(c=>`<option value="${esc(c)}" ${classFilter===c?'selected':''}>${esc(c)}</option>`).join('')}</select></label><label>상태<select id="membersStatus"><option value="">전체 상태</option>${Object.entries(statuses).map(([id,name])=>`<option value="${id}" ${statusFilter===id?'selected':''}>${name}</option>`).join('')}</select></label><span class="members-count" id="membersCount"></span></div>
       <p id="membersMessage" role="status"></p><div class="members-table-wrap" id="membersTable"></div>`;
@@ -183,9 +183,10 @@
     }
   }
   function openReset(id){
-    const student=rows.find(u=>u.id===id),s=session,v=version;if(!student||!active||resetBusy)return;
+    const student=rows.find(u=>u.id===id),s=session,v=version;if(!student||!active||resetBusy||logoutAllBusy)return;
     if(!dialog){dialog=document.createElement('dialog');dialog.className='profile-dialog';dialog.setAttribute('aria-labelledby','studentResetTitle');document.body.append(dialog);
-      dialog.addEventListener('cancel',e=>{if(resetBusy)e.preventDefault();});dialog.addEventListener('close',()=>{dialog.innerHTML='';});}
+      dialog.addEventListener('cancel',e=>{if(resetBusy||logoutAllBusy)e.preventDefault();});dialog.addEventListener('close',()=>{dialog.innerHTML='';});}
+    dialog.setAttribute('aria-labelledby','studentResetTitle');
     dialog.innerHTML=`<div class="profile-dialog-header"><h2 id="studentResetTitle">비밀번호 재설정</h2><button type="button" class="icon-btn" data-reset-close aria-label="닫기">✕</button></div><p class="members-reset-note">${esc(student.full_name)} · @${esc(student.username)}<br>변경하면 이 학생의 기존 로그인 세션이 종료됩니다. 현재 비밀번호는 조회할 수 없습니다.</p><form><label for="resetAdminPassword">관리자 비밀번호</label><input id="resetAdminPassword" type="password" autocomplete="current-password" required><label for="resetNewPassword">학생의 새 비밀번호</label><input id="resetNewPassword" type="password" autocomplete="new-password" minlength="8" required><label for="resetConfirmPassword">새 비밀번호 확인</label><input id="resetConfirmPassword" type="password" autocomplete="new-password" minlength="8" required><p class="members-reset-note">8자 이상 입력해 주세요.</p><p id="studentResetMessage" role="status"></p><div class="profile-dialog-actions"><button type="button" class="toss-chip-btn" data-reset-close>취소</button><button type="submit" class="toss-primary-btn">비밀번호 변경</button></div></form>`;
     dialog.querySelectorAll('[data-reset-close]').forEach(b=>b.addEventListener('click',()=>{if(!resetBusy)closeReset();}));
     const form=dialog.querySelector('form'),admin=form.querySelector('#resetAdminPassword'),password=form.querySelector('#resetNewPassword'),confirm=form.querySelector('#resetConfirmPassword'),message=form.querySelector('#studentResetMessage');
@@ -209,7 +210,56 @@
     });
     dialog.showModal();admin.focus();
   }
+  function openLogoutAllConfirm(){
+    const s=session,v=version;if(!active||!s||resetBusy||logoutAllBusy)return;
+    if(!dialog){dialog=document.createElement('dialog');dialog.className='profile-dialog';dialog.setAttribute('aria-labelledby','logoutAllTitle');document.body.append(dialog);
+      dialog.addEventListener('cancel',e=>{if(resetBusy||logoutAllBusy)e.preventDefault();});dialog.addEventListener('close',()=>{dialog.innerHTML='';});}
+    dialog.setAttribute('aria-labelledby','logoutAllTitle');
+    dialog.innerHTML=`<div class="profile-dialog-header"><h2 id="logoutAllTitle">전원 로그아웃</h2><button type="button" class="icon-btn" data-logout-close aria-label="닫기">✕</button></div><p class="members-reset-note">현재 로그인 중인 <strong>모든 학생 계정</strong>의 세션을 종료합니다.<br>접속 중인 학생에게는 <strong>"관리자에 의해 로그아웃되었습니다."</strong> 팝업이 표시되고 바로 로그인 화면으로 이동합니다. 관리자 세션은 유지됩니다.</p><p id="logoutAllMessage" role="status"></p><div class="profile-dialog-actions"><button type="button" class="toss-chip-btn" data-logout-close>취소</button><button type="button" id="confirmLogoutAllBtn" class="toss-chip-btn members-danger-btn">전원 로그아웃 실행</button></div>`;
+    dialog.querySelectorAll('[data-logout-close]').forEach(b=>b.addEventListener('click',()=>{if(!logoutAllBusy)closeReset();}));
+    const confirmBtn=dialog.querySelector('#confirmLogoutAllBtn');
+    const message=dialog.querySelector('#logoutAllMessage');
+    confirmBtn?.addEventListener('click',async()=>{
+      if(logoutAllBusy||!current(s,v)||!dialog.open)return;
+      logoutAllBusy=true;
+      dialog.querySelectorAll('button').forEach(el=>el.disabled=true);
+      if(message)message.textContent='로그아웃 처리 중…';
+      try{
+        const result=await call('cw_admin_logout_all',{},s);
+        if(!current(s,v)||!dialog.open)return;
+        if(result?.ok!==true)throw Error();
+        const count=Number(result.logged_out_count)||0;
+        void window.CodeWikiPresence?.notifySessionCheck?.();
+        closeReset();
+        const noticeText=count>0
+          ? `현재 접속 중이던 학생 ${count}명을 모두 로그아웃했습니다.`
+          : '종료할 활성 학생 세션이 없었습니다. 모든 학생 세션이 초기화된 상태입니다.';
+        if(currentTab()==='logins')loginsMessage=noticeText;else rowsMessage=noticeText;
+        const msgEl=host.querySelector('#membersMessage');if(msgEl)msgEl.textContent=noticeText;
+        window.CodeWikiPresence?.refresh?.(true);
+      }catch(error){
+        if(current(s,v)&&dialog.open){
+          const messages={
+            '42501':'관리자 로그인이 만료되었습니다. 다시 로그인해 주세요.',
+            CW_ADMIN_REQUIRED:'관리자 로그인이 만료되었습니다. 다시 로그인해 주세요.',
+            CW_RATE_LIMIT:'요청이 너무 빠릅니다. 잠시 후 다시 시도해 주세요.',
+            PGRST202:'전원 로그아웃 기능이 아직 서버에 적용되지 않았습니다.'
+          };
+          if(message)message.textContent=messages[error?.code]||'전원 로그아웃 처리에 실패했습니다. 잠시 후 다시 시도해 주세요.';
+        }
+      }finally{
+        if(current(s,v)){
+          logoutAllBusy=false;
+          const lb=host.querySelector('[data-logout-all]');if(lb)lb.disabled=false;
+          if(dialog?.open)dialog.querySelectorAll('button').forEach(el=>el.disabled=false);
+        }
+      }
+    });
+    dialog.showModal();
+    (dialog.querySelector('.profile-dialog-actions [data-logout-close]')||confirmBtn)?.focus?.();
+  }
   host.addEventListener('click',e=>{
+    if(e.target.closest('[data-logout-all]')){openLogoutAllConfirm();return;}
     if(e.target.closest('[data-members-refresh]')){if(currentTab()==='logins')void loadLogins(selectedUserId);else void load();return;}
     const tab=e.target.closest('[data-members-tab]');if(tab){switchTab(tab.dataset.membersTab);return;}
     const viewLogins=e.target.closest('[data-view-logins]');if(viewLogins){switchTab('logins',viewLogins.dataset.viewLogins,viewLogins.dataset.viewLoginsId);return;}

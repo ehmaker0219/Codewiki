@@ -2,7 +2,7 @@
 window.WIKI_PRACTICE = [
   {
     "title": "기초 · 변수와 자료형",
-    "doc": "abap-types",
+    "doc": "unit-03",
     "questions": [
       {
         "title": "상품 금액 계산",
@@ -201,7 +201,7 @@ window.WIKI_PRACTICE = [
   },
   {
     "title": "조건식 · 반복문",
-    "doc": "abap-loops",
+    "doc": "unit-03",
     "questions": [
       {
         "title": "홀수 합계",
@@ -301,7 +301,7 @@ window.WIKI_PRACTICE = [
   },
   {
     "title": "디버깅 · 메시지",
-    "doc": "abap-debug-messages",
+    "doc": "unit-03",
     "questions": [
       {
         "title": "누적값 추적",
@@ -401,7 +401,7 @@ window.WIKI_PRACTICE = [
   },
   {
     "title": "모듈화 · 서브루틴",
-    "doc": "abap-modularization",
+    "doc": "unit-04",
     "questions": [
       {
         "title": "부가세 계산 분리",
@@ -501,7 +501,7 @@ window.WIKI_PRACTICE = [
   },
   {
     "title": "클래스 · 메서드",
-    "doc": "abap-objects",
+    "doc": "unit-04",
     "questions": [
       {
         "title": "인사 객체",

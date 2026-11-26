@@ -1,6 +1,7 @@
-/** 2026-11-11 ~ 25 수업 필기를 주제별로 정리한 문서. */
+/** 2026-11-11 ~ 25 수업 필기를 BC400 (Unit 1–13) · BC430 ABAP Dictionary (Unit 1–9) 구조로 정리한 문서. */
 (function () {
   const docs = window.WIKI_DOCS;
+  const raw = {};
   const text = (...paragraphs) => ({ type: 'text', paragraphs });
   const table = (headers, rows) => ({ type: 'table', headers, rows });
   const code = (label, code) => ({ type: 'code', label, code });
@@ -11,7 +12,7 @@
     ...(programs.length ? [table(['실습 Program (`SE80` · `ZBC400_F##`)', '내용'], programs)] : [])
   );
   function put(id, title, summary, aliases, sections, dates, programs) {
-    docs[id] = { id, title, summary, aliases, lessonDates: dates.split(' · ').map(date => '2026-' + date.replace('/', '-')), sections: [...sections, source(dates, programs)], track: 'abap', categoryId: 'abap-curriculum', subtitle: '수업 필기 정리 · 개념과 예제', stepNum: '', tcodes: [], specs: {} };
+    raw[id] = { id, title, summary, aliases, sections: [...sections, source(dates, programs)], dates, programs: programs || [] };
   }
   put('sap-architecture', 'SAP 시스템 구조', '사용자 요청이 처리되는 흐름과 서버 구성 요소의 역할을 구분합니다.', ['Dispatcher', 'Work Process', '워크 프로세스', 'Message Server', 'Gateway', 'ICM', 'SAP GUI'], [
     section('요청 처리 흐름', text('SAP GUI → Dispatcher → 사용 가능한 Work Process → 필요한 경우 데이터베이스 접근 → 결과 반환 순서로 이해할 수 있습니다. 모든 요청이 데이터베이스 작업을 수행하는 것은 아닙니다.', 'Dispatcher는 요청을 받아 작업을 배분합니다. 큐를 단순한 처리 순서 예제로 이해하되, 실제 스케줄링 전체를 항상 FIFO라고 단정하지 않습니다.')),
@@ -172,7 +173,7 @@ START-OF-SELECTION.
   ], '11/17');
 
   // 11/18: retain earlier sections so their curated daily pages stay unchanged.
-  docs['abap-objects'].sections.splice(-1, 1,
+  raw['abap-objects'].sections.splice(-1, 1,
     section('로컬 클래스의 정의와 구현', text('12번 Program 필기: DEFINITION에서 속성과 메서드의 인터페이스를 선언하고 IMPLEMENTATION에서 메서드의 동작을 작성합니다. 속성만 선언하고 구현할 메서드가 없다면 구현부를 생략할 수 있습니다.', '접근 영역은 PUBLIC → PROTECTED → PRIVATE 순서입니다. 수업에서는 PUBLIC과 PRIVATE를 사용했지만 영역이 두 종류뿐인 것은 아닙니다. CLASS-METHODS는 정적 메서드, METHODS는 인스턴스 메서드 선언입니다.'),
       code('로컬 클래스의 정적 메서드', `REPORT zabap_f##_##.
 CLASS lcl_calculator DEFINITION.
@@ -193,7 +194,7 @@ ENDCLASS.
 START-OF-SELECTION.
   DATA lv_result TYPE i.
   lv_result = lcl_calculator=>double( iv_number = 5 ).
-  WRITE / lv_result.`), text('클래스 외부에서는 공개된 double 메서드를 호출하고, PRIVATE 영역의 c_factor는 클래스 내부에서 사용합니다. 호출 방식은 [[abap-modularization|프로그램 모듈화]]와 비교해 보세요.')),
+  WRITE / lv_result.`), text('클래스 외부에서는 공개된 double 메서드를 호출하고, PRIVATE 영역의 c_factor는 클래스 내부에서 사용합니다. 호출 방식은 [[unit-04|Unit 4 · ABAP 모듈화 기법]]의 서브루틴·함수 모듈과 비교해 보세요.')),
     source('11/17 · 11/18', [
       ['`ZABAP_F##_11`', 'ABAP Call Class Method'],
       ['`ZABAP_F##_12`', 'ABAP Local Class'],
@@ -201,10 +202,10 @@ START-OF-SELECTION.
       ['`ZBC400_F##_GLOBAL_CLASS_2`', 'Global Class 실습 2']
     ]));
 
-  docs['abap-types'].aliases.push('구조체', 'Structure', 'MOVE-CORRESPONDING');
-  const typeSource = docs['abap-types'].sections.pop();
-  docs['abap-types'].sections.push(
-    section('구조체 선언과 컴포넌트', text('구조체는 서로 다른 타입의 컴포넌트를 하나로 묶습니다. ABAP Dictionary의 글로벌 구조를 참조하거나 Program 안에서 TYPES로 로컬 구조 타입을 정의할 수 있습니다.', 'ts_는 구조 타입, gs_는 구조 변수에 붙인 학습용 명명 관례입니다. 필드에 접근할 때는 구조변수-컴포넌트 형식을 사용합니다. 구조 하나는 한 건의 데이터를, [[abap-data-report|내부 테이블]]은 여러 행을 담습니다.'),
+  raw['abap-types'].aliases.push('구조체', 'Structure', 'MOVE-CORRESPONDING');
+  const typeSource = raw['abap-types'].sections.pop();
+  raw['abap-types'].sections.push(
+    section('구조체 선언과 컴포넌트', text('구조체는 서로 다른 타입의 컴포넌트를 하나로 묶습니다. ABAP Dictionary의 글로벌 구조를 참조하거나 Program 안에서 TYPES로 로컬 구조 타입을 정의할 수 있습니다.', 'ts_는 구조 타입, gs_는 구조 변수에 붙인 학습용 명명 관례입니다. 필드에 접근할 때는 구조변수-컴포넌트 형식을 사용합니다. 구조 하나는 한 건의 데이터를, [[unit-05|내부 테이블]]은 여러 행을 담습니다.'),
       code('구조 타입과 구조 변수', `TYPES: BEGIN OF ts_carrier,
          carrid   TYPE scarr-carrid,
          carrname TYPE scarr-carrname,
@@ -237,7 +238,7 @@ gs_flight-seatsocc = 320.
 MOVE-CORRESPONDING gs_spfli TO gs_flight.
 WRITE: / gs_flight-carrid, gs_flight-connid, gs_flight-seatsocc.`)));
   typeSource.blocks[0].paragraphs[0] = typeSource.blocks[0].paragraphs[0].replace('11/12.', '11/12 · 11/18.');
-  docs['abap-types'].sections.push(typeSource);
+  raw['abap-types'].sections.push(typeSource);
 
   put('abap-data-report', '데이터 처리와 리포트', '구조체를 행 타입으로 사용하는 Internal Table과 Classic ABAP Report의 Selection Screen·처리 순서를 정리합니다.', ['내부 테이블', 'Internal Table', 'STANDARD TABLE', 'SORTED TABLE', 'HASHED TABLE', 'Header Line', 'OCCURS', 'Classic ABAP Report', 'Selection Screen', 'SELECT-OPTIONS', 'INITIALIZATION', 'AT SELECTION-SCREEN', 'START-OF-SELECTION', 'cl_demo_output'], [
     section('내부 테이블의 종류와 접근', text('14번 Program 필기: 내부 테이블은 Program 실행 중 여러 행을 메모리에 보관합니다. 데이터베이스 테이블에 저장하는 것과는 다릅니다. 아래는 기본 키와 기본 인덱스를 기준으로 한 비교입니다.'), table(['구분', 'STANDARD TABLE', 'SORTED TABLE', 'HASHED TABLE'], [
@@ -1173,43 +1174,870 @@ ENDLOOP.`)),
     ['`ZBC430S_F##_STRUCT_DEEP`', 'Report SAPBC430S_STRUCT_DEEP (Deep Structure)']
   ]);
 
-  // Remove the setup stub and repair every existing reference, including home and roadmap.
-  delete docs['erp-setup'];
-  for (const [id, doc] of Object.entries(docs)) {
-    docs[id] = JSON.parse(JSON.stringify(doc).replaceAll('[[erp-setup|실습 준비]]', '[[sap-architecture|SAP 시스템 구조]]').replaceAll('[[erp-setup|', '[[sap-architecture|'));
+  // Assemble Unit 1–13 documents from the curated raw sections + textbook Exercise guides.
+  const normalizeLegacyLinks = obj => JSON.parse(
+    JSON.stringify(obj)
+      .replaceAll('[[abap-types|자료형과 초기값]]', '[[unit-03|Unit 3 · ABAP 기본 언어 요소]]')
+      .replaceAll('[[abap-types|구조체]]', '[[unit-05|Unit 5 · 구조체]]')
+      .replaceAll('[[abap-loops|sy-subrc]]', '[[unit-03|sy-subrc]]')
+      .replaceAll('[[abap-modularization|프로그램 모듈화]]', '[[unit-04|Unit 4 · ABAP 모듈화 기법]]')
+      .replaceAll('[[abap-data-report|내부 테이블]]', '[[unit-05|Unit 5 · 내부 테이블]]')
+      .replaceAll('[[abap-open-sql|Open SQL]]', '[[unit-06|BC400 Unit 6 · Open SQL]]')
+      .replaceAll('[[abap-dictionary|ABAP Dictionary]]', '[[bc430-01|BC430 · ABAP Dictionary]]')
+  );
+
+  const take = (rawId, title, tab, badge, page) => {
+    const found = raw[rawId]?.sections.find(s => s.title === title);
+    if (!found) throw new Error(`Missing raw section: ${rawId}/${title}`);
+    return { ...normalizeLegacyLinks(found), tab, badge, page };
+  };
+
+  const exSec = (tab, badge, page, title, ...blocks) => ({ tab, badge, page, kind: 'exercise', title, blocks });
+  const pendingSec = (tab, badge, page, title, note) => ({
+    tab, badge, page, title,
+    pendingNote: note || `준비 중 · 교재 p. ${page} 내용을 수업 진도에 맞춰 정리할 예정입니다.`,
+    blocks: []
+  });
+
+  function putCourseUnit(course, idPrefix, categoryId, stepPrefix, num, koTitle, enTitle, page, summary, aliases, sectionTabs, sections, dates = '', programs = []) {
+    const id = `${idPrefix}-${String(num).padStart(2, '0')}`;
+    const lessonCount = sectionTabs
+      .filter(t => t.kind === 'lesson')
+      .reduce((sum, t) => {
+        const range = String(t.badge || '').match(/^L(\d+)[–-](\d+)$/);
+        return sum + (range ? Number(range[2]) - Number(range[1]) + 1 : 1);
+      }, 0);
+    const exTab = sectionTabs.find(t => t.kind === 'exercise');
+    const fullSections = [...sections];
+    if (dates) fullSections.push(source(dates, programs));
+    docs[id] = {
+      id,
+      track: 'abap',
+      course,
+      categoryId,
+      stepNum: `${stepPrefix}${String(num).padStart(2, '0')}`,
+      unitNum: num,
+      unitMeta: {
+        course,
+        number: num,
+        page,
+        koTitle,
+        enTitle,
+        lessonCount,
+        exerciseRange: exTab?.badge || '',
+        dates: dates || ''
+      },
+      title: `${course} Unit ${num} · ${koTitle}`,
+      subtitle: `${enTitle} · ${course} 교재 p. ${page}${exTab?.badge ? ` · ${exTab.badge}` : ''}`,
+      summary,
+      aliases,
+      lessonDates: dates ? dates.split(' · ').map(d => '2026-' + d.replace('/', '-')) : [],
+      defaultTab: 'all',
+      hideSectionNumbers: true,
+      sectionTabs,
+      sections: fullSections,
+      tcodes: [],
+      specs: {}
+    };
   }
-  const order = ['sap-architecture', 'abap-development', 'abap-basics', 'abap-types', 'abap-loops', 'abap-debug-messages', 'abap-program-types', 'abap-modularization', 'abap-bapi', 'abap-objects', 'abap-data-report', 'abap-open-sql', 'abap-dictionary', 'erp-fi', 'erp-co', 'erp-mm', 'erp-sd', 'erp-pp', 'erp-resources'];
-  order.forEach((id, i) => { docs[id].stepNum = String(i + 1).padStart(2, '0'); });
+  const putUnit = (...args) => putCourseUnit('BC400', 'unit', 'abap-curriculum', 'U', ...args);
+  const putBc430 = (...args) => putCourseUnit('BC430', 'bc430', 'abap-bc430', 'D', ...args);
+
+  putUnit(1, 'ABAP 프로그램의 흐름', 'Flow of an ABAP Program', 1,
+    'SAP GUI 요청이 Dispatcher와 Work Process를 거쳐 처리되는 아키텍처 흐름과 ABAP Program 유형·Include 저장소 객체를 정리합니다.',
+    ['SAP 시스템 구조', 'Dispatcher', 'Work Process', '워크 프로세스', 'Message Server', 'Gateway', 'ICM', 'SAP GUI', 'Program 종류와 Include', 'Include Program', 'Include 프로그램', '리포트 프로그램', 'Module Pool'],
+    [
+      { id: 'l1', kind: 'lesson', badge: 'L1', page: 'p. 3', label: 'ABAP 프로그램 처리 과정', desc: 'Lesson: Describing the Processing of ABAP Programs (p. 3) — SAP 요청 처리 흐름, Work Process, 통신 구성 요소, Program 종류와 Include를 정리합니다.' }
+    ],
+    [
+      take('sap-architecture', '요청 처리 흐름', 'l1', 'Lesson 1', 'p. 3'),
+      take('sap-architecture', '워크 프로세스와 잠금', 'l1', 'Lesson 1', 'p. 3'),
+      take('sap-architecture', '통신 구성 요소', 'l1', 'Lesson 1', 'p. 3'),
+      take('abap-program-types', 'Program과 저장소 객체', 'l1', 'Lesson 1', 'p. 3'),
+      take('abap-program-types', 'Include와 모듈화', 'l1', 'Lesson 1', 'p. 3')
+    ],
+    '11/11 · 11/17'
+  );
+
+  putUnit(2, 'ABAP Workbench', 'ABAP Workbench', 19,
+    'ABAP Workbench(SE80·SE38·SE09·SE93) 탐색, Package와 Change Request 관리, Program 기본 작성·전송, 트랜잭션 생성과 Exercise 1–3 실습 가이드를 정리합니다.',
+    ['개발 객체와 전송 관리', 'ABAP Workbench', '패키지', 'Package', 'Change Request', 'Workbench Request', 'Customizing Request', 'Transport'],
+    [
+      { id: 'l1', kind: 'lesson', badge: 'L1', page: 'p. 21', label: 'Workbench 소개', desc: 'Lesson: Introducing the ABAP Workbench (p. 21) — DEV·QAS·PRD 시스템 구성과 SE80 Object Navigator 활용을 정리합니다.' },
+      { id: 'l2', kind: 'lesson', badge: 'L2', page: 'p. 30', label: '개발 프로젝트 구성', desc: 'Lesson: Organizing ABAP Development Projects (p. 30) — Package와 Change Request·Task 관리 원칙을 정리합니다.' },
+      { id: 'l3', kind: 'lesson', badge: 'L3', page: 'p. 40', label: 'ABAP 프로그램 개발', desc: 'Lesson: Developing ABAP Programs (p. 40) — ABAP 문장·주석 기초와 작성 → 검사 → 활성화 → 전송 흐름을 정리합니다.' },
+      { id: 'l4', kind: 'lesson', badge: 'L4', page: 'p. 55', label: '프로젝트 마무리 · T-Code', desc: 'Lesson: Finalizing ABAP Development Projects (p. 55) — SE93 트랜잭션 코드 생성과 릴리스 절차를 정리합니다.' },
+      { id: 'ex', kind: 'exercise', badge: 'Ex 1–3', page: 'p. 37–59', label: 'Exercise 1–3', desc: '교재 Exercise 1(Package 생성), Exercise 2(간단한 Program 개발), Exercise 3(Transaction 생성) 실습 체크포인트를 정리합니다.' }
+    ],
+    [
+      take('abap-development', '개발·품질·운영 시스템', 'l1', 'Lesson 1', 'p. 21'),
+      take('abap-development', 'SE80에서 Program이 안 보일 때', 'l1', 'Lesson 1', 'p. 21'),
+      take('abap-development', 'Package와 Change Request', 'l2', 'Lesson 2', 'p. 30'),
+      take('abap-basics', '문장과 주석', 'l3', 'Lesson 3', 'p. 40'),
+      take('abap-development', '작성에서 전송까지', 'l3', 'Lesson 3', 'p. 40'),
+      take('abap-development', '트랜잭션 코드 생성', 'l4', 'Lesson 4', 'p. 55'),
+      exSec('ex', 'Exercise 1', 'p. 37', 'Exercise 1: Create a Package',
+        text('SE80(Object Navigator)에서 본인 실습용 Package(`ZBC400_F##`)를 생성하고 Workbench Change Request에 연결하는 실습입니다.'),
+        { type: 'practice', title: 'Exercise 1 핵심 확인 포인트', steps: [
+          { step: '1', action: 'SE80에서 Package 선택 후 이름 입력', detail: 'Repository Browser에서 Package를 고르고 ZBC400_F##(본인 번호)을 입력해 생성합니다.' },
+          { step: '2', action: 'Transport Layer · Change Request 확인', detail: '로컬 $TMP와 전송 대상 Package의 차이를 구분하고, Workbench Request와 본인 Task에 기록되는지 확인합니다.' }
+        ] }),
+      exSec('ex', 'Exercise 2', 'p. 51', 'Exercise 2: Develop a Simple ABAP Program',
+        text('SE80/SE38에서 첫 실행 가능 Program(`ZBC400_F##_HELLO` · `ZABAP_F##_01` · `ZABAP_F##_02`)을 만들고 저장 → 문법 검사(`Ctrl + F2`) → 활성화(`Ctrl + F3`) → 실행(`F8`) 흐름을 익힙니다.'),
+        table(['연계 실습 Program', '핵심 연습 포인트'], [
+          ['`ZBC400_F##_HELLO`', '교재 Exercise 2: 첫 실행 가능 Program 작성·활성화·실행'],
+          ['`ZABAP_F##_01` · `ZABAP_F##_02`', '`WRITE` 출력, 마침표(`.`), 주석(`*`, `"`), 체인 문법(`:`)']
+        ])),
+      exSec('ex', 'Exercise 3', 'p. 59', 'Exercise 3: Create a Transaction',
+        text('SE93(Transaction Maintenance)에서 작성한 리포트 Program을 실행하는 리포트 트랜잭션(Report Transaction)을 생성하고 SAP GUI 명령 필드에서 직접 호출해 봅니다.'),
+        { type: 'callout', style: 'tip', title: 'SE93 유형 선택 주의', body: '실행 가능 리포트 Program에는 **Program and selection screen (report transaction)** 유형을 선택합니다. 생성 후 명령 필드(`/nZ...`)로 바로 실행되는지 확인하세요.' })
+    ],
+    '11/11 · 11/12 · 11/20',
+    [
+      ['`ZABAP_F##_01`', 'ABAP Write statement'],
+      ['`ZABAP_F##_02`', 'ABAP Syntax'],
+      ['`ZBC400_F##_HELLO`', 'Program ZBC400_F##_HELLO (Exercise 2)']
+    ]
+  );
+
+  putUnit(3, 'ABAP 기본 언어 요소', 'Basic ABAP Language Elements', 73,
+    '기본 데이터 객체(자료형·길이·초기값·텍스트 심볼), 조건·반복문·시스템 필드·메시지·예외, ABAP 디버거와 Exercise 4–5 실습 가이드를 정리합니다.',
+    ['ABAP 기초', '자료형과 초기값', '반복문과 시스템 필드', '디버깅과 메시지', 'DATA', 'PARAMETERS', 'CLEAR', 'TYPE', 'LIKE', '자료형', 'DATA TYPE', '초기값', 'DECFLOAT16', 'DECFLOAT34', 'XSTRING', 'DO', 'WHILE', 'sy-index', 'sy-tabix', 'sy-subrc', 'sy-dbcnt', 'sy-uname', '시스템 필드', '디버깅', 'Debugger', '중단점', '메시지 클래스', 'MESSAGE'],
+    [
+      { id: 'l1', kind: 'lesson', badge: 'L1', page: 'p. 75', label: '기본 데이터 객체', desc: 'Lesson: Defining Elementary Data Objects (p. 75) — 변수 선언, 기본/길이 지정 자료형, 초기값, 텍스트 심볼을 정리합니다.' },
+      { id: 'l2', kind: 'lesson', badge: 'L2', page: 'p. 87', label: '기본 ABAP 문장', desc: 'Lesson: Using Basic ABAP Statements (p. 87) — 입출력, 반복문(DO/WHILE), 시스템 필드, 메시지 유형과 예외를 정리합니다.' },
+      { id: 'l3', kind: 'lesson', badge: 'L3', page: 'p. 104', label: 'ABAP 디버거 분석', desc: 'Lesson: Analyzing Programs with the ABAP Debugger (p. 104) — 중단점 설정, F5 단계 실행, ST22 덤프 확인을 정리합니다.' },
+      { id: 'ex', kind: 'exercise', badge: 'Ex 4–5', page: 'p. 97–113', label: 'Exercise 4–5', desc: '교재 Exercise 4(기본 ABAP 문장 활용)와 Exercise 5(디버거 단계 실행) 실습 체크포인트를 정리합니다.' }
+    ],
+    [
+      take('abap-basics', '변수 선언과 대입', 'l1', 'Lesson 1', 'p. 75'),
+      take('abap-types', '주요 기본 타입', 'l1', 'Lesson 1', 'p. 75'),
+      take('abap-types', '길이를 지정하는 타입', 'l1', 'Lesson 1', 'p. 75'),
+      take('abap-types', '초기값 확인', 'l1', 'Lesson 1', 'p. 75'),
+      take('abap-types', '텍스트 심볼과 번역', 'l1', 'Lesson 1', 'p. 75'),
+      take('abap-basics', '입력과 출력', 'l2', 'Lesson 2', 'p. 87'),
+      take('abap-loops', '반복문 비교', 'l2', 'Lesson 2', 'p. 87'),
+      take('abap-loops', 'CONTINUE와 EXIT', 'l2', 'Lesson 2', 'p. 87'),
+      take('abap-loops', '자주 보는 시스템 필드', 'l2', 'Lesson 2', 'p. 87'),
+      take('abap-debug-messages', '메시지 유형', 'l2', 'Lesson 2', 'p. 87'),
+      take('abap-debug-messages', '직접 문구와 메시지 클래스', 'l2', 'Lesson 2', 'p. 87'),
+      take('abap-debug-messages', '예외와 반환 코드', 'l2', 'Lesson 2', 'p. 87'),
+      take('abap-debug-messages', '디버깅 순서', 'l3', 'Lesson 3', 'p. 104'),
+      exSec('ex', 'Exercise 4', 'p. 97', 'Exercise 4: Use Basic ABAP Statements',
+        text('산술 연산, 조건 분기(`IF`/`CASE`), 반복문(`DO`/`WHILE`), `sy-subrc` 반환 코드 확인을 실습합니다.'),
+        table(['연계 실습 Program', '핵심 연습 포인트'], [
+          ['`ZBC400_F##_COMPUTE` · `ZABAP_F##_04`', '기본 사칙연산, `DIV`/`MOD`, 0으로 나누기 예외 및 결과 출력'],
+          ['`ZABAP_F##_03` · `ZABAP_F##_05`', '기본 자료형·초기값(`CLEAR`, `IS INITIAL`)과 `IF`/`ELSEIF` 조건 분기'],
+          ['`ZBC400_F##_LOOP` · `ZABAP_F##_06~07`', '`DO`/`WHILE`/`CONTINUE`/`EXIT`, `sy-index`, `sy-subrc` 확인']
+        ])),
+      exSec('ex', 'Exercise 5', 'p. 113', 'Exercise 5: Debug Statements on Elementary Data Objects',
+        text('작성한 Program에 중단점(Session Breakpoint)을 설정하고 ABAP 디버거에서 한 단계씩 실행하며 변수와 `sy-*` 시스템 필드의 변화를 관찰합니다.'),
+        { type: 'practice', title: 'Exercise 5 디버깅 점검 체크리스트', steps: [
+          { step: '1', action: '중단점 설정 후 실행(F8)', detail: 'SE38/SE80 편집기 왼쪽 회색 여백을 클릭해 Session Breakpoint를 찍고 F8로 실행합니다.' },
+          { step: '2', action: 'F5(Single Step)로 변수 값 추적', detail: '변수를 더블클릭해 Variables 탭에 등록하고 대입·CLEAR·반복문마다 값과 sy-index·sy-subrc가 어떻게 바뀌는지 확인합니다.' }
+        ] })
+    ],
+    '11/11 · 11/12 · 11/13 · 11/16 · 11/17',
+    [
+      ['`ZABAP_F##_03`', 'ABAP Data Type & Elementary Data Objects'],
+      ['`ZABAP_F##_04`', 'ABAP Calculation'],
+      ['`ZABAP_F##_05`', 'ABAP IF Conditional Statement'],
+      ['`ZABAP_F##_06`', 'ABAP Loop Statement'],
+      ['`ZABAP_F##_07`', 'ABAP sy-subrc System Field'],
+      ['`ZBC400_F##_COMPUTE`', 'Program ZBC400_F##_COMPUTE (Exercise 4)'],
+      ['`ZBC400_F##_LOOP`', 'Program ZBC400_F##_LOOP']
+    ]
+  );
+
+  putUnit(4, 'ABAP 모듈화 기법', 'Modularization Techniques in ABAP', 125,
+    '서브루틴(FORM/PERFORM), Function Group·Function Module(SE37), BAPI와 RFC, 글로벌·로컬 클래스(SE24)와 Exercise 6–12 실습 가이드를 정리합니다.',
+    ['프로그램 모듈화', 'BAPI와 RFC', '클래스와 메서드', '서브루틴', 'FORM', 'PERFORM', 'Function Module', '함수 모듈', 'BAPI', 'RFC', 'RETURN', 'Global class', 'Local class', '정적 메서드', '인스턴스 메서드', '참조 변수', 'TYPE REF TO'],
+    [
+      { id: 'l1', kind: 'lesson', badge: 'L1', page: 'p. 127', label: '모듈화 개요', desc: 'Lesson: Explaining Modularization (p. 127) — 서브루틴·함수 모듈·메서드 3가지 모듈화 방식을 비교합니다.' },
+      { id: 'l2', kind: 'lesson', badge: 'L2', page: 'p. 134', label: '서브루틴 (FORM)', desc: 'Lesson: Defining and Calling Subroutines (p. 134) — USING/CHANGING과 VALUE(...) 값·참조 전달을 정리합니다.' },
+      { id: 'l3', kind: 'lesson', badge: 'L3–4', page: 'p. 155 · 172', label: '함수 모듈 호출·생성', desc: 'Lesson: Calling & Creating Function Modules (p. 155 · p. 172) — Function Group(SAPL/TOP/UXX)과 호출 방향을 정리합니다.' },
+      { id: 'l5', kind: 'lesson', badge: 'L5', page: 'p. 187', label: 'BAPI와 RFC', desc: 'Lesson: Describing Business Application Programming Interfaces (p. 187) — RFC와 BAPI의 관계 및 RETURN 오류 처리를 정리합니다.' },
+      { id: 'l6', kind: 'lesson', badge: 'L6–7', page: 'p. 193 · 212', label: '글로벌 클래스 · 메서드', desc: 'Lesson: Calling & Creating Global Classes and Static Methods (p. 193 · p. 212) — 정적(`=>`)·인스턴스(`->`) 호출과 SE24 클래스를 정리합니다.' },
+      { id: 'l8', kind: 'lesson', badge: 'L8', page: 'p. 225', label: '로컬 클래스', desc: 'Lesson: Using Local Classes (p. 225) — DEFINITION/IMPLEMENTATION과 PUBLIC·PROTECTED·PRIVATE 접근 제어를 정리합니다.' },
+      { id: 'ex', kind: 'exercise', badge: 'Ex 6–12', page: 'p. 149–219', label: 'Exercise 6–12', desc: '교재 Exercise 6(서브루틴), Exercise 7–9(함수 그룹·함수 모듈), Exercise 10–12(글로벌 클래스·정적 메서드) 실습 가이드를 정리합니다.' }
+    ],
+    [
+      take('abap-modularization', '모듈화 방식', 'l1', 'Lesson 1', 'p. 127'),
+      take('abap-modularization', '서브루틴 매개변수', 'l2', 'Lesson 2', 'p. 134'),
+      take('abap-modularization', '함수 그룹과 함수 모듈', 'l3', 'Lesson 3–4', 'p. 155 · 172'),
+      take('abap-modularization', '호출자와 함수의 방향', 'l3', 'Lesson 3–4', 'p. 155 · 172'),
+      take('abap-bapi', 'BAPI와 RFC의 관계', 'l5', 'Lesson 5', 'p. 187'),
+      take('abap-bapi', '입출력과 오류 처리', 'l5', 'Lesson 5', 'p. 187'),
+      take('abap-objects', '글로벌 클래스와 로컬 클래스', 'l6', 'Lesson 6–7', 'p. 193 · 212'),
+      take('abap-objects', '정적 호출과 인스턴스 호출', 'l6', 'Lesson 6–7', 'p. 193 · 212'),
+      take('abap-objects', '로컬 클래스의 정의와 구현', 'l8', 'Lesson 8', 'p. 225'),
+      exSec('ex', 'Exercise 6', 'p. 149', 'Exercise 6: Implement Subroutines',
+        text('`FORM ... ENDFORM`과 `PERFORM`으로 계산 로직을 분리하고 `USING VALUE(...)` vs `CHANGING` 전달 방식 차이를 확인합니다.'),
+        table(['연계 실습 Program', '핵심 연습 포인트'], [
+          ['`ZBC400_F##_SUBROUTINE`', '교재 Exercise 6: 서브루틴 정의·호출 및 매개변수 매핑'],
+          ['`ZABAP_F##_08` · `ZABAP_F##_09`', '서브루틴 생성과 값 전달 vs 참조 전달 비교']
+        ])),
+      exSec('ex', 'Exercise 7–9', 'p. 165 · 175 · 179', 'Exercise 7–9: Call · Create Function Group & Function Module',
+        text('SE37에서 기존 함수 모듈을 호출(Ex 7)한 뒤, 직접 Function Group(Ex 8)과 Function Module(Ex 9)을 생성·활성화해 리포트에서 `CALL FUNCTION`으로 호출합니다.'),
+        table(['Exercise / Program', '핵심 확인 포인트'], [
+          ['Ex 7 (`ZBC400_F##_FUNCTION_MODULE`, `ZABAP_F##_10`)', 'SE37 인터페이스(`IMPORTING`↔`EXPORTING`) 방향 확인 및 `EXCEPTIONS` `sy-subrc` 처리'],
+          ['Ex 8–9 (`ZBC400_F##_FUNCTION_MODULE_2`)', 'Function Group 생성(`SAPL...`, `TOP`/`UXX` Include 활성화) 후 직접 만든 함수 모듈 호출·테스트']
+        ])),
+      exSec('ex', 'Exercise 10–12', 'p. 205 · 217 · 219', 'Exercise 10–12: Global Class & Static Method',
+        text('SE24 글로벌 클래스의 정적 메서드를 호출(Ex 10)하고, 직접 Simple Global Class(Ex 11)와 Static Method(Ex 12)를 구현·활성화합니다.'),
+        table(['Exercise / Program', '핵심 확인 포인트'], [
+          ['Ex 10 (`ZBC400_F##_GLOBAL_CLASS_1`, `ZABAP_F##_11`)', '정적 메서드(`클래스=>메서드( )`)와 인스턴스 메서드(`참조->메서드( )`) 구분'],
+          ['Ex 11–12 (`ZBC400_F##_GLOBAL_CLASS_2`, `ZABAP_F##_12`)', 'SE24 글로벌 클래스 생성·`PUBLIC`/`PRIVATE` 가시성 설정과 로컬 클래스 구현 비교']
+        ]))
+    ],
+    '11/16 · 11/17 · 11/18',
+    [
+      ['`ZABAP_F##_08`', 'ABAP Subroutine'],
+      ['`ZABAP_F##_09`', 'ABAP Subroutine Parameters'],
+      ['`ZABAP_F##_10`', 'ABAP Function Module'],
+      ['`ZABAP_F##_11`', 'ABAP Call Class Method'],
+      ['`ZABAP_F##_12`', 'ABAP Local Class'],
+      ['`ZBC400_F##_SUBROUTINE`', 'Program ZBC400_F##_SUBROUTINE (Exercise 6)'],
+      ['`ZBC400_F##_FUNCTION_MODULE`', 'Function Module 실습 1 (Exercise 7)'],
+      ['`ZBC400_F##_FUNCTION_MODULE_2`', 'Function Module 실습 2 (Exercise 9)'],
+      ['`ZBC400_F##_GLOBAL_CLASS_1`', 'Global Class 실습 1 (Exercise 10)'],
+      ['`ZBC400_F##_GLOBAL_CLASS_2`', 'Global Class 실습 2 (Exercise 11–12)']
+    ]
+  );
+
+  putUnit(5, '복합 데이터 객체', 'Complex Data Objects', 239,
+    '구조체(Structure · MOVE-CORRESPONDING)와 Internal Table(STANDARD · SORTED · HASHED, 선언 10가지, 행 조작, 정렬, CLEAR/Header Line) 및 Exercise 13–14를 정리합니다.',
+    ['복합 데이터 객체', '구조체', 'Structure', 'MOVE-CORRESPONDING', '내부 테이블', 'Internal Table', 'STANDARD TABLE', 'SORTED TABLE', 'HASHED TABLE', 'Header Line', 'OCCURS'],
+    [
+      { id: 'l1', kind: 'lesson', badge: 'L1', page: 'p. 240', label: '구조체 (Structure)', desc: 'Lesson: Using Structured Data Objects (p. 240) — 로컬·글로벌 구조 타입 선언과 MOVE-CORRESPONDING을 정리합니다.' },
+      { id: 'l2', kind: 'lesson', badge: 'L2', page: 'p. 253', label: '내부 테이블 (Internal Table)', desc: 'Lesson: Using Internal Tables (p. 253) — 3가지 테이블 종류, TYPE/LIKE 10가지 선언, CRUD·SORT·CLEAR·Header Line을 정리합니다.' },
+      { id: 'ex', kind: 'exercise', badge: 'Ex 13–14', page: 'p. 247 · 273', label: 'Exercise 13–14', desc: '교재 Exercise 13(구조체 활용)과 Exercise 14(Internal Table 활용) 실습 체크포인트를 정리합니다.' }
+    ],
+    [
+      take('abap-types', '구조체 선언과 컴포넌트', 'l1', 'Lesson 1', 'p. 240'),
+      take('abap-types', '구조체 간 MOVE-CORRESPONDING', 'l1', 'Lesson 1', 'p. 240'),
+      take('abap-data-report', '내부 테이블의 종류와 접근', 'l2', 'Lesson 2', 'p. 253'),
+      take('abap-data-report', '내부 테이블 타입과 변수 선언', 'l2', 'Lesson 2', 'p. 253'),
+      take('abap-data-report', '행 추가·조회·수정·삭제', 'l2', 'Lesson 2', 'p. 253'),
+      take('abap-data-report', '내부 테이블 정렬', 'l2', 'Lesson 2', 'p. 253'),
+      take('abap-data-report', 'CLEAR·REFRESH·FREE', 'l2', 'Lesson 2', 'p. 253'),
+      take('abap-data-report', 'Header Line과 OCCURS — 기존 코드 읽기', 'l2', 'Lesson 2', 'p. 253'),
+      exSec('ex', 'Exercise 13', 'p. 247', 'Exercise 13: Use Structured Data Objects',
+        text('로컬 구조 타입(`ts_`)과 글로벌 구조(`BC400_S_FLIGHT`)를 참조해 구조 변수(`gs_`)를 선언하고 `MOVE-CORRESPONDING`으로 컴포넌트를 복사합니다.'),
+        table(['연계 실습 Program', '핵심 연습 포인트'], [
+          ['`ZBC400_F##_STRUCTURE` · `ZABAP_F##_13`', '구조체 컴포넌트 접근(`gs_carrier-carrid`)과 `MOVE-CORRESPONDING` 필드명 매칭 확인']
+        ])),
+      exSec('ex', 'Exercise 14', 'p. 273', 'Exercise 14: Use Internal Tables',
+        text('`STANDARD` · `SORTED` · `HASHED` Internal Table과 Work Area 선언을 비교하고 `APPEND`/`INSERT`/`READ TABLE`/`MODIFY`/`DELETE`/`SORT`를 실습합니다.'),
+        table(['연계 실습 Program', '핵심 연습 포인트'], [
+          ['`ZABAP_F##_14` · `ZABAP_F##_16`', 'Internal Table & Work Area 10가지 선언 방식(`TYPE`/`LIKE`, `TABLE OF`/`LINE OF`)과 CRUD'],
+          ['`ZABAP_F##_15` · `ZBC430S_ITAB_SORTED`', 'Header Line(`itab` vs `itab[]`) 구분과 `SORTED TABLE` 자동 정렬·키 접근 확인']
+        ]))
+    ],
+    '11/18',
+    [
+      ['`ZABAP_F##_13`', 'ABAP Structure Variable'],
+      ['`ZABAP_F##_14`', 'ABAP Internal Table'],
+      ['`ZABAP_F##_15`', 'ABAP Header Line'],
+      ['`ZABAP_F##_16`', 'ABAP Internal table & Work area'],
+      ['`ZBC400_F##_STRUCTURE`', 'Program ZBC400_F##_STRUCTURE (Exercise 13)'],
+      ['`ZBC430S_ITAB_SORTED`', 'Program SAPBC430S_ITAB_SORTED (Exercise 14 연계)']
+    ]
+  );
+
+  putUnit(6, '데이터 모델링과 데이터 조회', 'Data Modeling and Data Retrieval', 283,
+    'SAP 항공 데이터 모델과 Open SQL(단건·다건 조회, 조건·집계, JOIN·서브쿼리·FOR ALL ENTRIES, CUD·트랜잭션·Strict Mode) 및 Exercise 15–19를 정리합니다. ABAP Dictionary 심화 전체는 BC430 Unit 1–9로 분리되어 있습니다.',
+    ['Open SQL', 'ABAP SQL', 'SELECT SINGLE', 'CORRESPONDING FIELDS', 'APPENDING TABLE', 'GROUP BY', 'HAVING', 'FOR ALL ENTRIES', 'OUTER JOIN'],
+    [
+      { id: 'l1', kind: 'lesson', badge: 'L1', page: 'p. 285', label: '데이터 모델 개요', desc: 'Lesson: Explaining Data Models (p. 285) — SAP 항공 데이터 모델(SCARR·SPFLI·SFLIGHT·SBOOK·SCUSTOM)과 BC430 ABAP Dictionary 연계 목차를 안내합니다.' },
+      { id: 'l2', kind: 'lesson', badge: 'L2', page: 'p. 301', label: '단건 DB 조회', desc: 'Lesson: Retrieving Single Database Records (p. 301) — Open SQL 기본 구조, @ 호스트 변수, SELECT SINGLE과 UP TO 1 ROWS를 정리합니다.' },
+      { id: 'l3', kind: 'lesson', badge: 'L3', page: 'p. 315', label: '다건 DB 조회 · 집계', desc: 'Lesson: Retrieving Multiple Database Records (p. 315) — INTO TABLE, APPENDING, WHERE·NULL, DISTINCT·GROUP BY·HAVING과 0건 시 시스템 필드를 정리합니다.' },
+      { id: 'l4', kind: 'lesson', badge: 'L4', page: 'p. 331', label: 'JOIN · CUD · Strict Mode', desc: 'Lesson: Describing Other Aspects of Database Access (p. 331) — JOIN, 서브쿼리·FOR ALL ENTRIES, DB 변경(CUD), 트랜잭션·성능·Strict Mode를 정리합니다.' },
+      { id: 'l5', kind: 'lesson', badge: 'L5', page: 'p. 342', pending: true, label: '권한 검사 (준비 중)', desc: 'Lesson: Implementing Authorization Checks (p. 342) — AUTHORITY-CHECK와 권한 객체 내용은 수업 진도에 맞춰 보강할 예정입니다.' },
+      { id: 'ex', kind: 'exercise', badge: 'Ex 15–19', page: 'p. 295–349', label: 'Exercise 15–19', desc: '교재 Exercise 15(Transparent Table 분석), Exercise 16(단건 조회), Exercise 17–18(SELECT Loop · Array Fetch), Exercise 19(권한 체크 · 준비 중)를 정리합니다.' }
+    ],
+    [
+      {
+        tab: 'l1', badge: 'Lesson 1', page: 'p. 285', title: 'SAP 항공 데이터 모델과 BC430 ABAP Dictionary 연결',
+        blocks: [
+          text('BC400 Unit 6에서는 Open SQL로 조회할 데이터베이스 테이블 구조(SAP 항공 모델: `SCARR` → `SPFLI` → `SFLIGHT` → `SBOOK` / `SCUSTOM`)를 이해하고 단건·다건 조회 문법을 익힙니다.',
+            'Domain, Data Element, Structure, Table Type, Transparent Table, Index, Table Buffer, Input Checks, Text Table, SE14 Table Conversion, Append Structure, Views/SM30 등 ABAP Dictionary 전 과정은 **BC430 교재(Unit 1–9)** 기준으로 전용 단원에 정리되어 있습니다.'),
+          table(['BC430 단원', '핵심 주제', '바로가기'], [
+            ['BC430 Unit 1–2', 'ABAP Dictionary 개요 · Domain · Data Element · Structure · Table Type', '[[bc430-01|BC430 Unit 1]] · [[bc430-02|BC430 Unit 2]]'],
+            ['BC430 Unit 3–4', 'Transparent Table · Technical Settings · Index · Table Buffer', '[[bc430-03|BC430 Unit 3]] · [[bc430-04|BC430 Unit 4]]'],
+            ['BC430 Unit 5–6', 'Input Checks(Fixed Values · Foreign Keys · Text Table) · 종속성(Where-Used List)', '[[bc430-05|BC430 Unit 5]] · [[bc430-06|BC430 Unit 6]]'],
+            ['BC430 Unit 7–9', 'Table Conversion(SE14) · Append Structure · Views/SM30 · Search Helps', '[[bc430-07|BC430 Unit 7]] · [[bc430-08|BC430 Unit 8]] · [[bc430-09|BC430 Unit 9]]']
+          ])
+        ]
+      },
+      take('abap-open-sql', 'Open SQL과 Transparent Table', 'l2', 'Lesson 2', 'p. 301'),
+      take('abap-open-sql', 'SELECT 기본 구조와 호스트 변수', 'l2', 'Lesson 2', 'p. 301'),
+      take('abap-open-sql', '한 행 조회와 정렬된 첫 행', 'l2', 'Lesson 2', 'p. 301'),
+      take('abap-open-sql', '작업 영역·내부 테이블·CORRESPONDING', 'l3', 'Lesson 3', 'p. 315'),
+      take('abap-open-sql', 'INTO TABLE과 APPENDING TABLE', 'l3', 'Lesson 3', 'p. 315'),
+      take('abap-open-sql', 'WHERE 조건과 NULL', 'l3', 'Lesson 3', 'p. 315'),
+      take('abap-open-sql', 'DISTINCT·집계·GROUP BY·HAVING', 'l3', 'Lesson 3', 'p. 315'),
+      take('abap-open-sql', '조회 결과가 없을 때와 시스템 필드', 'l3', 'Lesson 3', 'p. 315'),
+      take('abap-open-sql', 'JOIN과 ON·WHERE의 차이', 'l4', 'Lesson 4', 'p. 331'),
+      take('abap-open-sql', '보완: 서브쿼리와 FOR ALL ENTRIES', 'l4', 'Lesson 4', 'p. 331'),
+      take('abap-open-sql', 'INSERT·UPDATE·MODIFY·DELETE', 'l4', 'Lesson 4', 'p. 331'),
+      take('abap-open-sql', '보완: 트랜잭션과 안전한 변경', 'l4', 'Lesson 4', 'p. 331'),
+      take('abap-open-sql', '보완: 성능과 다음 문법', 'l4', 'Lesson 4', 'p. 331'),
+      take('abap-open-sql', '최신 문법(Strict Mode)과 쉼표·@ 규칙', 'l4', 'Lesson 4', 'p. 331'),
+      pendingSec('l5', 'Lesson 5', 'p. 342', 'AUTHORITY-CHECK와 권한 검사 (준비 중)', '준비 중 · 교재 p. 342 (Implementing Authorization Checks) 수업 진도에 맞춰 정리할 예정입니다.'),
+      exSec('ex', 'Exercise 15', 'p. 295', 'Exercise 15: Analyze Transparent Tables in the Data Dictionary',
+        text('SE11에서 항공 모델 표준 테이블(`SCARR`, `SPFLI`, `SFLIGHT`, `SBOOK`)의 Key Field, Data Element, Domain, Foreign Key, Technical Settings를 분석합니다. 자세한 테이블 생성·설계는 [[bc430-03|BC430 Unit 3 · 데이터베이스 테이블]]에서 이어집니다.'),
+        { type: 'callout', style: 'tip', title: 'SE11 분석 체크포인트', body: '`SCARR` → `SPFLI` → `SFLIGHT` → `SBOOK` 순으로 Primary Key(`MANDT`, `CARRID`, `CONNID`, `FLDATE`, `BOOKID`)가 어떻게 계층적으로 확장되는지 확인하세요.' }),
+      exSec('ex', 'Exercise 16', 'p. 309', 'Exercise 16: Implement Single Record Access',
+        text('Primary Key 전체 조건으로 `SELECT SINGLE`을 실행하고 직후 `IF sy-subrc = 0.`으로 조회 성공 여부를 판별합니다. 구문법·신문법 비교 예제는 [[abap-sql-guide|ABAP SQL 가이드]]의 `SELECT · INTO` 탭에서도 바로 전환해 볼 수 있습니다.'),
+        { type: 'callout', style: 'tip', title: '실습 확인 포인트', body: '조회 결과가 없을 때 기존 Work Area에 이전 값이 남지 않도록 조회 전 `CLEAR` 하거나 `sy-subrc` 분기 처리를 빠뜨리지 마세요.' }),
+      exSec('ex', 'Exercise 17–18', 'p. 317 · 325', 'Exercise 17–18: SELECT Loop & Array Fetch',
+        text('한 행씩 읽는 `SELECT ... ENDSELECT` 루프(Ex 17)와 Internal Table에 한 번에 담는 `INTO TABLE` Array Fetch(Ex 18)의 구조·성능 차이를 비교 실습합니다.'),
+        table(['구분', '문법 형태', '실무 권장 여부'], [
+          ['Ex 17: SELECT Loop', '`SELECT ... INTO @gs_row ... ENDSELECT.`', 'DB 커서를 열어 한 행씩 처리 — 대량·일반 목록 조회에는 비권장'],
+          ['Ex 18: Array Fetch', '`SELECT ... INTO TABLE @gt_rows.`', '한 번에 Internal Table로 수신 — 실무 기본 권장 패턴']
+        ])),
+      pendingSec('ex', 'Exercise 19', 'p. 349', 'Exercise 19: Implement an Authorization Check (준비 중)', '준비 중 · 교재 p. 349 권한 검사 실습은 Lesson 5 학습 후 정리할 예정입니다.')
+    ],
+    '11/19 · 11/20'
+  );
+
+  putUnit(7, 'Classic ABAP Reports', 'Classic ABAP Reports', 363,
+    'Classic ABAP List(아이콘·컬럼 서식), Selection Screen(PARAMETERS · SELECT-OPTIONS), Report 이벤트 처리 순서와 Exercise 20–21 실습 가이드를 정리합니다.',
+    ['데이터 처리와 리포트', 'Classic ABAP Report', 'Selection Screen', 'SELECT-OPTIONS', 'INITIALIZATION', 'AT SELECTION-SCREEN', 'START-OF-SELECTION', 'cl_demo_output'],
+    [
+      { id: 'l1', kind: 'lesson', badge: 'L1', page: 'p. 365', label: 'ABAP 리스트', desc: 'Lesson: Implementing ABAP Lists (p. 365) — 클래식 리스트 출력, ICON 테이블, BC400_RPS_REP_A 컬럼 서식을 정리합니다.' },
+      { id: 'l2', kind: 'lesson', badge: 'L2', page: 'p. 370', label: 'Selection Screen', desc: 'Lesson: Implementing Selection Screens (p. 370) — PARAMETERS와 SELECT-OPTIONS(SIGN·OPTION·LOW·HIGH)를 정리합니다.' },
+      { id: 'l3', kind: 'lesson', badge: 'L3', page: 'p. 386', label: 'Report 이벤트 흐름', desc: 'Lesson: Implementing Events of ABAP Reports (p. 386) — INITIALIZATION → AT SELECTION-SCREEN → START-OF-SELECTION 처리 순서를 정리합니다.' },
+      { id: 'ex', kind: 'exercise', badge: 'Ex 20–21', page: 'p. 379 · 395', label: 'Exercise 20–21', desc: '교재 Exercise 20(Selection Screen · Classic List)과 Exercise 21(Report 이벤트 구현) 실습 가이드를 정리합니다.' }
+    ],
+    [
+      take('abap-data-report', '리스트 아이콘과 컬럼 서식 참고', 'l1', 'Lesson 1', 'p. 365'),
+      take('abap-data-report', 'Classic ABAP Report와 Selection Screen', 'l2', 'Lesson 2', 'p. 370'),
+      take('abap-data-report', 'Report 처리 순서', 'l3', 'Lesson 3', 'p. 386'),
+      exSec('ex', 'Exercise 20', 'p. 379', 'Exercise 20: Create a Selection Screen and a Classic ABAP List',
+        text('`SELECT-OPTIONS`로 검색 조건을 받고 클래식 리스트에 아이콘·컬럼 서식을 적용해 출력합니다.'),
+        table(['연계 실습 Program', '핵심 연습 포인트'], [
+          ['`ZABAP_F##_17`', '`SELECT-OPTIONS` 선언(`FOR` 참조 변수)과 `WHERE ... IN` 조건 조회'],
+          ['`ZBC400_F##_REP_A` · `BC400_RPS_REP_A`', 'Classic List 출력, `ICON` 테이블 아이콘 표시, 컬럼 색상·정렬 서식']
+        ])),
+      exSec('ex', 'Exercise 21', 'p. 395', 'Exercise 21: Implement Events of ABAP Reports',
+        text('`INITIALIZATION`, `AT SELECTION-SCREEN`, `START-OF-SELECTION` 이벤트 블록으로 리포트 흐름을 구조화합니다. 고객별 예약 건수 리포트의 전체 설계 흐름은 [[abap-thinking-flow|ABAP 사고 흐름]]에서도 도식으로 볼 수 있습니다.'),
+        table(['연계 실습 Program', '핵심 연습 포인트'], [
+          ['`ZBC400_F##_REP_B`', '초기값 설정(`INITIALIZATION`), 입력 검증(`AT SELECTION-SCREEN` `so_carr[] IS INITIAL`), 메인 조회 분리']
+        ]))
+    ],
+    '11/20 · 11/23',
+    [
+      ['`ZABAP_F##_17`', 'ABAP Select-Options'],
+      ['`ZBC400_F##_REP_A`', 'Report with Select-Options & Classic List (Exercise 20)'],
+      ['`ZBC400_F##_REP_B`', 'Report with Events & Classic List (Exercise 21)']
+    ]
+  );
+
+  putUnit(8, 'Screens (Dynpro)', 'Screens', 405,
+    'Screen Painter(SE51)를 이용한 Dynpro 화면 생성, 입출력 필드 구성, 화면과 ABAP Program 간 데이터 전송(PBO · PAI)과 Exercise 22–24를 다룹니다.',
+    ['Dynpro', 'Screens'],
+    [
+      { id: 'l1', kind: 'lesson', badge: 'L1', page: 'p. 406', pending: true, label: '화면 생성', desc: 'Lesson: Creating Screens (p. 406) — 준비 중' },
+      { id: 'l2', kind: 'lesson', badge: 'L2', page: 'p. 432', pending: true, label: '입출력 필드', desc: 'Lesson: Creating Input and Output Fields (p. 432) — 준비 중' },
+      { id: 'l3', kind: 'lesson', badge: 'L3', page: 'p. 441', pending: true, label: '데이터 전송', desc: 'Lesson: Implementing Data Transport (p. 441) — 준비 중' },
+      { id: 'ex', kind: 'exercise', badge: 'Ex 22–24', page: 'p. 425–449', pending: true, label: 'Exercise 22–24', desc: 'Exercise 22–24 — 준비 중' }
+    ],
+    [
+      pendingSec('l1', 'Lesson 1', 'p. 406', 'Creating Screens (화면 생성)'),
+      pendingSec('l2', 'Lesson 2', 'p. 432', 'Creating Input and Output Fields (입출력 필드)'),
+      pendingSec('l3', 'Lesson 3', 'p. 441', 'Implementing Data Transport (데이터 전송)'),
+      pendingSec('ex', 'Exercise 22', 'p. 425', 'Exercise 22: Create Screens'),
+      pendingSec('ex', 'Exercise 23', 'p. 435', 'Exercise 23: Create Input and Output Fields on a Screen'),
+      pendingSec('ex', 'Exercise 24', 'p. 449', 'Exercise 24: Implement Data Transport')
+    ]
+  );
+
+  putUnit(9, 'SAP List Viewer (ALV)', 'SAP List Viewer', 459,
+    'ABAP Report에서 Internal Table을 표 형태로 출력하고 정렬·필터·합계 등 표준 UI 기능을 제공하는 SAP List Viewer(ALV)와 Exercise 25–26을 다룹니다.',
+    ['SAP List Viewer', 'ALV'],
+    [
+      { id: 'l1', kind: 'lesson', badge: 'L1', page: 'p. 460', pending: true, label: 'SAP List Viewer 활용', desc: 'Lesson: Using the SAP List Viewer (p. 460) — 준비 중' },
+      { id: 'ex', kind: 'exercise', badge: 'Ex 25–26', page: 'p. 473 · 481', pending: true, label: 'Exercise 25–26', desc: 'Exercise 25–26 — 준비 중' }
+    ],
+    [
+      pendingSec('l1', 'Lesson 1', 'p. 460', 'Using the SAP List Viewer (ALV 활용)'),
+      pendingSec('ex', 'Exercise 25', 'p. 473', 'Exercise 25: Use SAP List Viewer in an ABAP Report'),
+      pendingSec('ex', 'Exercise 26', 'p. 481', 'Exercise 26: Display an Internal Table with the SAP List Viewer')
+    ]
+  );
+
+  putUnit(10, 'Web Dynpro ABAP', 'Web Dynpro ABAP', 493,
+    '웹 기반 SAP UI 프레임워크인 Web Dynpro ABAP의 구조, 뷰 간 네비게이션, 컨텍스트 데이터 전송과 Exercise 27–28을 다룹니다.',
+    ['Web Dynpro ABAP'],
+    [
+      { id: 'l1', kind: 'lesson', badge: 'L1', page: 'p. 495', pending: true, label: 'Web Dynpro 개요', desc: 'Lesson: Describing Web Dynpro ABAP (p. 495) — 준비 중' },
+      { id: 'l2', kind: 'lesson', badge: 'L2', page: 'p. 503', pending: true, label: '네비게이션 구현', desc: 'Lesson: Implementing Navigation in Web Dynpro (p. 503) — 준비 중' },
+      { id: 'l3', kind: 'lesson', badge: 'L3', page: 'p. 522', pending: true, label: '데이터 전송 구현', desc: 'Lesson: Implementing Data Transport in Web Dynpro (p. 522) — 준비 중' },
+      { id: 'ex', kind: 'exercise', badge: 'Ex 27–28', page: 'p. 515 · 531', pending: true, label: 'Exercise 27–28', desc: 'Exercise 27–28 — 준비 중' }
+    ],
+    [
+      pendingSec('l1', 'Lesson 1', 'p. 495', 'Describing Web Dynpro ABAP (개요)'),
+      pendingSec('l2', 'Lesson 2', 'p. 503', 'Implementing Navigation in Web Dynpro (네비게이션)'),
+      pendingSec('l3', 'Lesson 3', 'p. 522', 'Implementing Data Transport in Web Dynpro (데이터 전송)'),
+      pendingSec('ex', 'Exercise 27', 'p. 515', 'Exercise 27: Implement Navigation in Web Dynpro'),
+      pendingSec('ex', 'Exercise 28', 'p. 531', 'Exercise 28: Implement Data Transport in Web Dynpro')
+    ]
+  );
+
+  putUnit(11, 'Program Analysis Tools', 'Program Analysis Tools', 543,
+    'Code Inspector(SCI) 등 정적 분석 도구를 활용해 ABAP 코드 품질·성능·보안 규칙을 점검하는 방법을 다룹니다.',
+    ['Code Inspector'],
+    [
+      { id: 'l1', kind: 'lesson', badge: 'L1', page: 'p. 545', pending: true, label: 'Code Inspector 품질 개선', desc: 'Lesson: Improving the Quality of ABAP Code with the Code Inspector (p. 545) — 준비 중' }
+    ],
+    [
+      pendingSec('l1', 'Lesson 1', 'p. 545', 'Improving the Quality of ABAP Code with the Code Inspector')
+    ]
+  );
+
+  putUnit(12, 'ADT (Eclipse)', 'ABAP Development Tools for SAP NetWeaver', 555,
+    'Eclipse 기반 ABAP Development Tools(ADT) 개요와 ABAP 프로젝트 생성·연결 방법을 다룹니다.',
+    ['ABAP Development Tools', 'ADT'],
+    [
+      { id: 'l1', kind: 'lesson', badge: 'L1', page: 'p. 557', pending: true, label: 'ADT 개요', desc: 'Lesson: Describing ABAP Development Tools for SAP NetWeaver (p. 557) — 준비 중' },
+      { id: 'l2', kind: 'lesson', badge: 'L2', page: 'p. 561', pending: true, label: 'Eclipse ABAP 프로젝트', desc: 'Lesson: Creating an ABAP Project in Eclipse (p. 561) — 준비 중' }
+    ],
+    [
+      pendingSec('l1', 'Lesson 1', 'p. 557', 'Describing ABAP Development Tools for SAP NetWeaver'),
+      pendingSec('l2', 'Lesson 2', 'p. 561', 'Creating an ABAP Project in Eclipse')
+    ]
+  );
+
+  putUnit(13, 'SAP 표준 소프트웨어 조정', 'SAP Standard Software Adjustments', 569,
+    'SAP Standard 소프트웨어를 원본 수정 없이 고객 요구사항에 맞게 확장(Enhancement · Append Structure 등)하는 원칙을 정리합니다.',
+    ['SAP Standard Software Adjustments'],
+    [
+      { id: 'l1', kind: 'lesson', badge: 'L1', page: 'p. 571', label: 'SAP 표준 소프트웨어 조정', desc: 'Lesson: Adjusting the SAP Standard Software (p. 571) — 표준 테이블 확장(Append Structure)과 BC430 Unit 7 상세 절차를 연결합니다.' }
+    ],
+    [
+      {
+        tab: 'l1', badge: 'Lesson 1', page: 'p. 571', title: 'SAP 표준 소프트웨어 조정과 Table Enhancement 연계',
+        blocks: [
+          text('SAP Standard 객체는 업그레이드 시 덮어쓰기 및 지원 문제가 생기므로 직접 수정·삭제하지 않고 SAP가 제공하는 확장 기법(Enhancement)을 사용합니다.',
+            'Standard Table에 고객사 전용 필드(`ZZ`/`YY` 접두어)를 추가하는 **Append Structure** 절차와 규칙은 [[bc430-07|BC430 Unit 7 · 테이블 변경과 확장]]에서 상세히 다루고 있습니다.')
+        ]
+      }
+    ]
+  );
+
+  /* ===================== BC430 · ABAP Dictionary (Unit 1–9) ===================== */
+  putBc430(1, 'ABAP Dictionary 개요', 'Introduction to the ABAP Dictionary', 1,
+    'SE11 ABAP Dictionary의 3가지 핵심 기능(Type Definitions · DB Objects · Services)과 View 4가지 개요를 정리합니다.',
+    ['ABAP Dictionary', '데이터 사전', 'DDIC'],
+    [
+      { id: 'l1', kind: 'lesson', badge: 'L1', page: 'p. 3', label: 'ABAP Dictionary 개요', desc: 'Lesson: Describing the ABAP Dictionary (p. 3) — ABAP Dictionary의 역할, 3가지 기능, View 4가지 개요를 정리합니다.' }
+    ],
+    [
+      take('abap-dictionary', 'ABAP Dictionary의 역할과 3가지 기능', 'l1', 'Lesson 1', 'p. 3'),
+      take('abap-dictionary', 'View 4가지', 'l1', 'Lesson 1', 'p. 3')
+    ],
+    '11/23'
+  );
+
+  putBc430(2, 'ABAP Dictionary 데이터 타입', 'Data Types in the ABAP Dictionary', 11,
+    'Domain(Technical Attribute) · Data Element(Semantic Attribute), Flat Structure(Simple · Nested · .INCLUDE), Table Type · Deep Structure, Type Groups와 Exercise 1–4를 정리합니다.',
+    ['DATA ELEMENT', '데이터 요소', 'Domain', '도메인', 'Technical Attribute', 'Semantic Attribute', 'SET/GET Parameters', 'Flat structure', 'Simple structure', 'Nested structure', 'Deep structure', 'Table Type', 'Line Type'],
+    [
+      { id: 'l1', kind: 'lesson', badge: 'L1', page: 'p. 12', label: 'Domain · Data Element', desc: 'Lesson: Creating Domains and Data Elements (p. 12) — Technical Attribute와 Semantic Attribute의 분리 및 SE11 생성 절차를 정리합니다.' },
+      { id: 'l2', kind: 'lesson', badge: 'L2', page: 'p. 25', label: 'Flat Structure · .INCLUDE', desc: 'Lesson: Creating Flat Structures (p. 25) — Simple · Nested Structure와 .INCLUDE 평탄화 접근 비교를 정리합니다.' },
+      { id: 'l3', kind: 'lesson', badge: 'L3', page: 'p. 34', label: 'Table Type · Deep Structure', desc: 'Lesson: Creating Table Types and Deep Structures (p. 34) — 전역 Table Type(Line Type · Access Mode · Primary Key)과 Deep Structure를 정리합니다.' },
+      { id: 'l4', kind: 'lesson', badge: 'L4', page: 'p. 47', pending: true, label: 'Type Groups (준비 중)', desc: 'Lesson: Creating Type Groups (p. 47) — 준비 중' },
+      { id: 'ex', kind: 'exercise', badge: 'Ex 1–4', page: 'p. 19–41', label: 'Exercise 1–4', desc: 'BC430 Exercise 1(Elementary Data Types), Exercise 2(Simple · Nested Structures), Exercise 3(Table Types), Exercise 4(Deep Structures) 실습 가이드를 정리합니다.' }
+    ],
+    [
+      take('abap-dictionary', 'Data의 속성과 Domain · Data Element가 필요한 이유', 'l1', 'Lesson 1', 'p. 12'),
+      take('abap-dictionary', 'Domain — Technical Attribute와 SE11 절차', 'l1', 'Lesson 1', 'p. 12'),
+      take('abap-dictionary', 'Data Element — Semantic Attribute와 SE11 절차', 'l1', 'Lesson 1', 'p. 12'),
+      take('abap-dictionary', 'Structure — 종류(Flat · Deep)와 .INCLUDE', 'l2', 'Lesson 2', 'p. 25'),
+      take('abap-dictionary', 'Table Type — SE11 전역 내부 테이블 타입', 'l3', 'Lesson 3', 'p. 34'),
+      pendingSec('l4', 'Lesson 4', 'p. 47', 'Creating Type Groups (준비 중)', '준비 중 · BC430 교재 p. 47 (Creating Type Groups) 수업 진도에 맞춰 정리할 예정입니다.'),
+      exSec('ex', 'Exercise 1', 'p. 19', 'Exercise 1: Create Elementary Data Types',
+        text('SE11에서 Domain(Data Type · 길이 · Value Range)과 Data Element(Domain 참조 · Field Label · Parameter ID)를 만들고 리포트에서 참조합니다.'),
+        table(['연계 실습 Program', '핵심 연습 포인트'], [
+          ['`ZBC430S_DATA_ELEMENTS`', 'Program `SAPBC430S_DATA_ELEMENTS` 기반 Data Element·Field Label·F4 Help 확인']
+        ])),
+      exSec('ex', 'Exercise 2', 'p. 29', 'Exercise 2: Create Simple and Nested Structures',
+        text('SE11에서 Simple structure, Nested structure, `.INCLUDE` 구조를 만들고 컴포넌트 접근 경로 차이를 비교합니다.'),
+        table(['연계 실습 Program', '핵심 연습 포인트'], [
+          ['`ZABAP_F##_18` · `ZBC430S_F##_STRUCT_NESTED`', '`gs_nested-route-cityfrom` vs `.INCLUDE` `gs_included-cityfrom` 비교']
+        ])),
+      exSec('ex', 'Exercise 3–4', 'p. 37 · 41', 'Exercise 3–4: Create Table Types & Deep Structures',
+        text('SE11에서 전역 `Table Type`(Line Type · Standard/Sorted/Hashed · Primary Key)을 정의(Ex 3)하고, 이를 컴포넌트로 포함하는 `Deep structure`(Ex 4)를 작성합니다.'),
+        table(['연계 실습 Program', '핵심 연습 포인트'], [
+          ['`ZABAP_F##_19` · `ZBC430S_F##_STRUCT_DEEP`', '컴포넌트에 전역 Table Type이 포함된 가변 길이 Deep structure 조회·활용']
+        ]))
+    ],
+    '11/23',
+    [
+      ['`ZABAP_F##_18`', 'ABAP Flat(Simple & Nested) Structure'],
+      ['`ZABAP_F##_19`', 'ABAP Deep Structure'],
+      ['`ZBC430S_DATA_ELEMENTS`', 'Program SAPBC430S_DATA_ELEMENTS (Ex 1)'],
+      ['`ZBC430S_F##_STRUCT_NESTED`', 'Report SAPBC430S_STRUCT_NESTED (Ex 2)'],
+      ['`ZBC430S_F##_STRUCT_DEEP`', 'Report SAPBC430S_STRUCT_DEEP (Ex 4)']
+    ]
+  );
+
+  putBc430(3, '데이터베이스 테이블', 'Database Tables', 55,
+    'Transparent Table 생성(Delivery Class · Key Fields · Currency/Quantity · Technical Settings), Cluster/Pooled Table 개요와 Exercise 5를 정리합니다.',
+    ['데이터베이스 테이블', 'Transparent Table', 'Delivery Class', 'Technical Settings'],
+    [
+      { id: 'l1', kind: 'lesson', badge: 'L1', page: 'p. 56', label: 'Transparent Table 생성', desc: 'Lesson: Creating Transparent Tables (p. 56) — Delivery Class, Key 필드, Currency/Quantity 참조(KRW 100 나눗셈 주의), Technical Settings 4가지를 정리합니다.' },
+      { id: 'l2', kind: 'lesson', badge: 'L2', page: 'p. 79', pending: true, label: 'Cluster · Pooled Table (준비 중)', desc: 'Lesson: Defining Cluster Tables and Pooled Tables (p. 79) — 준비 중' },
+      { id: 'ex', kind: 'exercise', badge: 'Ex 5', page: 'p. 69', label: 'Exercise 5', desc: 'BC430 Exercise 5: Create Tables in the ABAP Dictionary (p. 69) 실습 체크포인트를 정리합니다.' }
+    ],
+    [
+      take('abap-dictionary', 'Transparent Table 생성과 Technical Settings', 'l1', 'Lesson 1', 'p. 56'),
+      pendingSec('l2', 'Lesson 2', 'p. 79', 'Defining Cluster Tables and Pooled Tables (준비 중)', '준비 중 · BC430 교재 p. 79 (Cluster Tables and Pooled Tables) 수업 진도에 맞춰 정리할 예정입니다.'),
+      exSec('ex', 'Exercise 5', 'p. 69', 'Exercise 5: Create Tables in the ABAP Dictionary',
+        text('SE11에서 `Z` 연습용 Transparent Table을 생성하고 Delivery Class, Key Field(`MANDT` 포함), Currency/Quantity 참조, Technical Settings를 설정해 활성화한 뒤 데이터를 입력합니다.'),
+        { type: 'practice', title: 'Exercise 5 필수 체크포인트', steps: [
+          { step: '1', action: 'Key Field 연속 배치 & Initial Values 확인', detail: 'MANDT를 첫 필드로 두고 Key 필드를 맨 위부터 빈틈 없이 나열합니다.' },
+          { step: '2', action: 'Technical Settings → Activate → Create Entries', detail: 'Data Class(APPL0/USER) · Size Category를 저장한 뒤 활성화하고 Utilities → Table Contents → Create Entries로 테스트 데이터를 입력합니다.' }
+        ] })
+    ],
+    '11/24'
+  );
+
+  putBc430(4, '테이블 접근 성능', 'Performance During Table Access', 91,
+    'Primary · Secondary Index와 Application Server Table Buffer(Full · Generic · Single-Record, Synchronization Table, Decision Tree, BYPASSING BUFFER) 및 Exercise 6–7을 정리합니다.',
+    ['Secondary Index', 'Table Buffer', 'Full Buffering', 'Generic Buffering', 'Single-Record Buffering', 'Synchronization Table', 'BYPASSING BUFFER'],
+    [
+      { id: 'l1', kind: 'lesson', badge: 'L1', page: 'p. 92', label: 'Database Table Index', desc: 'Lesson: Creating Database Table Indexes (p. 92) — Primary Index와 Secondary Index 구성 원리 및 주의사항을 정리합니다.' },
+      { id: 'l2', kind: 'lesson', badge: 'L2', page: 'p. 101', label: 'Table Buffering 설정', desc: 'Lesson: Setting Up Table Buffering (p. 101) — 3가지 버퍼링, Synchronization Table 동기화, Decision Tree와 BYPASSING BUFFER를 정리합니다.' },
+      { id: 'ex', kind: 'exercise', badge: 'Ex 6–7', page: 'p. 97 · 115', label: 'Exercise 6–7', desc: 'BC430 Exercise 6(Table Indexes 생성)과 Exercise 7(Table Buffering 설정) 실습 체크포인트를 정리합니다.' }
+    ],
+    [
+      take('abap-dictionary', 'Database Access Using Index — Primary · Secondary Index', 'l1', 'Lesson 1', 'p. 92'),
+      take('abap-dictionary', 'Database Access Using the Buffer — Table Buffer와 동기화', 'l2', 'Lesson 2', 'p. 101'),
+      exSec('ex', 'Exercise 6', 'p. 97', 'Exercise 6: Create Table Indexes',
+        text('SE11의 `Indexes` 메뉴에서 자주 검색하는 Non-Key 컬럼에 `MANDT` + 검색 필드 조합의 Secondary Index를 생성하고 활성화합니다.'),
+        { type: 'callout', style: 'tip', title: 'Secondary Index 설계 포인트', body: '인덱스를 과도하게 늘리면 변경(INSERT/UPDATE/DELETE) 성능이 떨어지므로, 실제 `WHERE` 조건의 선두 컬럼과 선택도를 고려해 꼭 필요한 인덱스만 생성합니다.' }),
+      exSec('ex', 'Exercise 7', 'p. 115', 'Exercise 7: Set Up Table Buffering',
+        text('SE11 `Technical Settings`에서 테이블 크기·조회 패턴에 맞는 버퍼링 유형(Full · Generic · Single-Record)을 설정하고, `BYPASSING BUFFER` 조회와 구분합니다.'),
+        { type: 'callout', style: 'tip', title: 'Decision Tree 점검', body: '실시간 정합성이 필수이거나 변경이 잦은 테이블은 버퍼링을 끄고, 읽기 중심의 작은 마스터/코드 테이블에만 적절한 Buffering Type을 적용합니다.' })
+    ],
+    '11/24'
+  );
+
+  putBc430(5, '입력 검사 (Input Checks)', 'Input Checks', 125,
+    'Domain Fixed Values(고정값 검사), Check Table · Foreign Keys(Cardinality 1:1/1:N/1:C/1:CN), 다국어 Text Table(LANGU · SPRAS)과 Exercise 8–10을 Lesson별로 정리합니다.',
+    ['Input Checks', 'Fixed Values', 'Value Table', 'Check Table', 'Foreign Key', 'Cardinality', 'Text Table', 'SPRAS'],
+    [
+      { id: 'l1', kind: 'lesson', badge: 'L1', page: 'p. 126', label: 'Fixed Values (고정값)', desc: 'Lesson: Creating Fixed Values (p. 126) — Domain Value Range의 고정값/구간 제한과 F4 Help 자동 표시, 소급 미적용 주의를 정리합니다.' },
+      { id: 'l2', kind: 'lesson', badge: 'L2', page: 'p. 132', label: 'Foreign Keys (외래키)', desc: 'Lesson: Defining Foreign Keys to Perform Input Checks (p. 132) — Check Table · Value Table, Cardinality(1:1/1:N/1:C/1:CN), SE11 설정 절차를 정리합니다.' },
+      { id: 'l3', kind: 'lesson', badge: 'L3', page: 'p. 152', label: 'Text Table (다국어)', desc: 'Lesson: Creating Text Tables (p. 152) — 언어전환용 Text Table 구조(LANGU · SPRAS), Key fields of a text table 설정과 T005T 예제를 정리합니다.' },
+      { id: 'ex', kind: 'exercise', badge: 'Ex 8–10', page: 'p. 129–155', label: 'Exercise 8–10', desc: 'BC430 Exercise 8(Fixed Values), Exercise 9(Foreign Key Input Checks), Exercise 10(Text Table 생성) 실습 가이드를 정리합니다.' }
+    ],
+    [
+      {
+        tab: 'l1', badge: 'Lesson 1', page: 'p. 126', title: 'Creating Fixed Values — Domain Value Range 입력 제한',
+        blocks: [
+          text('ABAP Dictionary는 잘못된 데이터가 화면이나 테이블에 들어오는 것을 막기 위해 **Input Checks(인풋 검사)**를 제공합니다. 첫 번째 방식인 **Fixed Values**는 `Domain`의 `Value Range` 탭에서 허용할 고정값(Single Vals)이나 구간(Intervals)을 직접 지정하는 방법입니다.'),
+          table(['항목', '동작과 주의사항'], [
+            ['설정 위치', '`SE11` → `Domain` → `Value Range` 탭 (`Single Vals` / `Intervals`)'],
+            ['입력 도움말 연동', '설정한 고정값 목록과 설명이 입력 화면의 **F4 Help**에 자동으로 디스플레이됨'],
+            ['검사 시점 주의', '새 입력이 들어올 때만 검사하므로, 설정 전 **이미 테이블에 저장된 기존 데이터에는 소급 적용되지 않음**']
+          ])
+        ]
+      },
+      {
+        tab: 'l2', badge: 'Lesson 2', page: 'p. 132', title: 'Defining Foreign Keys — Check Table과 Cardinality',
+        blocks: [
+          text('두 번째 Input Checks 방식인 **Foreign Keys**는 데이터 적합성·일치성 측면에서 타 테이블(**Check Table**)과의 참조 무결성을 검사합니다. 예를 들어 항공사 `AA`에 `Counter 8`이 없다면 입력 시 Check Table(예: `SCOUNTER`)에 존재 여부를 확인해 있으면 **Confirm**, 없으면 **Reject** 처리합니다.',
+            'Domain의 `Value Range` 탭에 **`Value Table`**을 미리 지정해 두면, 해당 Domain을 쓰는 필드에서 Foreign Key를 만들 때 Check Table 제안(Proposal)으로 자동 활용됩니다.'),
+          text('**Foreign Key의 Cardinality(관계성)**', 'Check Table의 한 레코드와 Foreign Key Table의 레코드 간 대응 관계를 설정합니다.'),
+          table(['Cardinality', '의미 (Check Table : Foreign Key Table)'], [
+            ['1 : 1', '일대일 대응 (모든 값이 정확히 1건과 대응)'],
+            ['1 : N', '모든 값이 다수 값(1건 이상)을 가짐'],
+            ['1 : C', '일부 값이 일대일 대응됨 (0건 또는 1건)'],
+            ['1 : CN', '일부 값이 다수 값을 가짐 (0건, 1건, 또는 여러 건)']
+          ]),
+          {
+            type: 'practice',
+            title: 'SE11에서 Foreign Key 설정 방법',
+            steps: [
+              { step: '1', action: 'Change Table (Fields 탭) 열기', detail: 'SE11에서 대상 테이블을 Change 모드로 열고 Fields 탭으로 이동합니다.' },
+              { step: '2', action: '컬럼 선택 후 키 아이콘(Foreign Keys) 클릭', detail: '외래키 검사를 연결할 필드에 커서를 두고 상단 툴바의 Foreign Keys(열쇠 아이콘)를 누릅니다.' },
+              { step: '3', action: 'Check Table 입력 후 Create Proposal', detail: 'Check Table 이름을 기입하고 Create Proposal을 눌러 필드 매핑 제안을 생성합니다. (Domain → Value Range에 Value Table을 미리 등록해 두면(예: ZMAJOR_F##) 자동으로 제안됩니다.)' },
+              { step: '4', action: '필드 유형·Cardinality 선택 후 Copy', detail: 'Foreign Key Field Type(Key 필드인지, Key 필드가 아닌 Non-key field / Function field인지)과 Cardinality(1:1, 1:N, 1:C, 1:CN)를 선택한 뒤 Copy하고 Activate합니다.' }
+            ]
+          }
+        ]
+      },
+      {
+        tab: 'l3', badge: 'Lesson 3', page: 'p. 152', title: 'Creating Text Tables — 언어전환용 테이블과 LANGU(SPRAS)',
+        blocks: [
+          text('Text Table은 본체 테이블의 코드 값에 대해 다국어 설명 텍스트를 따로 보관하는 **언어전환용 테이블**입니다. 본체 테이블에 데이터를 입력하거나 조회할 때 Text Table에 선언한 설명 필드가 함께 디스플레이되며, 입력된 텍스트의 언어 코드는 `LANGU`(Data Element: `SPRAS`) 필드에 저장됩니다.'),
+          {
+            type: 'practice',
+            title: 'SE11에서 Text Table 생성 방법',
+            steps: [
+              { step: '1', action: 'SE11에서 Text Table 생성', detail: 'SE11에서 Database Table을 새로 생성합니다(관례상 본체 테이블명 뒤에 T를 붙인 이름 사용).' },
+              { step: '2', action: '본체 테이블의 Key Field만 그대로 복사', detail: '연결할 본체 테이블의 Key Field(예: MANDT + 코드 키 필드)를 동일하게 선언합니다.' },
+              { step: '3', action: 'LANGU(SPRAS) 및 텍스트 필드 추가', detail: 'Key Field에 언어 필드 LANGU(Data Element: SPRAS)를 추가하고, 언어별 설명을 담을 텍스트 필드를 일반 필드로 추가합니다.' },
+              { step: '4', action: 'Foreign Key 설정', detail: '본체 코드(Key) 필드에 Foreign Key를 연결할 때 Foreign Key Field Type 라디오 버튼을 Key fields of a text table로 설정합니다. LANGU 필드는 본체 테이블 키가 아니므로 본체 Foreign Key 매핑 대상에서 제외하거나 T002 언어 테이블 참조 시 Non-key-fields/candidates(필기의 non-key 필드)로 설정합니다.' }
+            ]
+          },
+          code('Text Table(T005T)과 sy-langu로 언어별 국가명 조회', `REPORT zabap_f##_##.
+
+PARAMETERS p_carr TYPE spfli-carrid DEFAULT 'LH'.
+
+" SPFLI 출발 국가 코드(countryfr)에 대응하는 표준 Text Table(T005T)을
+" 현재 로그온 언어(sy-langu) 기준으로 LEFT OUTER JOIN 조회
+SELECT a~carrid,
+       a~connid,
+       a~countryfr,
+       t~landx AS country_name,
+       a~cityfrom,
+       a~cityto
+  FROM spfli AS a
+  LEFT OUTER JOIN t005t AS t
+    ON t~land1 = a~countryfr
+   AND t~spras = @sy-langu
+  WHERE a~carrid = @p_carr
+  ORDER BY a~connid
+  INTO TABLE @DATA(gt_routes).
+
+LOOP AT gt_routes INTO DATA(gs_route).
+  WRITE: / gs_route-carrid, gs_route-connid,
+           gs_route-countryfr, gs_route-country_name,
+           gs_route-cityfrom, '->', gs_route-cityto.
+ENDLOOP.`)
+        ]
+      },
+      exSec('ex', 'Exercise 8', 'p. 129', 'Exercise 8: Create Fixed Values',
+        text('Domain의 `Value Range` 탭에 Fixed Values(Single Vals / Intervals)를 등록하고 입력 화면 F4 Help에 자동 표시되는지 확인합니다.'),
+        { type: 'callout', style: 'tip', title: '기존 데이터 주의', body: 'Fixed Values는 새 입력 시점에만 검사하므로, 설정 전 이미 테이블에 들어가 있던 잘못된 기존 레코드에는 소급 적용되지 않습니다.' }),
+      exSec('ex', 'Exercise 9', 'p. 141', 'Exercise 9: Perform Input Checks to Ensure Data Consistency',
+        text('SE11 Fields 탭에서 `Foreign Keys`(열쇠 아이콘) → Check Table 지정 → `Create Proposal` → Field Type 및 Cardinality(`1:1`, `1:N`, `1:C`, `1:CN`)를 설정해 참조 무결성 검사를 적용합니다.'),
+        { type: 'callout', style: 'tip', title: 'Value Table 활용', body: 'Domain의 `Value Range`에 `Value Table`을 미리 지정해 두면 Foreign Key 생성 시 Check Table 제안이 자동으로 채워집니다.' }),
+      exSec('ex', 'Exercise 10', 'p. 155', 'Exercise 10: Create a Text Table',
+        text('본체 테이블의 Key Field를 복사한 뒤 `LANGU`(Data Element: `SPRAS`)와 텍스트 필드를 추가하고, 본체 코드 필드의 Foreign Key 유형을 **`Key fields of a text table`**로 설정합니다.'),
+        { type: 'callout', style: 'tip', title: 'Text Table 연결 확인', body: '활성화 후 본체 테이블에서 `Goto → Text Table` 메뉴로 바로 이동되는지 확인하면 연결이 정상 완료된 것입니다.' })
+    ],
+    '11/24 · 11/25'
+  );
+
+  putBc430(6, 'Dictionary 객체 종속성', 'Dictionary Object Dependencies', 167,
+    'Active / Inactive Dictionary 객체 구분과 Where-Used List를 활용한 ABAP Dictionary 객체 종속성(영향도) 추적 및 Exercise 11–12를 정리합니다.',
+    ['Where-Used List'],
+    [
+      { id: 'l1', kind: 'lesson', badge: 'L1', page: 'p. 168', pending: true, label: 'Active · Inactive 객체 (준비 중)', desc: 'Lesson: Differentiating Between Active and Inactive Dictionary Objects (p. 168) — 준비 중' },
+      { id: 'l2', kind: 'lesson', badge: 'L2', page: 'p. 177', label: '객체 종속성 (Where-Used List)', desc: 'Lesson: Identifying Dependencies with ABAP Dictionary Objects (p. 177) — Domain·Data Element 변경 전 Where-Used List로 참조 객체를 확인하는 방법을 정리합니다.' },
+      { id: 'ex', kind: 'exercise', badge: 'Ex 11–12', page: 'p. 173 · 181', label: 'Exercise 11–12', desc: 'BC430 Exercise 11(Active/Inactive · 준비 중)과 Exercise 12(Where-Used List 종속성 확인)를 정리합니다.' }
+    ],
+    [
+      pendingSec('l1', 'Lesson 1', 'p. 168', 'Differentiating Between Active and Inactive Dictionary Objects (준비 중)', '준비 중 · BC430 교재 p. 168 (Active/Inactive Dictionary Objects) 수업 진도에 맞춰 정리할 예정입니다.'),
+      {
+        tab: 'l2', badge: 'Lesson 2', page: 'p. 177', title: 'Where-Used List로 Dictionary 객체 종속성 확인',
+        blocks: [
+          text('ABAP Dictionary의 `Domain`, `Data Element`, `Structure`, `Table`은 서로 참조 관계로 얽혀 있습니다. 예를 들어 하나의 `Domain` 길이를 변경하면 그 Domain을 쓰는 모든 `Data Element`, `Transparent Table`, `View`, `Program`에 연쇄 영향이 미칩니다.',
+            '따라서 객체를 수정·축소·삭제하기 전에 반드시 `SE11` 툴바의 **`Where-Used List`**(단축키 `Ctrl + Shift + F3`)로 어디에서 사용 중인지 먼저 확인해야 합니다.'),
+          {
+            type: 'practice',
+            title: 'SE11에서 Where-Used List 확인 방법',
+            steps: [
+              { step: '1', action: 'SE11에서 대상 객체(Domain · Data Element 등) 입력', detail: '조회하려는 Domain 또는 Data Element 이름을 입력합니다.' },
+              { step: '2', action: 'Where-Used List 아이콘(Ctrl + Shift + F3) 클릭', detail: '조회 범위 팝업에서 Data Elements, Tables, Structures, Views, Programs 등 확인할 객체 유형을 선택합니다.' },
+              { step: '3', action: '참조 목록으로 변경 영향도 파악', detail: '결과 목록에서 실제 사용 중인 테이블과 프로그램을 확인한 뒤, 구조 축소 등이 필요하면 BC430 Unit 7의 SE14 Table Conversion 절차를 계획합니다.' }
+            ]
+          }
+        ]
+      },
+      pendingSec('ex', 'Exercise 11', 'p. 173', 'Exercise 11: Differentiate Between Active and Inactive Dictionary Objects (준비 중)', '준비 중 · BC430 교재 p. 173 실습은 Lesson 1 학습 후 정리할 예정입니다.'),
+      exSec('ex', 'Exercise 12', 'p. 181', 'Exercise 12: Identify Dependencies with ABAP Dictionary Objects',
+        text('SE11에서 `S_CARR_ID` 같은 Domain/Data Element에 대해 `Where-Used List`(`Ctrl + Shift + F3`)를 실행해 어떤 테이블·구조·프로그램이 의존하는지 추적합니다.'),
+        { type: 'callout', style: 'tip', title: '변경 전 필수 습관', body: 'Domain을 변경하기 전 `Where-Used List`로 사용처를 먼저 확인하면 예상치 못한 테이블 비활성화나 Table Conversion 사고를 예방할 수 있습니다.' })
+    ],
+    '11/25'
+  );
+
+  putBc430(7, '테이블 변경과 확장', 'Table Changes', 189,
+    'Table Conversion(QCM 임시 테이블 · SE14 Database Utility · Activate and adjust database), Standard Table 확장용 Append Structure(ZZ/YY 규칙)와 Exercise 13–14를 정리합니다.',
+    ['Table Conversion', 'QCM', 'Database Utility', 'Append Structure'],
+    [
+      { id: 'l1', kind: 'lesson', badge: 'L1', page: 'p. 190', label: 'Table Conversion (SE14)', desc: 'Lesson: Performing a Table Conversion (p. 190) — QCM 임시 테이블, Domain 축소 시 SE14 Activate and adjust database, Delete 금지 경고를 정리합니다.' },
+      { id: 'l2', kind: 'lesson', badge: 'L2', page: 'p. 204', label: 'Append Structure 확장', desc: 'Lesson: Enhancing Tables Using Append Structures (p. 204) — Standard Table에 ZZ/YY 필드를 추가하는 Append Structure 규칙과 절차를 정리합니다.' },
+      { id: 'ex', kind: 'exercise', badge: 'Ex 13–14', page: 'p. 199 · 211', label: 'Exercise 13–14', desc: 'BC430 Exercise 13(Table Conversion 수행)과 Exercise 14(Append Structure 추가) 실습 체크포인트를 정리합니다.' }
+    ],
+    [
+      take('abap-dictionary', 'Table Changes — Table Conversion과 Database Utility(SE14)', 'l1', 'Lesson 1', 'p. 190'),
+      take('abap-dictionary', 'Enhancement — Standard Table과 Append Structure', 'l2', 'Lesson 2', 'p. 204'),
+      exSec('ex', 'Exercise 13', 'p. 199', 'Exercise 13: Perform a Table Conversion',
+        text('기존 데이터가 있는 `Z` 테이블의 Domain 길이를 축소하거나 키를 변경한 뒤 `SE14`(Database Utility)에서 `Save data` + `Activate and adjust database`로 안전하게 변환을 완료합니다.'),
+        { type: 'callout', style: 'warning', title: 'SE14 실습 시 반드시 확인', body: '`Delete Database Table` 또는 `Delete data`는 **모든 클라이언트**의 테이블과 데이터를 삭제하므로 절대 누르지 마세요. 항상 `Save data` 상태를 확인하세요.' }),
+      exSec('ex', 'Exercise 14', 'p. 211', 'Exercise 14: Add Enhancements to a Table Using an Append Structure',
+        text('SE11에서 대상 테이블 조회 → `Append Structure` 버튼 클릭 → `ZZ` 또는 `YY`로 시작하는 필드 정의 → Activate 순서로 표준 테이블을 확장합니다.'),
+        { type: 'callout', style: 'tip', title: '명명 규칙 확인', body: 'Append Structure 자체는 Z/Y 이름으로 N개 생성 가능하며, 내부 추가 컬럼명은 반드시 `ZZ` 또는 `YY`로 시작해야 합니다.' })
+    ],
+    '11/25'
+  );
+
+  putBc430(8, 'View와 Maintenance View', 'Views and Maintenance Views', 219,
+    'SE11 View 생성 4단계, View별 Join 고정 규칙(Database view=INNER JOIN, Help/Maintenance view=LEFT OUTER JOIN), Dynamic Attachment(* / -), SM30 Table Maintenance Generator와 Exercise 15–17을 Lesson별로 정리합니다.',
+    ['Database view', 'Projection view', 'Help view', 'Maintenance view', 'Table Maintenance Generator', 'Maintenance Dialog', 'Dynamic Attachment'],
+    [
+      { id: 'l1', kind: 'lesson', badge: 'L1', page: 'p. 220', label: 'Database View · Dynamic Attachment', desc: 'Lesson: Creating Database Views (p. 220) — SE11 View 생성 4단계, 4가지 View와 Join 고정 규칙, Inner/Outer Join 차이, Dynamic Attachment(* / -)를 정리합니다.' },
+      { id: 'l2', kind: 'lesson', badge: 'L2', page: 'p. 237', label: 'Maintenance View (SM30)', desc: 'Lesson: Creating Maintenance Views (p. 237) — SM30 유지보수, Table Maintenance Generator(&NC& · Function Group · 1000~1010 영구결번 · Overview/Detail view)와 장단점을 정리합니다.' },
+      { id: 'l3', kind: 'lesson', badge: 'L3', page: 'p. 250', pending: true, label: 'View Clusters (준비 중)', desc: 'Lesson: Creating View Clusters (p. 250) — 준비 중' },
+      { id: 'ex', kind: 'exercise', badge: 'Ex 15–17', page: 'p. 233–253', label: 'Exercise 15–17', desc: 'BC430 Exercise 15(Database View), Exercise 16(Maintenance View · SM30), Exercise 17(View Cluster · 준비 중) 실습 가이드를 정리합니다.' }
+    ],
+    [
+      {
+        tab: 'l1', badge: 'Lesson 1', page: 'p. 220', title: 'Creating Database Views — View 생성 · Join 규칙 · Dynamic Attachment',
+        blocks: [
+          text('SE11에서 여러 테이블의 컬럼을 조합하거나 단일 테이블의 일부 컬럼만 추려 조회할 때 View를 생성합니다. View 유형에 따라 사용되는 Join 방식이 고정되어 있습니다.'),
+          {
+            type: 'practice',
+            title: 'SE11에서 View 만드는 법',
+            steps: [
+              { step: '1', action: 'SE11에서 View 이름 작성 후 생성', detail: 'View 라디오 버튼을 선택하고 이름을 입력한 뒤 Create를 눌러 4가지 View 유형 중 하나를 선택합니다.' },
+              { step: '2', action: 'Table/Join Conditions에서 테이블 입력 후 Relationships 선택', detail: '기준 테이블을 적고 Relationships 버튼을 누르면 테이블 간 Foreign Key를 바탕으로 Join Condition이 자동 처리됩니다.' },
+              { step: '3', action: 'View Fields 탭에서 Display할 필드 선택', detail: 'View Fields 탭의 Table fields 버튼으로 각 테이블에서 표시할 컬럼을 선택합니다.' },
+              { step: '4', action: 'Selection Conditions 지정', detail: 'Selection Conditions 탭에서 View에 표시할 행의 필터 조건을 선택·입력할 수 있습니다.' }
+            ]
+          },
+          table(['View 4가지 유형', 'Join 고정 규칙', '목적과 특징 (필기 3번 Help view 보완)'], [
+            ['1. Database view', '`INNER JOIN` 고정', '여러 개의 테이블에서 컬럼을 골라 Join해 Display 가능 (조인 조건에 매치되는 데이터만 조회)'],
+            ['2. Projection view', '단일 테이블 (Join 없음)', '하나의 테이블 안에서만 컬럼을 골라 Display 가능하며, 간단한 `Selection Condition`을 걸어 필요한 행만 추출 가능'],
+            ['3. Help view', '`LEFT OUTER JOIN` 고정', 'Search Help의 데이터 조회(Selection Method)에서 기준 테이블 행을 유지하는 Outer Join이 필요할 때 사용'],
+            ['4. Maintenance view', '`LEFT OUTER JOIN` 고정', '아주 관련이 깊은 테이블들을 모아 `SM30`에서 유지보수하는 용도(실무에서는 보통 여러 테이블보다 **딱 하나의 테이블**을 대상으로 유지보수하는 경우도 많음)']
+          ]),
+          {
+            type: 'compare',
+            items: [
+              {
+                tag: 'Database view 고정',
+                title: 'Inner Join',
+                points: [
+                  'Join Condition에 양쪽 모두 매치되는 데이터만 결과에 표시',
+                  'Database view에서는 항상 Inner Join으로 동작'
+                ]
+              },
+              {
+                tag: 'Help view · Maintenance view 고정',
+                title: 'Outer Join (LEFT OUTER JOIN)',
+                points: [
+                  'Join Condition에 매치되는 데이터뿐만 아니라 기준 테이블(왼쪽 테이블)의 행까지 모두 표시',
+                  'Help view와 Maintenance view는 LEFT OUTER JOIN으로 고정'
+                ]
+              }
+            ]
+          },
+          text('**Dynamic Attachment**', '원본 테이블의 필드가 추가·수정돼도 참조된 View에 자동으로 반영되도록 하는 설정입니다. `View Fields` 탭에서 아래 표처럼 `*`를 지정하면 해당 테이블의 모든 필드가 동적으로 연결됩니다.'),
+          table(['View Field', 'Table', 'Field'], [
+            ['`*`', '테이블 이름', '`*`']
+          ]),
+          {
+            type: 'callout', style: 'point', title: 'Dynamic Attachment에서 - 제외와 중복 필드 에러 주의',
+            body: '전체 포함(`*`) 상태에서 원하지 않는 특정 필드는 `View Field` 열에 **`-`**를 입력해 제외할 수 있습니다. 특히 조인된 여러 테이블에 **이름이 같은 필드**가 있을 때 중복 필드를 `-`로 빼주지 않으면 View 활성화 시 **에러**가 발생합니다.'
+          }
+        ]
+      },
+      {
+        tab: 'l2', badge: 'Lesson 2', page: 'p. 237', title: 'Creating Maintenance Views — SM30과 Table Maintenance Generator',
+        blocks: [
+          text('**Maintenance View**는 서로 관련이 깊은 테이블(실무에서는 주로 단일 Customer Table)의 데이터를 `SM30` 화면에서 직접 조회·입력·수정할 수 있게 해 주는 유지보수용 View입니다. 사용하려면 반드시 **Maintenance Dialog**(최대 2개 화면: Overview · Detail view)를 생성해야 합니다.'),
+          {
+            type: 'practice',
+            title: 'Maintenance View · Table Maintenance Generator 설정 (SM30)',
+            steps: [
+              { step: '1', action: 'Utilities → Table Maintenance Generator 실행', detail: 'Maintenance View 또는 Customer Table의 SE11 화면에서 Utilities → Table Maintenance Generator로 진입합니다. Maintenance Dialog는 최대 2개 화면(Overview / Detail view)까지 구성할 수 있습니다.' },
+              { step: '2', action: 'Authorization Group 및 Maintenance 전용 Function Group 지정', detail: 'Authorization Group은 보통 &NC&(권한 그룹 미지정)로 설정하고, Maintenance Dialog 생성을 위해 일반 로직과 분리된 Maintenance 전용 Function Group을 지정합니다.' },
+              { step: '3', action: 'Maint. Screen No. 지정 (Find Scr. Number(s) 활용)', detail: '스크린 번호는 1~9999 중 지정하되 1000~1010은 영구결번이라 사용할 수 없습니다. Find Scr. Number(s)로 세 가지 옵션 중 하나를 선택할 수 있으며, 나중에 스크린을 끼워 넣기 편하도록 보통 한 자리 수는 잘 사용하지 않습니다.' },
+              { step: '4', action: 'SM30에서 Overview · Detail view 유지보수', detail: '생성이 끝나면 SM30에서 데이터를 관리합니다. 2-step 구성 시 Overview 목록에서 행을 더블클릭해 Detail view로 접근(access)합니다.' }
+            ]
+          },
+          {
+            type: 'compare',
+            items: [
+              {
+                tag: 'Maintenance View 장점',
+                title: '간편한 유지보수',
+                points: [
+                  '별도 화면 코딩 없이 SM30에서 간단한 데이터 조회·입력·수정을 빠르게 처리',
+                  '오직 Customer Table(Z/Y)만 Maintenance View / SM30으로 관리 (Standard Table은 SAP 표준 방식으로 따로 관리)'
+                ]
+              },
+              {
+                tag: 'Maintenance View 단점 · 제약',
+                title: '동시 수정 Lock · 비동기 업데이트',
+                points: [
+                  '기본적으로 비동기화 업데이트 방식으로 동작',
+                  '테이블 단위 Lock이 걸려 다른 사용자가 수정 중이면 동시에 수정할 수 없음'
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      pendingSec('l3', 'Lesson 3', 'p. 250', 'Creating View Clusters (준비 중)', '준비 중 · BC430 교재 p. 250 (Creating View Clusters) 수업 진도에 맞춰 정리할 예정입니다.'),
+      exSec('ex', 'Exercise 15', 'p. 233', 'Exercise 15: Create a Database View',
+        text('SE11에서 Database View를 생성하고 `Relationships` 버튼으로 `INNER JOIN` 조건을 자동 생성한 뒤 `View Fields`(`Dynamic Attachment` `*` 및 `-` 제외 포함)와 `Selection Conditions`를 설정합니다.'),
+        { type: 'callout', style: 'tip', title: 'Dynamic Attachment 중복 필드 주의', body: '`View Field: * / Table: 테이블명 / Field: *` 설정 시 조인 테이블 간 이름이 같은 필드를 `-`로 제외하지 않으면 활성화 오류가 발생합니다.' }),
+      exSec('ex', 'Exercise 16', 'p. 245', 'Exercise 16: Create a Maintenance View',
+        text('Customer Table 대상 Maintenance View(`LEFT OUTER JOIN` 고정)에서 `Utilities → Table Maintenance Generator`로 `&NC&` · Maintenance 전용 Function Group · Screen No.(`1000~1010` 제외)를 생성하고 `SM30`에서 Overview/Detail view를 확인합니다.'),
+        { type: 'callout', style: 'tip', title: 'SM30 적용 대상', body: 'Maintenance View / SM30 유지보수는 Customer Table(`Z`/`Y`) 전용이며, 동시 수정 시 테이블 Lock이 걸립니다.' }),
+      pendingSec('ex', 'Exercise 17', 'p. 253', 'Exercise 17: Create a View Cluster (준비 중)', '준비 중 · BC430 교재 p. 253 실습은 Lesson 3 학습 후 정리할 예정입니다.')
+    ],
+    '11/25'
+  );
+
+  putBc430(9, 'Search Help', 'Search Helps', 265,
+    '입력 필드 F4 도움말을 구성하는 Elementary · Collective · Append Search Help 개념과 고급 기법, Exercise 18–20을 다룹니다.',
+    ['Search Help'],
+    [
+      { id: 'l1', kind: 'lesson', badge: 'L1', page: 'p. 266', pending: true, label: 'Search Help 생성', desc: 'Lesson: Creating Search Helps (p. 266) — 준비 중' },
+      { id: 'l2', kind: 'lesson', badge: 'L2', page: 'p. 285', pending: true, label: '고급 Search Help 기법', desc: 'Lesson: Applying Advanced Search Help Techniques (p. 285) — 준비 중' },
+      { id: 'ex', kind: 'exercise', badge: 'Ex 18–20', page: 'p. 281–293', pending: true, label: 'Exercise 18–20', desc: 'BC430 Exercise 18–20 (Search Help · Collective · Append) — 준비 중' }
+    ],
+    [
+      pendingSec('l1', 'Lesson 1', 'p. 266', 'Creating Search Helps (Search Help 생성)'),
+      pendingSec('l2', 'Lesson 2', 'p. 285', 'Applying Advanced Search Help Techniques (고급 Search Help 기법)'),
+      pendingSec('ex', 'Exercise 18', 'p. 281', 'Exercise 18: Create Search Helps'),
+      pendingSec('ex', 'Exercise 19', 'p. 289', 'Exercise 19: Create Collective Search Helps'),
+      pendingSec('ex', 'Exercise 20', 'p. 293', 'Exercise 20: Create Append Search Helps')
+    ]
+  );
+
+  const unitOrder = [
+    ...Array.from({ length: 13 }, (_, i) => `unit-${String(i + 1).padStart(2, '0')}`),
+    ...Array.from({ length: 9 }, (_, i) => `bc430-${String(i + 1).padStart(2, '0')}`)
+  ];
   const connections = {
-    'sap-architecture': ['sap-tcode-reference', 'abap-development'],
-    'abap-development': ['abap-program-types', 'sap-gui-shortcuts', 'sap-tcode-reference'],
-    'abap-basics': ['abap-types', 'abap-loops', 'abap-useful-syntax'],
-    'abap-types': ['abap-basics', 'abap-data-report', 'abap-dictionary', 'abap-useful-syntax'],
-    'abap-loops': ['abap-debug-messages', 'abap-data-report'],
-    'abap-debug-messages': ['abap-loops', 'abap-bapi', 'sap-tcode-reference'],
-    'abap-modularization': ['abap-objects', 'abap-bapi', 'abap-types'],
-    'abap-bapi': ['abap-modularization', 'abap-debug-messages'],
-    'abap-objects': ['abap-modularization', 'abap-program-types'],
-    'abap-program-types': ['abap-development', 'abap-modularization'],
-    'abap-data-report': ['abap-types', 'abap-loops', 'abap-dictionary', 'abap-open-sql'],
-    'abap-open-sql': ['abap-data-report', 'abap-dictionary', 'abap-loops'],
-    'abap-dictionary': ['abap-types', 'abap-data-report', 'abap-open-sql', 'sap-tcode-reference']
+    'unit-01': ['unit-02', 'sap-tcode-reference', 'sap-gui-shortcuts'],
+    'unit-02': ['unit-01', 'unit-03', 'sap-tcode-reference', 'sap-gui-shortcuts'],
+    'unit-03': ['unit-02', 'unit-04', 'unit-05', 'abap-useful-syntax'],
+    'unit-04': ['unit-03', 'unit-05', 'sap-tcode-reference'],
+    'unit-05': ['unit-03', 'unit-06', 'unit-07', 'bc430-02'],
+    'unit-06': ['unit-05', 'unit-07', 'bc430-01', 'bc430-03', 'bc430-04'],
+    'unit-07': ['unit-05', 'unit-06', 'unit-08', 'unit-09'],
+    'unit-08': ['unit-07', 'unit-09'],
+    'unit-09': ['unit-07', 'unit-08'],
+    'unit-10': ['unit-08', 'unit-09'],
+    'unit-11': ['unit-03', 'unit-06'],
+    'unit-12': ['unit-02', 'unit-11'],
+    'unit-13': ['bc430-07', 'sap-tcode-reference'],
+    'bc430-01': ['bc430-02', 'bc430-03', 'unit-06', 'sap-tcode-reference'],
+    'bc430-02': ['bc430-01', 'bc430-03', 'unit-03', 'unit-05'],
+    'bc430-03': ['bc430-02', 'bc430-04', 'bc430-05', 'unit-06'],
+    'bc430-04': ['bc430-03', 'unit-06', 'sap-tcode-reference'],
+    'bc430-05': ['bc430-03', 'bc430-06', 'bc430-08'],
+    'bc430-06': ['bc430-02', 'bc430-07', 'sap-tcode-reference'],
+    'bc430-07': ['bc430-03', 'bc430-06', 'unit-13', 'sap-tcode-reference'],
+    'bc430-08': ['bc430-01', 'bc430-05', 'bc430-09', 'sap-tcode-reference'],
+    'bc430-09': ['bc430-02', 'bc430-05', 'bc430-08']
   };
   for (const [id, targets] of Object.entries(connections)) docs[id].sections.push(related(targets));
-  // Move broad aliases to their dedicated topic pages.
-  const owners = { 'SAP GUI': 'sap-architecture', '자료형': 'abap-types', 'Include 프로그램': 'abap-program-types', '리포트 프로그램': 'abap-program-types', 'Open SQL': 'abap-open-sql' };
-  for (const doc of Object.values(docs)) doc.aliases = (doc.aliases || []).filter(alias => !owners[alias] || owners[alias] === doc.id);
-  docs['learning-roadmap'].subtitle = '수업 필기 기반 ABAP 학습 순서';
-  docs['learning-roadmap'].summary = '11월 11~25일 필기를 주제별로 정리했습니다. 본문이 채워진 문서부터 읽고, 이후 과정은 준비된 목차로 확인하세요.';
-  docs['learning-roadmap'].sections[0].blocks[0].rows = order.map(id => [docs[id].stepNum, `[[${id}|${docs[id].title}]]`, connections[id] ? '필기 정리 · 예제' : '목차 준비 · 본문 예정']);
+
   docs['welcome-abap'].topWidgetId = 'knowledge-map-entry';
-  docs['welcome-abap'].sections[0].blocks = [text('[[learning-roadmap|전체 학습 목차]]에서 주제별 내용을 확인하세요. 수업 필기에서 다루지 않은 ERP 모듈은 목차로 남겨 두었습니다.'), table(['분야', '문서'], [
-    ['시스템과 개발', '[[sap-architecture|SAP 시스템 구조]] · [[abap-development|개발 객체와 전송 관리]] · [[abap-program-types|Program 종류]]'],
-    ['ABAP 기본기', '[[abap-basics|ABAP 기초]] · [[abap-types|자료형과 초기값]] · [[abap-loops|반복문과 시스템 필드]] · [[abap-debug-messages|디버깅과 메시지]]'],
-    ['모듈화', '[[abap-modularization|프로그램 모듈화]] · [[abap-bapi|BAPI와 RFC]] · [[abap-objects|클래스와 메서드]]'],
-    ['데이터 처리', '[[abap-types|구조체와 자료형]] · [[abap-data-report|내부 테이블 · Report]] · [[abap-open-sql|Open SQL]] · [[abap-dictionary|ABAP Dictionary]]'],
-    ['이후 학습', '[[learning-roadmap|ERP 모듈 목차]]']
-  ])];
   docs['abap-thinking-flow'] = {
     id: 'abap-thinking-flow',
     track: 'abap',
@@ -1291,7 +2119,7 @@ ENDLOOP.`)),
                 badge: '선언부',
                 title: '출력용 · 계산용 · 검색조건 선언',
                 code: 'TYPES · DATA · SELECT-OPTIONS',
-                desc: '어떤 오븐(`gt_`)·트레이(`gs_`)·검색조건(`so_`)이 필요한지 3덩어리로 준비. [[abap-data-report|다른 선언 방법 보기]] — 내부 테이블 타입과 변수 선언의 ‘선언 방법별 비교’',
+                desc: '어떤 오븐(`gt_`)·트레이(`gs_`)·검색조건(`so_`)이 필요한지 3덩어리로 준비. [[unit-05|다른 선언 방법 보기]] — Unit 5 내부 테이블 타입과 변수 선언의 ‘선언 방법별 비교’',
                 layout: 'wide',
                 items: [
                   {
@@ -1541,63 +2369,63 @@ END-OF-SELECTION.
         }
       ),
       section('파트별 한눈에 보기',
-        table(['공부할 파트', '관련 위키 문서', '열어 볼 실습 Program (`ZBC400_F##`)'], [
-          ['ABAP 기초 · 문법 · 조건문', '[[abap-basics|ABAP 기초]]', '`ZABAP_F##_01`, `02`, `04`, `05`<br>`ZBC400_F##_HELLO`, `ZBC400_F##_COMPUTE`'],
-          ['자료형 · 구조체', '[[abap-types|자료형과 초기값]]', '`ZABAP_F##_03`, `13`<br>`ZBC400_F##_STRUCTURE`'],
-          ['반복문 · 시스템 필드', '[[abap-loops|반복문과 시스템 필드]]', '`ZABAP_F##_06`, `07`<br>`ZBC400_F##_LOOP`'],
-          ['모듈화 (FORM · Function Module)', '[[abap-modularization|프로그램 모듈화]]', '`ZABAP_F##_08`, `09`, `10`<br>`ZBC400_F##_SUBROUTINE`, `ZBC400_F##_FUNCTION_MODULE`, `ZBC400_F##_FUNCTION_MODULE_2`'],
-          ['클래스 · 메서드', '[[abap-objects|클래스와 메서드]]', '`ZABAP_F##_11`, `12`<br>`ZBC400_F##_GLOBAL_CLASS_1`, `ZBC400_F##_GLOBAL_CLASS_2`'],
-          ['Internal Table · Classic Report', '[[abap-data-report|데이터 처리와 리포트]]', '`ZABAP_F##_14`, `15`, `16`, `17`<br>`ZBC400_F##_REP_A`, `ZBC400_F##_REP_B`, `ZBC430S_ITAB_SORTED`'],
-          ['ABAP Dictionary (Data Element · Structure)', '[[abap-dictionary|ABAP Dictionary]]', '`ZABAP_F##_18`, `19`<br>`ZBC430S_DATA_ELEMENTS`, `ZBC430S_F##_STRUCT_NESTED`, `ZBC430S_F##_STRUCT_DEEP`']
+        table(['교재 Unit · 파트', '관련 위키 문서', '열어 볼 실습 Program (`ZBC400_F##`)'], [
+          ['Unit 2 · Workbench · 기초 문법', '[[unit-02|Unit 2 · ABAP Workbench]]', '`ZABAP_F##_01`, `02`<br>`ZBC400_F##_HELLO`'],
+          ['Unit 3 · 자료형 · 연산 · 반복문 · 시스템 필드', '[[unit-03|Unit 3 · ABAP 기본 언어 요소]]', '`ZABAP_F##_03`, `04`, `05`, `06`, `07`<br>`ZBC400_F##_COMPUTE`, `ZBC400_F##_LOOP`'],
+          ['Unit 4 · 모듈화 (FORM · Function Module · 클래스)', '[[unit-04|Unit 4 · ABAP 모듈화 기법]]', '`ZABAP_F##_08`, `09`, `10`, `11`, `12`<br>`ZBC400_F##_SUBROUTINE`, `ZBC400_F##_FUNCTION_MODULE`, `ZBC400_F##_FUNCTION_MODULE_2`, `ZBC400_F##_GLOBAL_CLASS_1`, `ZBC400_F##_GLOBAL_CLASS_2`'],
+          ['Unit 5 · 구조체 · Internal Table', '[[unit-05|Unit 5 · 복합 데이터 객체]]', '`ZABAP_F##_13`, `14`, `15`, `16`<br>`ZBC400_F##_STRUCTURE`, `ZBC430S_ITAB_SORTED`'],
+          ['BC400 Unit 6 · Open SQL', '[[unit-06|BC400 Unit 6 · 데이터 모델링과 데이터 조회]]', '[[abap-sql-guide|ABAP SQL 가이드]] 연계'],
+          ['BC430 Unit 2 · ABAP Dictionary 타입 · 구조체', '[[bc430-02|BC430 Unit 2 · ABAP Dictionary 데이터 타입]]', '`ZABAP_F##_18`, `19`<br>`ZBC430S_DATA_ELEMENTS`, `ZBC430S_F##_STRUCT_NESTED`, `ZBC430S_F##_STRUCT_DEEP`'],
+          ['Unit 7 · Classic ABAP Report · Select-Options', '[[unit-07|Unit 7 · Classic ABAP Reports]]', '`ZABAP_F##_17`<br>`ZBC400_F##_REP_A`, `ZBC400_F##_REP_B`']
         ])
       ),
       section('ZABAP_F##_01 ~ 19 · 수업 진도별 Program',
         text('강사님과 수업 순서대로 작성한 핵심 개념별 Program 목록입니다.'),
-        table(['Program', '설명 (Description)', '공부할 파트', '확인 포인트'], [
-          ['`ZABAP_F##_01`', 'ABAP Write statement', '[[abap-basics|ABAP 기초]]', '기본 `WRITE` 출력과 줄바꿈(`/`)'],
-          ['`ZABAP_F##_02`', 'ABAP Syntax', '[[abap-basics|ABAP 기초]]', '문장 마침표(.), 주석(`*`, `"`), 체인 문법(`:`)'],
-          ['`ZABAP_F##_03`', 'ABAP Data Type & Elementary Data Objects', '[[abap-types|자료형과 초기값]]', '기본 자료형(`c`, `n`, `i`, `p`, `d`, `t`, `string`)과 `TYPE`/`LIKE`·초기값'],
-          ['`ZABAP_F##_04`', 'ABAP Calculation', '[[abap-basics|ABAP 기초]]', '산술 연산, `DIV`/`MOD`, 계산 결과 변수 저장'],
-          ['`ZABAP_F##_05`', 'ABAP IF Conditional Statement', '[[abap-basics|ABAP 기초]]', '`IF` / `ELSEIF` / `ELSE` / `CASE` 조건 분기'],
-          ['`ZABAP_F##_06`', 'ABAP Loop Statement', '[[abap-loops|반복문과 시스템 필드]]', '`DO`, `WHILE`, `CONTINUE`, `EXIT`, `sy-index`'],
-          ['`ZABAP_F##_07`', 'ABAP sy-subrc System Field', '[[abap-loops|반복문과 시스템 필드]]', '문장 실행 결과 반환 코드 `sy-subrc` 판별'],
-          ['`ZABAP_F##_08`', 'ABAP Subroutine', '[[abap-modularization|프로그램 모듈화]]', '`FORM ... ENDFORM` 정의와 `PERFORM` 호출'],
-          ['`ZABAP_F##_09`', 'ABAP Subroutine Parameters', '[[abap-modularization|프로그램 모듈화]]', '`USING` / `CHANGING`, `VALUE(...)` 값 전달 vs 참조 전달'],
-          ['`ZABAP_F##_10`', 'ABAP Function Module', '[[abap-modularization|프로그램 모듈화]]', '`SE37` 함수 모듈 인터페이스와 `CALL FUNCTION` 호출 방향'],
-          ['`ZABAP_F##_11`', 'ABAP Call Class Method', '[[abap-objects|클래스와 메서드]]', '정적 메서드(`=>`)와 인스턴스 메서드(`->`) 호출'],
-          ['`ZABAP_F##_12`', 'ABAP Local Class', '[[abap-objects|클래스와 메서드]]', '`CLASS ... DEFINITION / IMPLEMENTATION`, `PUBLIC`/`PRIVATE`'],
-          ['`ZABAP_F##_13`', 'ABAP Structure Variable', '[[abap-types|자료형과 초기값]]', '로컬 구조 타입(`ts_`)·구조 변수(`gs_`) 선언과 `MOVE-CORRESPONDING`'],
-          ['`ZABAP_F##_14`', 'ABAP Internal Table', '[[abap-data-report|데이터 처리와 리포트]]', '`STANDARD`/`SORTED`/`HASHED` Internal Table 선언·행 조작(`APPEND`, `INSERT`, `READ`, `MODIFY`, `DELETE`, `SORT`)'],
-          ['`ZABAP_F##_15`', 'ABAP Header Line', '[[abap-data-report|데이터 처리와 리포트]]', '기존 코드의 `WITH HEADER LINE`과 `CLEAR itab` vs `CLEAR itab[]` 구분'],
-          ['`ZABAP_F##_16`', 'ABAP Internal table & Work area', '[[abap-data-report|데이터 처리와 리포트]]', '글로벌/로컬 `TYPE`, `TYPE TABLE OF`, `TYPE LINE OF`, `LIKE` 선언 비교'],
-          ['`ZABAP_F##_17`', 'ABAP Select-Options', '[[abap-data-report|데이터 처리와 리포트]]', '`SELECT-OPTIONS`(`SIGN`·`OPTION`·`LOW`·`HIGH`), `WHERE ... IN`과 Selection Screen'],
-          ['`ZABAP_F##_18`', 'ABAP Flat(Simple & Nested) Structure', '[[abap-dictionary|ABAP Dictionary]]', '`Simple structure` vs `Nested structure`와 `.INCLUDE` 접근 비교'],
-          ['`ZABAP_F##_19`', 'ABAP Deep Structure', '[[abap-dictionary|ABAP Dictionary]]', '컴포넌트에 `Table Type`이 포함된 `Deep structure` 구성과 활용']
+        table(['Program', '설명 (Description)', '교재 Unit', '확인 포인트'], [
+          ['`ZABAP_F##_01`', 'ABAP Write statement', '[[unit-02|Unit 2]]', '기본 `WRITE` 출력과 줄바꿈(`/`)'],
+          ['`ZABAP_F##_02`', 'ABAP Syntax', '[[unit-02|Unit 2]]', '문장 마침표(.), 주석(`*`, `"`), 체인 문법(`:`)'],
+          ['`ZABAP_F##_03`', 'ABAP Data Type & Elementary Data Objects', '[[unit-03|Unit 3]]', '기본 자료형(`c`, `n`, `i`, `p`, `d`, `t`, `string`)과 `TYPE`/`LIKE`·초기값'],
+          ['`ZABAP_F##_04`', 'ABAP Calculation', '[[unit-03|Unit 3]]', '산술 연산, `DIV`/`MOD`, 계산 결과 변수 저장'],
+          ['`ZABAP_F##_05`', 'ABAP IF Conditional Statement', '[[unit-03|Unit 3]]', '`IF` / `ELSEIF` / `ELSE` / `CASE` 조건 분기'],
+          ['`ZABAP_F##_06`', 'ABAP Loop Statement', '[[unit-03|Unit 3]]', '`DO`, `WHILE`, `CONTINUE`, `EXIT`, `sy-index`'],
+          ['`ZABAP_F##_07`', 'ABAP sy-subrc System Field', '[[unit-03|Unit 3]]', '문장 실행 결과 반환 코드 `sy-subrc` 판별'],
+          ['`ZABAP_F##_08`', 'ABAP Subroutine', '[[unit-04|Unit 4]]', '`FORM ... ENDFORM` 정의와 `PERFORM` 호출'],
+          ['`ZABAP_F##_09`', 'ABAP Subroutine Parameters', '[[unit-04|Unit 4]]', '`USING` / `CHANGING`, `VALUE(...)` 값 전달 vs 참조 전달'],
+          ['`ZABAP_F##_10`', 'ABAP Function Module', '[[unit-04|Unit 4]]', '`SE37` 함수 모듈 인터페이스와 `CALL FUNCTION` 호출 방향'],
+          ['`ZABAP_F##_11`', 'ABAP Call Class Method', '[[unit-04|Unit 4]]', '정적 메서드(`=>`)와 인스턴스 메서드(`->`) 호출'],
+          ['`ZABAP_F##_12`', 'ABAP Local Class', '[[unit-04|Unit 4]]', '`CLASS ... DEFINITION / IMPLEMENTATION`, `PUBLIC`/`PRIVATE`'],
+          ['`ZABAP_F##_13`', 'ABAP Structure Variable', '[[unit-05|Unit 5]]', '로컬 구조 타입(`ts_`)·구조 변수(`gs_`) 선언과 `MOVE-CORRESPONDING`'],
+          ['`ZABAP_F##_14`', 'ABAP Internal Table', '[[unit-05|Unit 5]]', '`STANDARD`/`SORTED`/`HASHED` Internal Table 선언·행 조작(`APPEND`, `INSERT`, `READ`, `MODIFY`, `DELETE`, `SORT`)'],
+          ['`ZABAP_F##_15`', 'ABAP Header Line', '[[unit-05|Unit 5]]', '기존 코드의 `WITH HEADER LINE`과 `CLEAR itab` vs `CLEAR itab[]` 구분'],
+          ['`ZABAP_F##_16`', 'ABAP Internal table & Work area', '[[unit-05|Unit 5]]', '글로벌/로컬 `TYPE`, `TYPE TABLE OF`, `TYPE LINE OF`, `LIKE` 선언 비교'],
+          ['`ZABAP_F##_17`', 'ABAP Select-Options', '[[unit-07|Unit 7]]', '`SELECT-OPTIONS`(`SIGN`·`OPTION`·`LOW`·`HIGH`), `WHERE ... IN`과 Selection Screen'],
+          ['`ZABAP_F##_18`', 'ABAP Flat(Simple & Nested) Structure', '[[bc430-02|BC430 Unit 2]]', '`Simple structure` vs `Nested structure`와 `.INCLUDE` 접근 비교'],
+          ['`ZABAP_F##_19`', 'ABAP Deep Structure', '[[bc430-02|BC430 Unit 2]]', '컴포넌트에 `Table Type`이 포함된 `Deep structure` 구성과 활용']
         ])
       ),
       section('ZBC400_F##_* · BC400 교재 실습 Program',
         text('BC400 교재 Exercise를 따라 작성·복사한 실습 Program입니다.'),
-        table(['Program', '공부할 파트', '확인 포인트'], [
-          ['`ZBC400_F##_HELLO`', '[[abap-basics|ABAP 기초]]', '첫 실행 가능 Program 생성·활성화·실행 (Exercise 2)'],
-          ['`ZBC400_F##_COMPUTE`', '[[abap-basics|ABAP 기초]]', '기본 연산문과 변수 처리 실습 (Exercise 4)'],
-          ['`ZBC400_F##_LOOP`', '[[abap-loops|반복문과 시스템 필드]]', '반복문과 디버거 단계 실행 확인'],
-          ['`ZBC400_F##_SUBROUTINE`', '[[abap-modularization|프로그램 모듈화]]', 'Subroutine(`FORM` / `PERFORM`) 구현 실습 (Exercise 6)'],
-          ['`ZBC400_F##_FUNCTION_MODULE`', '[[abap-modularization|프로그램 모듈화]]', 'Function Module 호출 실습 1 (Exercise 7)'],
-          ['`ZBC400_F##_FUNCTION_MODULE_2`', '[[abap-modularization|프로그램 모듈화]]', '직접 만든 Function Module 호출 실습 2 (Exercise 9)'],
-          ['`ZBC400_F##_GLOBAL_CLASS_1`', '[[abap-objects|클래스와 메서드]]', 'Global Class 정적 메서드 호출 실습 1 (Exercise 10)'],
-          ['`ZBC400_F##_GLOBAL_CLASS_2`', '[[abap-objects|클래스와 메서드]]', 'Global Class 생성 및 메서드 호출 실습 2 (Exercise 11~12)'],
-          ['`ZBC400_F##_STRUCTURE`', '[[abap-types|자료형과 초기값]]', 'Structured Data Objects 실습 (Exercise 13)'],
-          ['`ZBC400_F##_REP_A`', '[[abap-data-report|데이터 처리와 리포트]]', 'Select-Options·Classic List·아이콘·컬럼 서식 실습 템플릿 A (Exercise 20)'],
-          ['`ZBC400_F##_REP_B`', '[[abap-data-report|데이터 처리와 리포트]]', 'Select-Options·Classic List·Report 이벤트 실습 템플릿 B (Exercise 21)']
+        table(['Program', '교재 Unit', '확인 포인트'], [
+          ['`ZBC400_F##_HELLO`', '[[unit-02|Unit 2]]', '첫 실행 가능 Program 생성·활성화·실행 (Exercise 2)'],
+          ['`ZBC400_F##_COMPUTE`', '[[unit-03|Unit 3]]', '기본 연산문과 변수 처리 실습 (Exercise 4)'],
+          ['`ZBC400_F##_LOOP`', '[[unit-03|Unit 3]]', '반복문과 디버거 단계 실행 확인'],
+          ['`ZBC400_F##_SUBROUTINE`', '[[unit-04|Unit 4]]', 'Subroutine(`FORM` / `PERFORM`) 구현 실습 (Exercise 6)'],
+          ['`ZBC400_F##_FUNCTION_MODULE`', '[[unit-04|Unit 4]]', 'Function Module 호출 실습 1 (Exercise 7)'],
+          ['`ZBC400_F##_FUNCTION_MODULE_2`', '[[unit-04|Unit 4]]', '직접 만든 Function Module 호출 실습 2 (Exercise 9)'],
+          ['`ZBC400_F##_GLOBAL_CLASS_1`', '[[unit-04|Unit 4]]', 'Global Class 정적 메서드 호출 실습 1 (Exercise 10)'],
+          ['`ZBC400_F##_GLOBAL_CLASS_2`', '[[unit-04|Unit 4]]', 'Global Class 생성 및 메서드 호출 실습 2 (Exercise 11–12)'],
+          ['`ZBC400_F##_STRUCTURE`', '[[unit-05|Unit 5]]', 'Structured Data Objects 실습 (Exercise 13)'],
+          ['`ZBC400_F##_REP_A`', '[[unit-07|Unit 7]]', 'Select-Options·Classic List·아이콘·컬럼 서식 실습 템플릿 A (Exercise 20)'],
+          ['`ZBC400_F##_REP_B`', '[[unit-07|Unit 7]]', 'Select-Options·Classic List·Report 이벤트 실습 템플릿 B (Exercise 21)']
         ])
       ),
       section('ZBC430S_* · BC430(Dictionary · Table) 실습 Program',
         text('BC430 ABAP Dictionary 파트에서 표준 예제(`SAPBC430S_*`)를 기반으로 다루는 Program입니다.'),
-        table(['Program', '원본 / 설명', '공부할 파트', '확인 포인트'], [
-          ['`ZBC430S_DATA_ELEMENTS`', 'Program `SAPBC430S_DATA_ELEMENTS`', '[[abap-dictionary|ABAP Dictionary]]', '`Data Element`·`Domain` 참조와 `Field Label`·`F4 Help` 동작 확인'],
-          ['`ZBC430S_F##_STRUCT_NESTED`', 'Report `SAPBC430S_STRUCT_NESTED`', '[[abap-dictionary|ABAP Dictionary]]', '`Nested structure`와 `.INCLUDE` 컴포넌트 접근 방식 확인'],
-          ['`ZBC430S_F##_STRUCT_DEEP`', 'Deep Structure 실습', '[[abap-dictionary|ABAP Dictionary]]', '내부 테이블(`Table Type`)을 포함하는 `Deep structure` 확인'],
-          ['`ZBC430S_ITAB_SORTED`', 'Program `SAPBC430S_ITAB_SORTED`', '[[abap-data-report|데이터 처리와 리포트]]', '`Sorted Table` 선언·정렬 유지·키 접근 확인']
+        table(['Program', '원본 / 설명', '교재 Unit', '확인 포인트'], [
+          ['`ZBC430S_DATA_ELEMENTS`', 'Program `SAPBC430S_DATA_ELEMENTS`', '[[bc430-02|BC430 Unit 2]]', '`Data Element`·`Domain` 참조와 `Field Label`·`F4 Help` 동작 확인 (Ex 1)'],
+          ['`ZBC430S_F##_STRUCT_NESTED`', 'Report `SAPBC430S_STRUCT_NESTED`', '[[bc430-02|BC430 Unit 2]]', '`Nested structure`와 `.INCLUDE` 컴포넌트 접근 방식 확인 (Ex 2)'],
+          ['`ZBC430S_F##_STRUCT_DEEP`', 'Deep Structure 실습', '[[bc430-02|BC430 Unit 2]]', '내부 테이블(`Table Type`)을 포함하는 `Deep structure` 확인 (Ex 4)'],
+          ['`ZBC430S_ITAB_SORTED`', 'Program `SAPBC430S_ITAB_SORTED`', '[[unit-05|BC400 Unit 5]]', '`Sorted Table` 선언·정렬 유지·키 접근 확인']
         ])
       )
     ]
@@ -2364,7 +3192,7 @@ ENDIF.`)
       ),
       sqlSection('dml', 'classic', 'DB 변경 문법 — INSERT · UPDATE · MODIFY · DELETE',
         text(
-          '구문법의 DB 변경 문장(`INSERT`, `UPDATE`, `MODIFY`, `DELETE`)은 Work Area·Internal Table·조건 변수 앞에 **`@`를 붙이지 않습니다**. [[abap-data-report|내부 테이블]] 조작 문장과 이름이 비슷하므로 대상이 DB 테이블인지 Internal Table 변수인지 항상 구분하세요.',
+          '구문법의 DB 변경 문장(`INSERT`, `UPDATE`, `MODIFY`, `DELETE`)은 Work Area·Internal Table·조건 변수 앞에 **`@`를 붙이지 않습니다**. [[unit-05|내부 테이블]] 조작 문장과 이름이 비슷하므로 대상이 DB 테이블인지 Internal Table 변수인지 항상 구분하세요.',
           '오래된 레거시 프로그램에서는 `TABLES zcarrier_##.`로 테이블명과 같은 암묵적 Work Area를 선언한 뒤 `FROM` 없이 `INSERT zcarrier_##.`처럼 쓰는 짧은 형태도 볼 수 있지만, 가독성과 안전을 위해 구문법에서도 **명시적인 `FROM gs_row`** 사용을 권장합니다.'
         ),
         {
@@ -2551,12 +3379,12 @@ ENDLOOP.`)
           type: 'callout',
           style: 'tip',
           title: '관련 문서 함께 보기',
-          body: '수업 필기 원문과 연결 개념은 [[abap-open-sql|Open SQL (수업 필기)]] · [[abap-dictionary|ABAP Dictionary]] · [[abap-data-report|내부 테이블 · Report]] · [[sap-tcode-reference|자주 쓰는 T-Code 모음]]에서 바로 이어서 볼 수 있습니다.'
+          body: '수업 필기 원문과 연결 개념은 [[unit-06|BC400 Unit 6 · 데이터 모델링과 데이터 조회]] · [[bc430-01|BC430 Unit 1 · ABAP Dictionary]] · [[bc430-04|BC430 Unit 4 · 테이블 접근 성능]] · [[unit-05|BC400 Unit 5 · 복합 데이터 객체]] · [[sap-tcode-reference|자주 쓰는 T-Code 모음]]에서 바로 이어서 볼 수 있습니다.'
         }
       )
     ]
   };
-  const sortedIds = ['welcome-abap', 'learning-roadmap', ...order];
+  const sortedIds = ['welcome-abap', ...unitOrder];
   const sorted = Object.fromEntries([...sortedIds, ...Object.keys(docs).filter(id => !sortedIds.includes(id))].map(id => [id, docs[id]]));
   window.WIKI_DOCS = sorted;
 })();

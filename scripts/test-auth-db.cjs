@@ -102,13 +102,17 @@ const read = file => {
     await db.exec(read('migrations/20261124-review-hardening.sql'));
     await db.exec(read('migrations/20261125-auto-revisit-login-log.sql'));
     await db.exec(read('migrations/20261125-auto-revisit-login-log.sql'));
+    await db.exec(read('migrations/20261126-admin-logout-all.sql'));
+    await db.exec(read('migrations/20261126-admin-logout-all.sql'));
     // Re-running legacy hardening migrations after final migration must keep plaintext RPCs locked.
     await db.exec(read('migrations/20261119-auth-hardening.sql'));
     await db.exec(read('migrations/20261119-admin-members.sql'));
     // Reapply final migrations after legacy rerun (matches runbook) and exercise full regression suite on final schema.
     await db.exec(read('migrations/20261124-review-hardening.sql'));
     await db.exec(read('migrations/20261125-auto-revisit-login-log.sql'));
+    await db.exec(read('migrations/20261126-admin-logout-all.sql'));
     for (const file of [
+      'admin-logout-all.sql',
       'auto-revisit-login-log.sql',
       'review-hardening-261124.sql',
       'signup-login-log.sql',

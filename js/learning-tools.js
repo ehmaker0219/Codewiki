@@ -55,7 +55,7 @@
     const references = JSON.stringify(doc.sections || []).matchAll(/\[\[([a-z0-9-]+)(?:\|[^\]]+)?\]\]/g);
     for (const ref of references) topics.add(ref[1]);
     const backlinkIds = new Set(backlinks.map(d => d.id));
-    const isOverview = d => Boolean(d.isHome || d.id === 'learning-roadmap' || d.id === 'abap-textbook' || d.id === 'sap-gui-programs' || d.id === 'abap-sql-guide');
+    const isOverview = d => Boolean(d.isHome || d.id === 'learning-roadmap' || d.id === 'abap-textbook' || d.id === 'bc400-textbook' || d.id === 'bc430-textbook' || d.id === 'sap-gui-programs' || d.id === 'abap-sql-guide');
     const concepts = documents.filter(d => d.id !== doc.id && d.track !== 'ui5' && !d.isDailyLesson &&
       (topics.has(d.id) || backlinkIds.has(d.id)))
       .sort((a, b) => Number(isOverview(a)) - Number(isOverview(b)));

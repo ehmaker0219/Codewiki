@@ -272,7 +272,7 @@ code, pre, .mono {
   min-height: 0;
   overflow-y: auto;
   overscroll-behavior-y: contain;
-  padding: 8px 14px 20px;
+  padding: 8px 10px 20px;
   display: flex;
   flex-direction: column;
   gap: 24px;
@@ -397,11 +397,11 @@ code, pre, .mono {
   width: 100%;
   border: none;
   background: transparent;
-  padding: 7px 10px;
+  padding: 7px 8px;
   border-radius: 9px;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 7px;
   font-size: 12.5px;
   font-weight: 600;
   font-family: inherit;
@@ -432,9 +432,10 @@ code, pre, .mono {
 
 .sb-folder-name {
   flex: 1;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  min-width: 0;
+  white-space: normal;
+  word-break: keep-all;
+  line-height: 1.35;
 }
 
 .sb-chevron {
@@ -451,8 +452,8 @@ code, pre, .mono {
   display: flex;
   flex-direction: column;
   gap: 2px;
-  padding: 2px 0 6px 18px;
-  margin-left: 17px;
+  padding: 2px 0 6px 8px;
+  margin-left: 8px;
   border-left: 1px solid var(--border-subtle);
 }
 
@@ -460,9 +461,11 @@ code, pre, .mono {
   font-family: "JetBrains Mono", monospace;
   font-size: 10.5px;
   font-weight: 700;
+  line-height: 1.4;
   color: var(--toss-blue);
   background: var(--toss-blue-soft);
   padding: 1px 5px;
+  margin-top: 1px;
   border-radius: 5px;
   flex-shrink: 0;
 }
@@ -470,16 +473,18 @@ code, pre, .mono {
 .read-check-mark {
   font-size: 11.5px;
   font-weight: 800;
+  line-height: 1.35;
   color: var(--toss-green);
   margin-left: auto;
+  margin-top: 1px;
   flex-shrink: 0;
 }
 
 .nav-doc-link {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 6px;
-  padding: 6px 9px;
+  padding: 6px 8px;
   border-radius: 8px;
   text-decoration: none;
   font-size: 12px;
@@ -489,19 +494,32 @@ code, pre, .mono {
 }
 
 .nav-doc-title-text {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  white-space: normal;
+  word-break: keep-all;
+  overflow-wrap: break-word;
+  line-height: 1.35;
+}
+
+.nav-doc-title-main {
+  display: block;
 }
 
 .nav-textbook-label {
   display: block;
-  margin-top: 2px;
-  font-size: 10px;
+  font-size: 10.5px;
   font-weight: 400;
-  line-height: 1.5;
+  line-height: 1.35;
+  color: var(--text-muted);
+}
+
+.nav-doc-link.active .nav-textbook-label {
   color: inherit;
-  opacity: .85;
+  opacity: 0.85;
 }
 
 .nav-doc-link:hover {
@@ -513,6 +531,13 @@ code, pre, .mono {
   background: var(--toss-blue-soft);
   color: var(--toss-blue);
   font-weight: 700;
+}
+
+.sb-menu-item.nav-doc-link {
+  align-items: center;
+  padding: 7px 10px;
+  gap: 8px;
+  font-size: 12.5px;
 }
 
 /* 사이드바 최하단 고정 유저 프로필 카드 (Quest-On 하단 프로필 스타일) */
@@ -2075,6 +2100,143 @@ body.track-selecting .app-layout {
   margin-top: 6px;
 }
 
+/* 학생 최초 로그인 1회성 공지사항 모달 */
+.site-notice-card {
+  width: 100%;
+  max-width: 480px;
+  max-height: 88vh;
+  overflow-y: auto;
+  padding: 26px 28px;
+}
+
+.site-notice-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.site-notice-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: var(--toss-blue-soft);
+  color: var(--toss-blue);
+  font-size: 11.5px;
+  font-weight: 700;
+}
+
+.site-notice-title {
+  margin-top: 8px;
+  font-size: 19px;
+  line-height: 1.4;
+  font-weight: 800;
+  color: var(--text-strong);
+  letter-spacing: -0.02em;
+}
+
+.site-notice-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 0 0 16px;
+  padding: 0;
+}
+
+.site-notice-item {
+  background: var(--bg-subtle);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--tds-radius-sm);
+  padding: 13px 15px;
+}
+
+.site-notice-item strong {
+  display: block;
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--text-strong);
+  margin-bottom: 4px;
+}
+
+.site-notice-item p {
+  font-size: 13px;
+  line-height: 1.65;
+  color: var(--text-sub);
+}
+
+.site-notice-cheer {
+  background: var(--toss-blue-soft);
+  color: var(--toss-blue);
+  border-radius: var(--tds-radius-sm);
+  padding: 12px 15px;
+  font-size: 13.5px;
+  font-weight: 700;
+  text-align: center;
+  margin-bottom: 18px;
+}
+
+.site-notice-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.site-notice-hint {
+  font-size: 11.5px;
+  color: var(--text-muted);
+}
+
+.site-notice-confirm-btn {
+  width: auto;
+  min-width: 96px;
+  padding: 10px 22px;
+  height: auto;
+}
+
+/* 관리자 강제 로그아웃 안내 팝업 */
+.forced-logout-card {
+  width: 100%;
+  max-width: 390px;
+  padding: 26px 26px 24px;
+  text-align: center;
+}
+
+.forced-logout-icon {
+  width: 44px;
+  height: 44px;
+  margin: 0 auto 14px;
+  border-radius: 50%;
+  background: var(--toss-red-soft);
+  color: var(--toss-red);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.forced-logout-title {
+  font-size: 17px;
+  line-height: 1.45;
+  font-weight: 800;
+  color: var(--text-strong);
+  margin-bottom: 8px;
+}
+
+.forced-logout-desc {
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--text-sub);
+  margin-bottom: 20px;
+}
+
+.forced-logout-confirm-btn {
+  width: 100%;
+  height: 44px;
+}
+
 .admin-group-title {
   display: flex;
   align-items: center;
@@ -2369,6 +2531,126 @@ body.track-selecting .app-layout {
   box-shadow: 0 0 0 4px var(--toss-blue-soft);
 }
 
+.unit-meta-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 0 0 18px;
+  padding: 11px 14px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
+  background: var(--bg-subtle);
+}
+
+.unit-meta-pills {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.unit-meta-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-sub);
+  font-size: 11.5px;
+  font-weight: 700;
+}
+
+.step-num-badge.is-bc430 {
+  color: var(--toss-green);
+  background: var(--toss-green-soft);
+}
+
+.unit-meta-pill.is-unit {
+  background: var(--toss-blue-soft);
+  border-color: transparent;
+  color: var(--toss-blue);
+}
+
+.unit-meta-pill.is-bc430 {
+  background: var(--toss-green-soft);
+  border-color: transparent;
+  color: var(--toss-green);
+}
+
+.unit-meta-pill.is-exercise {
+  background: var(--toss-green-soft);
+  border-color: transparent;
+  color: var(--toss-green);
+}
+
+.unit-meta-pill.is-pending {
+  background: var(--toss-amber-soft);
+  border-color: transparent;
+  color: #b45309;
+}
+
+:root[data-theme="dark"] .unit-meta-pill.is-pending {
+  color: var(--toss-amber);
+}
+
+.unit-meta-link {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--toss-blue);
+  text-decoration: none;
+}
+
+.unit-meta-link:hover {
+  text-decoration: underline;
+}
+
+.doc-tab-kind {
+  display: inline-flex;
+  align-items: center;
+  padding: 1px 6px;
+  border-radius: 5px;
+  background: var(--toss-blue-soft);
+  color: var(--toss-blue);
+  font-family: "JetBrains Mono", monospace;
+  font-size: 10.5px;
+  font-weight: 700;
+}
+
+.doc-tab-kind.kind-exercise {
+  background: var(--toss-green-soft);
+  color: var(--toss-green);
+}
+
+.doc-tab-kind.is-pending {
+  background: var(--border-subtle);
+  color: var(--text-muted);
+}
+
+.doc-tab-btn.is-pending {
+  opacity: 0.78;
+}
+
+.doc-sec-unit-pill {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  padding: 2px 8px;
+  border-radius: 6px;
+  background: var(--toss-blue-soft);
+  color: var(--toss-blue);
+  font-family: "JetBrains Mono", monospace;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.doc-sec-unit-pill.is-exercise {
+  background: var(--toss-green-soft);
+  color: var(--toss-green);
+}
+
 .doc-syntax-panel {
   margin: 0 0 14px;
   padding: 14px 16px 12px;
@@ -2597,7 +2879,8 @@ body.track-selecting .app-layout {
   color: var(--text-sub);
 }
 
-.doc-section[hidden] {
+.doc-section[hidden],
+.toc-link[hidden] {
   display: none !important;
 }
 

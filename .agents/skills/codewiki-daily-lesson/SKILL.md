@@ -32,14 +32,14 @@ description: >-
 
 ### 필수 수정 파일
 
-1. **`js/class-notes.js` (주제별 커리큘럼 문서)**
-   - 하루치 필기에 여러 주제가 함께 들어 있으면(예: 앞부분 이전 단원 보충 + 뒷부분 신규 단원) 각 주제 문서(`WIKI_DOCS[<topic-id>]`)에 맞게 나누어 배치한다.
+1. **`js/class-notes.js` (교재 Unit별 커리큘럼 문서 — BC400 · BC430)**
+   - 수업 내용의 교재 소속에 따라 **BC400 (`unit-01`~`unit-13`, `putUnit`)** 또는 **BC430 ABAP Dictionary (`bc430-01`~`bc430-09`, `putBc430`)**의 해당 Unit과 Lesson/Exercise 탭(`sectionTabs`, `tab` · `badge` · `page`)에 맞춰 배치한다. (11/23 이후 ABAP Dictionary 수업 내용은 BC430 단원에 분배한다.)
+   - 하루치 필기에 여러 단원·주제가 섞여 있으면 각 Unit의 대응 Lesson 섹션으로 나누어 배치하고, `준비 중` 상태였던 Lesson/Exercise가 채워지면 `pending: true`와 안내 문구를 실제 본문으로 교체한다.
    - **기존 일자 페이지 호환성 유지**: 이미 `js/lesson-days.js`의 이전 날짜들이 `from(docId, sectionTitle)`로 참조하고 있는 섹션의 제목을 바꾸거나 삭제하지 않는다. 기존 문서에 새 날짜 내용을 더할 때는 새 `section(...)`을 추가하고 `source(...)`의 날짜 표기(예: `'11/18 · 11/20 · 11/23'`)를 갱신한다.
-   - 목차 스텁(`js/data.js`의 `chapters`)이던 문서를 처음 본문으로 채울 때는 `put(...)`으로 작성하고 `connections` 객체에 연관 문서 ID 배열을 추가한다(`learning-roadmap`의 상태가 자동으로 `'필기 정리 · 예제'`로 바뀌고 지식 맵에서도 활성 노드로 표시됨; 단, `connections` 순회 시점에는 그보다 아래에서 선언되는 `abap-thinking-flow`가 아직 생성 전이므로 `connections` 배열에는 `data.js` 또는 위쪽 `put(...)`에서 이미 정의된 문서 ID만 넣는다).
-   - 파일 상단 날짜 주석, `docs['learning-roadmap'].summary`, `docs['welcome-abap']` 분야 표(`이후 학습`에 있던 주제를 해당 학습 분야 행으로 이동)를 최신 날짜에 맞게 갱신한다.
+   - 파일 상단 날짜 주석, `js/textbook.js`의 `bc400Units`/`bc430Units` 항목 상태(`준비 중` → `완료` / `실습 정리`)·`abap-textbook` 반영 범위, `welcome-abap` 단계별 요약 표 상태를 최신 날짜에 맞게 갱신한다.
    - **별칭(`aliases`) 충돌 금지**: 비-UI5 문서 전체에서 `title`과 `aliases`는 대소문자 무시 기준으로 유일해야 한다(`tests/wiki-links.cjs` 검증).
    - 절차 설명에는 `practice` 블록, 대비 개념에는 `compare`·`table` 블록, 핵심 요약에는 `callout`(`style: 'point' | 'tip'`) 블록, 실행 예제에는 `code(label, code)` 블록을 적절히 활용한다.
-   - **참고 자료(`programs`)**: 별도 요청이 없는 한 외부 SAP/ABAP 사이트 링크는 넣지 않으며, `SE80`(`ZBC400_F##`) 실습 Program 목록이 있을 때만 `put(..., dates, [['\`ZABAP_F##_XX\`', '설명'], ...])` 형식으로 `필기와 참고 자료` 표에 기록하고 `docs['sap-gui-programs']`(SAP GUI 프로그램 정리표)에도 함께 반영한다(개인 번호는 항상 `F##`으로 일반화).
+   - **참고 자료(`programs`)**: 별도 요청이 없는 한 외부 SAP/ABAP 사이트 링크는 넣지 않으며, `SE80`(`ZBC400_F##`) 실습 Program 목록이 있을 때만 `putUnit`/`putBc430`의 `programs` 인자로 기록하고 `docs['sap-gui-programs']`(SAP GUI 프로그램 정리표)에도 함께 반영한다(개인 번호는 항상 `F##`으로 일반화).
 
 2. **`js/lesson-days.js` (일자별 수업 페이지)**
    - `days` 배열 끝에 `{ date: 'YYYY-MM-DD', source: '<원본 파일명>', sections: [...] }`를 추가한다.
@@ -50,7 +50,7 @@ description: >-
 
 ### 선택적 연동 파일
 
-- **`js/textbook.js`**: 새로 채운 주제가 교재 `Unit 1–13`의 Lesson/Exercise 항목과 대응하면 해당 항목의 대상 문서 배열에 문서 ID를 연결한다.
+- **`js/textbook.js`**: 새로 채운 Lesson/Exercise 항목의 상태를 `완료` 또는 `실습 정리`로 갱신하고, 보조 참고 문서(`abap-sql-guide`, `sap-tcode-reference` 등)가 추가되면 대상 문서 ID 배열에 연결한다.
 - **`js/app.js`**: 예제 코드에 새로운 ABAP 핵심 키워드가 추가되어 코드 하이라이팅이 필요하면 `renderEditorCode`의 `keywords` 집합을 보강한다.
 - **`js/knowledge-map.js`**: 기존 `CLUSTER_SPECS`에 없는 완전히 새로운 커리큘럼 문서 ID를 신설한 경우에만 해당 클러스터의 `docs`·`angles`에 반영한다.
 - **`js/object-game-bank.js` · `js/practice.js`**: 사용자가 함께 요청했거나 새로 배운 객체/문법이 데이터 미니게임·연습문제 보강 대상일 때 반영한다(`js/practice.js`의 기존 문항 `id`는 멘토링 데이터와 연결되므로 절대 변경·삭제하지 않는다).

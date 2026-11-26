@@ -463,10 +463,11 @@
     document.querySelector(".app-shell")?.classList.remove("board-mode-shell");
 
     if (window.CodeWikiApp) {
-      const normalized = targetDocId === "erp-setup" ? "sap-architecture" : targetDocId;
+      const normalized = window.WIKI_DOC_REDIRECTS?.[targetDocId] || targetDocId;
+      const redirectTab = window.WIKI_DOC_REDIRECT_TABS?.[targetDocId] || null;
       const docs = window.WIKI_DOCS || {};
       const resolved = normalized && docs[normalized] ? normalized : (window.CodeWikiApp.getCurrentDocId() || "welcome-abap");
-      window.CodeWikiApp.openDoc(docs[resolved] ? resolved : "welcome-abap");
+      window.CodeWikiApp.openDoc(docs[resolved] ? resolved : "welcome-abap", normalized && docs[normalized] ? redirectTab : null);
     }
   }
 
@@ -477,7 +478,7 @@
     const isAdmin = currentUser?.role === "admin";
     const docs = Object.values(window.WIKI_DOCS || {}).filter(d => d.track !== "ui5" && !((d.studentOnly || d.isHome) && isAdmin));
     const authorName = currentUser?.full_name || "익명 학생";
-    const normalizedPreselect = preselectedDocId === "erp-setup" ? "sap-architecture" : preselectedDocId;
+    const normalizedPreselect = window.WIKI_DOC_REDIRECTS?.[preselectedDocId] || preselectedDocId;
 
     writeModal._saving = false;
     writeModal.classList.remove("hidden");

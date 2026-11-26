@@ -46,9 +46,11 @@
   --bg-chip-hover: #ffffff16;
   --toss-blue: #a3c2f7;
   --toss-blue-soft: #a3c2f713;
+  --toss-green: #6ee7c8;
+  --toss-green-soft: rgba(110, 231, 200, 0.14);
   --on-accent: #0f2242;
   --border-subtle: #ffffff12;
-  width: 232px;
+  width: 276px;
   background: #183b67;
   border-right: 1px solid #ffffff12;
   box-shadow: none;
@@ -165,8 +167,8 @@ button:focus-visible, a:focus-visible { outline: 2px solid var(--toss-blue); out
 
 /* Compact, document-first wiki workspace. */
 body { background-image: none; }
-.workspace-area { margin-left: 232px; }
-.edge-collapse-btn { left: 218px; border-radius: 3px; }
+.workspace-area { margin-left: 276px; }
+.edge-collapse-btn { left: 262px; border-radius: 3px; }
 .brand-track-toggle, .brand-track-btn, .sb-menu-item { border-radius: 3px; }
 .icon-btn { border-radius: 3px; }
 .theme-icon { display: block; flex-shrink: 0; }
@@ -174,7 +176,7 @@ body { background-image: none; }
 :root[data-theme="dark"] .theme-icon-moon { display: none; }
 :root[data-theme="dark"] .theme-icon-sun { display: block; }
 .app-shell, .app-shell.single-col { max-width: 1440px; padding: 20px 24px 40px; gap: 18px; }
-.app-shell { grid-template-columns: minmax(0, 1fr) 200px; }
+.app-shell { grid-template-columns: minmax(0, 1fr) 224px; }
 .app-shell.single-col { grid-template-columns: minmax(0, 1fr); }
 .main-content { min-width: 0; }
 .article-card { position: relative; border: 1px solid var(--border-subtle); background: var(--bg-card); border-radius: 0; box-shadow: none; padding: 24px 28px; min-height: calc(100vh - 96px); }
@@ -198,7 +200,7 @@ body { background-image: none; }
 .toss-table tr:last-child td { border-bottom: 1px solid var(--border-subtle); }
 .block-table-wrap, .block-code-wrap, .block-callout, .right-card { border-radius: 0; box-shadow: none; }
 .block-code-wrap { margin: 14px 0; }
-.sidebar-right .right-card { border: 1px solid var(--border-subtle); }
+.sidebar-right .right-card { border: 1px solid var(--border-subtle); padding: 16px 14px; }
 .wiki-link:hover { text-decoration: underline; }
 @media (max-width: 1140px) {
   .app-shell { grid-template-columns: minmax(0, 1fr); }
@@ -296,4 +298,4 @@ body { background-image: none; }
 #copyPracticeBtn:disabled { opacity:.45; cursor:not-allowed; }
 
 .related-group { width:100%; min-width:0; }
-.related-group .backlink-pill { display:block; width:fit-content; max-width:100%; margin:6px 0; overflow-wrap:anywhere; }
+.related-group .backlink-pill { display:block; width:fit-content; max-width:100%; margin:6px 0; padding:5px 9px; font-size:11.5px; line-height:1.35; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }

@@ -5,50 +5,49 @@
 
   const CLUSTER_SPECS = [
     {
-      id: 'system', step: '01', title: '시스템과 개발',
-      subtitle: 'SAP 구조 · Package · 전송',
-      x: 330, y: 290, angles: [-145, -35, 90],
-      docs: ['sap-architecture', 'abap-development', 'abap-program-types']
+      id: 'foundations', step: '01', title: 'BC400 · 기초 · 모듈화',
+      subtitle: 'Unit 1–4 · 흐름 · Workbench · 기본 문법 · 모듈화',
+      x: 330, y: 290, angles: [-145, -35, 35, 145],
+      docs: ['unit-01', 'unit-02', 'unit-03', 'unit-04']
     },
     {
-      id: 'basics', step: '02', title: 'ABAP 기본기',
-      subtitle: '문법 · 자료형 · 반복문 · 디버깅',
+      id: 'data', step: '02', title: 'BC400 · 데이터 · 리포트',
+      subtitle: 'Unit 5–7 · 13 · 구조체 · ITAB · Open SQL · Report',
       x: 900, y: 260, angles: [-145, -35, 35, 145],
-      docs: ['abap-basics', 'abap-types', 'abap-loops', 'abap-debug-messages']
+      docs: ['unit-05', 'unit-06', 'unit-07', 'unit-13']
     },
     {
-      id: 'modular', step: '03', title: '모듈화와 객체',
-      subtitle: 'FORM · 함수 · BAPI · 클래스',
-      x: 1470, y: 290, angles: [-145, -35, 90],
-      docs: ['abap-modularization', 'abap-bapi', 'abap-objects']
+      id: 'bc430-core', step: '03', title: 'BC430 · DDIC 타입 · 테이블',
+      subtitle: 'Unit 1–5 · Domain · Structure · Table · Buffer · 검사',
+      x: 1470, y: 290, angles: [-144, -72, 0, 72, 144],
+      docs: ['bc430-01', 'bc430-02', 'bc430-03', 'bc430-04', 'bc430-05']
     },
     {
-      id: 'data', step: '04', title: '데이터 처리',
-      subtitle: '내부 테이블 · Report · Open SQL · DDIC',
-      x: 900, y: 930, angles: [-145, -35, 90],
-      docs: ['abap-data-report', 'abap-open-sql', 'abap-dictionary']
+      id: 'bc430-adv', step: '04', title: 'BC430 · 변경 · View · Help',
+      subtitle: 'Unit 6–9 · 종속성 · SE14 · Append · SM30 · Search Help',
+      x: 1470, y: 910, angles: [-145, -35, 35, 145],
+      docs: ['bc430-06', 'bc430-07', 'bc430-08', 'bc430-09']
     },
     {
-      id: 'reference', step: '05', title: '실전 참고',
-      subtitle: 'T-Code · 단축키 · 문법 모음',
-      x: 330, y: 910, angles: [-145, -35, 90],
-      docs: ['sap-tcode-reference', 'sap-gui-shortcuts', 'abap-useful-syntax']
+      id: 'ui', step: '05', title: 'BC400 · 화면 · 도구 (예정)',
+      subtitle: 'Unit 8–12 · Dynpro · ALV · Web Dynpro · SCI · ADT',
+      x: 900, y: 930, upcoming: true, angles: [-144, -72, 0, 72, 144],
+      docs: ['unit-08', 'unit-09', 'unit-10', 'unit-11', 'unit-12']
     },
     {
-      id: 'erp', step: '06', title: 'ERP 업무 모듈',
-      subtitle: 'FI · CO · MM · SD · PP',
-      x: 1470, y: 910, upcoming: true, angles: [-144, -72, 0, 72, 144],
-      docs: ['erp-fi', 'erp-co', 'erp-mm', 'erp-sd', 'erp-pp']
+      id: 'reference', step: '06', title: '실전 참고 · 가이드',
+      subtitle: 'T-Code · 단축키 · 문법 모음 · ABAP SQL',
+      x: 330, y: 910, angles: [-145, -35, 35, 145],
+      docs: ['sap-tcode-reference', 'sap-gui-shortcuts', 'abap-useful-syntax', 'abap-sql-guide']
     }
   ];
 
   const CLUSTER_FLOWS = [
-    ['system', 'basics', false],
-    ['basics', 'modular', false],
-    ['modular', 'data', false],
-    ['basics', 'data', true],
-    ['data', 'erp', true],
-    ['system', 'reference', true],
+    ['foundations', 'data', false],
+    ['data', 'bc430-core', false],
+    ['bc430-core', 'bc430-adv', false],
+    ['data', 'ui', true],
+    ['foundations', 'reference', true],
     ['reference', 'data', true]
   ];
 
