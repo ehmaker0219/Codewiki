@@ -64,13 +64,13 @@
       section('unit-04', '함수 모듈 테스트 입력', text('함수 그룹의 글로벌 데이터와 상수는 TOP Include에서 관리합니다. 함수 모듈과 관련 Include의 활성화 상태를 확인하세요.', 'SE37 테스트에서 문자 입력의 대소문자를 보존해야 한다면 해당 테스트 화면의 대소문자 구분 설정을 확인합니다.')),
       from('unit-04', 'BAPI와 RFC의 관계'), from('unit-04', '입출력과 오류 처리'),
       section('unit-04', 'BAPI 탐색', text('BAPI Explorer에서 업무 객체별 메서드를 확인합니다. GetList, GetDetail, Create, Change, Delete 등은 기능 이름의 예이며 실제 제공 여부는 객체마다 다릅니다.')),
-      from('unit-04', '글로벌 클래스와 로컬 클래스'), from('unit-04', '정적 호출과 인스턴스 호출'),
-      section('unit-04', '글로벌 클래스 생성과 접근 범위', text('SE24에서 클래스를 생성하고 메서드 이름과 매개변수를 정의합니다. PRIVATE 메서드는 클래스 외부에서 직접 호출할 수 없으므로 외부에 공개할 동작은 접근 범위를 확인합니다.')),
+      from('unit-04', 'Global Class와 Local Class'), from('unit-04', 'Static 호출과 Instance 호출'),
+      section('unit-04', 'Global Class 생성과 접근 범위', text('SE24에서 Class를 생성하고 메서드 이름과 매개변수를 정의합니다. PRIVATE 메서드는 Class 외부에서 직접 호출할 수 없으므로 외부에 공개할 동작은 접근 범위를 확인합니다.')),
       from('unit-03', '예외와 반환 코드'),
       from('unit-01', 'Program과 저장소 객체'), from('unit-01', 'Include와 모듈화')
     ]},
     {date: '2026-11-18', source: '261118 수요일 (2).md', sections: [
-      from('unit-04', '로컬 클래스의 정의와 구현'),
+      from('unit-04', 'Local Class의 정의와 구현'),
       from('unit-05', '구조체 선언과 컴포넌트'),
       from('unit-05', '구조체 간 MOVE-CORRESPONDING'),
       from('unit-05', '내부 테이블의 종류와 접근'),

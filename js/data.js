@@ -218,7 +218,7 @@ window.WIKI_DOC_REDIRECT_TABS = {
     ["데이터와 개발 객체 탐색", [
       ["SE16", "Data Browser", "테이블 이름과 조회 조건을 입력하여 저장된 데이터 조회"],
       ["SE84", "Repository Information System", "Program 등 저장소의 개발 객체를 조건별로 검색"],
-      ["SE80", "Object Navigator", "Package·Program·함수 그룹·클래스 등 개발 객체를 통합 탐색"],
+      ["SE80", "Object Navigator", "Package·Program·함수 그룹·Class 등 개발 객체를 통합 탐색"],
       ["SE11", "ABAP Dictionary", "테이블·구조·데이터 요소·View 등 데이터 사전 객체 정의와 유지보수"],
       ["SE14", "Database Utility", "테이블 구조 변경·축소 시 Activate and adjust database 수행 및 Table Conversion(QCM) 수습"],
       ["SM30", "Maintain Table Views", "Maintenance View 및 Table Maintenance Generator로 생성한 Customer Table 데이터 유지보수"]
@@ -226,7 +226,7 @@ window.WIKI_DOC_REDIRECT_TABS = {
     ["Program과 화면 개발", [
       ["SE38", "ABAP Editor", "ABAP Program 생성·소스 편집·검사·활성화·실행"],
       ["SE37", "Function Builder", "함수 모듈 생성·유지보수·테스트"],
-      ["SE24", "Class Builder", "글로벌 클래스와 인터페이스 등 객체지향 개발 객체 관리"],
+      ["SE24", "Class Builder", "Global Class와 Interface 등 객체지향 개발 객체 관리"],
       ["SE41", "Menu Painter", "메뉴·툴바·기능 키를 구성하는 GUI 상태와 제목 관리"],
       ["SE51", "Screen Painter", "Dynpro 화면의 레이아웃과 흐름 로직 편집"]
     ]],

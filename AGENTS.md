@@ -17,7 +17,7 @@
 ## 수업 필기 · 용어 작성 규칙
 
 - 사용자가 작성한 필기나 요청의 영문·한글 용어 표기를 임의로 번역하거나 바꾸지 말고, **작성한 그대로** 반영한다.
-- SAP/ABAP 용어는 수업에서 사용하는 원어 표기를 유지한다(예: `Change Request`, `Task`, `Package`, `Package` 안에서 생성하는 저장소 객체 개념의 `Program`). 한글 검색 편의를 위한 별칭(`aliases`)은 필요 시 유지할 수 있다.
+- SAP/ABAP 용어는 수업에서 사용하는 원어 표기를 유지한다(예: `Change Request`, `Task`, `Package`, `Package` 안에서 생성하는 저장소 객체 개념의 `Program`, `Class`, `Local Class`, `Global Class`, `Static`, `Instance`). 한글 검색 편의를 위한 별칭(`aliases`)은 필요 시 유지할 수 있다.
 - ABAP 테이블·구조체 예시는 학생/더미 데이터 대신 SAP 항공 실습 모델(`SCARR`, `SPFLI`, `SFLIGHT`, `SBOOK`, `SCUSTOM`, `SAPLANE` 등)을 기준으로 작성한다.
 - 실행 가능 ABAP Report 예제의 `REPORT` 선언 이름은 수업 규칙에 맞춰 `REPORT zabap_f##_##.` 형식을 사용한다.
 

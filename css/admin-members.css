@@ -32,6 +32,8 @@
 .members-table td {overflow-wrap:anywhere;min-width:55px;}
 .members-table td:nth-child(2) {font-weight:600;}
 .members-table button {white-space:nowrap;}
+.members-actions-cell {white-space:nowrap;}
+.members-row-actions {display:inline-flex;align-items:center;gap:6px;flex-wrap:nowrap;}
 .members-sort {display:inline-flex;align-items:center;gap:6px;padding:4px 0;border:0;background:transparent;color:inherit;font:inherit;cursor:pointer;}
 .members-sort span {color:var(--text-muted);}
 .members-table th[aria-sort=ascending] .members-sort,.members-table th[aria-sort=descending] .members-sort {color:var(--toss-blue);}

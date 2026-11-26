@@ -12,14 +12,14 @@
     ['databaseTable', 'Database Table · DB 테이블', 'DDIC', 'ZCW_DB_는 이 문제집의 데이터베이스 테이블 접두어입니다.', '데이터베이스에 행을 영속적으로 저장하는 테이블입니다. Program 메모리의 내부 테이블과 구분합니다.', ['ZCW_DB_SCARR','ZCW_DB_SPFLI','ZCW_DB_SFLIGHT','ZCW_DB_SBOOK','ZCW_DB_SCUSTOM','ZCW_DB_SAPLANE']],
     ['functionModule', 'Function Module · 함수 모듈', '프로그램', 'Z_CW_로 시작하는 동작 이름은 이 문제집에서 함수 모듈입니다.', '함수 그룹에 속하는 재사용 가능한 처리 단위이며 CALL FUNCTION으로 호출합니다.', ['Z_CW_GET_FLIGHTS','Z_CW_GET_CARRIER','Z_CW_CHECK_BOOKING','Z_CW_READ_SPFLI','Z_CW_CALC_SEATS','Z_CW_CONVERT_FARE']],
     ['functionGroup', 'Function Group · 함수 그룹', '프로그램', 'ZCW_FG_는 이 문제집의 함수 그룹 접두어입니다.', '관련 함수 모듈을 묶는 저장소 객체입니다. 같은 그룹의 함수 모듈은 그룹의 글로벌 데이터를 공유할 수 있습니다.', ['ZCW_FG_FLIGHT','ZCW_FG_CARRIER','ZCW_FG_SCHEDULE','ZCW_FG_BOOKING','ZCW_FG_AIRPLANE','ZCW_FG_CUSTOMER']],
-    ['class', 'Class · 클래스', '프로그램', 'ZCL_은 글로벌 클래스, LCL_은 로컬 클래스에 사용하는 명명 관례입니다.', '속성과 메서드를 묶는 객체 타입입니다. 인스턴스는 이 클래스를 기반으로 생성합니다.', ['ZCL_CW_FLIGHT_SERVICE','ZCL_CW_CARRIER','ZCL_CW_AIRPLANE','LCL_FLIGHT','LCL_SCHEDULE','LCL_BOOKING','ZCL_CW_SCHEDULE','ZCL_CW_BOOKING','ZCL_CW_CUSTOMER']],
-    ['interface', 'Interface · 인터페이스', '프로그램', 'ZIF_는 글로벌 인터페이스, LIF_는 로컬 인터페이스에 사용하는 명명 관례입니다.', '구현 클래스가 제공할 메서드 등의 계약을 정의합니다. 인터페이스 자체를 객체로 생성하지 않습니다.', ['ZIF_CW_PRINTABLE','ZIF_CW_FLIGHT_SERVICE','ZIF_CW_BOOKABLE','LIF_FLIGHT_READER','LIF_FARE_CALC','LIF_ROUTE_CHECK']],
+    ['class', 'Class · 클래스', '프로그램', 'ZCL_은 Global Class, LCL_은 Local Class에 사용하는 명명 관례입니다.', '속성과 메서드를 묶는 객체 타입입니다. Instance는 이 Class를 기반으로 생성합니다.', ['ZCL_CW_FLIGHT_SERVICE','ZCL_CW_CARRIER','ZCL_CW_AIRPLANE','LCL_FLIGHT','LCL_SCHEDULE','LCL_BOOKING','ZCL_CW_SCHEDULE','ZCL_CW_BOOKING','ZCL_CW_CUSTOMER']],
+    ['interface', 'Interface · 인터페이스', '프로그램', 'ZIF_는 Global Interface, LIF_는 Local Interface에 사용하는 명명 관례입니다.', '구현 Class가 제공할 메서드 등의 계약을 정의합니다. Interface 자체를 객체로 생성하지 않습니다.', ['ZIF_CW_PRINTABLE','ZIF_CW_FLIGHT_SERVICE','ZIF_CW_BOOKABLE','LIF_FLIGHT_READER','LIF_FARE_CALC','LIF_ROUTE_CHECK']],
     ['report', 'Report · 실행 가능 Program', '프로그램', 'ZCW_R_는 이 문제집의 실행 가능 리포트 접두어입니다.', 'REPORT로 시작하는 실행 가능 Program으로 가정합니다. 선택 화면과 이벤트를 사용해 실행할 수 있습니다.', ['ZCW_R_FLIGHT_LIST','ZCW_R_CARRIER_LIST','ZCW_R_SPFLI_ROUTE','ZCW_R_BOOKING_CHECK','ZCW_R_SEAT_STATUS','ZCW_R_PLANE_SPEC']],
     ['include', 'Include · 인클루드', '프로그램', 'ZCW_I_는 이 문제집의 Include Program 접두어입니다.', 'INCLUDE 문으로 다른 Program에 소스를 포함합니다. Include 자체는 독립 실행 Program이 아닙니다.', ['ZCW_I_FLIGHT_TOP','ZCW_I_FLIGHT_FORMS','ZCW_I_CARRIER_TOP','ZCW_I_BOOKING_FORMS','ZCW_I_SPFLI_EVENTS','ZCW_I_PLANE_CLASSES']],
     ['elementaryType', 'Built-in Type · 기본 타입', '데이터', 'ABAP에서 제공하는 기본 타입 이름입니다.', 'DATA 변수명 TYPE 타입명처럼 선언할 때 쓰는 기본 타입입니다. 사용자 정의 데이터 요소나 변수 이름과 구분합니다.', ['i','int8','c','n','p','d','t','string','xstring']],
     ['structureVariable', 'Structure Variable · 구조 변수', '데이터', 'gs_ / ls_는 이 문제집에서 글로벌 / 로컬 구조 변수 접두어입니다.', '구조 타입으로 선언한 데이터 객체이며 한 건의 필드 값을 보관합니다. 변수-컴포넌트 형식으로 필드에 접근합니다.', ['gs_scarr','gs_spfli','gs_sflight','ls_sbook','ls_scustom','ls_saplane']],
     ['tableVariable', 'Internal Table · 내부 테이블 변수', '데이터', 'gt_ / lt_는 이 문제집에서 글로벌 / 로컬 내부 테이블 변수 접두어입니다.', '여러 행의 실제 데이터를 메모리에 보관합니다. 이를 선언하는 데 사용하는 테이블 타입과 구분합니다.', ['gt_scarr','gt_spfli','gt_sflight','lt_sbook','lt_scustom','lt_saplane']],
-    ['referenceVariable', 'Object Reference · 객체 참조 변수', '데이터', 'go_ / lo_는 이 문제집에서 글로벌 / 로컬 객체 참조 변수 접두어입니다.', 'TYPE REF TO로 선언하여 객체에 대한 참조를 보관합니다. 클래스 정의나 객체 자체와는 다릅니다.', ['go_flight_service','go_carrier','go_airplane','lo_flight','lo_schedule','lo_booking']],
+    ['referenceVariable', 'Object Reference · 객체 참조 변수', '데이터', 'go_ / lo_는 이 문제집에서 글로벌 / 로컬 객체 참조 변수 접두어입니다.', 'TYPE REF TO로 선언하여 객체에 대한 참조를 보관합니다. Class 정의나 객체 자체와는 다릅니다.', ['go_flight_service','go_carrier','go_airplane','lo_flight','lo_schedule','lo_booking']],
     ['constant', 'Constant · 상수', '데이터', 'gc_ / lc_는 이 문제집에서 글로벌 / 로컬 상수 접두어입니다.', 'CONSTANTS로 선언하고 VALUE로 초기값을 정합니다. 실행 중 값을 다시 대입하는 일반 변수와 구분합니다.', ['gc_default_carrid','gc_max_seats','gc_default_currency','lc_min_fltime','lc_cabin_class','lc_limit']],
     ['selectionTable', 'Selection Table · 선택 조건 테이블', '데이터', 'so_는 이 문제집에서 SELECT-OPTIONS로 선언한 선택 조건의 접두어입니다.', 'SELECT-OPTIONS로 선언한 Selection Table입니다. SIGN·OPTION·LOW·HIGH로 여러 값이나 범위, 포함·제외 조건을 보관합니다. 단일 입력값을 받는 PARAMETERS와 구분합니다.', ['so_carr','so_conn','so_date','so_id','so_order','so_plane']]
   ];
@@ -114,15 +114,15 @@
     ['CL_ABAP_TABLEDESCR','DATA lo_table TYPE REF TO cl_abap_tabledescr.']
   ];
   for(const [name,prompt] of classExamples) add('class',name,prompt,
-    '클래스 이름과 그 클래스를 가리키는 참조 변수는 다른 대상입니다.',
-    name+'는 글로벌 Class입니다. TYPE REF TO 뒤의 클래스 이름이나 정적 메서드 호출의 => 왼쪽에 사용할 수 있습니다.');
+    'Class 이름과 그 Class를 가리키는 참조 변수는 다른 대상입니다.',
+    name+'는 Global Class입니다. TYPE REF TO 뒤의 Class 이름이나 Static 메서드 호출의 => 왼쪽에 사용할 수 있습니다.');
   for(const name of ['BAPI_FLIGHT_GETLIST','DDIF_FIELDINFO_GET']) add('functionModule',name,
     "호출 구문 일부\nCALL FUNCTION '"+name+"'\n  ...",
     'CALL FUNCTION 뒤에 놓인 이름을 확인하세요.',
-    name+'는 Function Module입니다. 클래스 메서드 호출이나 Function Group 이름과 구분합니다.');
+    name+'는 Function Module입니다. Class 메서드 호출이나 Function Group 이름과 구분합니다.');
   add('interface','IF_AMDP_MARKER_HDB','CLASS zcl_cw_flights DEFINITION PUBLIC.\n  PUBLIC SECTION.\n    INTERFACES if_amdp_marker_hdb.\nENDCLASS.',
-    'INTERFACES 문은 구현 클래스가 따르는 인터페이스를 지정합니다.',
-    'IF_AMDP_MARKER_HDB는 SAP HANA용 AMDP 클래스에 사용하는 marker Interface입니다. 클래스 자체나 객체 참조 변수가 아닙니다.');
+    'INTERFACES 문은 구현 Class가 따르는 Interface를 지정합니다.',
+    'IF_AMDP_MARKER_HDB는 SAP HANA용 AMDP Class에 사용하는 marker Interface입니다. Class 자체나 객체 참조 변수가 아닙니다.');
   add('tableType','BC400_T_FLIGHTS','수업 예시\nDATA gt_flights TYPE bc400_t_flights.',
     '수업에서 BC400_S_FLIGHT와 BC400_T_FLIGHTS를 어떻게 구분했는지 떠올려 보세요.',
     '수업에서 사용한 Table Type입니다. BC400_S_FLIGHT는 Structure, gt_flights는 실제 데이터를 담는 Internal Table 변수입니다.');
@@ -198,8 +198,8 @@
     name+'는 필드·컴포넌트를 지정한 표현입니다. S_CARR_ID 같은 독립적인 Data Element 이름이나 구조 전체를 뜻하지 않습니다.');
   for(const [name,type] of [['lo_output','cl_demo_output'],['lo_salv','cl_salv_table'],['lo_type','cl_abap_typedescr']]) {
     add('referenceVariable',name,'DATA '+name+' TYPE REF TO '+type+'.',
-      'TYPE REF TO 뒤의 클래스와 DATA 뒤의 참조 변수를 구분하세요.',
-      name+'는 Object Reference 변수입니다. 선언만으로 클래스의 객체가 생성되는 것은 아니며, 객체를 참조하기 전에는 초기 상태입니다.');
+      'TYPE REF TO 뒤의 Class와 DATA 뒤의 참조 변수를 구분하세요.',
+      name+'는 Object Reference 변수입니다. 선언만으로 Class의 객체가 생성되는 것은 아니며, 객체를 참조하기 전에는 초기 상태입니다.');
   }
   for(const [name,type,value] of [['lc_carrid','s_carr_id','LH'],['gc_carrier_id','s_carr_id','AA'],['lc_connid','s_conn_id','0400']]) {
     add('constant',name,'CONSTANTS '+name+' TYPE '+type+" VALUE '"+value+"'.",

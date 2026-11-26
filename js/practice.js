@@ -500,22 +500,22 @@ window.WIKI_PRACTICE = [
     "id": "forms"
   },
   {
-    "title": "클래스 · 메서드",
+    "title": "Class · 메서드",
     "doc": "unit-04",
     "questions": [
       {
         "title": "인사 객체",
-        "body": "이름을 받아 인사 문장을 반환하는 로컬 클래스를 작성하세요.",
+        "body": "이름을 받아 인사 문장을 반환하는 Local Class를 작성하세요.",
         "conditions": [
-          "PUBLIC SECTION에 인스턴스 메서드를 선언하세요.",
+          "PUBLIC SECTION에 Instance 메서드를 선언하세요.",
           "TYPE REF TO로 참조 변수를 선언하고 객체를 생성하세요.",
           "반환받은 문장은 호출부에서 출력하세요."
         ],
         "id": "objects-01"
       },
       {
-        "title": "정적 계산 메서드",
-        "body": "두 정수를 더해 결과를 반환하는 정적 메서드를 작성하세요.",
+        "title": "Static 계산 메서드",
+        "body": "두 정수를 더해 결과를 반환하는 Static 메서드를 작성하세요.",
         "conditions": [
           "CLASS-METHODS를 사용하세요.",
           "객체를 생성하지 않고 =>로 호출하세요.",
@@ -525,19 +525,19 @@ window.WIKI_PRACTICE = [
       },
       {
         "title": "카운터 객체 두 개",
-        "body": "숫자를 하나씩 증가시키는 카운터 클래스를 만들고 객체를 두 개 생성하세요.",
+        "body": "숫자를 하나씩 증가시키는 카운터 Class를 만들고 객체를 두 개 생성하세요.",
         "conditions": [
-          "카운터 값은 인스턴스 속성으로 두세요.",
+          "카운터 값은 Instance 속성으로 두세요.",
           "증가 메서드와 값 조회 메서드를 분리하세요.",
           "각 객체를 다른 횟수로 증가시켜 상태가 독립적인지 확인하세요."
         ],
         "id": "objects-03"
       },
       {
-        "title": "첫 번째 로컬 클래스",
-        "body": "화면에 안녕하세요를 출력하는 로컬 클래스를 작성하세요.",
+        "title": "첫 번째 Local Class",
+        "body": "화면에 안녕하세요를 출력하는 Local Class를 작성하세요.",
         "conditions": [
-          "PUBLIC SECTION에 매개변수 없는 인스턴스 메서드를 선언하세요.",
+          "PUBLIC SECTION에 매개변수 없는 Instance 메서드를 선언하세요.",
           "객체를 생성한 뒤 ->로 메서드를 호출하세요."
         ],
         "id": "objects-04"
@@ -553,7 +553,7 @@ window.WIKI_PRACTICE = [
       },
       {
         "title": "이름 속성 읽기",
-        "body": "이름을 보관하는 공개 인스턴스 속성이 있는 로컬 클래스를 작성하세요.",
+        "body": "이름을 보관하는 공개 Instance 속성이 있는 Local Class를 작성하세요.",
         "conditions": [
           "객체를 생성하고 ->로 이름 속성에 값을 넣으세요.",
           "속성 값을 다시 읽어 화면에 출력하세요."
@@ -562,34 +562,34 @@ window.WIKI_PRACTICE = [
       },
       {
         "title": "생성자로 이름 설정",
-        "body": "객체 생성 시 이름을 받아 저장하는 로컬 클래스를 작성하세요.",
+        "body": "객체 생성 시 이름을 받아 저장하는 Local Class를 작성하세요.",
         "conditions": [
           "CONSTRUCTOR의 IMPORTING 매개변수로 이름을 받으세요.",
-          "저장된 이름을 출력하는 인스턴스 메서드를 호출하세요."
+          "저장된 이름을 출력하는 Instance 메서드를 호출하세요."
         ],
         "id": "objects-07"
       },
       {
         "title": "숫자 저장과 조회",
-        "body": "정수 값을 저장하고 돌려주는 로컬 클래스를 작성하세요.",
+        "body": "정수 값을 저장하고 돌려주는 Local Class를 작성하세요.",
         "conditions": [
-          "값은 PRIVATE SECTION의 인스턴스 속성으로 선언하세요.",
+          "값은 PRIVATE SECTION의 Instance 속성으로 선언하세요.",
           "공개 설정 메서드와 조회 메서드로 7을 저장하고 읽으세요."
         ],
         "id": "objects-08"
       },
       {
         "title": "카운터 초기화",
-        "body": "증가와 초기화 기능이 있는 간단한 카운터 클래스를 작성하세요.",
+        "body": "증가와 초기화 기능이 있는 간단한 카운터 Class를 작성하세요.",
         "conditions": [
-          "인스턴스 속성을 0에서 시작하고 증가 메서드에서 1을 더하세요.",
+          "Instance 속성을 0에서 시작하고 증가 메서드에서 1을 더하세요.",
           "두 번 증가한 뒤 초기화 메서드를 호출하고 값이 0인지 확인하세요."
         ],
         "id": "objects-09"
       },
       {
         "title": "두 수 중 작은 값 반환",
-        "body": "정수 두 개 중 작은 값을 반환하는 정적 메서드를 작성하세요.",
+        "body": "정수 두 개 중 작은 값을 반환하는 Static 메서드를 작성하세요.",
         "conditions": [
           "CLASS-METHODS와 IF문을 사용하세요.",
           "객체 생성 없이 =>로 호출해 4와 9를 비교한 결과를 출력하세요."

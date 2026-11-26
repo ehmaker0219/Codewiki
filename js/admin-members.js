@@ -8,7 +8,7 @@
   let sortKey='full_name',sortDirection=1;
   let session=null,active=false,rows=[],rowsLoaded=false,version=0,loading=false,rowsMessage='';
   let logins=[],loginsLoaded=false,loginsVersion=0,loginsLoading=false,loginsMessage='',loginsUserId='';
-  let query='',classFilter='',statusFilter='',selectedUserId='',dialog=null,resetBusy=false,logoutAllBusy=false;
+  let query='',classFilter='',statusFilter='',selectedUserId='',dialog=null,resetBusy=false,usernameBusy=false,logoutAllBusy=false;
   let online=null;
   const isAdminRoute=()=>window.location.hash==='#admin/students'||window.location.hash==='#admin/logins';
   const currentTab=()=>window.location.hash==='#admin/logins'?'logins':'students';
@@ -20,7 +20,15 @@
     document.getElementById('openStudentDirectoryBtn')?.classList[active&&tab==='students'?'add':'remove']('active');
     document.getElementById('openLoginHistoryBtn')?.classList[active&&tab==='logins'?'add':'remove']('active');
   }
-  function closeReset(){if(dialog){dialog.close();dialog.innerHTML='';}resetBusy=false;logoutAllBusy=false;const lb=host.querySelector('[data-logout-all]');if(lb)lb.disabled=false;}
+  function closeReset(){if(dialog){dialog.close();dialog.innerHTML='';}resetBusy=false;usernameBusy=false;logoutAllBusy=false;const lb=host.querySelector('[data-logout-all]');if(lb)lb.disabled=false;}
+  function ensureDialog(labelledBy){
+    if(!dialog){
+      dialog=document.createElement('dialog');dialog.className='profile-dialog';document.body.append(dialog);
+      dialog.addEventListener('cancel',e=>{if(resetBusy||usernameBusy||logoutAllBusy)e.preventDefault();});
+      dialog.addEventListener('close',()=>{dialog.innerHTML='';});
+    }
+    dialog.setAttribute('aria-labelledby',labelledBy);
+  }
   function clear(){
     version++;loginsVersion++;
     rows=[];rowsLoaded=false;loading=false;rowsMessage='';
@@ -92,7 +100,7 @@
     }
     const filtered=rows.filter(matches).sort(compareRows);
     host.querySelector('#membersCount').textContent=`${filtered.length}명 / 전체 ${rows.length}명`;
-    host.querySelector('#membersTable').innerHTML=filtered.length?`<table class="members-table"><caption>학생 계정 목록 · 생년월일은 관리자 전용</caption><thead><tr>${columns.map(([key,label])=>`<th scope="col" aria-sort="${sortKey===key?(sortDirection===1?'ascending':'descending'):'none'}"><button type="button" class="members-sort" data-members-sort="${key}" aria-label="${label} ${sortKey===key&&sortDirection===1?'내림차순':'오름차순'} 정렬">${label}<span aria-hidden="true">${sortKey===key?(sortDirection===1?'↑':'↓'):'↕'}</span></button></th>`).join('')}<th scope="col">비밀번호</th></tr></thead><tbody>${filtered.map(u=>`<tr><td>${esc(u.student_number??'—')}</td><td>${esc(u.full_name)}</td><td>${esc(u.class_name||'기본반')}</td><td>${esc(u.username)}</td><td>${esc(u.birth_date||'미등록')}</td><td>${esc(u.mbti||'—')}</td><td>${esc(statuses[u.status]||u.status)}</td><td>${u.last_login_at?`<button type="button" class="members-login-link" data-view-logins="${esc(u.username)}" data-view-logins-id="${esc(u.id)}" title="로그인 내역 보기">${esc(formatDateTime(u.last_login_at))}${Number(u.login_count)>0?` <small>(${esc(u.login_count)}회)</small>`:''}</button>`:'—'}</td><td>${esc(formatDate(u.created_at))}</td><td><button type="button" class="toss-chip-btn" data-reset-student="${esc(u.id)}">재설정</button></td></tr>`).join('')}</tbody></table>`:loading||rowsMessage?'':'<p class="members-reset-note">표시할 학생이 없습니다.</p>';
+    host.querySelector('#membersTable').innerHTML=filtered.length?`<table class="members-table"><caption>학생 계정 목록 · 생년월일은 관리자 전용</caption><thead><tr>${columns.map(([key,label])=>`<th scope="col" aria-sort="${sortKey===key?(sortDirection===1?'ascending':'descending'):'none'}"><button type="button" class="members-sort" data-members-sort="${key}" aria-label="${label} ${sortKey===key&&sortDirection===1?'내림차순':'오름차순'} 정렬">${label}<span aria-hidden="true">${sortKey===key?(sortDirection===1?'↑':'↓'):'↕'}</span></button></th>`).join('')}<th scope="col">계정 관리</th></tr></thead><tbody>${filtered.map(u=>`<tr><td>${esc(u.student_number??'—')}</td><td>${esc(u.full_name)}</td><td>${esc(u.class_name||'기본반')}</td><td>${esc(u.username)}</td><td>${esc(u.birth_date||'미등록')}</td><td>${esc(u.mbti||'—')}</td><td>${esc(statuses[u.status]||u.status)}</td><td>${u.last_login_at?`<button type="button" class="members-login-link" data-view-logins="${esc(u.username)}" data-view-logins-id="${esc(u.id)}" title="로그인 내역 보기">${esc(formatDateTime(u.last_login_at))}${Number(u.login_count)>0?` <small>(${esc(u.login_count)}회)</small>`:''}</button>`:'—'}</td><td>${esc(formatDate(u.created_at))}</td><td class="members-actions-cell"><div class="members-row-actions"><button type="button" class="toss-chip-btn" data-edit-username="${esc(u.id)}">아이디 변경</button><button type="button" class="toss-chip-btn" data-reset-student="${esc(u.id)}">비밀번호 재설정</button></div></td></tr>`).join('')}</tbody></table>`:loading||rowsMessage?'':'<p class="members-reset-note">표시할 학생이 없습니다.</p>';
   }
   function sortValue(row){
     const value=sortKey==='status'?statuses[row.status]:row[sortKey];
@@ -182,10 +190,8 @@
     }
   }
   function openReset(id){
-    const student=rows.find(u=>u.id===id),s=session,v=version;if(!student||!active||resetBusy||logoutAllBusy)return;
-    if(!dialog){dialog=document.createElement('dialog');dialog.className='profile-dialog';dialog.setAttribute('aria-labelledby','studentResetTitle');document.body.append(dialog);
-      dialog.addEventListener('cancel',e=>{if(resetBusy||logoutAllBusy)e.preventDefault();});dialog.addEventListener('close',()=>{dialog.innerHTML='';});}
-    dialog.setAttribute('aria-labelledby','studentResetTitle');
+    const student=rows.find(u=>u.id===id),s=session,v=version;if(!student||!active||resetBusy||usernameBusy||logoutAllBusy)return;
+    ensureDialog('studentResetTitle');
     dialog.innerHTML=`<div class="profile-dialog-header"><h2 id="studentResetTitle">비밀번호 재설정</h2><button type="button" class="icon-btn" data-reset-close aria-label="닫기">✕</button></div><p class="members-reset-note">${esc(student.full_name)} · @${esc(student.username)}<br>변경하면 이 학생의 기존 로그인 세션이 종료됩니다. 현재 비밀번호는 조회할 수 없습니다.</p><form><label for="resetAdminPassword">관리자 비밀번호</label><input id="resetAdminPassword" type="password" autocomplete="current-password" required><label for="resetNewPassword">학생의 새 비밀번호</label><input id="resetNewPassword" type="password" autocomplete="new-password" minlength="8" required><label for="resetConfirmPassword">새 비밀번호 확인</label><input id="resetConfirmPassword" type="password" autocomplete="new-password" minlength="8" required><p class="members-reset-note">8자 이상 입력해 주세요.</p><p id="studentResetMessage" role="status"></p><div class="profile-dialog-actions"><button type="button" class="toss-chip-btn" data-reset-close>취소</button><button type="submit" class="toss-primary-btn">비밀번호 변경</button></div></form>`;
     dialog.querySelectorAll('[data-reset-close]').forEach(b=>b.addEventListener('click',()=>{if(!resetBusy)closeReset();}));
     const form=dialog.querySelector('form'),admin=form.querySelector('#resetAdminPassword'),password=form.querySelector('#resetNewPassword'),confirm=form.querySelector('#resetConfirmPassword'),message=form.querySelector('#studentResetMessage');
@@ -209,11 +215,49 @@
     });
     dialog.showModal();admin.focus();
   }
+  function openUsernameEdit(id){
+    const student=rows.find(u=>u.id===id),s=session,v=version;if(!student||!active||resetBusy||usernameBusy||logoutAllBusy)return;
+    ensureDialog('studentUsernameTitle');
+    dialog.innerHTML=`<div class="profile-dialog-header"><h2 id="studentUsernameTitle">아이디 변경</h2><button type="button" class="icon-btn" data-username-close aria-label="닫기">✕</button></div><p class="members-reset-note">${esc(student.full_name)} · 현재 아이디: <strong>${esc(student.username)}</strong><br>변경 즉시 새 아이디로 로그인할 수 있으며, 기존 비밀번호와 학습 기록은 그대로 유지됩니다.</p><form><label for="editNewUsername">새 아이디</label><input id="editNewUsername" type="text" autocomplete="off" autocapitalize="none" spellcheck="false" minlength="2" maxlength="100" value="${esc(student.username)}" required><p class="members-reset-note">2~100자, 공백 없이 입력해 주세요. 영문은 소문자로 저장됩니다.</p><p id="studentUsernameMessage" role="status"></p><div class="profile-dialog-actions"><button type="button" class="toss-chip-btn" data-username-close>취소</button><button type="submit" class="toss-primary-btn">아이디 변경</button></div></form>`;
+    dialog.querySelectorAll('[data-username-close]').forEach(b=>b.addEventListener('click',()=>{if(!usernameBusy)closeReset();}));
+    const form=dialog.querySelector('form'),input=form.querySelector('#editNewUsername'),message=form.querySelector('#studentUsernameMessage');
+    form.addEventListener('submit',async e=>{
+      e.preventDefault();if(usernameBusy||!current(s,v)||!dialog.open||!form.isConnected)return;
+      const nextUsername=input.value.trim().toLowerCase();
+      const charCount=Array.from(nextUsername).length,byteCount=new TextEncoder().encode(nextUsername).length;
+      if(charCount<2||charCount>100||byteCount>300){message.textContent='아이디는 2~100자(UTF-8 300바이트 이하)로 입력해 주세요.';return;}
+      if(/[\s\u0000-\u001f\u007f\u00a0\u3000]/.test(nextUsername)){message.textContent='아이디에는 공백이나 제어 문자를 포함할 수 없습니다.';return;}
+      if(nextUsername===student.username){message.textContent='현재 아이디와 같습니다. 다른 아이디를 입력해 주세요.';return;}
+      usernameBusy=true;form.querySelectorAll('input,button').forEach(el=>el.disabled=true);message.textContent='변경 중…';
+      try{
+        const result=await call('cw_admin_update_student_username',{p_target_id:student.id,p_new_username:nextUsername},s);
+        if(!current(s,v)||!dialog.open||!form.isConnected)return;
+        if(result?.ok!==true||result.user_id!==student.id||typeof result.username!=='string')throw Error();
+        student.username=result.username;
+        for(const entry of logins)if(entry.user_id===student.id)entry.username=result.username;
+        closeReset();
+        rowsMessage=`${student.full_name}님의 아이디를 ${result.username}(으)로 변경했습니다.`;
+        renderRows();
+        const msgEl=host.querySelector('#membersMessage');if(msgEl)msgEl.textContent=rowsMessage;
+      }catch(error){if(current(s,v)&&dialog.open&&form.isConnected){
+        const messages={
+          '42501':'관리자 로그인이 만료되었습니다. 다시 로그인해 주세요.',
+          CW_ADMIN_REQUIRED:'관리자 로그인이 만료되었습니다. 다시 로그인해 주세요.',
+          CW_STUDENT_NOT_FOUND:'학생 계정을 찾을 수 없습니다.',
+          CW_INVALID_USERNAME:'아이디는 공백 없이 2~100자(UTF-8 300바이트 이하)로 입력해 주세요.',
+          CW_USERNAME_UNCHANGED:'현재 아이디와 같습니다. 다른 아이디를 입력해 주세요.',
+          CW_USERNAME_TAKEN:'이미 사용 중인 아이디입니다. 다른 아이디를 입력해 주세요.',
+          CW_RATE_LIMIT:'요청이 너무 빠릅니다. 잠시 후 다시 시도해 주세요.',
+          PGRST202:'아이디 변경 기능이 아직 서버에 적용되지 않았습니다.'
+        };
+        message.textContent=messages[error?.code]||'아이디를 변경하지 못했습니다. 잠시 후 다시 시도해 주세요.';
+      }}finally{if(current(s,v)&&form.isConnected){usernameBusy=false;form.querySelectorAll('input,button').forEach(el=>el.disabled=false);}}
+    });
+    dialog.showModal();input.focus();input.select?.();
+  }
   function openLogoutAllConfirm(){
-    const s=session,v=version;if(!active||!s||resetBusy||logoutAllBusy)return;
-    if(!dialog){dialog=document.createElement('dialog');dialog.className='profile-dialog';dialog.setAttribute('aria-labelledby','logoutAllTitle');document.body.append(dialog);
-      dialog.addEventListener('cancel',e=>{if(resetBusy||logoutAllBusy)e.preventDefault();});dialog.addEventListener('close',()=>{dialog.innerHTML='';});}
-    dialog.setAttribute('aria-labelledby','logoutAllTitle');
+    const s=session,v=version;if(!active||!s||resetBusy||usernameBusy||logoutAllBusy)return;
+    ensureDialog('logoutAllTitle');
     dialog.innerHTML=`<div class="profile-dialog-header"><h2 id="logoutAllTitle">전원 로그아웃</h2><button type="button" class="icon-btn" data-logout-close aria-label="닫기">✕</button></div><p class="members-reset-note">현재 로그인 중인 <strong>모든 학생 계정</strong>의 세션을 종료합니다.<br>접속 중인 학생에게는 <strong>"관리자에 의해 로그아웃되었습니다."</strong> 팝업이 표시되고 바로 로그인 화면으로 이동합니다. 관리자 세션은 유지됩니다.</p><p id="logoutAllMessage" role="status"></p><div class="profile-dialog-actions"><button type="button" class="toss-chip-btn" data-logout-close>취소</button><button type="button" id="confirmLogoutAllBtn" class="toss-chip-btn members-danger-btn">전원 로그아웃 실행</button></div>`;
     dialog.querySelectorAll('[data-logout-close]').forEach(b=>b.addEventListener('click',()=>{if(!logoutAllBusy)closeReset();}));
     const confirmBtn=dialog.querySelector('#confirmLogoutAllBtn');
@@ -262,6 +306,7 @@
     const tab=e.target.closest('[data-members-tab]');if(tab){switchTab(tab.dataset.membersTab);return;}
     const viewLogins=e.target.closest('[data-view-logins]');if(viewLogins){switchTab('logins',viewLogins.dataset.viewLogins,viewLogins.dataset.viewLoginsId);return;}
     const sort=e.target.closest('[data-members-sort]');if(sort){sortBy(sort.dataset.membersSort);return;}
+    const editUsername=e.target.closest('[data-edit-username]');if(editUsername){openUsernameEdit(editUsername.dataset.editUsername);return;}
     const b=e.target.closest('[data-reset-student]');if(b)openReset(b.dataset.resetStudent);
   });
   host.addEventListener('input',e=>{

@@ -3,8 +3,8 @@ const flush=()=>new Promise(resolve=>setImmediate(resolve));
 const nodes=new Map(),requests=[],timers=new Map();let token='admin-session',timerId=0;
 function node(id){
  if(!nodes.has(id))nodes.set(id,{innerHTML:'',textContent:'',value:'',hidden:true,open:false,isConnected:true,events:{},classList:{add(){},remove(){}},
-  addEventListener(k,fn){this.events[k]=fn;},setAttribute(){},focus(){},showModal(){this.open=true;},close(){this.open=false;this.events.close?.();},
-  querySelector:s=>node(s.startsWith('#')?s.slice(1):s),querySelectorAll:s=>s==='input,button'?['resetAdminPassword','resetNewPassword','resetConfirmPassword','submit'].map(node):s==='[data-reset-close]'?[node('close-reset')]:[]});
+  addEventListener(k,fn){this.events[k]=fn;},setAttribute(){},focus(){},select(){},showModal(){this.open=true;},close(){this.open=false;this.events.close?.();},
+  querySelector:s=>node(s.startsWith('#')?s.slice(1):s),querySelectorAll:s=>s==='input,button'?['resetAdminPassword','resetNewPassword','resetConfirmPassword','editNewUsername','submit'].map(node):s==='[data-reset-close]'?[node('close-reset')]:s==='[data-username-close]'?[node('close-username')]:[]});
  return nodes.get(id);
 }
 const window={location:{hash:'#admin/students'},events:{},addEventListener(k,fn){this.events[k]=fn;},CodeWikiLearning:{escape:s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))},
@@ -15,7 +15,7 @@ const context={window,document:{getElementById:node,querySelectorAll:()=>[],crea
  setTimeout:fn=>{const id=++timerId;timers.set(id,fn);return id;},clearTimeout:id=>timers.delete(id)};
 vm.runInNewContext(fs.readFileSync('js/admin-members.js','utf8'),context);
 const api=window.CodeWikiAdminMembers,host=node('adminMembersPage');
-const click=(kind,id,extra={})=>host.events.click({target:{closest:selector=>selector===kind?{dataset:{resetStudent:id,membersSort:id,membersTab:id,viewLogins:id,...extra}}:null}});
+const click=(kind,id,extra={})=>host.events.click({target:{closest:selector=>selector===kind?{dataset:{resetStudent:id,editUsername:id,membersSort:id,membersTab:id,viewLogins:id,...extra}}:null}});
 const input=(id,value)=>host.events[id==='membersSearch'?'input':'change']({target:{id,value}});
 const submit=()=>node('form').events.submit({preventDefault(){}});
 const fixtures=[{id:'s1',username:'student-one',full_name:'<img onerror=alert(1)>',class_name:'1반',student_number:null,mbti:'INTJ',status:'approved',birth_date:'2000-01-02',created_at:'2026-11-19T00:00:00Z'},
@@ -118,5 +118,38 @@ const fixtures=[{id:'s1',username:'student-one',full_name:'<img onerror=alert(1)
  staleLogins2.resolve({data:[loginFixtures[0]]});await flush();
  freshLogins2.resolve({data:loginFixtures});await flush();
  assert.match(node('membersCount').textContent,/2건 \/ 전체 2건/);
- console.log('PASS: admin-only directory, login history, escaped fields, local filters, bounded/coalesced reads, reauthentication reset, duplicate guard, credential clearing, timeout and session isolation');
+ // Username change flow: local validation, duplicate guard, error mapping, table + login cache update, timeout guard.
+ click('[data-members-tab]','students');
+ assert.equal(requests.length,1);requests.shift().resolve({data:sortable.map(r=>({...r}))});await flush();
+ input('membersSearch','');
+ assert.ok(node('membersTable').innerHTML.includes('data-edit-username="n1"'),'directory renders username edit button');
+ click('[data-edit-username]','n1');assert.equal(node('dialog').open,true);
+ node('editNewUsername').value='a';await submit();assert.equal(requests.length,0);assert.match(node('studentUsernameMessage').textContent,/2~100자/);
+ node('editNewUsername').value='bad space';await submit();assert.equal(requests.length,0);assert.match(node('studentUsernameMessage').textContent,/공백/);
+ node('editNewUsername').value='user10';await submit();assert.equal(requests.length,0);assert.match(node('studentUsernameMessage').textContent,/현재 아이디와 같습니다/);
+ node('editNewUsername').value='  NewUser10  ';
+ const renaming=submit();submit();assert.equal(requests.length,1,'duplicate username change coalesced');
+ const renameReq=requests.shift();
+ assert.equal(renameReq.name,'cw_admin_update_student_username');
+ assert.equal(renameReq.args.p_target_id,'n1');
+ assert.equal(renameReq.args.p_new_username,'newuser10');
+ renameReq.resolve({error:{code:'CW_USERNAME_TAKEN',message:'raw constraint detail'}});await renaming;
+ assert.match(node('studentUsernameMessage').textContent,/이미 사용 중인 아이디/);
+ assert.ok(!node('studentUsernameMessage').textContent.includes('raw constraint'));
+ node('editNewUsername').value='  NewUser10  ';
+ const renamed=submit();
+ requests.shift().resolve({data:{ok:true,user_id:'n1',previous_username:'user10',username:'newuser10'}});await renamed;
+ assert.equal(node('dialog').open,false);assert.equal(node('dialog').innerHTML,'');
+ assert.match(node('membersMessage').textContent,/newuser10/);
+ assert.ok(node('membersTable').innerHTML.includes('newuser10'),'directory table updated with new username');
+ assert.ok(!node('membersTable').innerHTML.includes('>user10<'),'old username removed from directory table');
+ click('[data-members-tab]','logins');
+ assert.ok(node('membersTable').innerHTML.includes('newuser10'),'cached login history updated with new username');
+ click('[data-members-tab]','students');
+ click('[data-edit-username]','n2');node('editNewUsername').value='slow_user2';
+ const slowRename=submit();[...timers.values()][0]();await slowRename;
+ assert.match(node('studentUsernameMessage').textContent,/아이디를 변경하지 못했습니다/);
+ requests.shift().resolve({data:{ok:true,user_id:'n2',username:'slow_user2'}});await flush();
+ assert.equal(node('dialog').open,true,'late timeout success must not overwrite username dialog');
+ console.log('PASS: admin-only directory, username change, login history, escaped fields, local filters, bounded/coalesced reads, reauthentication reset, duplicate guard, credential clearing, timeout and session isolation');
 })().catch(e=>{console.error(e);process.exitCode=1;});

@@ -110,12 +110,12 @@ ENDDO.`), text('출력은 1, 3, 5입니다. CONTINUE는 현재 반복의 남은 
       ['S', '성공 또는 상태 안내'], ['I', '정보 안내'], ['W', '경고'], ['E', '오류 처리'], ['A', '처리 중단'], ['X', '런타임 오류와 숏덤프 발생']
     ]), text('팝업·상태바 표시와 이후 제어 흐름은 메시지 유형뿐 아니라 선택 화면, 화면 PAI, 배치 등 실행 맥락에 따라 달라집니다. E/W를 “항상 하단 바에만 표시”라고 외우지 않습니다.')),
     section('직접 문구와 메시지 클래스', code('직접 문구', `MESSAGE '입력값을 확인하세요' TYPE 'I'.`), code('메시지 클래스 예시 — ZCW와 001을 먼저 생성', `MESSAGE i001(zcw) WITH sy-uname.`), text('메시지 클래스는 000~999 번호로 문구를 관리하고 번역할 수 있습니다. 문구의 & 자리표시자에 WITH의 값을 전달하며 최대 네 개의 값을 사용할 수 있습니다.')),
-    section('예외와 반환 코드', text('클래식 예외는 호출 시 EXCEPTIONS에 번호를 매핑하고 sy-subrc로 처리하는 방식을 볼 수 있습니다. 클래스 기반 예외는 TRY … CATCH … ENDTRY로 처리합니다.', '같은 인터페이스의 예외 선언 방식은 해당 문법의 제약을 따릅니다. Program 전체에서 두 방식이 절대 공존할 수 없다는 뜻은 아닙니다.'))
+    section('예외와 반환 코드', text('클래식 예외는 호출 시 EXCEPTIONS에 번호를 매핑하고 sy-subrc로 처리하는 방식을 볼 수 있습니다. Class 기반 예외는 TRY … CATCH … ENDTRY로 처리합니다.', '같은 인터페이스의 예외 선언 방식은 해당 문법의 제약을 따릅니다. Program 전체에서 두 방식이 절대 공존할 수 없다는 뜻은 아닙니다.'))
   ], '11/12 · 11/13 · 11/16 · 11/17');
 
   put('abap-modularization', '프로그램 모듈화', '서브루틴, 함수 모듈, 메서드를 구분하고 매개변수 전달 방향을 읽습니다.', ['프로그램 모듈화', '서브루틴', 'FORM', 'PERFORM', 'Function Module', '함수 모듈'], [
     section('모듈화 방식', table(['단위', '호출', '주요 용도'], [
-      ['서브루틴', 'PERFORM', '클래식 Program 내 절차 분리'], ['함수 모듈', 'CALL FUNCTION', '함수 그룹에 속하는 재사용 단위'], ['메서드', '클래스=>메서드 / 참조->메서드', '클래스의 동작을 캡슐화']
+      ['서브루틴', 'PERFORM', '클래식 Program 내 절차 분리'], ['함수 모듈', 'CALL FUNCTION', '함수 그룹에 속하는 재사용 단위'], ['메서드', 'Class=>메서드 / 참조->메서드', 'Class의 동작을 캡슐화']
     ])),
     section('서브루틴 매개변수', table(['선언 방식', '전달과 반영'], [
       ['USING VALUE(p)', '값 복사. 내부 변경은 호출자에게 복사되지 않음'], ['CHANGING VALUE(p)', '값을 복사하고 정상 종료 시 결과를 호출자에게 반영'], ['USING p / CHANGING p', '참조 전달. 같은 실제 데이터를 가리키므로 변경이 호출자에 반영']
@@ -145,11 +145,11 @@ ENDFORM.`)),
     section('입출력과 오류 처리', text('BAPI는 화면 팝업 대신 RETURN 구조 또는 테이블로 성공·오류 메시지를 전달하도록 설계합니다. 호출자는 RETURN의 TYPE과 메시지 내용을 확인해야 합니다.', '원격 함수의 인터페이스는 RFC 지원 타입과 값 전달 제약을 따릅니다. 일반 로컬 함수의 모든 설정에 그대로 적용할 규칙으로 이해하지 마세요.', '변경 BAPI의 커밋·롤백 책임은 개별 BAPI 문서를 확인해야 합니다. 호출 성공 여부만 보고 저장 완료라고 판단하지 않습니다.'))
   ], '11/17');
 
-  put('abap-objects', '클래스와 메서드', '클래스 자체의 정적 메서드와 객체의 인스턴스 메서드를 구분합니다.', ['Global class', 'Local class', '정적 메서드', '인스턴스 메서드', '참조 변수', 'TYPE REF TO'], [
-    section('글로벌 클래스와 로컬 클래스', text('글로벌 클래스는 저장소 객체로 관리하며 SE24에서 확인할 수 있습니다. 로컬 클래스는 Program 안에 정의합니다. 클래스는 속성과 메서드를 함께 묶는 단위입니다.')),
-    section('정적 호출과 인스턴스 호출', table(['종류', '표기', '특징'], [
-      ['정적 메서드', '클래스명=>메서드명( )', '객체 생성 없이 클래스에 호출'], ['인스턴스 메서드', '참조변수->메서드명( )', '생성된 객체를 참조하여 호출']
-    ]), text('TYPE REF TO는 객체 참조를 보관할 변수를 선언합니다. 선언만으로 객체가 생기지는 않으며 CREATE OBJECT 또는 NEW로 생성합니다.'), code('로컬 클래스의 인스턴스 메서드', `REPORT zabap_f##_##.
+  put('abap-objects', 'Class와 메서드', 'Class 자체의 Static 메서드와 객체의 Instance 메서드를 구분합니다.', ['Global Class', 'Local Class', 'Static Method', 'Instance Method', '정적 메서드', '인스턴스 메서드', '참조 변수', 'TYPE REF TO'], [
+    section('Global Class와 Local Class', text('Global Class는 저장소 객체로 관리하며 SE24에서 확인할 수 있습니다. Local Class는 Program 안에 정의합니다. Class는 속성과 메서드를 함께 묶는 단위입니다.')),
+    section('Static 호출과 Instance 호출', table(['종류', '표기', '특징'], [
+      ['Static 메서드', 'Class명=>메서드명( )', '객체 생성 없이 Class에 호출'], ['Instance 메서드', '참조변수->메서드명( )', '생성된 객체를 참조하여 호출']
+    ]), text('TYPE REF TO는 객체 참조를 보관할 변수를 선언합니다. 선언만으로 객체가 생기지는 않으며 CREATE OBJECT 또는 NEW로 생성합니다.'), code('Local Class의 Instance 메서드', `REPORT zabap_f##_##.
 CLASS lcl_greeter DEFINITION.
   PUBLIC SECTION.
     METHODS greet.
@@ -167,15 +167,15 @@ START-OF-SELECTION.
 
   put('abap-program-types', 'Program 종류와 Include', '실행 가능한 리포트와 다른 Program에 포함되는 소스 단위를 구분합니다.', ['Include Program', 'Include 프로그램', '리포트 프로그램', 'Module Pool'], [
     section('Program과 저장소 객체', table(['종류', '역할'], [
-      ['실행 가능 Program / Report', '선택 화면과 이벤트를 사용해 실행·출력'], ['Module Pool', '클래식 Dynpro 화면과 대화형 흐름 처리'], ['Function Pool', '함수 그룹의 런타임 Program'], ['Class Pool', '글로벌 클래스의 런타임 Program'], ['Interface Pool', '글로벌 인터페이스의 런타임 Program'], ['Include', '다른 Program에 포함되는 소스. 독립 실행 대상이 아님']
+      ['실행 가능 Program / Report', '선택 화면과 이벤트를 사용해 실행·출력'], ['Module Pool', '클래식 Dynpro 화면과 대화형 흐름 처리'], ['Function Pool', '함수 그룹의 런타임 Program'], ['Class Pool', 'Global Class의 런타임 Program'], ['Interface Pool', 'Global Interface의 런타임 Program'], ['Include', '다른 Program에 포함되는 소스. 독립 실행 대상이 아님']
     ]), text('“Screen”은 화면 객체를, “OOP”는 객체지향 프로그래밍 방식을 가리킵니다. 이를 그대로 공식 Program 유형 이름과 일대일 대응시키지 않습니다.')),
     section('Include와 모듈화', text('Include는 소스를 나누는 수단입니다. Include 자체가 별도 매개변수나 호출 경계를 만드는 함수는 아닙니다. 동작 단위의 재사용은 서브루틴·함수 모듈·메서드와 구분해서 설계합니다.'))
   ], '11/17');
 
   // 11/18: retain earlier sections so their curated daily pages stay unchanged.
   raw['abap-objects'].sections.splice(-1, 1,
-    section('로컬 클래스의 정의와 구현', text('12번 Program 필기: DEFINITION에서 속성과 메서드의 인터페이스를 선언하고 IMPLEMENTATION에서 메서드의 동작을 작성합니다. 속성만 선언하고 구현할 메서드가 없다면 구현부를 생략할 수 있습니다.', '접근 영역은 PUBLIC → PROTECTED → PRIVATE 순서입니다. 수업에서는 PUBLIC과 PRIVATE를 사용했지만 영역이 두 종류뿐인 것은 아닙니다. CLASS-METHODS는 정적 메서드, METHODS는 인스턴스 메서드 선언입니다.'),
-      code('로컬 클래스의 정적 메서드', `REPORT zabap_f##_##.
+    section('Local Class의 정의와 구현', text('12번 Program 필기: DEFINITION에서 속성과 메서드의 인터페이스를 선언하고 IMPLEMENTATION에서 메서드의 동작을 작성합니다. 속성만 선언하고 구현할 메서드가 없다면 구현부를 생략할 수 있습니다.', '접근 영역은 PUBLIC → PROTECTED → PRIVATE 순서입니다. 수업에서는 PUBLIC과 PRIVATE를 사용했지만 영역이 두 종류뿐인 것은 아닙니다. CLASS-METHODS는 Static 메서드, METHODS는 Instance 메서드 선언입니다.'),
+      code('Local Class의 Static 메서드', `REPORT zabap_f##_##.
 CLASS lcl_calculator DEFINITION.
   PUBLIC SECTION.
     CLASS-METHODS double
@@ -194,7 +194,7 @@ ENDCLASS.
 START-OF-SELECTION.
   DATA lv_result TYPE i.
   lv_result = lcl_calculator=>double( iv_number = 5 ).
-  WRITE / lv_result.`), text('클래스 외부에서는 공개된 double 메서드를 호출하고, PRIVATE 영역의 c_factor는 클래스 내부에서 사용합니다. 호출 방식은 [[unit-04|Unit 4 · ABAP 모듈화 기법]]의 서브루틴·함수 모듈과 비교해 보세요.')),
+  WRITE / lv_result.`), text('Class 외부에서는 공개된 double 메서드를 호출하고, PRIVATE 영역의 c_factor는 Class 내부에서 사용합니다. 호출 방식은 [[unit-04|Unit 4 · ABAP 모듈화 기법]]의 서브루틴·함수 모듈과 비교해 보세요.')),
     source('11/17 · 11/18', [
       ['`ZABAP_F##_11`', 'ABAP Call Class Method'],
       ['`ZABAP_F##_12`', 'ABAP Local Class'],
@@ -381,7 +381,7 @@ SELECT carrid, connid, cityfrom, cityto
   INTO TABLE @DATA(gt_connections).
 
 cl_demo_output=>display( gt_connections ).`),
-      text('cl_demo_output=>display( gt_connections ).은 학습·테스트용으로 Internal Table을 빠르게 화면에 출력하는 정적 메서드입니다. 실무 조회 화면용 ALV와는 구분해서 사용하세요.')),
+      text('cl_demo_output=>display( gt_connections ).은 학습·테스트용으로 Internal Table을 빠르게 화면에 출력하는 Static 메서드입니다. 실무 조회 화면용 ALV와는 구분해서 사용하세요.')),
     section('Report 처리 순서', text('Classic ABAP Report는 REPORT 선언 이후 PARAMETERS·SELECT-OPTIONS·DATA 선언을 거쳐 아래 이벤트 순서대로 처리됩니다.'),
       table(['단계', '역할'], [
         ['1. 선언부 (REPORT · PARAMETERS · SELECT-OPTIONS · DATA)', 'Program 헤더, Selection Screen 입력 항목, 데이터 변수 선언'],
@@ -1350,16 +1350,16 @@ ENDLOOP.`)),
   );
 
   putUnit(4, 'ABAP 모듈화 기법', 'Modularization Techniques in ABAP', 125,
-    '서브루틴(FORM/PERFORM), Function Group·Function Module(SE37), BAPI와 RFC, 글로벌·로컬 클래스(SE24)와 Exercise 6–12 실습 가이드를 정리합니다.',
-    ['프로그램 모듈화', 'BAPI와 RFC', '클래스와 메서드', '서브루틴', 'FORM', 'PERFORM', 'Function Module', '함수 모듈', 'BAPI', 'RFC', 'RETURN', 'Global class', 'Local class', '정적 메서드', '인스턴스 메서드', '참조 변수', 'TYPE REF TO'],
+    '서브루틴(FORM/PERFORM), Function Group·Function Module(SE37), BAPI와 RFC, Global·Local Class(SE24)와 Exercise 6–12 실습 가이드를 정리합니다.',
+    ['프로그램 모듈화', 'BAPI와 RFC', '클래스와 메서드', '서브루틴', 'FORM', 'PERFORM', 'Function Module', '함수 모듈', 'BAPI', 'RFC', 'RETURN', 'Global Class', 'Local Class', 'Static Method', 'Instance Method', '글로벌 클래스', '로컬 클래스', '정적 메서드', '인스턴스 메서드', '참조 변수', 'TYPE REF TO'],
     [
       { id: 'l1', kind: 'lesson', badge: 'L1', page: 'p. 127', label: '모듈화 개요', desc: 'Lesson: Explaining Modularization (p. 127) — 서브루틴·함수 모듈·메서드 3가지 모듈화 방식을 비교합니다.' },
       { id: 'l2', kind: 'lesson', badge: 'L2', page: 'p. 134', label: '서브루틴 (FORM)', desc: 'Lesson: Defining and Calling Subroutines (p. 134) — USING/CHANGING과 VALUE(...) 값·참조 전달을 정리합니다.' },
       { id: 'l3', kind: 'lesson', badge: 'L3–4', page: 'p. 155 · 172', label: '함수 모듈 호출·생성', desc: 'Lesson: Calling & Creating Function Modules (p. 155 · p. 172) — Function Group(SAPL/TOP/UXX)과 호출 방향을 정리합니다.' },
       { id: 'l5', kind: 'lesson', badge: 'L5', page: 'p. 187', label: 'BAPI와 RFC', desc: 'Lesson: Describing Business Application Programming Interfaces (p. 187) — RFC와 BAPI의 관계 및 RETURN 오류 처리를 정리합니다.' },
-      { id: 'l6', kind: 'lesson', badge: 'L6–7', page: 'p. 193 · 212', label: '글로벌 클래스 · 메서드', desc: 'Lesson: Calling & Creating Global Classes and Static Methods (p. 193 · p. 212) — 정적(`=>`)·인스턴스(`->`) 호출과 SE24 클래스를 정리합니다.' },
-      { id: 'l8', kind: 'lesson', badge: 'L8', page: 'p. 225', label: '로컬 클래스', desc: 'Lesson: Using Local Classes (p. 225) — DEFINITION/IMPLEMENTATION과 PUBLIC·PROTECTED·PRIVATE 접근 제어를 정리합니다.' },
-      { id: 'ex', kind: 'exercise', badge: 'Ex 6–12', page: 'p. 149–219', label: 'Exercise 6–12', desc: '교재 Exercise 6(서브루틴), Exercise 7–9(함수 그룹·함수 모듈), Exercise 10–12(글로벌 클래스·정적 메서드) 실습 가이드를 정리합니다.' }
+      { id: 'l6', kind: 'lesson', badge: 'L6–7', page: 'p. 193 · 212', label: 'Global Class · 메서드', desc: 'Lesson: Calling & Creating Global Classes and Static Methods (p. 193 · p. 212) — Static(`=>`)·Instance(`->`) 호출과 SE24 Class를 정리합니다.' },
+      { id: 'l8', kind: 'lesson', badge: 'L8', page: 'p. 225', label: 'Local Class', desc: 'Lesson: Using Local Classes (p. 225) — DEFINITION/IMPLEMENTATION과 PUBLIC·PROTECTED·PRIVATE 접근 제어를 정리합니다.' },
+      { id: 'ex', kind: 'exercise', badge: 'Ex 6–12', page: 'p. 149–219', label: 'Exercise 6–12', desc: '교재 Exercise 6(서브루틴), Exercise 7–9(함수 그룹·함수 모듈), Exercise 10–12(Global Class·Static 메서드) 실습 가이드를 정리합니다.' }
     ],
     [
       take('abap-modularization', '모듈화 방식', 'l1', 'Lesson 1', 'p. 127'),
@@ -1368,9 +1368,9 @@ ENDLOOP.`)),
       take('abap-modularization', '호출자와 함수의 방향', 'l3', 'Lesson 3–4', 'p. 155 · 172'),
       take('abap-bapi', 'BAPI와 RFC의 관계', 'l5', 'Lesson 5', 'p. 187'),
       take('abap-bapi', '입출력과 오류 처리', 'l5', 'Lesson 5', 'p. 187'),
-      take('abap-objects', '글로벌 클래스와 로컬 클래스', 'l6', 'Lesson 6–7', 'p. 193 · 212'),
-      take('abap-objects', '정적 호출과 인스턴스 호출', 'l6', 'Lesson 6–7', 'p. 193 · 212'),
-      take('abap-objects', '로컬 클래스의 정의와 구현', 'l8', 'Lesson 8', 'p. 225'),
+      take('abap-objects', 'Global Class와 Local Class', 'l6', 'Lesson 6–7', 'p. 193 · 212'),
+      take('abap-objects', 'Static 호출과 Instance 호출', 'l6', 'Lesson 6–7', 'p. 193 · 212'),
+      take('abap-objects', 'Local Class의 정의와 구현', 'l8', 'Lesson 8', 'p. 225'),
       exSec('ex', 'Exercise 6', 'p. 149', 'Exercise 6: Implement Subroutines',
         text('`FORM ... ENDFORM`과 `PERFORM`으로 계산 로직을 분리하고 `USING VALUE(...)` vs `CHANGING` 전달 방식 차이를 확인합니다.'),
         table(['연계 실습 Program', '핵심 연습 포인트'], [
@@ -1384,10 +1384,10 @@ ENDLOOP.`)),
           ['Ex 8–9 (`ZBC400_F##_FUNCTION_MODULE_2`)', 'Function Group 생성(`SAPL...`, `TOP`/`UXX` Include 활성화) 후 직접 만든 함수 모듈 호출·테스트']
         ])),
       exSec('ex', 'Exercise 10–12', 'p. 205 · 217 · 219', 'Exercise 10–12: Global Class & Static Method',
-        text('SE24 글로벌 클래스의 정적 메서드를 호출(Ex 10)하고, 직접 Simple Global Class(Ex 11)와 Static Method(Ex 12)를 구현·활성화합니다.'),
+        text('SE24 Global Class의 Static 메서드를 호출(Ex 10)하고, 직접 Simple Global Class(Ex 11)와 Static Method(Ex 12)를 구현·활성화합니다.'),
         table(['Exercise / Program', '핵심 확인 포인트'], [
-          ['Ex 10 (`ZBC400_F##_GLOBAL_CLASS_1`, `ZABAP_F##_11`)', '정적 메서드(`클래스=>메서드( )`)와 인스턴스 메서드(`참조->메서드( )`) 구분'],
-          ['Ex 11–12 (`ZBC400_F##_GLOBAL_CLASS_2`, `ZABAP_F##_12`)', 'SE24 글로벌 클래스 생성·`PUBLIC`/`PRIVATE` 가시성 설정과 로컬 클래스 구현 비교']
+          ['Ex 10 (`ZBC400_F##_GLOBAL_CLASS_1`, `ZABAP_F##_11`)', 'Static 메서드(`Class=>메서드( )`)와 Instance 메서드(`참조->메서드( )`) 구분'],
+          ['Ex 11–12 (`ZBC400_F##_GLOBAL_CLASS_2`, `ZABAP_F##_12`)', 'SE24 Global Class 생성·`PUBLIC`/`PRIVATE` 가시성 설정과 Local Class 구현 비교']
         ]))
     ],
     '11/16 · 11/17 · 11/18',
@@ -2372,7 +2372,7 @@ END-OF-SELECTION.
         table(['교재 Unit · 파트', '관련 위키 문서', '열어 볼 실습 Program (`ZBC400_F##`)'], [
           ['Unit 2 · Workbench · 기초 문법', '[[unit-02|Unit 2 · ABAP Workbench]]', '`ZABAP_F##_01`, `02`<br>`ZBC400_F##_HELLO`'],
           ['Unit 3 · 자료형 · 연산 · 반복문 · 시스템 필드', '[[unit-03|Unit 3 · ABAP 기본 언어 요소]]', '`ZABAP_F##_03`, `04`, `05`, `06`, `07`<br>`ZBC400_F##_COMPUTE`, `ZBC400_F##_LOOP`'],
-          ['Unit 4 · 모듈화 (FORM · Function Module · 클래스)', '[[unit-04|Unit 4 · ABAP 모듈화 기법]]', '`ZABAP_F##_08`, `09`, `10`, `11`, `12`<br>`ZBC400_F##_SUBROUTINE`, `ZBC400_F##_FUNCTION_MODULE`, `ZBC400_F##_FUNCTION_MODULE_2`, `ZBC400_F##_GLOBAL_CLASS_1`, `ZBC400_F##_GLOBAL_CLASS_2`'],
+          ['Unit 4 · 모듈화 (FORM · Function Module · Class)', '[[unit-04|Unit 4 · ABAP 모듈화 기법]]', '`ZABAP_F##_08`, `09`, `10`, `11`, `12`<br>`ZBC400_F##_SUBROUTINE`, `ZBC400_F##_FUNCTION_MODULE`, `ZBC400_F##_FUNCTION_MODULE_2`, `ZBC400_F##_GLOBAL_CLASS_1`, `ZBC400_F##_GLOBAL_CLASS_2`'],
           ['Unit 5 · 구조체 · Internal Table', '[[unit-05|Unit 5 · 복합 데이터 객체]]', '`ZABAP_F##_13`, `14`, `15`, `16`<br>`ZBC400_F##_STRUCTURE`, `ZBC430S_ITAB_SORTED`'],
           ['BC400 Unit 6 · Open SQL', '[[unit-06|BC400 Unit 6 · 데이터 모델링과 데이터 조회]]', '[[abap-sql-guide|ABAP SQL 가이드]] 연계'],
           ['BC430 Unit 2 · ABAP Dictionary 타입 · 구조체', '[[bc430-02|BC430 Unit 2 · ABAP Dictionary 데이터 타입]]', '`ZABAP_F##_18`, `19`<br>`ZBC430S_DATA_ELEMENTS`, `ZBC430S_F##_STRUCT_NESTED`, `ZBC430S_F##_STRUCT_DEEP`'],
@@ -2392,7 +2392,7 @@ END-OF-SELECTION.
           ['`ZABAP_F##_08`', 'ABAP Subroutine', '[[unit-04|Unit 4]]', '`FORM ... ENDFORM` 정의와 `PERFORM` 호출'],
           ['`ZABAP_F##_09`', 'ABAP Subroutine Parameters', '[[unit-04|Unit 4]]', '`USING` / `CHANGING`, `VALUE(...)` 값 전달 vs 참조 전달'],
           ['`ZABAP_F##_10`', 'ABAP Function Module', '[[unit-04|Unit 4]]', '`SE37` 함수 모듈 인터페이스와 `CALL FUNCTION` 호출 방향'],
-          ['`ZABAP_F##_11`', 'ABAP Call Class Method', '[[unit-04|Unit 4]]', '정적 메서드(`=>`)와 인스턴스 메서드(`->`) 호출'],
+          ['`ZABAP_F##_11`', 'ABAP Call Class Method', '[[unit-04|Unit 4]]', 'Static 메서드(`=>`)와 Instance 메서드(`->`) 호출'],
           ['`ZABAP_F##_12`', 'ABAP Local Class', '[[unit-04|Unit 4]]', '`CLASS ... DEFINITION / IMPLEMENTATION`, `PUBLIC`/`PRIVATE`'],
           ['`ZABAP_F##_13`', 'ABAP Structure Variable', '[[unit-05|Unit 5]]', '로컬 구조 타입(`ts_`)·구조 변수(`gs_`) 선언과 `MOVE-CORRESPONDING`'],
           ['`ZABAP_F##_14`', 'ABAP Internal Table', '[[unit-05|Unit 5]]', '`STANDARD`/`SORTED`/`HASHED` Internal Table 선언·행 조작(`APPEND`, `INSERT`, `READ`, `MODIFY`, `DELETE`, `SORT`)'],
@@ -2412,7 +2412,7 @@ END-OF-SELECTION.
           ['`ZBC400_F##_SUBROUTINE`', '[[unit-04|Unit 4]]', 'Subroutine(`FORM` / `PERFORM`) 구현 실습 (Exercise 6)'],
           ['`ZBC400_F##_FUNCTION_MODULE`', '[[unit-04|Unit 4]]', 'Function Module 호출 실습 1 (Exercise 7)'],
           ['`ZBC400_F##_FUNCTION_MODULE_2`', '[[unit-04|Unit 4]]', '직접 만든 Function Module 호출 실습 2 (Exercise 9)'],
-          ['`ZBC400_F##_GLOBAL_CLASS_1`', '[[unit-04|Unit 4]]', 'Global Class 정적 메서드 호출 실습 1 (Exercise 10)'],
+          ['`ZBC400_F##_GLOBAL_CLASS_1`', '[[unit-04|Unit 4]]', 'Global Class Static 메서드 호출 실습 1 (Exercise 10)'],
           ['`ZBC400_F##_GLOBAL_CLASS_2`', '[[unit-04|Unit 4]]', 'Global Class 생성 및 메서드 호출 실습 2 (Exercise 11–12)'],
           ['`ZBC400_F##_STRUCTURE`', '[[unit-05|Unit 5]]', 'Structured Data Objects 실습 (Exercise 13)'],
           ['`ZBC400_F##_REP_A`', '[[unit-07|Unit 7]]', 'Select-Options·Classic List·아이콘·컬럼 서식 실습 템플릿 A (Exercise 20)'],

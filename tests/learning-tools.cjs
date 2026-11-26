@@ -41,7 +41,7 @@ assert.ok(!daily('11').sections.some(s=>/초기값|트랜잭션 코드 생성/.t
 assert.ok(daily('12').sections.some(s=>s.title==='텍스트 심볼과 번역'));
 assert.ok(!daily('13').sections.some(s=>s.title==='예외와 반환 코드'));
 assert.ok(daily('16').sections.some(s=>s.title==='서브루틴 매개변수'));
-assert.ok(!daily('16').sections.some(s=>/함수 그룹|BAPI|클래스/.test(s.title)));
+assert.ok(!daily('16').sections.some(s=>/함수 그룹|BAPI|클래스|Class/.test(s.title)));
 assert.ok(daily('17').sections.some(s=>s.title==='함수 그룹과 함수 모듈'));
 assert.ok(daily('17').sections.some(s=>s.title==='예외와 반환 코드'));
 assert.deepEqual(Array.from(docs['unit-04'].lessonDates),['2026-11-16','2026-11-17','2026-11-18']);
@@ -125,7 +125,7 @@ assert.equal(docs['abap-textbook'].defaultTab, 'bc400');
 assert.equal(docs['abap-textbook'].filterTocByTab, true);
 assert.equal(ctx.window.WIKI_DOC_REDIRECTS['bc430-textbook'], 'abap-textbook');
 assert.equal(ctx.window.WIKI_DOC_REDIRECT_TABS['bc430-textbook'], 'bc430');
-assert.ok(!daily('17').sections.some(s=>s.title==='로컬 클래스의 정의와 구현'));
+assert.ok(!daily('17').sections.some(s=>s.title==='Local Class의 정의와 구현'));
 assert.ok(!JSON.stringify(daily('18')).includes('codewiki-rich-v1'));
 assert.ok(tools.search(index,'MOVE-CORRESPONDING').some(r=>r.doc.id==='unit-05'));
 assert.ok(tools.search(index,'OCCURS').some(r=>r.doc.id==='unit-05'));
