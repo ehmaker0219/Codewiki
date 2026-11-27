@@ -89,8 +89,6 @@
       setSupaToken("");
       activeUserCache = null;
       syncUserFeatures(null);
-      window.CodeWikiApp?.resetTrackChoice();
-      adminModal?.classList.add("hidden");
       document.getElementById("boardWriteModal")?.classList.add("hidden");
       await renderAuthState();
     } catch (error) {
@@ -108,8 +106,6 @@
   }
 
   const authGateOverlay = document.getElementById("authGateOverlay");
-  const trackSelectOverlay = document.getElementById("trackSelectOverlay");
-  const adminModal = document.getElementById("adminModal");
   const forcedLogoutModal = document.getElementById("forcedLogoutModal");
   const adminSidebarSlot = document.getElementById("adminSidebarSlot");
   const sidebarProfileSlot = document.getElementById("sidebarProfileSlot");
@@ -119,6 +115,166 @@
   let activeUserCache = null;
   let authStateVersion = 0;
   let forcedLogoutKeydown = null;
+  let adminPreviewMode = false;
+  let adminPreviewStudent = null;
+  let adminPreviewRoster = [];
+  let adminPreviewRosterLoading = false;
+  let adminPreviewRosterVersion = 0;
+
+  function normalizePreviewStudent(stu) {
+    if (!stu || typeof stu !== "object" || !stu.id) return null;
+    const tools = stu.tools && typeof stu.tools === "object"
+      ? {
+          mentoring: typeof stu.tools.mentoring === "boolean" ? stu.tools.mentoring : undefined,
+          foundation: typeof stu.tools.foundation === "boolean" ? stu.tools.foundation : undefined
+        }
+      : null;
+    return {
+      id: String(stu.id),
+      full_name: String(stu.full_name || ""),
+      username: String(stu.username || ""),
+      class_name: String(stu.class_name || "기본반"),
+      status: "approved",
+      tools
+    };
+  }
+
+  function previewTagsFor(student) {
+    if (!student || !student.id) return [];
+    const tags = [];
+    const hasMentoring = typeof student.tools?.mentoring === "boolean"
+      ? student.tools.mentoring
+      : Boolean(window.CodeWikiMentoringModel?.staticMember ? window.CodeWikiMentoringModel.staticMember(student.id) : window.CodeWikiMentoringModel?.member?.(student.id));
+    const hasFoundation = typeof student.tools?.foundation === "boolean"
+      ? student.tools.foundation
+      : window.CodeWikiFoundation?.OWNER_ID === student.id;
+    if (hasMentoring) tags.push("멘토링");
+    if (hasFoundation) tags.push("파운데이션");
+    return tags;
+  }
+
+  function setAdminPreviewRoster(list) {
+    const prev = Array.isArray(list) ? list : [];
+    adminPreviewRoster = prev
+      .filter(u => u && u.id && u.status === "approved")
+      .map(normalizePreviewStudent)
+      .filter(Boolean)
+      .sort((a, b) =>
+        a.class_name.localeCompare(b.class_name, "ko", { numeric: true }) ||
+        a.full_name.localeCompare(b.full_name, "ko", { numeric: true }) ||
+        a.username.localeCompare(b.username, "ko")
+      );
+    if (adminPreviewStudent) {
+      const fresh = adminPreviewRoster.find(s => s.id === adminPreviewStudent.id);
+      if (fresh) adminPreviewStudent = fresh;
+    }
+    if (adminPreviewMode && activeUserCache?.role === "admin") {
+      renderAdminPreviewBanner(true);
+    }
+  }
+
+  async function ensurePreviewRosterLoaded() {
+    if (adminPreviewRoster.length || adminPreviewRosterLoading || activeUserCache?.role !== "admin") return;
+    const token = getSupaToken();
+    if (!token || !supabaseClient) return;
+    const ver = ++adminPreviewRosterVersion;
+    adminPreviewRosterLoading = true;
+    renderAdminPreviewBanner(true);
+    try {
+      const { data, error } = await authRpc("cw_admin_student_directory", { p_token: token });
+      if (ver !== adminPreviewRosterVersion || getSupaToken() !== token || activeUserCache?.role !== "admin") return;
+      if (!error && Array.isArray(data)) setAdminPreviewRoster(data);
+    } catch {}
+    finally {
+      if (ver === adminPreviewRosterVersion) {
+        adminPreviewRosterLoading = false;
+        if (adminPreviewMode && activeUserCache?.role === "admin") renderAdminPreviewBanner(true);
+      }
+    }
+  }
+
+  function syncStudySidebarSlot(user, previewing) {
+    const studySidebarSlot = document.getElementById("studySidebarSlot");
+    if (!studySidebarSlot) return;
+    const show = Boolean(user && ((user.role === "student" && user.status === "approved") || previewing));
+    studySidebarSlot.innerHTML = show
+      ? `<a href="#study" id="openStudyBtn" class="sb-menu-item${window.location.hash === "#study" ? " active" : ""}"><svg class="sb-icon" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="4" width="15" height="17" rx="2"></rect><path d="M9 2v4M16 2v4M3 9h4M3 14h4M3 19h4M10 10h6M10 14h6M10 18h4"></path></svg><span>내 공부방</span></a>`
+      : "";
+  }
+
+  function renderAdminPreviewBanner(active) {
+    const banner = document.getElementById("adminPreviewBanner");
+    if (!banner) return;
+    if (!active) {
+      banner.hidden = true;
+      banner.innerHTML = "";
+      return;
+    }
+    const target = adminPreviewStudent;
+    const tags = previewTagsFor(target);
+    const options = [...adminPreviewRoster];
+    if (target && !options.some(s => s.id === target.id)) options.unshift(target);
+    const optionHtml = options.map(stu => {
+      const t = previewTagsFor(stu);
+      const suffix = t.length ? ` [${t.join(" · ")}]` : "";
+      const selected = target?.id === stu.id ? " selected" : "";
+      return `<option value="${escapeHtml(stu.id)}"${selected}>${escapeHtml(stu.class_name)} · ${escapeHtml(stu.full_name)}${stu.username ? ` (@${escapeHtml(stu.username)})` : ""}${escapeHtml(suffix)}</option>`;
+    }).join("");
+    const titleHtml = target
+      ? `<strong>${escapeHtml(target.full_name)}</strong> (${escapeHtml(target.class_name)}) 화면 미리보기 중${tags.map(t => ` <span class="admin-preview-pill">${escapeHtml(t)}</span>`).join("")}`
+      : `<strong>일반 학생 (기본)</strong> 화면 미리보기 중`;
+    banner.innerHTML = `<div class="admin-preview-inner"><span class="admin-preview-info">${titleHtml}</span><div class="admin-preview-controls"><label class="admin-preview-picker"><span>대상 학생</span><select id="adminPreviewStudentSelect" aria-label="미리보기 대상 학생 선택"><option value=""${!target ? " selected" : ""}>일반 학생 (기본)</option>${optionHtml}${adminPreviewRosterLoading && !options.length ? '<option disabled>학생 목록 불러오는 중…</option>' : ""}</select></label><button type="button" id="exitAdminPreviewBtn" class="toss-primary-btn">관리자 콘솔로 돌아가기</button></div></div>`;
+    banner.hidden = false;
+    document.getElementById("adminPreviewStudentSelect")?.addEventListener("change", e => {
+      const nextId = e.target.value;
+      const found = nextId ? options.find(s => s.id === nextId) || null : null;
+      setAdminPreviewMode(true, found);
+    });
+    document.getElementById("exitAdminPreviewBtn")?.addEventListener("click", () => setAdminPreviewMode(false));
+  }
+
+  function setAdminPreviewMode(enabled, targetOrStudent = undefined) {
+    if (activeUserCache?.role !== "admin") return false;
+    const next = Boolean(enabled);
+    if (next) {
+      if (targetOrStudent !== undefined) {
+        adminPreviewStudent = normalizePreviewStudent(targetOrStudent);
+      }
+      const entering = !adminPreviewMode;
+      adminPreviewMode = true;
+      if (entering) {
+        window.CodeWikiAdminMembers?.leave?.();
+        syncUserFeatures(activeUserCache);
+        void ensurePreviewRosterLoaded();
+        window.CodeWikiApp?.openDoc?.("welcome-abap");
+      } else {
+        const prevHash = window.location.hash;
+        syncUserFeatures(activeUserCache);
+        void ensurePreviewRosterLoaded();
+        if (prevHash !== window.location.hash && window.location.hash.startsWith("#doc/")) {
+          window.CodeWikiApp?.openDoc?.("welcome-abap");
+        }
+      }
+      return true;
+    }
+    if (!adminPreviewMode && typeof targetOrStudent !== "string") return false;
+    const targetHash = typeof targetOrStudent === "string" && targetOrStudent.startsWith("#admin/")
+      ? targetOrStudent
+      : "#admin/students";
+    adminPreviewMode = false;
+    adminPreviewStudent = null;
+    window.CodeWikiKnowledgeMap?.leave?.();
+    window.CodeWikiObjectGame?.leave?.();
+    window.CodeWikiFoundation?.leave?.();
+    window.CodeWikiMentoring?.leave?.();
+    window.CodeWikiStudy?.leave?.();
+    history.replaceState(null, "", targetHash);
+    syncUserFeatures(activeUserCache);
+    if (!window.CodeWikiAdminMembers?.openRoute?.(targetHash)) {
+      window.CodeWikiAdminMembers?.openHome?.();
+    }
+    return false;
+  }
 
   function closeForcedLogoutPopup() {
     if (forcedLogoutKeydown) {
@@ -172,44 +328,47 @@
     setSupaToken("");
     activeUserCache = null;
     syncUserFeatures(null);
-    window.CodeWikiApp?.resetTrackChoice?.();
-    adminModal?.classList.add("hidden");
     document.getElementById("boardWriteModal")?.classList.add("hidden");
-    document.body.classList.remove("authenticated", "track-selecting");
-    trackSelectOverlay?.classList.add("hidden");
+    document.body.classList.remove("authenticated");
     authGateOverlay?.classList.remove("hidden");
     renderPreLoginLanding(message);
     showForcedLogoutPopup(message);
   }
-  const adminApproval = window.CodeWikiAdmin?.create({
-    modal: adminModal, getToken: getSupaToken, getUser: () => activeUserCache,
-    client: supabaseClient, onChange: renderAuthState
-  });
 
   // Authentication owns session propagation; feature modules don't control each other.
   function syncUserFeatures(user) {
     const isAdmin = user?.role === 'admin';
-    document.body.classList[isAdmin ? 'add' : 'remove']('admin-workspace');
+    if (!isAdmin) {
+      adminPreviewMode = false;
+      adminPreviewStudent = null;
+      adminPreviewRoster = [];
+      adminPreviewRosterLoading = false;
+      adminPreviewRosterVersion++;
+    }
+    const previewing = isAdmin && adminPreviewMode;
+    document.body.classList[isAdmin && !previewing ? 'add' : 'remove']('admin-workspace');
+    document.body.classList[previewing ? 'add' : 'remove']('admin-preview-mode');
+    renderAdminPreviewBanner(previewing);
     const operationsLabel = document.getElementById('adminOperationsLabel');
     if (operationsLabel) operationsLabel.hidden = !isAdmin;
     const isApprovedStudent = user?.role === 'student' && user.status === 'approved';
+    const canViewStudentUi = isApprovedStudent || previewing;
     const thinkingFlow = document.getElementById('sbThinkingFlowItem');
-    if (thinkingFlow) thinkingFlow.hidden = !isApprovedStudent;
+    if (thinkingFlow) thinkingFlow.hidden = !canViewStudentUi;
     const programCatalog = document.getElementById('sbProgramCatalogItem');
-    if (programCatalog) programCatalog.hidden = !isApprovedStudent;
+    if (programCatalog) programCatalog.hidden = !canViewStudentUi;
     const basicSession = document.getElementById('sbBasicSessionItem');
-    if (basicSession) basicSession.hidden = !isApprovedStudent;
+    if (basicSession) basicSession.hidden = !canViewStudentUi;
     const sqlGuide = document.getElementById('sbSqlGuideItem');
-    if (sqlGuide) sqlGuide.hidden = !isApprovedStudent;
+    if (sqlGuide) sqlGuide.hidden = !canViewStudentUi;
     const learningContents = document.getElementById('learningContentsGroup');
-    if (learningContents) learningContents.hidden = !isApprovedStudent;
+    if (learningContents) learningContents.hidden = !canViewStudentUi;
     const learningTools = document.getElementById('learningToolsGroup');
-    if (learningTools) learningTools.hidden = !isApprovedStudent;
+    if (learningTools) learningTools.hidden = !canViewStudentUi;
+    syncStudySidebarSlot(user, previewing);
     if (!user) {
       if (adminSidebarSlot) adminSidebarSlot.innerHTML = "";
       if (sidebarProfileSlot) sidebarProfileSlot.innerHTML = "";
-      const studySidebarSlot = document.getElementById('studySidebarSlot');
-      if (studySidebarSlot) studySidebarSlot.innerHTML = "";
     }
     window.CodeWikiBoard?.setUser?.(user);
     window.CodeWikiProfile?.setUser(user);
@@ -217,13 +376,14 @@
     window.CodeWikiBirthdays?.setUser(user);
     window.CodeWikiStudy?.setUser(user);
     window.CodeWikiMentoring?.setUser(user);
+    window.CodeWikiFoundation?.setUser?.(user);
     window.CodeWikiPractice?.setUser(user);
     window.CodeWikiObjectGame?.setUser(user);
     window.CodeWikiKnowledgeMap?.setUser?.(user);
     window.CodeWikiSqlPractice?.setUser?.(user);
-    adminApproval?.setUser(user);
     window.CodeWikiAdminMembers?.setUser(user);
     window.CodeWikiPresence?.setUser(user);
+    window.CodeWikiTelemetry?.setUser?.(user);
     window.CodeWikiNotice?.setUser?.(user);
     window.CodeWikiApp?.syncAccess?.();
   }
@@ -234,12 +394,32 @@
     getSessionToken: () => getSupaToken(),
     isSupabaseConfigured: () => isSupabaseConfigured,
     getSupabaseClient: () => supabaseClient,
+    isAdminPreviewMode: () => Boolean(activeUserCache?.role === "admin" && adminPreviewMode),
+    getAdminPreviewStudent: () => (activeUserCache?.role === "admin" && adminPreviewMode && adminPreviewStudent ? { ...adminPreviewStudent } : null),
+    setAdminPreviewMode,
+    setAdminPreviewRoster,
     logout,
     handleForcedLogout,
     refresh: () => renderAuthState(),
     credentialRequest: (name,args) => {
       if (!credentialOperations.has(name)) return Promise.reject(Error('unsupported-auth-operation'));
       return authRpc(name,args);
+    },
+    applyStudentTools: tools => {
+      if (!activeUserCache || activeUserCache.role !== "student" || activeUserCache.status !== "approved" || !tools || typeof tools !== "object") return;
+      const prev = activeUserCache.tools || {};
+      const next = {
+        mentoring: typeof tools.mentoring === "boolean" ? tools.mentoring : Boolean(prev.mentoring),
+        foundation: typeof tools.foundation === "boolean" ? tools.foundation : Boolean(prev.foundation)
+      };
+      if (prev.mentoring === next.mentoring && prev.foundation === next.foundation && activeUserCache.tools) return;
+      const prevHash = window.location.hash;
+      activeUserCache = { ...activeUserCache, tools: next };
+      window.CodeWikiMentoring?.setUser?.(activeUserCache);
+      window.CodeWikiFoundation?.setUser?.(activeUserCache);
+      if (prevHash !== window.location.hash && window.location.hash.startsWith("#doc/")) {
+        window.CodeWikiApp?.openDoc?.("welcome-abap");
+      }
     },
     applyProfile: profile => {
       if (!activeUserCache || activeUserCache.id !== profile.id) return;
@@ -249,66 +429,14 @@
     }
   };
 
-  function showApprovedWorkspaceOrTrackGate(user, pendingCount) {
+  function showApprovedWorkspace(user, pendingCount) {
     document.body.classList.add("authenticated");
     authGateOverlay.classList.add("hidden");
     renderTopbarAuthControls(user, pendingCount);
     if (window.CodeWikiBoard) window.CodeWikiBoard.refreshBadge();
-
-    if (user.role !== 'admin' && !window.CodeWikiApp?.hasSelectedTrack()) {
-      document.body.classList.add("track-selecting");
-      trackSelectOverlay?.classList.remove("hidden");
-      renderTrackSelectGate(user);
-    } else {
-      document.body.classList.remove("track-selecting");
-      trackSelectOverlay?.classList.add("hidden");
-      window.CodeWikiNotice?.maybeShow?.(user);
-    }
+    window.CodeWikiNotice?.maybeShow?.(user);
+    if (typeof Event === "function") window.dispatchEvent?.(new Event("cw-workspace-ready"));
     window.scrollTo({ top: 0 });
-  }
-
-  // [로그인 직후 트랙 대형 선택 화면]: 군더더기 없는 미니멀 2버튼 구성
-  function renderTrackSelectGate(user) {
-    if (!trackSelectOverlay) return;
-
-    trackSelectOverlay.innerHTML = `
-      <div class="track-select-inner">
-        <h1 class="track-select-heading" style="margin-bottom:32px;">학습할 트랙을 선택하세요</h1>
-
-        <div class="track-choice-grid">
-          <button type="button" class="track-big-card track-abap" data-pick-track="abap" style="min-height:210px; align-items:center; justify-content:center; text-align:center;">
-            <div class="track-card-icon-wrap" style="margin:0 auto 18px;">
-              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                <polyline points="16 18 22 12 16 6"></polyline>
-                <polyline points="8 6 2 12 8 18"></polyline>
-              </svg>
-            </div>
-            <div class="track-card-title">ABAP</div>
-          </button>
-
-          <button type="button" class="track-big-card track-ui5" data-pick-track="ui5" disabled title="업데이트 준비 중" style="min-height:210px; align-items:center; justify-content:center; text-align:center;">
-            <div class="track-card-icon-wrap" style="margin:0 auto 18px;">
-              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                <rect x="3" y="3" width="18" height="18" rx="3"></rect>
-                <line x1="3" y1="9" x2="21" y2="9"></line>
-                <line x1="9" y1="21" x2="9" y2="9"></line>
-              </svg>
-            </div>
-            <div class="track-card-title">UI5 / Fiori · 준비 중</div>
-          </button>
-        </div>
-      </div>
-    `;
-
-    trackSelectOverlay.querySelectorAll("[data-pick-track]").forEach(card => {
-      card.addEventListener("click", () => {
-        const chosen = card.getAttribute("data-pick-track");
-        window.CodeWikiApp?.selectTrack(chosen);
-        document.body.classList.remove("track-selecting");
-        trackSelectOverlay.classList.add("hidden");
-        window.CodeWikiNotice?.maybeShow?.(user || activeUserCache);
-      });
-    });
   }
 
   async function renderAuthState() {
@@ -316,8 +444,7 @@
     if (!isSupabaseConfigured || !supabaseClient) {
       activeUserCache = null;
       syncUserFeatures(null);
-      document.body.classList.remove('authenticated', 'track-selecting');
-      trackSelectOverlay?.classList.add('hidden');
+      document.body.classList.remove('authenticated');
       authGateOverlay.classList.remove('hidden');
       authGateOverlay.innerHTML = '<div class="auth-container"><div class="auth-card"><h2>로그인 서버에 연결할 수 없습니다.</h2><p>연결을 확인한 뒤 새로고침해 주세요.</p></div></div>';
       return;
@@ -328,8 +455,7 @@
     if (!token) {
       activeUserCache = null;
       syncUserFeatures(null);
-      document.body.classList.remove("authenticated", "track-selecting");
-      trackSelectOverlay?.classList.add("hidden");
+      document.body.classList.remove("authenticated");
       authGateOverlay.classList.remove("hidden");
       renderPreLoginLanding();
       return;
@@ -356,8 +482,7 @@
       // A failed request does not prove that the saved session has expired.
       activeUserCache = null;
       syncUserFeatures(null);
-      document.body.classList.remove("authenticated", "track-selecting");
-      trackSelectOverlay?.classList.add("hidden");
+      document.body.classList.remove("authenticated");
       authGateOverlay.classList.remove("hidden");
       authGateOverlay.innerHTML = `<div class="auth-container"><div class="auth-card">
         <h2 class="auth-status-title">로그인 상태를 확인하지 못했습니다</h2>
@@ -385,8 +510,7 @@
       setSupaToken("");
       activeUserCache = null;
       syncUserFeatures(null);
-      document.body.classList.remove("authenticated", "track-selecting");
-      trackSelectOverlay?.classList.add("hidden");
+      document.body.classList.remove("authenticated");
       authGateOverlay.classList.remove("hidden");
       renderPreLoginLanding();
       return;
@@ -397,41 +521,38 @@
     syncUserFeatures(profile);
 
     if (profile.status !== "approved" && profile.role !== "admin") {
-      document.body.classList.remove("authenticated", "track-selecting");
-      trackSelectOverlay?.classList.add("hidden");
+      document.body.classList.remove("authenticated");
       authGateOverlay.classList.remove("hidden");
       renderPendingGate(profile);
       return;
     }
 
-    showApprovedWorkspaceOrTrackGate(profile, profile.pending_count || 0);
+    showApprovedWorkspace(profile, profile.pending_count || 0);
   }
 
   // 좌측 사이드바 내 [학생 승인 관리 메뉴] + [하단 유저 프로필 카드]
   function renderTopbarAuthControls(user, pendingCount) {
     if (!user) return;
     const isAdmin = user.role === "admin";
-
-    const studySidebarSlot = document.getElementById('studySidebarSlot');
-    if (studySidebarSlot) studySidebarSlot.innerHTML = user.role === 'student' && user.status === 'approved' ? `<a href="#study" id="openStudyBtn" class="sb-menu-item${window.location.hash === '#study' ? ' active' : ''}"><svg class="sb-icon" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="4" width="15" height="17" rx="2"></rect><path d="M9 2v4M16 2v4M3 9h4M3 14h4M3 19h4M10 10h6M10 14h6M10 18h4"></path></svg><span>내 공부방</span></a>` : '';
+    const securityAlerts = Number(user.security_alert_count) || 0;
+    syncStudySidebarSlot(user, isAdmin && adminPreviewMode);
 
     if (adminSidebarSlot) {
       adminSidebarSlot.innerHTML = (isAdmin || (user.role === 'student' && user.status === 'approved'))
         ? `
-        ${isAdmin ? `<div class="sb-group-label">학생 관리</div><a href="#admin/students" id="openStudentDirectoryBtn" class="sb-menu-item${window.location.hash === '#admin/students' ? ' active' : ''}"><svg class="sb-icon" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="M6 17v-1a3 3 0 0 1 6 0v1M15 8h3M15 12h3M15 16h3"/></svg><span>학생 정보</span></a><a href="#admin/logins" id="openLoginHistoryBtn" class="sb-menu-item${window.location.hash === '#admin/logins' ? ' active' : ''}"><svg class="sb-icon" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 15"/></svg><span>로그인 내역</span></a><button type="button" id="openAdminModalBtn" class="sb-menu-item">
-          <svg class="sb-icon" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-            <circle cx="9" cy="7" r="4"></circle>
-            <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
-            <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
-          </svg>
-          <span>학생 승인 관리</span>
-          ${pendingCount > 0 ? `<span class="pending-badge" style="margin-left:auto;">${pendingCount}</span>` : ""}
-        </button>` : ''}
+        ${isAdmin ? `<div class="sb-group-label">학생 관리</div><a href="#admin/students" id="openStudentDirectoryBtn" class="sb-menu-item${window.location.hash === '#admin/students' ? ' active' : ''}"><svg class="sb-icon" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="M6 17v-1a3 3 0 0 1 6 0v1M15 8h3M15 12h3M15 16h3"/></svg><span>학생 정보</span></a><a href="#admin/accounts" id="openStudentAccountsBtn" class="sb-menu-item${window.location.hash === '#admin/accounts' ? ' active' : ''}"><svg class="sb-icon" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M3 20v-1a5 5 0 0 1 10 0v1"/><circle cx="17.5" cy="14.5" r="2.5"/><path d="M17.5 10.5v1.5M17.5 17v1.5M13.5 14.5H15M20 14.5h1.5"/></svg><span>계정 관리</span></a><a href="#admin/approvals" id="openAdminModalBtn" class="sb-menu-item${window.location.hash === '#admin/approvals' ? ' active' : ''}"><svg class="sb-icon" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg><span>학생 승인 관리</span><span id="adminPendingCountBadge" class="pending-badge" style="margin-left:auto;"${pendingCount > 0 ? '' : ' hidden'}>${pendingCount > 0 ? pendingCount : ''}</span></a><a href="#admin/logins" id="openLoginHistoryBtn" class="sb-menu-item${window.location.hash === '#admin/logins' ? ' active' : ''}"><svg class="sb-icon" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 15"/></svg><span>로그인 내역</span></a><div class="sb-group-label" style="margin-top:12px;">공지 · 알림</div><a href="#admin/notices" id="openAdminNoticesBtn" class="sb-menu-item${window.location.hash === '#admin/notices' ? ' active' : ''}"><svg class="sb-icon" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg><span>공지 · 1:1 알림</span></a><div class="sb-group-label" style="margin-top:12px;">운영 관제실</div><a href="#admin/dashboard" id="openAdminDashboardBtn" class="sb-menu-item${window.location.hash === '#admin/dashboard' ? ' active' : ''}"><svg class="sb-icon" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3v18h18"/><path d="M7 14l4-4 3 3 5-6"/></svg><span>출석부</span></a><a href="#admin/insights" id="openAdminInsightsBtn" class="sb-menu-item${window.location.hash === '#admin/insights' ? ' active' : ''}"><svg class="sb-icon" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 20V10M12 20V4M6 20v-6"/></svg><span>학습 분석</span></a><a href="#admin/controls" id="openAdminControlsBtn" class="sb-menu-item${window.location.hash === '#admin/controls' ? ' active' : ''}"><svg class="sb-icon" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="2" y1="14" x2="6" y2="14"/><line x1="10" y1="8" x2="14" y2="8"/><line x1="18" y1="16" x2="22" y2="16"/></svg><span>원격 제어</span></a><a href="#admin/security" id="openAdminSecurityBtn" class="sb-menu-item${window.location.hash === '#admin/security' ? ' active' : ''}"><svg class="sb-icon" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg><span>보안 검사</span><span id="adminSecurityAlertBadge" class="pending-badge" style="margin-left:auto;"${securityAlerts > 0 ? '' : ' hidden'}>${securityAlerts > 0 ? securityAlerts : ''}</span></a>` : ''}
       `
         : "";
 
-      document.getElementById("openAdminModalBtn")?.addEventListener("click", openAdminApprovalModal);
+      ["openStudentDirectoryBtn", "openStudentAccountsBtn", "openAdminModalBtn", "openLoginHistoryBtn", "openAdminNoticesBtn", "openAdminDashboardBtn", "openAdminInsightsBtn", "openAdminControlsBtn", "openAdminSecurityBtn"].forEach(id => {
+        const el = document.getElementById(id);
+        el?.addEventListener("click", e => {
+          if (adminPreviewMode) {
+            e.preventDefault();
+            setAdminPreviewMode(false, el.getAttribute("href") || "#admin/students");
+          }
+        });
+      });
     }
 
     if (sidebarProfileSlot) {
@@ -793,7 +914,6 @@
         showSubmitError(error?.message || data?.message || (isSignup ? "가입 신청 중 오류가 발생했습니다." : "아이디 또는 비밀번호를 확인해 주세요."));
       } else {
         authMessage = "";
-        window.CodeWikiApp?.resetTrackChoice();
         setSupaToken(data.session_token);
         renderAuthState();
       }
@@ -850,6 +970,12 @@
     document.getElementById("pendingLogoutBtn").addEventListener("click", logout);
   }
 
+  window.addEventListener?.('hashchange', () => {
+    if (adminPreviewMode && activeUserCache?.role === 'admin' && String(window.location?.hash || '').startsWith('#admin/')) {
+      setAdminPreviewMode(false, window.location.hash);
+    }
+  });
+
   window.addEventListener?.('storage', event => {
     if (event.key !== null && event.key !== SUPA_TOKEN_KEY) return;
     closeForcedLogoutPopup();
@@ -859,10 +985,6 @@
     document.getElementById('boardWriteModal')?.classList.add('hidden');
     void renderAuthState();
   });
-
-  function openAdminApprovalModal() {
-    return adminApproval?.open();
-  }
 
   renderAuthState();
 })();

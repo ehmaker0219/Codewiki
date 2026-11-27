@@ -32,6 +32,10 @@ const fixtures=[{id:'s1',username:'student-one',full_name:'<img onerror=alert(1)
  assert.ok(node('membersTable').innerHTML.includes('&lt;img'));assert.ok(!node('membersTable').innerHTML.includes('<img'));
  const before=requests.length;input('membersSearch','student-two');assert.match(node('membersCount').textContent,/1명/);input('membersClass','1반');assert.match(node('membersCount').textContent,/0명/);assert.equal(requests.length,before,'filters must be local');
  input('membersSearch','');input('membersClass','');
+ const order=()=>[...node('membersTable').innerHTML.matchAll(/data-student-id="(.*?)"/g)].map(m=>m[1]);
+ assert.equal(node('membersTable').innerHTML.includes('data-reset-student='),false,'students info view omits heavy account action buttons');
+ click('[data-members-tab]','accounts');assert.equal(window.location.hash,'#admin/accounts');assert.equal(requests.length,0,'accounts tab reuses cached directory');
+ assert.ok(node('membersTable').innerHTML.includes('data-reset-student="s1"'),'accounts tab renders password reset button');
  click('[data-reset-student]','s1');assert.equal(node('dialog').open,true);
  node('resetAdminPassword').value='admin password';node('resetNewPassword').value='New-test-42!';node('resetConfirmPassword').value='different';await submit();assert.equal(requests.length,0);assert.match(node('studentResetMessage').textContent,/서로 다릅니다/);
  node('resetConfirmPassword').value='New-test-42!';const sending=submit();submit();assert.equal(requests.length,1,'duplicate reset');
@@ -43,13 +47,13 @@ const fixtures=[{id:'s1',username:'student-one',full_name:'<img onerror=alert(1)
  click('[data-reset-student]','s2');node('resetAdminPassword').value='correct admin';node('resetNewPassword').value=node('resetConfirmPassword').value='New-test-42!';const slow=submit();[...timers.values()][0]();await slow;
  assert.match(node('studentResetMessage').textContent,/변경 결과를 확인하지 못했습니다/);requests.shift().resolve({data:{ok:true,user_id:'s2'}});await flush();assert.equal(node('dialog').open,true,'late timeout success must not overwrite UI');
  api.setUser(null);assert.equal(host.innerHTML,'');assert.equal(node('dialog').innerHTML,'');
+ window.location.hash='#admin/students';
  api.setUser({id:'a',role:'admin'});const late=requests.shift();api.setUser({id:'s',role:'student'});late.resolve({data:fixtures});await flush();assert.equal(host.innerHTML,'');assert.equal(host.hidden,true);
  token='other-admin';api.setUser({id:'a2',role:'admin'});requests.shift().resolve({error:{code:'PGRST202'}});await flush();assert.match(node('membersMessage').textContent,/아직 서버에 적용/);
  const sortable=[
   {id:'n1',full_name:'김가',username:'user10',class_name:'10반',student_number:10,birth_date:'2002-01-01',last_login_at:'2026-11-21T10:00:00Z',login_count:3,created_at:'2026-11-19T10:00:00Z',status:'approved'},
   {id:'n2',full_name:'김나',username:'user2',class_name:'2반',student_number:2,birth_date:'1999-01-01',last_login_at:'2026-11-20T10:00:00Z',login_count:1,created_at:'2026-11-18T10:00:00Z',status:'pending'},
   {id:'n3',full_name:'김다',username:'user3',class_name:'1반',student_number:null,birth_date:null,last_login_at:null,login_count:0,created_at:null,status:'rejected'}];
- const order=()=>[...node('membersTable').innerHTML.matchAll(/data-reset-student="(.*?)"/g)].map(m=>m[1]);
  api.invalidate();requests.shift().resolve({data:sortable});await flush();
  assert.deepEqual(order(),['n1','n2','n3']);
  click('[data-members-sort]','student_number');assert.deepEqual(order(),['n2','n1','n3']);
@@ -118,11 +122,12 @@ const fixtures=[{id:'s1',username:'student-one',full_name:'<img onerror=alert(1)
  staleLogins2.resolve({data:[loginFixtures[0]]});await flush();
  freshLogins2.resolve({data:loginFixtures});await flush();
  assert.match(node('membersCount').textContent,/2건 \/ 전체 2건/);
- // Username change flow: local validation, duplicate guard, error mapping, table + login cache update, timeout guard.
- click('[data-members-tab]','students');
+ // Username change flow on dedicated accounts tab (#admin/accounts): local validation, duplicate guard, error mapping, table + login cache update, timeout guard.
+ click('[data-members-tab]','accounts');
+ assert.equal(window.location.hash,'#admin/accounts');
  assert.equal(requests.length,1);requests.shift().resolve({data:sortable.map(r=>({...r}))});await flush();
  input('membersSearch','');
- assert.ok(node('membersTable').innerHTML.includes('data-edit-username="n1"'),'directory renders username edit button');
+ assert.ok(node('membersTable').innerHTML.includes('data-edit-username="n1"'),'accounts tab renders username edit button');
  click('[data-edit-username]','n1');assert.equal(node('dialog').open,true);
  node('editNewUsername').value='a';await submit();assert.equal(requests.length,0);assert.match(node('studentUsernameMessage').textContent,/2~100자/);
  node('editNewUsername').value='bad space';await submit();assert.equal(requests.length,0);assert.match(node('studentUsernameMessage').textContent,/공백/);
@@ -145,7 +150,7 @@ const fixtures=[{id:'s1',username:'student-one',full_name:'<img onerror=alert(1)
  assert.ok(!node('membersTable').innerHTML.includes('>user10<'),'old username removed from directory table');
  click('[data-members-tab]','logins');
  assert.ok(node('membersTable').innerHTML.includes('newuser10'),'cached login history updated with new username');
- click('[data-members-tab]','students');
+ click('[data-members-tab]','accounts');
  click('[data-edit-username]','n2');node('editNewUsername').value='slow_user2';
  const slowRename=submit();[...timers.values()][0]();await slowRename;
  assert.match(node('studentUsernameMessage').textContent,/아이디를 변경하지 못했습니다/);

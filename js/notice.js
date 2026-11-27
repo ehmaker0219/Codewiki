@@ -21,6 +21,8 @@
   const memorySeen = new Set();
 
   let openUserId = null;
+  let openLiveNoticeId = null;
+  let activeLiveAck = null;
   let previousFocus = null;
   let keydownHandler = null;
 
@@ -61,7 +63,14 @@
     return document.getElementById('siteNoticeModal');
   }
 
+  function isCoveredByHigherModal() {
+    const dm = document.getElementById('directMessageModal');
+    const maint = document.getElementById('maintenanceOverlay');
+    return Boolean((dm && !dm.classList.contains('hidden')) || (maint && !maint.classList.contains('hidden')));
+  }
+
   function close() {
+    const wasOpen = Boolean(openUserId != null || openLiveNoticeId != null);
     const modal = getModal();
     if (keydownHandler) {
       document.removeEventListener('keydown', keydownHandler);
@@ -70,24 +79,120 @@
     if (modal) {
       modal.classList.add('hidden');
       modal.innerHTML = '';
+      modal.onclick = null;
     }
     openUserId = null;
+    openLiveNoticeId = null;
+    activeLiveAck = null;
     const restore = previousFocus;
     previousFocus = null;
     if (restore && typeof restore.focus === 'function') {
       try { restore.focus(); } catch {}
     }
+    if (wasOpen && typeof Event === 'function') {
+      try { window.dispatchEvent?.(new Event('cw-notice-closed')); } catch {}
+    }
   }
 
   function dismiss() {
+    if (openLiveNoticeId) {
+      const ackId = openLiveNoticeId;
+      const ackFn = activeLiveAck;
+      const uid = openUserId;
+      const key = uid != null ? storageKey('live:' + ackId, uid) : '';
+      if (key) memorySeen.add(key);
+      close();
+      if (typeof ackFn === 'function') {
+        try {
+          Promise.resolve(ackFn(ackId)).then(ok => {
+            if (ok === false) {
+              if (key) memorySeen.delete(key);
+            } else if (uid != null) {
+              markSeen('live:' + ackId, uid);
+            }
+          }).catch(() => {
+            if (key) memorySeen.delete(key);
+          });
+        } catch {
+          if (key) memorySeen.delete(key);
+        }
+      } else if (uid != null) {
+        markSeen('live:' + ackId, uid);
+      }
+      return;
+    }
     if (ACTIVE_NOTICE && openUserId != null) {
       markSeen(ACTIVE_NOTICE.id, openUserId);
     }
     close();
   }
 
+  function showLiveNotice(notice, onAck) {
+    const user = window.CodeWikiAuth?.getCurrentUser?.();
+    if (!notice?.id || !isEligibleStudent(user) || isCoveredByHigherModal()) return false;
+    const userId = String(user.id);
+    const liveKey = 'live:' + String(notice.id);
+    if (hasSeen(liveKey, userId)) return false;
+    const modal = getModal();
+    if (!modal) return false;
+    // Never interrupt an already-visible notice (e.g., static update notice); caller retries on cw-notice-closed.
+    if (!modal.classList.contains('hidden')) {
+      return openLiveNoticeId === String(notice.id);
+    }
+
+    close();
+    openUserId = userId;
+    openLiveNoticeId = String(notice.id);
+    activeLiveAck = typeof onAck === 'function' ? onAck : null;
+    previousFocus = document.activeElement || null;
+
+    const paragraphs = String(notice.body || '')
+      .split(/\n{2,}/)
+      .map(block => block.trim())
+      .filter(Boolean)
+      .map(block => `<li class="site-notice-item"><p>${esc(block).replace(/\n/g, '<br>')}</p></li>`)
+      .join('');
+
+    modal.innerHTML = `
+      <div class="toss-card site-notice-card" role="dialog" aria-modal="true" aria-labelledby="siteNoticeTitle">
+        <div class="site-notice-header">
+          <div>
+            ${notice.badge ? `<span class="site-notice-badge">${esc(notice.badge)}</span>` : ''}
+            <h2 id="siteNoticeTitle" class="site-notice-title">${esc(notice.title)}</h2>
+          </div>
+          <button type="button" id="siteNoticeCloseBtn" class="icon-btn" aria-label="공지사항 닫기">✕</button>
+        </div>
+        <ul class="site-notice-list">${paragraphs}</ul>
+        ${notice.cheer ? `<div class="site-notice-cheer">${esc(notice.cheer)}</div>` : ''}
+        <div class="site-notice-footer">
+          <span class="site-notice-hint">관리자가 발송한 실시간 공지입니다.</span>
+          <button type="button" id="siteNoticeConfirmBtn" class="toss-primary-btn site-notice-confirm-btn">확인</button>
+        </div>
+      </div>
+    `;
+
+    modal.classList.remove('hidden');
+
+    const closeBtn = document.getElementById('siteNoticeCloseBtn');
+    const confirmBtn = document.getElementById('siteNoticeConfirmBtn');
+    closeBtn?.addEventListener('click', dismiss);
+    confirmBtn?.addEventListener('click', dismiss);
+    modal.onclick = e => {
+      if (e.target === modal) dismiss();
+    };
+    keydownHandler = e => {
+      if (e.key === 'Escape' && !isCoveredByHigherModal()) {
+        e.preventDefault();
+        dismiss();
+      }
+    };
+    document.addEventListener('keydown', keydownHandler);
+    confirmBtn?.focus?.();
+    return true;
+  }
+
   function maybeShow(user) {
-    if (!ACTIVE_NOTICE || !isEligibleStudent(user)) return false;
+    if (!ACTIVE_NOTICE || !isEligibleStudent(user) || isCoveredByHigherModal()) return false;
     const userId = String(user.id);
     if (hasSeen(ACTIVE_NOTICE.id, userId)) return false;
     const modal = getModal();
@@ -133,7 +238,7 @@
       if (e.target === modal) dismiss();
     };
     keydownHandler = e => {
-      if (e.key === 'Escape') {
+      if (e.key === 'Escape' && !isCoveredByHigherModal()) {
         e.preventDefault();
         dismiss();
       }
@@ -152,6 +257,7 @@
   window.CodeWikiNotice = {
     getActiveNotice: () => ACTIVE_NOTICE,
     maybeShow,
+    showLiveNotice,
     setUser,
     close
   };

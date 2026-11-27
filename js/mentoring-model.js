@@ -46,7 +46,37 @@
   const processStepIds=new Set(baseProcessSteps.map(s=>s.id));
   const weekdays=Object.freeze(['일','월','화','수','목','금','토']);
   const states=Object.freeze({active:'진행 중',review:'정리 중',complete:'완료'});
-  const member=id=>members.find(m=>m.id===id);
+  const dynamicMembers=new Map();
+  const staticMember=id=>members.find(m=>m.id===id);
+  const member=id=>staticMember(id)||dynamicMembers.get(id);
+  const createDynamicMember=user=>{
+    if(!user||!user.id)return null;
+    const preset=staticMember(user.id);
+    if(preset)return preset;
+    const name=String(user.full_name||user.name||'멘토').trim()||'멘토';
+    const group=String(user.class_name||user.group||'멘토링').trim()||'멘토링';
+    return Object.freeze({
+      id:user.id,
+      name,
+      role:'mentor',
+      group,
+      participants:Object.freeze([name]),
+      legacyParticipants:null,
+      storageKey:'mentor:'+user.id
+    });
+  };
+  const ensureDynamicMember=user=>{
+    if(!user||!user.id)return null;
+    const preset=staticMember(user.id);
+    if(preset)return preset;
+    const next=createDynamicMember(user);
+    const existing=dynamicMembers.get(user.id);
+    if(existing&&existing.name===next.name&&existing.group===next.group)return existing;
+    dynamicMembers.set(user.id,next);
+    return next;
+  };
+  const removeDynamicMember=id=>{ if(id)dynamicMembers.delete(id); };
+  const clearDynamicMembers=()=>{ dynamicMembers.clear(); };
   const resolveMentor=actorOrId=>{
     if(actorOrId&&typeof actorOrId==='object'&&actorOrId.id)return member(actorOrId.id)||actorOrId;
     if(typeof actorOrId==='string')return member(actorOrId)||members[0];
@@ -264,5 +294,5 @@
     next.drafts=Object.fromEntries(Object.entries(next.drafts).filter(([,d])=>d.owner===actorId));
     return next;
   }
-  window.CodeWikiMentoringModel={members,defaultTitle,defaultTitleFor,defaultParticipants,participantsFor,storageKeyFor,defaultLocation,defaultStartTime,defaultEndTime,processSteps,processStepsFor,states,startTimes,endTimes,member,key,empty,apply,view,inferRound,pdfFileTitle,resolveParticipants,formatDiscordTemplate};
+  window.CodeWikiMentoringModel={members,defaultTitle,defaultTitleFor,defaultParticipants,participantsFor,storageKeyFor,defaultLocation,defaultStartTime,defaultEndTime,processSteps,processStepsFor,states,startTimes,endTimes,member,staticMember,createDynamicMember,ensureDynamicMember,removeDynamicMember,clearDynamicMembers,key,empty,apply,view,inferRound,pdfFileTitle,resolveParticipants,formatDiscordTemplate};
 })();

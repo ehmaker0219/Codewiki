@@ -58,7 +58,11 @@ async function testAdminMembersLogoutAll() {
   api.setUser({ id: 'adm-1', role: 'admin' });
   requests.shift().resolve({ data: [] });
   await flush();
-  assert.ok(host.innerHTML.includes('data-logout-all'), 'admin header renders 전원 로그아웃 button');
+  assert.equal(host.innerHTML.includes('data-logout-all'), false, 'students info page does not show 전원 로그아웃 button');
+
+  // Switch to accounts management page (#admin/accounts), where 전원 로그아웃 lives.
+  api.openRoute('#admin/accounts');
+  assert.ok(host.innerHTML.includes('data-logout-all'), 'accounts page header renders 전원 로그아웃 button');
 
   // Open confirmation dialog and trigger logout-all with duplicate-click guard.
   host.events.click({ target: { closest: sel => sel === '[data-logout-all]' ? {} : null } });
@@ -188,7 +192,6 @@ async function testAuthForcedLogoutPopup() {
   const nodes = new Map();
   const docListeners = new Map();
   let landingNotice = '';
-  let trackResetCount = 0;
 
   function get(id) {
     if (!nodes.has(id)) {
@@ -215,8 +218,7 @@ async function testAuthForcedLogoutPopup() {
     window: {
       location: { hash: '#doc/unit-01' },
       supabase: { createClient: () => ({ rpc: async () => ({ data: { forced_logout: true, reason: 'admin_logout_all' } }) }) },
-      scrollTo() {},
-      CodeWikiApp: { hasSelectedTrack: () => true, resetTrackChoice: () => { trackResetCount++; } }
+      scrollTo() {}
     },
     AbortController, setTimeout, clearTimeout,
     document: {
@@ -236,7 +238,7 @@ async function testAuthForcedLogoutPopup() {
   await context.window.refresh();
   assert.equal(saved.has(key), false, 'revoked token cleared immediately');
   assert.equal(context.window.CodeWikiAuth.getCurrentUser(), null);
-  assert.equal(trackResetCount, 1, 'track choice reset');
+  assert.equal(get('body').classList.contains('authenticated'), false, 'workspace deactivated');
   assert.equal(get('authGateOverlay').classList.contains('hidden'), false, 'login page shown immediately');
   assert.equal(landingNotice, '관리자에 의해 로그아웃되었습니다.');
   assert.equal(get('forcedLogoutModal').classList.contains('hidden'), false, 'forced-logout popup shown');

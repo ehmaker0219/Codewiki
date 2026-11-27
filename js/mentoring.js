@@ -11,14 +11,14 @@
   const toggleIcon='<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m14 6-6 6 6 6"/></svg>';
   const shortDate=v=>{if(!v)return '—';const date=new Date(v);return Number.isNaN(date.getTime())?'—':savedDateFormat.format(date);};
   const today=()=>activityDateFormat.format(new Date());
-  let session=null,actor=null,store=null,state=model.empty(),selected=null,editing=null,dirty=false;
+  let session=null,actor=null,previewActor=null,store=null,state=model.empty(),selected=null,editing=null,dirty=false;
   const uploads=new Map();
   let loaded=false,busy=false,preview=false,version=0,urls=[],importVersion=0;
   let savedDocTitle=null,appliedDocTitle='';
   let libraryCollapsed=false,folderFilter='all',folderEditing=null,renderedFolderEditId=null,folderMessage='',folderMarkup='',folderMoveMarkup='',listMarkup='';
   let draggedActivity=null,dragSource=null,dropTarget=null;
   const $=id=>host.querySelector('#'+id);
-  const visible=()=>Boolean(session)&&location.hash==='#mentoring';
+  const visible=()=>Boolean(session||previewActor)&&location.hash==='#mentoring';
   const activity=()=>state.activities.find(a=>a.id===selected);
   const folderList=()=>Array.isArray(state.folders)?state.folders:[];
   const folderOf=id=>{
@@ -65,16 +65,44 @@
     const a=activity();dirty=false;uploads.clear();preview=false;revoke();restoreReportTitle();
     editing=a?{activity:hydrateActivity(a)}:null;
   }
+  function resolveMentorGrant(subject, register = true){
+    if(!subject||!subject.id)return null;
+    if(subject.tools&&typeof subject.tools==='object'&&typeof subject.tools.mentoring==='boolean'){
+      if(!subject.tools.mentoring)return null;
+      return register
+        ? (model.ensureDynamicMember?.(subject)||member(subject.id)||null)
+        : (model.createDynamicMember?.(subject)||model.staticMember?.(subject.id)||null);
+    }
+    return (model.staticMember ? model.staticMember(subject.id) : member(subject.id))||null;
+  }
   function setUser(user){
     const token=window.CodeWikiAuth?.getSessionToken();
-    const valid=user?.role==='student'&&user.status==='approved'&&token&&member(user.id);
-    if(valid&&session?.id===user.id&&session.token===token)return;
+    const isRealStudent=user?.role==='student'&&user.status==='approved'&&Boolean(token);
+    const previewStudent=user?.role==='admin'&&token&&window.CodeWikiAuth?.isAdminPreviewMode?.()?window.CodeWikiAuth?.getAdminPreviewStudent?.():null;
+    const nextPreviewMentor=previewStudent?resolveMentorGrant(previewStudent,false):null;
+    const candidateRealActor=isRealStudent?resolveMentorGrant(user,false):null;
+    const valid=Boolean(candidateRealActor);
+    if(valid&&session?.id===user.id&&session.token===token&&actor?.id===candidateRealActor.id&&!previewActor)return;
+    if(!valid&&nextPreviewMentor&&previewActor?.id===nextPreviewMentor.id&&!session){trigger.hidden=false;route();return;}
+    model.clearDynamicMembers?.();
+    const validActor=isRealStudent?resolveMentorGrant(user,true):null;
     version++;importVersion++;revoke();restoreReportTitle();clearDragState();$('mentoringImport')?.close();$('mentoringDiscord')?.close();
-    session=valid?{id:user.id,token}:null;actor=valid?member(user.id):null;
+    session=valid?{id:user.id,token}:null;actor=validActor;
+    previewActor=valid?null:(nextPreviewMentor||null);
     store=actor?window.CodeWikiMentoringTeamStore.create(actor.id):null;
     state=model.empty();selected=null;editing=null;dirty=false;preview=false;importItems=[];uploads.clear();loaded=false;busy=false;host.inert=false;
     libraryCollapsed=false;folderFilter='all';folderEditing=null;renderedFolderEditId=null;folderMessage='';folderMarkup='';folderMoveMarkup='';listMarkup='';
-    host.replaceChildren();trigger.hidden=!session;route();
+    host.replaceChildren();trigger.hidden=!(session||previewActor);
+    if(!(session||previewActor)&&user&&location.hash==='#mentoring'){
+      try{history.replaceState(null,'','#doc/'+(window.CodeWikiApp?.getCurrentDocId?.()||'welcome-abap'));}catch{}
+    }
+    route();
+  }
+  function renderPreviewNotice(){
+    if(!previewActor)return;
+    const team=participantsFor(previewActor);
+    host.innerHTML=`<header class="mentoring-heading"><div><span class="mentoring-eyebrow">MENTORING NOTES · PREVIEW</span><h1>내 멘토링</h1><p>진행한 활동과 결과물을 기록하고 보고서로 정리하세요.</p></div><span class="mentoring-role">${esc(previewActor.name)} · 멘토 (${esc(previewActor.group||'')})</span></header>
+      <div class="admin-preview-notice-card"><strong>학생 화면 미리보기 (읽기 전용)</strong><p>${esc(previewActor.name)} 학생(${esc(previewActor.group||'')})은 멘토 계정이므로 좌측 <code>학습툴 &gt; 멘토링</code> 메뉴가 표시됩니다. 팀 구성원은 <strong>${esc(team.join(', '))}</strong>이며, 실제 로컬 활동 기록은 보호되어 미리보기에서 열람·수정되지 않습니다.</p></div>`;
   }
   function setLibraryCollapsed(collapsed){
     libraryCollapsed=Boolean(collapsed);
@@ -513,8 +541,10 @@
       }
       return;
     }
-    window.CodeWikiBoard?.closeIfActive();document.querySelectorAll('#sbHomeItem.active,#sbScheduleItem.active,#sbThinkingFlowItem.active,#sbProgramCatalogItem.active,#sbBasicSessionItem.active,#sbSqlGuideItem.active,.nav-doc-link.active').forEach(el=>el.classList.remove('active'));document.getElementById('quizModeBtn')?.classList.add('hidden');
-    if(entering)window.scrollTo({top:0,behavior:'instant'});if(!loaded&&!busy&&!dirty){frame();void run(load);}
+    window.CodeWikiBoard?.closeIfActive();window.CodeWikiFoundation?.leave?.();document.querySelectorAll('#sbHomeItem.active,#sbScheduleItem.active,#sbThinkingFlowItem.active,#sbProgramCatalogItem.active,#sbBasicSessionItem.active,#sbSqlGuideItem.active,.nav-doc-link.active').forEach(el=>el.classList.remove('active'));document.getElementById('quizModeBtn')?.classList.add('hidden');
+    if(entering)window.scrollTo({top:0,behavior:'instant'});
+    if(previewActor&&!session){renderPreviewNotice();return;}
+    if(!loaded&&!busy&&!dirty){frame();void run(load);}
   }
   function syncEndTimeOptions(startValue){
     const endSelect=host.querySelector('[data-field="endTime"]');
@@ -660,6 +690,6 @@
   });
   window.addEventListener('hashchange',route);
   window.addEventListener('beforeunload',e=>{if(dirty){e.preventDefault();e.returnValue='';}});
-  trigger.addEventListener('click',()=>{if(session){location.hash='#mentoring';route();}});
+  trigger.addEventListener('click',()=>{if(session||previewActor){location.hash='#mentoring';route();}});
   window.CodeWikiMentoring={setUser,leave(){if(location.hash==='#mentoring')history.replaceState(null,'','#doc/'+(window.CodeWikiApp?.getCurrentDocId()||'welcome-abap'));route();}};
 })();

@@ -6,9 +6,9 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('nod
   const {privateKey,publicKey}=await generateKeyPair('RSA-OAEP-256',{modulusLength:3072,extractable:true});
   const jwk={...await exportJWK(privateKey),kid:'test-key',alg:'RSA-OAEP-256'};
   const origin='https://example.test',url='https://database.test',endpoint=url+'/functions/v1/secure-auth';
-  const clock=()=>Date.now(), seen=[],wire=[];
+  const clock=()=>Date.now(), seen=[],wire=[],secReports=[];
   let result={session_token:crypto.randomUUID()},keyCalls=0;
-  const handler=await createHandler({privateKeys:[jwk],origins:[origin],clock,rpc:async args=>{seen.push(args);return result;}});
+  const handler=await createHandler({privateKeys:[jwk],origins:[origin],clock,rpc:async args=>{seen.push(args);return result;},reportSecurityEvent:ev=>secReports.push(ev)});
   const fetcher=async (address,options)=>{
     wire.push({address,method:options.method,body:options.body});
     if(options.method==='GET')keyCalls++;
@@ -76,8 +76,19 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('nod
   const before=seen.length;
   for(const bad of malformed){const r=await post(bad);assert.equal(r.status,400);assert.equal((await r.json()).code,'CW_ENVELOPE_INVALID');}
   assert.equal(seen.length,before,'invalid encryption reached database');
-  assert.equal((await handler(new Request(endpoint,{headers:{Origin:'https://evil.test'}}))).status,403);
+  assert.equal((await handler(new Request(endpoint,{headers:{Origin:'https://evil.test','cf-connecting-ip':'203.0.113.9'}}))).status,403);
   assert.equal((await handler(new Request(endpoint+'?password=synthetic',{headers:{Origin:origin}}))).status,400);
+  assert.equal((await handler(new Request(endpoint,{method:'DELETE',headers:{Origin:origin}}))).status,405);
+  assert.ok(secReports.some(e=>e.p_event_type==='origin_denied'&&e.p_reason_code==='CW_ORIGIN_DENIED'&&/^[0-9a-f]{64}$/.test(e.p_client)),'origin_denied reported with HMAC client key');
+  assert.ok(secReports.some(e=>e.p_event_type==='envelope_tampered'&&e.p_reason_code==='CW_ENVELOPE_INVALID'),'envelope_tampered reported');
+  assert.ok(secReports.some(e=>e.p_event_type==='method_abuse'&&e.p_reason_code==='CW_METHOD_NOT_ALLOWED'),'method_abuse reported');
+  assert.ok(!JSON.stringify(secReports).includes('203.0.113.9')&&!JSON.stringify(secReports).includes(fixturePassword),'security reports never leak raw IP or password');
+  // Edge per-isolate security report throttling caps noisy floods (max 20 / 60s per type+client) without affecting 403 responses.
+  const beforeFlood=secReports.length;
+  for(let i=0;i<30;i++){
+    assert.equal((await handler(new Request(endpoint,{headers:{Origin:'https://flood.test','cf-connecting-ip':'198.51.100.42'}}))).status,403);
+  }
+  assert.equal(secReports.length-beforeFlood,20,'edge security reports throttled at 20/min per type+client');
   const failure=await createHandler({privateKeys:[jwk],origins:[origin],rpc:async()=>{throw Error(fixturePassword);}});
   const failed=await failure(new Request(endpoint,{method:'POST',headers:{Origin:origin,'Content-Type':'application/json'},body:JSON.stringify({envelope:await encrypt()})}));
   assert.deepEqual(await failed.json(),{code:'CW_AUTH_UNAVAILABLE'});

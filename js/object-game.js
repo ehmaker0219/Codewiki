@@ -41,7 +41,8 @@
   let userId=null,game=null,bankPromise=null,epoch=0;
   const visible=()=>Boolean(userId)&&window.location.hash==='#data-game';
   function setUser(user){
-    const id=user?.role==='student'&&user.status==='approved'?user.id:null;
+    const preview=user?.role==='admin'&&Boolean(window.CodeWikiAuth?.isAdminPreviewMode?.());
+    const id=(user?.role==='student'&&user.status==='approved')||preview?user.id:null;
     if(id!==userId){epoch++;game=null;output.replaceChildren();status.textContent='';next.disabled=true;}
     userId=id;trigger.hidden=!id;
     route();
@@ -74,6 +75,7 @@
       button.append(element('span','object-game-option-number',String(i+1)),element('span','',option.label));
       button.addEventListener('click',()=>{
         if(!visible())return;const result=game.answer(option.id);if(!result)return;
+        window.CodeWikiTelemetry?.trackQuizAnswer?.('data-game',question.id,question.name,result.correct);
         for(const child of choices.children){child.disabled=true;if(child.dataset.answer===question.answer)child.classList.add('is-correct');}
         if(!result.correct)button.classList.add('is-wrong');
         const answer=options.find(o=>o.id===question.answer).label;
@@ -99,6 +101,7 @@
     host.hidden=!open;shell.classList.toggle('object-game-hidden',open);trigger.classList.toggle('active',open);
     if(!open){epoch++;return;}
     window.CodeWikiBoard?.closeIfActive();
+    window.CodeWikiFoundation?.leave?.();
     document.querySelectorAll('#sbHomeItem.active,#sbScheduleItem.active,#sbThinkingFlowItem.active,#sbProgramCatalogItem.active,#sbBasicSessionItem.active,#sbSqlGuideItem.active,.nav-doc-link.active').forEach(el=>el.classList.remove('active'));
     document.getElementById('quizModeBtn')?.classList.add('hidden');
     if(entering)window.scrollTo({top:0,behavior:'instant'});

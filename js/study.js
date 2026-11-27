@@ -2,11 +2,11 @@
   const host=document.getElementById('studyWorkspace');
   const shell=document.getElementById('appShell');
   const esc=window.CodeWikiLearning.escape;
-  let session=null,store=null,notes=[],editor=null,loading=false,loadVersion=0,transition=false;
+  let session=null,previewStudent=null,store=null,notes=[],editor=null,loading=false,loadVersion=0,transition=false;
   let editorLoad=null,mounted=false;
   let listChanges=null,listMarkup=null;
   let folders=null;
-  const visible=()=>Boolean(session)&&window.location.hash==='#study';
+  const visible=()=>Boolean(session||previewStudent)&&window.location.hash==='#study';
   const date=value=>value?new Date(value).toLocaleString('ko-KR',{timeZone:'Asia/Seoul',month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}):'새 노트';
   const byId=id=>host.querySelector('#'+id);
   const titleCollator=new Intl.Collator('ko',{numeric:true,sensitivity:'base'});
@@ -29,13 +29,19 @@
   function setUser(user) {
     const token=window.CodeWikiAuth?.getSessionToken()||'';
     const allowed=user?.role==='student'&&user.status==='approved';
-    if(allowed&&session?.id===user.id&&session.token===token){
+    const previewing=user?.role==='admin'&&Boolean(token)&&Boolean(window.CodeWikiAuth?.isAdminPreviewMode?.());
+    const nextPreview=previewing?(window.CodeWikiAuth?.getAdminPreviewStudent?.()||{id:'default',full_name:'일반 학생',class_name:''}):null;
+    if(allowed&&session?.id===user.id&&session.token===token&&!previewStudent){
       session.name=user.full_name;
       if(mounted)byId('studyHeading').textContent=session.name+'님의 공부방';
       return;
     }
+    if(nextPreview&&previewStudent&&previewStudent.id===nextPreview.id&&previewStudent.full_name===nextPreview.full_name&&!session){
+      route();
+      return;
+    }
     folders?.dispose();folders=null;
-    store?.dispose();store=null;session=null;notes=[];loadVersion++;transition=false;
+    store?.dispose();store=null;session=null;previewStudent=nextPreview;notes=[];loadVersion++;transition=false;
     loading=false;listChanges=null;listMarkup=null;
     editor?.destroy();editor=null;mounted=false;host.innerHTML='';
     if(allowed&&token) {
@@ -45,11 +51,17 @@
     }
     route();
   }
+  function renderPreviewNotice() {
+    if(!previewStudent)return;
+    const displayName=previewStudent.full_name||'일반 학생';
+    host.innerHTML=`<header class="study-header"><div><span class="study-eyebrow">PERSONAL STUDY · PREVIEW</span><h1 id="studyHeading">${esc(displayName)}님의 공부방</h1><p>오늘 배운 내용을 나만의 언어로.</p></div><span class="study-private">나만 보는 노트</span></header>
+      <div class="admin-preview-notice-card"><strong>학생 개인 노트 보호 안내</strong><p>내 공부방은 승인된 학생 본인만 열람·편집할 수 있도록 보호되어 있습니다. 미리보기 모드에서는 메뉴 위치와 화면 헤더만 확인할 수 있으며, 실제 개인 필기 데이터는 조회하지 않습니다.</p></div>`;
+  }
   function route() {
     const open=visible();
     host.hidden=!open;shell.classList.toggle('study-hidden',open);
     document.getElementById('openStudyBtn')?.classList.toggle('active',open);
-    if(open){window.CodeWikiBoard?.closeIfActive();document.getElementById('quizModeBtn')?.classList.add('hidden');document.getElementById('sbHomeItem')?.classList.remove('active');document.getElementById('sbScheduleItem')?.classList.remove('active');document.getElementById('sbThinkingFlowItem')?.classList.remove('active');document.getElementById('sbProgramCatalogItem')?.classList.remove('active');document.getElementById('sbBasicSessionItem')?.classList.remove('active');document.getElementById('sbSqlGuideItem')?.classList.remove('active');document.querySelectorAll('.nav-doc-link.active').forEach(el=>el.classList.remove('active'));if(!window.CodeWikiStudyEditor){loadEditor();return;}if(!mounted)mount();else void folders?.load();void list();}
+    if(open){window.CodeWikiBoard?.closeIfActive();window.CodeWikiFoundation?.leave?.();document.getElementById('quizModeBtn')?.classList.add('hidden');document.getElementById('sbHomeItem')?.classList.remove('active');document.getElementById('sbScheduleItem')?.classList.remove('active');document.getElementById('sbThinkingFlowItem')?.classList.remove('active');document.getElementById('sbProgramCatalogItem')?.classList.remove('active');document.getElementById('sbBasicSessionItem')?.classList.remove('active');document.getElementById('sbSqlGuideItem')?.classList.remove('active');document.querySelectorAll('.nav-doc-link.active').forEach(el=>el.classList.remove('active'));if(previewStudent&&!session){renderPreviewNotice();return;}if(!window.CodeWikiStudyEditor){loadEditor();return;}if(!mounted)mount();else void folders?.load();void list();}
   }
   function loadEditor() {
     if(editorLoad)return;

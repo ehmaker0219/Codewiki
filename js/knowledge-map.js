@@ -588,6 +588,7 @@
     window.CodeWikiAdminMembers?.leave?.();
     window.CodeWikiStudy?.leave?.();
     window.CodeWikiMentoring?.leave?.();
+    window.CodeWikiFoundation?.leave?.();
     window.CodeWikiObjectGame?.leave?.();
     document.querySelectorAll('#sbHomeItem.active, #sbScheduleItem.active, #sbThinkingFlowItem.active, #sbProgramCatalogItem.active, #sbBasicSessionItem.active, #sbSqlGuideItem.active, .nav-doc-link.active').forEach(el => el.classList.remove('active'));
     document.getElementById('quizModeBtn')?.classList.add('hidden');
@@ -607,7 +608,8 @@
   }
 
   function setUser(user) {
-    const nextAllowed = Boolean(user && user.role === 'student' && user.status === 'approved');
+    const preview = user?.role === 'admin' && Boolean(window.CodeWikiAuth?.isAdminPreviewMode?.());
+    const nextAllowed = Boolean(user && ((user.role === 'student' && user.status === 'approved') || preview));
     if (!nextAllowed) {
       allowed = false;
       mounted = false;

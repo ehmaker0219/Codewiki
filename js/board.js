@@ -109,6 +109,7 @@
     window.CodeWikiAdminMembers?.leave();
     window.CodeWikiStudy?.leave();
     window.CodeWikiMentoring?.leave();
+    window.CodeWikiFoundation?.leave?.();
     window.CodeWikiKnowledgeMap?.leave?.();
     const version = ++viewVersion, token = window.CodeWikiAuth?.getSessionToken();
     const isCurrent = () => version === viewVersion && isBoardViewActive && token === window.CodeWikiAuth?.getSessionToken();
@@ -147,7 +148,8 @@
 
   function renderBoardPosts(posts) {
     const currentUser = window.CodeWikiAuth?.getCurrentUser();
-    const isAdmin = currentUser?.role === "admin";
+    const previewing = Boolean(window.CodeWikiAuth?.isAdminPreviewMode?.());
+    const isAdmin = currentUser?.role === "admin" && !previewing;
 
     const openCount = posts.filter(p => p.status === "open").length;
     const doneCount = posts.filter(p => p.status === "done").length;
@@ -163,7 +165,7 @@
         <div>
           <h1 class="article-main-title">건의 게시판</h1>
         </div>
-        <button id="openWriteModalFromBoard" class="toss-primary-btn" style="width:auto; padding:0 20px; height:40px; margin-top:0;">
+        <button id="openWriteModalFromBoard" class="toss-primary-btn" style="width:auto; padding:0 20px; height:40px; margin-top:0;" ${previewing ? 'disabled title="학생 화면 미리보기에서는 읽기 전용입니다."' : ""}>
           + 글쓰기
         </button>
       </div>
@@ -192,7 +194,7 @@
             : filtered
                 .map(post => {
                   const isDone = post.status === "done";
-                  const canDelete = isAdmin || (currentUser && post.author_id === currentUser.id);
+                  const canDelete = !previewing && (isAdmin || (currentUser && post.author_id === currentUser.id));
                   return `
                   <div class="board-post-card ${isDone ? "post-done" : ""}">
                     <div class="board-post-top">

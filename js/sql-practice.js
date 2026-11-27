@@ -1495,6 +1495,7 @@
       drafts.set(prob.id, code);
       const res = grade(prob, code, bank);
       feedbackById.set(prob.id, res);
+      window.CodeWikiTelemetry?.trackQuizAnswer?.('sql-practice', prob.id, `${prob.num} ${prob.title || ''}`.trim(), res.status === 'correct');
       if (res.status === 'correct' && !solved.has(prob.id)) {
         solved.add(prob.id);
         saveSolved(userId, solved);

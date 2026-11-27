@@ -3,6 +3,7 @@
 .sb-profile-settings { display:flex; align-items:center; flex-shrink:0; gap:5px; padding:8px 5px; border:0; border-radius:6px; background:transparent; color:var(--text-sub); font:inherit; font-size:12px; cursor:pointer; text-align:left; white-space:nowrap; }
 .sb-profile-settings:hover { background:rgba(255,255,255,.08); }
 .profile-dialog { margin:auto; width:min(440px,calc(100vw - 32px)); max-height:calc(100dvh - 40px); overflow:auto; padding:24px; border:1px solid var(--border-subtle); border-radius:10px; color:var(--text-body); background:var(--bg-card); }
+.profile-dialog.profile-dialog-wide { width:min(640px,calc(100vw - 32px)); }
 .profile-dialog::backdrop { background:rgba(15,30,50,.45); }
 .profile-dialog-header { display:flex; justify-content:space-between; align-items:center; gap:16px; }
 .profile-dialog h2 { margin:0; font-size:18px; }
@@ -10,10 +11,11 @@
 .profile-account { display:grid; grid-template-columns:65px 1fr; gap:7px; padding:14px; margin:0 0 10px; background:var(--bg-subtle); border-radius:5px; }
 .profile-account dt { color:var(--text-muted); }
 .profile-account dd { margin:0; overflow-wrap:anywhere; }
-.profile-dialog input:not([type=checkbox]),.profile-dialog select { width:100%; min-height:38px; padding:8px 10px; border:1px solid var(--border-subtle); border-radius:4px; background:var(--bg-card); color:inherit; font:inherit; }
+.profile-dialog input:not([type=checkbox]),.profile-dialog select,.profile-dialog textarea { width:100%; min-height:38px; padding:8px 10px; border:1px solid var(--border-subtle); border-radius:4px; background:var(--bg-card); color:inherit; font:inherit; box-sizing:border-box; }
+.profile-dialog textarea { min-height:92px; resize:vertical; line-height:1.55; }
 .profile-section-title { font-size:13px; font-weight:600; margin-top:10px; padding-top:16px; border-top:1px solid var(--border-subtle); }
 .profile-dialog .birthday-help { margin:3px 0; }
 .profile-dialog-actions { display:flex; justify-content:space-between; gap:12px; margin-top:8px; }
 .profile-dialog-actions button { min-height:36px; padding:8px 20px; }
-.profile-dialog-actions .toss-primary-btn { width:auto; }
-.profile-dialog input:focus-visible,.profile-dialog select:focus-visible { outline:2px solid var(--toss-blue); outline-offset:2px; }
+.profile-dialog-actions .toss-primary-btn { width:auto; margin-top:0; }
+.profile-dialog input:focus-visible,.profile-dialog select:focus-visible,.profile-dialog textarea:focus-visible { outline:2px solid var(--toss-blue); outline-offset:2px; }

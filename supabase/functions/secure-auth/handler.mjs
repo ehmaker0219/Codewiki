@@ -124,7 +124,7 @@ export async function clientKey(request, hmacKey) {
   return [...new Uint8Array(sig)].map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
-export async function createHandler({privateKeys, origins, rpc, clock=Date.now, clientHashKey}) {
+export async function createHandler({privateKeys, origins, rpc, clock=Date.now, clientHashKey, reportSecurityEvent}) {
   if (!Array.isArray(privateKeys) || !privateKeys.length || privateKeys.length > 2 || !origins?.length || origins.includes('*')) throw Error('invalid-config');
   const keys=new Map();
   for(const jwk of privateKeys){
@@ -137,12 +137,45 @@ export async function createHandler({privateKeys, origins, rpc, clock=Date.now, 
   const first=privateKeys[0], publicJwk={kty:'RSA',alg:'RSA-OAEP-256',use:'enc',kid:first.kid,n:first.n,e:first.e};
   // Server-only HMAC key prevents offline IPv4 rainbow-table reversal.
   const hmacKey=await importHmacKey(clientHashKey || ('codewiki-client-hmac-v2:' + first.d));
+  const reportBuckets=new Map();
+  const allowReport=(key)=>{
+    const now=clock();
+    const cur=reportBuckets.get(key);
+    if(!cur||cur.resetAt<=now){
+      if(reportBuckets.size>=500){
+        for(const [k,v] of reportBuckets)if(v.resetAt<=now)reportBuckets.delete(k);
+        if(reportBuckets.size>=500)reportBuckets.delete(reportBuckets.keys().next().value);
+      }
+      reportBuckets.set(key,{count:1,resetAt:now+60000});
+      return true;
+    }
+    if(cur.count>=20)return false;
+    cur.count++;
+    return true;
+  };
+  const reportEvent=async (eventType, reasonCode, request, details={})=>{
+    if(typeof reportSecurityEvent!=='function')return;
+    try{
+      const client=await clientKey(request,hmacKey);
+      if(!allowReport(`${eventType}|${client||'no-ip'}`))return;
+      // Invoke synchronously before returning the HTTP response so EdgeRuntime.waitUntil registers reliably.
+      Promise.resolve(reportSecurityEvent({
+        p_event_type:eventType,
+        p_reason_code:reasonCode,
+        p_client:client||null,
+        p_details:details
+      })).catch(()=>{});
+    }catch{}
+  };
   return async request=>{
     const origin=request.headers.get('origin');
     const headers={'Cache-Control':'no-store','Content-Type':'application/json','X-Content-Type-Options':'nosniff','Vary':'Origin'};
     const reply=(data,status=200)=>new Response(JSON.stringify(data),{status,headers});
     // Origin is defense-in-depth only. Non-browser callers can forge this header.
-    if(!origin||!origins.includes(origin))return reply({code:'CW_ORIGIN_DENIED'},403);
+    if(!origin||!origins.includes(origin)){
+      await reportEvent('origin_denied','CW_ORIGIN_DENIED',request,{origin:String(origin||'').slice(0,120),method:String(request.method||'').slice(0,16)});
+      return reply({code:'CW_ORIGIN_DENIED'},403);
+    }
     headers['Access-Control-Allow-Origin']=origin;
     if(request.method==='OPTIONS'){
       headers['Access-Control-Allow-Methods']='GET, POST, OPTIONS';
@@ -150,9 +183,15 @@ export async function createHandler({privateKeys, origins, rpc, clock=Date.now, 
       return new Response(null,{status:204,headers});
     }
     const url=new URL(request.url);
-    if(url.search)return reply({code:'CW_ENVELOPE_INVALID'},400);
+    if(url.search){
+      await reportEvent('envelope_tampered','CW_ENVELOPE_INVALID',request,{reason:'query_string',method:String(request.method||'').slice(0,16),has_query:true});
+      return reply({code:'CW_ENVELOPE_INVALID'},400);
+    }
     if(request.method==='GET')return reply({version:1,jwk:publicJwk,serverTime:clock()});
-    if(request.method!=='POST')return reply({code:'CW_METHOD_NOT_ALLOWED'},405);
+    if(request.method!=='POST'){
+      await reportEvent('method_abuse','CW_METHOD_NOT_ALLOWED',request,{method:String(request.method||'').slice(0,16)});
+      return reply({code:'CW_METHOD_NOT_ALLOWED'},405);
+    }
     let payload;
     try{
       const envelope=await readBody(request);
@@ -165,7 +204,15 @@ export async function createHandler({privateKeys, origins, rpc, clock=Date.now, 
       payload=decrypted.payload;
       if(!Number.isInteger(payload.iat)||!Number.isInteger(payload.exp)||payload.exp<=payload.iat||
         payload.exp-payload.iat>60||!uuid.test(payload.jti)||!validArgs(payload.operation,payload.args))throw Error('invalid-payload');
-    }catch{return reply({code:'CW_ENVELOPE_INVALID'},400);}
+    }catch(err){
+      const reason=err?.message==='oversized-body'?'oversized_body'
+        :err?.message==='invalid-body'?'invalid_body'
+        :err?.message==='invalid-payload'?'invalid_payload'
+        :err?.message==='invalid-key'?'unknown_key'
+        :'decrypt_failed';
+      await reportEvent('envelope_tampered','CW_ENVELOPE_INVALID',request,{reason,method:'POST'});
+      return reply({code:'CW_ENVELOPE_INVALID'},400);
+    }
     try{
       const args={p_operation:payload.operation,p_args:payload.args,p_request_id:payload.jti,p_expires_at:new Date(payload.exp*1000).toISOString()};
       const client=await clientKey(request,hmacKey);

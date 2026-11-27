@@ -106,6 +106,8 @@ const read = file => {
     await db.exec(read('migrations/20261126-admin-logout-all.sql'));
     await db.exec(read('migrations/20261126-admin-update-username.sql'));
     await db.exec(read('migrations/20261126-admin-update-username.sql'));
+    await db.exec(read('migrations/20261127-admin-command-center.sql'));
+    await db.exec(read('migrations/20261127-admin-command-center.sql'));
     // Re-running legacy hardening migrations after final migration must keep plaintext RPCs locked.
     await db.exec(read('migrations/20261119-auth-hardening.sql'));
     await db.exec(read('migrations/20261119-admin-members.sql'));
@@ -114,7 +116,9 @@ const read = file => {
     await db.exec(read('migrations/20261125-auto-revisit-login-log.sql'));
     await db.exec(read('migrations/20261126-admin-logout-all.sql'));
     await db.exec(read('migrations/20261126-admin-update-username.sql'));
+    await db.exec(read('migrations/20261127-admin-command-center.sql'));
     for (const file of [
+      'admin-command-center.sql',
       'admin-update-username.sql',
       'admin-logout-all.sql',
       'auto-revisit-login-log.sql',

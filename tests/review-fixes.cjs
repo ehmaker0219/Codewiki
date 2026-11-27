@@ -45,8 +45,11 @@ const read = name => fs.readFileSync(name, 'utf8');
     'admin CSS must hide knowledge map, practice, and primary learning nav'
   );
 
-  // 3. The disabled UI5 track is not loaded on startup.
+  // 3. The disabled UI5 track is not loaded on startup, and the initial track-selection gate is retired.
   assert.ok(!/src="js\/ui5-data\.js/.test(read('index.html')), 'ui5-data.js must not load at startup');
+  assert.ok(!read('index.html').includes('trackSelectOverlay'), 'index.html must not mount retired trackSelectOverlay');
+  assert.ok(!read('js/auth.js').includes('renderTrackSelectGate') && !read('js/auth.js').includes('track-selecting'), 'auth.js must not render retired track-selection gate');
+  assert.ok(!read('css/style.css').includes('track-select-overlay') && !read('css/theme.css').includes('track-select-overlay'), 'retired track-selection CSS must be removed');
 
   // 4. Navigation renders once: a hash change defers to the hashchange handler, and admin redirects from student home / student-only docs.
   const app = read('js/app.js');
@@ -61,7 +64,7 @@ const read = name => fs.readFileSync(name, 'utf8');
     document:{getElementById:id=>id==='sec-3'?targetSection:null, querySelectorAll:()=>[]},
     articleContainer:{_applyDocView(tab, mode){ appliedViews.push([tab, mode]); if (tab === 'l2') targetSection.hidden = false; }, querySelector:()=>({hidden:false})},
     currentDocId:'abap-basics', history:{replaceState(_a,_b,h){ nav.window.location.hash = h; }},
-    getHomeDocId:()=>'welcome-abap', renderDocument:id=>renders.push(id), sessionStorage:{setItem(){}}, TRACK_SESSION_KEY:'k', currentTrack:'abap'};
+    getHomeDocId:()=>'welcome-abap', renderDocument:id=>renders.push(id), currentTrack:'abap'};
   vm.runInNewContext(slice + '\nwindow.navigateTo = navigateTo; window.isDocAccessible = isDocAccessible; window.pending = () => pendingNavigation; window.consumeSection = consumePendingSection;', nav);
   nav.window.navigateTo('abap-basics');
   assert.equal(nav.window.location.hash, '#doc/abap-basics');

@@ -3,52 +3,211 @@
   const host=document.getElementById('adminMembersPage'),shell=document.getElementById('appShell');
   const esc=window.CodeWikiLearning.escape;
   const statuses={approved:'승인 완료',pending:'승인 대기',rejected:'반려'};
-  const columns=[['student_number','번호'],['full_name','이름'],['class_name','반'],['username','아이디'],['birth_date','생년월일'],['mbti','MBTI'],['status','가입 상태'],['last_login_at','최근 로그인'],['created_at','가입일']];
+  const columns=[['student_number','번호'],['full_name','이름'],['class_name','반'],['username','아이디'],['birth_date','생년월일'],['mbti','MBTI'],['status','가입 상태'],['completed_docs','학습 진도'],['last_login_at','최근 로그인'],['created_at','가입일']];
+  const accountColumns=[['student_number','번호'],['full_name','이름'],['class_name','반'],['username','아이디'],['status','가입 상태']];
   const collator=new Intl.Collator('ko',{numeric:true,sensitivity:'base'});
   let sortKey='full_name',sortDirection=1;
   let session=null,active=false,rows=[],rowsLoaded=false,version=0,loading=false,rowsMessage='';
   let logins=[],loginsLoaded=false,loginsVersion=0,loginsLoading=false,loginsMessage='',loginsUserId='';
+  let insightsMessage='',dialogVersion=0,insightDialogBusy=false;
   let query='',classFilter='',statusFilter='',selectedUserId='',dialog=null,resetBusy=false,usernameBusy=false,logoutAllBusy=false;
-  let online=null;
-  const isAdminRoute=()=>window.location.hash==='#admin/students'||window.location.hash==='#admin/logins';
-  const currentTab=()=>window.location.hash==='#admin/logins'?'logins':'students';
+  let online=null,livePresence=null;
+  const ADMIN_TAB_HASHES={students:'#admin/students',accounts:'#admin/accounts',approvals:'#admin/approvals',logins:'#admin/logins',notices:'#admin/notices',dashboard:'#admin/dashboard',controls:'#admin/controls',insights:'#admin/insights',security:'#admin/security'};
+  const isAdminRoute=()=>Object.values(ADMIN_TAB_HASHES).includes(window.location.hash);
+  const currentTab=()=>{
+    const h=window.location.hash;
+    if(h==='#admin/accounts')return 'accounts';
+    if(h==='#admin/approvals')return 'approvals';
+    if(h==='#admin/logins')return 'logins';
+    if(h==='#admin/notices')return 'notices';
+    if(h==='#admin/dashboard')return 'dashboard';
+    if(h==='#admin/controls')return 'controls';
+    if(h==='#admin/insights')return 'insights';
+    if(h==='#admin/security')return 'security';
+    return 'students';
+  };
   const visible=()=>Boolean(session)&&isAdminRoute();
   const current=(s,v)=>session===s&&version===v&&active;
   const currentLogins=(s,v)=>session===s&&loginsVersion===v&&active;
+  const DEVICE_LABELS={desktop:'PC',mobile:'모바일',tablet:'태블릿'};
+  const STUDENT_TOOL_META=[['mentoring','멘토링'],['foundation','파운데이션']];
+  const toolBusyUsers=new Set();
+  function resolveStudentTools(u){
+    const raw=u?.tools&&typeof u.tools==='object'?u.tools:null;
+    const mentoring=typeof raw?.mentoring==='boolean'
+      ? raw.mentoring
+      : Boolean(window.CodeWikiMentoringModel?.staticMember ? window.CodeWikiMentoringModel.staticMember(u?.id) : window.CodeWikiMentoringModel?.member?.(u?.id));
+    const foundation=typeof raw?.foundation==='boolean'
+      ? raw.foundation
+      : Boolean(u?.id&&window.CodeWikiFoundation?.OWNER_ID===u.id);
+    return {mentoring,foundation};
+  }
+  async function toggleStudentTool(uid,toolKey){
+    const student=rows.find(u=>u.id===uid),s=session,v=version;
+    if(!student||!active||!s||student.status!=='approved'||toolBusyUsers.has(uid)||!STUDENT_TOOL_META.some(([k])=>k===toolKey))return;
+    const currentTools=resolveStudentTools(student);
+    const nextTools={...currentTools,[toolKey]:!currentTools[toolKey]};
+    const label=STUDENT_TOOL_META.find(([k])=>k===toolKey)?.[1]||toolKey;
+    toolBusyUsers.add(uid);
+    if(currentTab()==='accounts')renderRows();
+    try{
+      const result=await call('cw_admin_set_student_tools',{p_target_id:uid,p_tools:nextTools},s);
+      if(!current(s,v))return;
+      if(result?.ok!==true||!result.tools||typeof result.tools!=='object')throw Error();
+      student.tools={mentoring:Boolean(result.tools.mentoring),foundation:Boolean(result.tools.foundation)};
+      window.CodeWikiAuth?.setAdminPreviewRoster?.(rows);
+      void window.CodeWikiTelemetry?.notifyRuntimeUpdate?.();
+      rowsMessage=`${student.full_name}님의 ${label} 권한을 ${student.tools[toolKey]?'켰습니다':'껐습니다'}.`;
+    }catch(error){
+      if(current(s,v)){
+        const messages={
+          '42501':'관리자 로그인이 만료되었습니다. 다시 로그인해 주세요.',
+          CW_ADMIN_REQUIRED:'관리자 로그인이 만료되었습니다. 다시 로그인해 주세요.',
+          CW_STUDENT_NOT_FOUND:'학생 계정을 찾을 수 없습니다.',
+          CW_RATE_LIMIT:'요청이 너무 빠릅니다. 잠시 후 다시 시도해 주세요.',
+          PGRST202:'학생별 전용 기능 권한 설정이 아직 서버 DB에 적용되지 않았습니다.'
+        };
+        rowsMessage=messages[error?.code]||`${student.full_name}님의 ${label} 권한을 변경하지 못했습니다.`;
+      }
+    }finally{
+      if(session===s)toolBusyUsers.delete(uid);
+      if(current(s,v)&&currentTab()==='accounts'){
+        renderRows();
+        const msgEl=host.querySelector('#membersMessage');if(msgEl)msgEl.textContent=rowsMessage;
+      }
+    }
+  }
   function syncSidebarActive(){
     const tab=currentTab();
     document.getElementById('openStudentDirectoryBtn')?.classList[active&&tab==='students'?'add':'remove']('active');
+    document.getElementById('openStudentAccountsBtn')?.classList[active&&tab==='accounts'?'add':'remove']('active');
+    document.getElementById('openAdminModalBtn')?.classList[active&&tab==='approvals'?'add':'remove']('active');
     document.getElementById('openLoginHistoryBtn')?.classList[active&&tab==='logins'?'add':'remove']('active');
+    document.getElementById('openAdminNoticesBtn')?.classList[active&&tab==='notices'?'add':'remove']('active');
+    document.getElementById('openAdminDashboardBtn')?.classList[active&&tab==='dashboard'?'add':'remove']('active');
+    document.getElementById('openAdminControlsBtn')?.classList[active&&tab==='controls'?'add':'remove']('active');
+    document.getElementById('openAdminInsightsBtn')?.classList[active&&tab==='insights'?'add':'remove']('active');
+    document.getElementById('openAdminSecurityBtn')?.classList[active&&tab==='security'?'add':'remove']('active');
   }
-  function closeReset(){if(dialog){dialog.close();dialog.innerHTML='';}resetBusy=false;usernameBusy=false;logoutAllBusy=false;const lb=host.querySelector('[data-logout-all]');if(lb)lb.disabled=false;}
-  function ensureDialog(labelledBy){
+  function closeReset(){dialogVersion++;insightDialogBusy=false;if(dialog){dialog.classList?.remove?.('profile-dialog-wide');dialog.close();dialog.innerHTML='';}resetBusy=false;usernameBusy=false;logoutAllBusy=false;const lb=host.querySelector('[data-logout-all]');if(lb)lb.disabled=false;}
+  function ensureDialog(labelledBy,wide=false){
+    dialogVersion++;
+    insightDialogBusy=false;
     if(!dialog){
       dialog=document.createElement('dialog');dialog.className='profile-dialog';document.body.append(dialog);
-      dialog.addEventListener('cancel',e=>{if(resetBusy||usernameBusy||logoutAllBusy)e.preventDefault();});
-      dialog.addEventListener('close',()=>{dialog.innerHTML='';});
+      dialog.addEventListener('cancel',e=>{if(resetBusy||usernameBusy||logoutAllBusy||insightDialogBusy)e.preventDefault();});
+      dialog.addEventListener('close',()=>{dialogVersion++;insightDialogBusy=false;dialog.classList?.remove?.('profile-dialog-wide');dialog.innerHTML='';});
     }
+    dialog.classList?.[wide?'add':'remove']?.('profile-dialog-wide');
     dialog.setAttribute('aria-labelledby',labelledBy);
+    return dialogVersion;
+  }
+  let insightsCtrl=null;
+  function getInsightsCtrl(){
+    if(!insightsCtrl&&window.CodeWikiAdminInsights?.create){
+      insightsCtrl=window.CodeWikiAdminInsights.create({
+        host,
+        callRpc:(name,args,s)=>call(name,args,s),
+        getSession:()=>session,
+        getStudents:()=>rows,
+        isActive:()=>active,
+        getCurrentTab:()=>currentTab(),
+        getDialog:(labelledBy,wide)=>{const v=ensureDialog(labelledBy,wide);return {dlg:dialog,version:v};},
+        getDialogVersion:()=>dialogVersion,
+        setDialogBusy:b=>{insightDialogBusy=Boolean(b);},
+        closeDialog:closeReset,
+        onMessage:text=>{
+          const tab=currentTab();
+          if(tab==='logins')loginsMessage=text;
+          else if(tab==='students'||tab==='accounts')rowsMessage=text;
+          else insightsMessage=text;
+          const msgEl=host.querySelector('#membersMessage');if(msgEl)msgEl.textContent=text;
+        },
+        onPresenceRefresh:()=>window.CodeWikiPresence?.refresh?.(true),
+        onSecurityAlertsChange:count=>syncSecuritySidebarBadge(count)
+      });
+    }
+    return insightsCtrl;
+  }
+  let approvalCtrl=null;
+  function syncApprovalSidebarBadge(count){
+    const badge=document.getElementById('adminPendingCountBadge');
+    if(!badge)return;
+    const n=typeof count==='number'?count:Number(window.CodeWikiAuth?.getCurrentUser?.()?.pending_count)||0;
+    badge.textContent=n>0?String(n):'';
+    badge.hidden=!(n>0);
+  }
+  function syncSecuritySidebarBadge(count){
+    const badge=document.getElementById('adminSecurityAlertBadge');
+    if(!badge)return;
+    const n=typeof count==='number'?count:Number(window.CodeWikiAuth?.getCurrentUser?.()?.security_alert_count)||0;
+    badge.textContent=n>0?String(n):'';
+    badge.hidden=!(n>0);
+  }
+  function getApprovalCtrl(){
+    if(!approvalCtrl&&window.CodeWikiAdmin?.create){
+      approvalCtrl=window.CodeWikiAdmin.create({
+        mode:'page',
+        getContainer:()=>host.querySelector('#membersTable'),
+        getToken:()=>session?.token||'',
+        getUser:()=>window.CodeWikiAuth?.getCurrentUser?.()||(session?{id:session.id,role:'admin'}:null),
+        getClient:()=>window.CodeWikiAuth?.getSupabaseClient?.(),
+        isActive:()=>active&&currentTab()==='approvals',
+        onChange:()=>window.CodeWikiAuth?.refresh?.()||Promise.resolve(),
+        onUsersChange:({pendingCount})=>syncApprovalSidebarBadge(pendingCount)
+      });
+    }
+    return approvalCtrl;
   }
   function clear(){
     version++;loginsVersion++;
-    rows=[];rowsLoaded=false;loading=false;rowsMessage='';
+    rows=[];rowsLoaded=false;loading=false;rowsMessage='';toolBusyUsers.clear();
     logins=[];loginsLoaded=false;loginsLoading=false;loginsMessage='';loginsUserId='';selectedUserId='';
+    insightsMessage='';
+    livePresence=null;
+    insightsCtrl?.reset?.();
+    approvalCtrl?.reset?.();
     closeReset();host.innerHTML='';host.hidden=true;active=false;
     shell.classList.remove('members-hidden');
     syncSidebarActive();
   }
   function setUser(user){
     const token=window.CodeWikiAuth?.getSessionToken()||'';
-    if(user?.role==='admin'&&session?.id===user.id&&session.token===token)return;
-    clear();online=null;session=user?.role==='admin'&&token?{id:user.id,token}:null;query='';classFilter='';statusFilter='';
+    if(user?.role==='admin'&&session?.id===user.id&&session.token===token){
+      syncApprovalSidebarBadge(approvalCtrl?.getPendingCount?.()??(Number(user.pending_count)||0));
+      syncSecuritySidebarBadge(Number(user.security_alert_count)||0);
+      return;
+    }
+    clear();online=null;livePresence=null;
+    session=user?.role==='admin'&&token?{id:user.id,token}:null;query='';classFilter='';statusFilter='';
     sortKey='full_name';sortDirection=1;
+    approvalCtrl?.setUser?.(user);
     const h=window.location.hash;
-    if(session&&(!h||h==='#admin/students'||h==='#doc/welcome-abap'||h==='#doc/welcome-ui5'||h==='#map'||h==='#study'||h==='#mentoring'||h==='#data-game'))openHome();else route();
+    if(session&&(!h||h==='#admin/students'||h==='#doc/welcome-abap'||h==='#doc/welcome-ui5'||h==='#map'||h==='#study'||h==='#mentoring'||h==='#data-game'||h==='#foundation'))openHome();else route();
   }
-  function openHome(){if(!session)return false;history.replaceState(null,'','#admin/students');route();window.CodeWikiPresence?.refresh();return true;}
+  function openRoute(hash){
+    if(!session)return false;
+    const target=Object.values(ADMIN_TAB_HASHES).includes(hash)?hash:'#admin/students';
+    history.replaceState(null,'',target);route();window.CodeWikiPresence?.refresh();return true;
+  }
+  function openHome(){return openRoute('#admin/students');}
   function renderPresence(){
     const panel=host.querySelector('#membersPresence');if(!panel)return;
-    panel.innerHTML=online===false?'<strong>접속 상태를 확인하지 못했습니다.</strong><span>잠시 후 자동으로 다시 확인합니다.</span>':online===null?'<strong>접속 상태를 확인하고 있습니다.</strong><span>최근 2분 기준 · 1분마다 갱신</span>':`<strong>현재 접속 ${online.length}명</strong><span>최근 2분 기준 · 관리자 포함</span><div class="members-online-names">${online.map(u=>`<span>${esc(u.full_name)}${u.role==='admin'?' (관리자)':` · ${esc(u.class_name||'')}`}</span>`).join('')||'<span>접속 중인 회원이 없습니다.</span>'}</div>`;
+    if(online===false){panel.innerHTML='<strong>접속 상태를 확인하지 못했습니다.</strong><span>잠시 후 자동으로 다시 확인합니다.</span>';return;}
+    if(online===null){panel.innerHTML='<strong>접속 상태를 확인하고 있습니다.</strong><span>최근 2분 기준 · 1분마다 갱신</span>';return;}
+    if(livePresence&&Array.isArray(livePresence.online)){
+      const docTitle=window.CodeWikiAdminInsights?.docTitle||(id=>id);
+      const list=livePresence.online;
+      const byDoc=Array.isArray(livePresence.by_doc)?livePresence.by_doc:[];
+      const docStrip=byDoc.length?`<div class="members-live-docs">${byDoc.map(d=>`<span class="members-live-doc-pill">${esc(d.label||docTitle(d.doc_id))} <b>${d.count}명</b></span>`).join('')}</div>`:'';
+      panel.innerHTML=`<strong>현재 접속 ${list.length}명</strong><span>최근 2분 기준 · 실시간 열람 위치 포함</span>${docStrip}<div class="members-online-names">${list.map(u=>{
+        const loc=u.role==='admin'?'':(u.current_label||u.current_doc_id?` · ${esc(u.current_label||docTitle(u.current_doc_id))}`:'');
+        const dev=u.role==='admin'?'':(u.device_type?` <small class="members-dev-tag">${esc(DEVICE_LABELS[u.device_type]||u.device_type)}</small>`:'');
+        return `<span>${esc(u.full_name)}${u.role==='admin'?' (관리자)':` · ${esc(u.class_name||'')}${loc}${dev}`}</span>`;
+      }).join('')||'<span>접속 중인 회원이 없습니다.</span>'}</div>`;
+      return;
+    }
+    panel.innerHTML=`<strong>현재 접속 ${online.length}명</strong><span>최근 2분 기준 · 관리자 포함</span><div class="members-online-names">${online.map(u=>`<span>${esc(u.full_name)}${u.role==='admin'?' (관리자)':` · ${esc(u.class_name||'')}`}</span>`).join('')||'<span>접속 중인 회원이 없습니다.</span>'}</div>`;
   }
   async function call(name,args,s){
     const controller=new AbortController();let timer;
@@ -69,18 +228,34 @@
     const selStart=keepSearch&&typeof activeEl.selectionStart==='number'?activeEl.selectionStart:null;
     const selEnd=keepSearch&&typeof activeEl.selectionEnd==='number'?activeEl.selectionEnd:null;
     const tab=currentTab();
+    const isDirectoryTab=tab==='students'||tab==='accounts';
+    const isTableTab=isDirectoryTab||tab==='logins';
     const source=tab==='logins'?logins:rows;
     const classes=[...new Set(source.map(u=>u.class_name||'기본반'))].sort((a,b)=>a.localeCompare(b,'ko',{numeric:true}));
     if(classFilter&&!classes.includes(classFilter))classes.push(classFilter);
-    const title=tab==='logins'?'학생 로그인 내역':'학생 정보';
-    const desc=tab==='logins'?'학생들의 최근 로그인 기록을 시간순으로 확인합니다.':'가입한 학생의 계정과 프로필을 관리합니다.';
-    const statusText=tab==='logins'?(loginsLoading?'로그인 내역을 불러오는 중…':loginsMessage):(loading?'학생 정보를 불러오는 중…':rowsMessage);
-    host.innerHTML=`<header class="members-heading"><div><h1>${title}</h1><p>${desc}</p></div><div class="members-heading-actions"><button type="button" class="toss-chip-btn members-danger-btn" data-logout-all ${logoutAllBusy?'disabled':''}>전원 로그아웃</button></div></header><section id="membersPresence" class="members-presence" aria-label="현재 접속자"></section>
-      <div class="members-tabs" role="tablist" aria-label="학생 관리 보기"><button type="button" class="members-tab" role="tab" aria-selected="${tab==='students'}" data-members-tab="students">학생 목록</button><button type="button" class="members-tab" role="tab" aria-selected="${tab==='logins'}" data-members-tab="logins">로그인 내역</button></div>
-      <div class="members-filters"><label>검색<input id="membersSearch" type="search" placeholder="이름 또는 아이디" value="${esc(query)}"></label><label>반<select id="membersClass"><option value="">전체 반</option>${classes.map(c=>`<option value="${esc(c)}" ${classFilter===c?'selected':''}>${esc(c)}</option>`).join('')}</select></label><label>상태<select id="membersStatus"><option value="">전체 상태</option>${Object.entries(statuses).map(([id,name])=>`<option value="${id}" ${statusFilter===id?'selected':''}>${name}</option>`).join('')}</select></label><span class="members-count" id="membersCount"></span></div>
+    const meta={
+      students:['학생 정보','가입한 학생의 기본 프로필, 학습 진도, 최근 접속 현황을 확인합니다.'],
+      accounts:['계정 관리','학생별 화면 미리보기, 아이디 변경, 비밀번호 재설정 및 세션 로그아웃을 관리합니다.'],
+      approvals:['학생 승인 관리','가입 신청 학생의 승인·반려 처리와 거절된 요청 정리를 한눈에 관리합니다.'],
+      logins:['학생 로그인 내역','학생들의 최근 로그인 및 자동 재방문 기록을 시간순으로 확인합니다.'],
+      notices:['공지 · 1:1 알림','전체 공지 팝업, 수업 스포트라이트 배너, 1:1 학생 알림 발송 및 통합 발송 내역을 관리합니다.'],
+      dashboard:['출석부','일별 순방문자, 접속 히트맵, 출석부 가입률, 미가입자 명단 및 장기 미접속 학생을 확인합니다.'],
+      controls:['원격 제어','원격 점검 모드(Maintenance)와 학생 메뉴 원격 잠금(Feature Flags)을 제어합니다.'],
+      insights:['학습 분석','단원별 학습 완료율, 이해 병목 레이더, 인기 문서, 검색 충족률, 코드 복사 및 퀴즈 오답률을 분석합니다.'],
+      security:['보안 검사','로그인 실패·무차별 시도, 암호화 패킷 위변조, 비인가 API 접근, SQLi/XSS 의심 입력, 다중 기기 전환 및 감사 로그를 상세 관제합니다.']
+    }[tab]||['학생 정보','가입한 학생의 기본 프로필과 학습 현황을 확인합니다.'];
+    const [title,desc]=meta;
+    const statusText=tab==='logins'?(loginsLoading?'로그인 내역을 불러오는 중…':loginsMessage):(isDirectoryTab?(loading?'학생 정보를 불러오는 중…':rowsMessage):(tab==='approvals'?'':insightsMessage));
+    const hasInsights=Boolean(window.CodeWikiAdminInsights);
+    const headingActions=`${(tab==='students'||tab==='logins')&&hasInsights?'<button type="button" class="toss-chip-btn" data-export-csv>CSV 내보내기</button>':''}${tab==='accounts'?`<button type="button" class="toss-chip-btn members-danger-btn" data-logout-all ${logoutAllBusy?'disabled':''}>전원 로그아웃</button>`:''}`;
+    host.innerHTML=`<header class="members-heading"><div><h1>${title}</h1><p>${desc}</p></div>${headingActions?`<div class="members-heading-actions">${headingActions}</div>`:''}</header><section id="membersPresence" class="members-presence" aria-label="현재 접속자"></section>
+      ${isTableTab?`<div class="members-filters"><label>검색<input id="membersSearch" type="search" placeholder="이름 또는 아이디" value="${esc(query)}"></label><label>반<select id="membersClass"><option value="">전체 반</option>${classes.map(c=>`<option value="${esc(c)}" ${classFilter===c?'selected':''}>${esc(c)}</option>`).join('')}</select></label><label>상태<select id="membersStatus"><option value="">전체 상태</option>${Object.entries(statuses).map(([id,name])=>`<option value="${id}" ${statusFilter===id?'selected':''}>${name}</option>`).join('')}</select></label><span class="members-count" id="membersCount"></span></div>`:''}
       <p id="membersMessage" role="status"></p><div class="members-table-wrap" id="membersTable"></div>`;
     const msg=host.querySelector('#membersMessage');if(msg)msg.textContent=statusText;
-    renderPresence();renderRows();
+    renderPresence();
+    if(isTableTab)renderRows();
+    else if(tab==='approvals')getApprovalCtrl()?.render();
+    else getInsightsCtrl()?.renderTab(tab);
     if(keepSearch){
       const search=host.querySelector('#membersSearch');
       search?.focus?.({preventScroll:true});
@@ -88,25 +263,44 @@
     }
   }
   function renderRows(){
+    const countEl=host.querySelector('#membersCount');
+    const tableEl=host.querySelector('#membersTable');
+    if(!tableEl)return;
     const q=query.trim().toLocaleLowerCase();
     const matches=u=>(!q||`${u.full_name||''} ${u.username||''}`.toLocaleLowerCase().includes(q))&&(!classFilter||(u.class_name||'기본반')===classFilter)&&(!statusFilter||u.status===statusFilter);
     if(currentTab()==='logins'){
       const filtered=logins.filter(e=>(!selectedUserId||e.user_id===selectedUserId)&&matches(e));
-      host.querySelector('#membersCount').textContent=`${filtered.length}건 / 전체 ${logins.length}건`;
-      host.querySelector('#membersTable').innerHTML=filtered.length
+      if(countEl)countEl.textContent=`${filtered.length}건 / 전체 ${logins.length}건`;
+      tableEl.innerHTML=filtered.length
         ? `<table class="members-table"><caption>${selectedUserId?'선택한 학생 로그인 내역 · 최대 100건 (한국 시간 기준)':'최근 학생 로그인 내역 · 최대 100건 (한국 시간 기준)'}</caption><thead><tr><th scope="col">로그인 시각</th><th scope="col">번호</th><th scope="col">이름</th><th scope="col">반</th><th scope="col">아이디</th><th scope="col">가입 상태</th></tr></thead><tbody>${filtered.map(e=>`<tr><td class="members-time-cell">${esc(formatDateTime(e.logged_in_at))}</td><td>${esc(e.student_number??'—')}</td><td>${esc(e.full_name)}</td><td>${esc(e.class_name||'기본반')}</td><td>${esc(e.username)}</td><td>${esc(statuses[e.status]||e.status)}</td></tr>`).join('')}</tbody></table>`
         : loginsLoading||loginsMessage?'':`<p class="members-reset-note">${logins.length?'조건에 맞는 로그인 내역이 없습니다.':'기록된 학생 로그인 내역이 없습니다. 로그인 기록 적용 이후의 로그인이 여기에 표시됩니다.'}</p>`;
       return;
     }
     const filtered=rows.filter(matches).sort(compareRows);
-    host.querySelector('#membersCount').textContent=`${filtered.length}명 / 전체 ${rows.length}명`;
-    host.querySelector('#membersTable').innerHTML=filtered.length?`<table class="members-table"><caption>학생 계정 목록 · 생년월일은 관리자 전용</caption><thead><tr>${columns.map(([key,label])=>`<th scope="col" aria-sort="${sortKey===key?(sortDirection===1?'ascending':'descending'):'none'}"><button type="button" class="members-sort" data-members-sort="${key}" aria-label="${label} ${sortKey===key&&sortDirection===1?'내림차순':'오름차순'} 정렬">${label}<span aria-hidden="true">${sortKey===key?(sortDirection===1?'↑':'↓'):'↕'}</span></button></th>`).join('')}<th scope="col">계정 관리</th></tr></thead><tbody>${filtered.map(u=>`<tr><td>${esc(u.student_number??'—')}</td><td>${esc(u.full_name)}</td><td>${esc(u.class_name||'기본반')}</td><td>${esc(u.username)}</td><td>${esc(u.birth_date||'미등록')}</td><td>${esc(u.mbti||'—')}</td><td>${esc(statuses[u.status]||u.status)}</td><td>${u.last_login_at?`<button type="button" class="members-login-link" data-view-logins="${esc(u.username)}" data-view-logins-id="${esc(u.id)}" title="로그인 내역 보기">${esc(formatDateTime(u.last_login_at))}${Number(u.login_count)>0?` <small>(${esc(u.login_count)}회)</small>`:''}</button>`:'—'}</td><td>${esc(formatDate(u.created_at))}</td><td class="members-actions-cell"><div class="members-row-actions"><button type="button" class="toss-chip-btn" data-edit-username="${esc(u.id)}">아이디 변경</button><button type="button" class="toss-chip-btn" data-reset-student="${esc(u.id)}">비밀번호 재설정</button></div></td></tr>`).join('')}</tbody></table>`:loading||rowsMessage?'':'<p class="members-reset-note">표시할 학생이 없습니다.</p>';
+    if(countEl)countEl.textContent=`${filtered.length}명 / 전체 ${rows.length}명`;
+    const renderSortHeaders=cols=>cols.map(([key,label])=>`<th scope="col" aria-sort="${sortKey===key?(sortDirection===1?'ascending':'descending'):'none'}"><button type="button" class="members-sort" data-members-sort="${key}" aria-label="${label} ${sortKey===key&&sortDirection===1?'내림차순':'오름차순'} 정렬">${label}<span aria-hidden="true">${sortKey===key?(sortDirection===1?'↑':'↓'):'↕'}</span></button></th>`).join('');
+    if(currentTab()==='accounts'){
+      const hasInsights=Boolean(window.CodeWikiAdminInsights);
+      const hasPreview=typeof window.CodeWikiAuth?.setAdminPreviewMode==='function';
+      const renderToolToggles=u=>{
+        if(u.status!=='approved')return '<span class="admin-feed-dash">—</span>';
+        const tools=resolveStudentTools(u);
+        const busyUser=toolBusyUsers.has(u.id);
+        return `<div class="members-tool-toggles" role="group" aria-label="${esc(u.full_name)} 전용 학습툴">${STUDENT_TOOL_META.map(([key,label])=>{
+          const on=Boolean(tools[key]);
+          return `<button type="button" class="members-tool-toggle${on?' is-on':''}" data-toggle-tool="${key}" data-tool-uid="${esc(u.id)}" aria-pressed="${on}" ${busyUser?'disabled':''} title="${esc(label)} ${on?'켜짐 (클릭해 끄기)':'꺼짐 (클릭해 켜기)'}"><span class="members-tool-dot" aria-hidden="true"></span>${esc(label)}</button>`;
+        }).join('')}</div>`;
+      };
+      tableEl.innerHTML=filtered.length?`<table class="members-table"><caption>학생 계정, 전용 학습툴 권한(ON/OFF) 및 화면 제어</caption><thead><tr>${renderSortHeaders(accountColumns)}<th scope="col">전용 학습툴</th><th scope="col" class="members-actions-col">계정 · 화면 관리</th></tr></thead><tbody>${filtered.map(u=>`<tr data-student-id="${esc(u.id)}"><td>${esc(u.student_number??'—')}</td><td>${esc(u.full_name)}</td><td>${esc(u.class_name||'기본반')}</td><td>${esc(u.username)}</td><td>${esc(statuses[u.status]||u.status)}</td><td>${renderToolToggles(u)}</td><td class="members-actions-cell"><div class="members-row-actions">${hasPreview&&u.status==='approved'?`<button type="button" class="toss-chip-btn" data-preview-student="${esc(u.id)}">화면 미리보기</button>`:''}<button type="button" class="toss-chip-btn" data-edit-username="${esc(u.id)}">아이디 변경</button><button type="button" class="toss-chip-btn" data-reset-student="${esc(u.id)}">비밀번호 재설정</button>${hasInsights?`<button type="button" class="toss-chip-btn members-danger-btn" data-logout-student="${esc(u.id)}">로그아웃</button>`:''}</div></td></tr>`).join('')}</tbody></table>`:loading||rowsMessage?'':'<p class="members-reset-note">표시할 학생이 없습니다.</p>';
+      return;
+    }
+    tableEl.innerHTML=filtered.length?`<table class="members-table"><caption>학생 기본 정보 · 생년월일은 관리자 전용</caption><thead><tr>${renderSortHeaders(columns)}</tr></thead><tbody>${filtered.map(u=>`<tr data-student-id="${esc(u.id)}"><td>${esc(u.student_number??'—')}</td><td>${esc(u.full_name)}</td><td>${esc(u.class_name||'기본반')}</td><td>${esc(u.username)}</td><td>${esc(u.birth_date||'미등록')}</td><td>${esc(u.mbti||'—')}</td><td>${esc(statuses[u.status]||u.status)}</td><td>${u.completed_docs!=null?`${Number(u.completed_docs)||0}개`:'—'}</td><td>${u.last_login_at?`<button type="button" class="members-login-link" data-view-logins="${esc(u.username)}" data-view-logins-id="${esc(u.id)}" title="로그인 내역 보기">${esc(formatDateTime(u.last_login_at))}${Number(u.login_count)>0?` <small>(${esc(u.login_count)}회)</small>`:''}</button>`:'—'}</td><td>${esc(formatDate(u.created_at))}</td></tr>`).join('')}</tbody></table>`:loading||rowsMessage?'':'<p class="members-reset-note">표시할 학생이 없습니다.</p>';
   }
   function sortValue(row){
     const value=sortKey==='status'?statuses[row.status]:row[sortKey];
     if(value==null||value==='')return null;
-    if(sortKey==='student_number'||sortKey==='birth_date'||sortKey==='last_login_at'||sortKey==='created_at'){
-      const number=sortKey==='student_number'?Number(value):new Date(value).getTime();
+    if(sortKey==='student_number'||sortKey==='completed_docs'||sortKey==='birth_date'||sortKey==='last_login_at'||sortKey==='created_at'){
+      const number=(sortKey==='student_number'||sortKey==='completed_docs')?Number(value):new Date(value).getTime();
       return Number.isFinite(number)?number:null;
     }
     return String(value);
@@ -120,7 +314,9 @@
     return result*sortDirection||collator.compare(a.full_name||'',b.full_name||'')||collator.compare(a.username||'',b.username||'')||collator.compare(a.id,b.id);
   }
   function sortBy(key){
-    if(!active||!session||currentTab()!=='students'||!columns.some(([id])=>id===key))return;
+    const tab=currentTab();
+    const activeCols=tab==='accounts'?accountColumns:columns;
+    if(!active||!session||(tab!=='students'&&tab!=='accounts')||!activeCols.some(([id])=>id===key))return;
     sortDirection=sortKey===key?-sortDirection:1;sortKey=key;
     renderRows();
     host.querySelector(`[data-members-sort="${key}"]`)?.focus({preventScroll:true});
@@ -129,21 +325,23 @@
   function formatDateTime(value){const d=new Date(value);return value&&!Number.isNaN(d.getTime())?d.toLocaleString('ko-KR',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'}):'—';}
   async function load(force=false){
     if(!active||!session||(loading&&!force))return;
-    const s=session,v=++version;loading=true;rows=[];rowsLoaded=false;rowsMessage='';closeReset();render();
-    try{const result=await call('cw_admin_student_directory',{},s);if(!current(s,v))return;if(!Array.isArray(result))throw Error();rows=result;rowsLoaded=true;loading=false;render();}
-    catch(error){if(current(s,v)){loading=false;rowsMessage=error?.code==='PGRST202'?'학생 정보 기능이 아직 서버에 적용되지 않았습니다.':'학생 정보를 불러오지 못했습니다. 새로고침해 주세요.';render();}}
+    const s=session,v=++version;loading=true;rows=[];rowsLoaded=false;rowsMessage='';closeReset();
+    if(currentTab()==='students'||currentTab()==='accounts')render();
+    try{const result=await call('cw_admin_student_directory',{},s);if(!current(s,v))return;if(!Array.isArray(result))throw Error();rows=result;rowsLoaded=true;loading=false;window.CodeWikiAuth?.setAdminPreviewRoster?.(rows);if(currentTab()==='students'||currentTab()==='accounts')render();}
+    catch(error){if(current(s,v)){loading=false;rowsMessage=error?.code==='PGRST202'?'학생 정보 기능이 아직 서버에 적용되지 않았습니다.':'학생 정보를 불러오지 못했습니다. 새로고침해 주세요.';if(currentTab()==='students'||currentTab()==='accounts')render();}}
   }
   async function loadLogins(targetUserId=selectedUserId,force=false){
     const uid=targetUserId||'';
     if(!active||!session||(loginsLoading&&!force&&loginsUserId===uid))return;
     const s=session,v=++loginsVersion;
-    loginsLoading=true;logins=[];loginsLoaded=false;loginsUserId=uid;loginsMessage='';render();
+    loginsLoading=true;logins=[];loginsLoaded=false;loginsUserId=uid;loginsMessage='';
+    if(currentTab()==='logins')render();
     try{
       const args=uid?{p_limit:100,p_user_id:uid}:{p_limit:100};
       const result=await call('cw_admin_login_history',args,s);
       if(!currentLogins(s,v))return;if(!Array.isArray(result))throw Error();
-      logins=result;loginsLoaded=true;loginsLoading=false;render();
-    }catch(error){if(currentLogins(s,v)){loginsLoading=false;loginsMessage=error?.code==='PGRST202'?'로그인 내역 기능이 아직 서버에 적용되지 않았습니다.':'로그인 내역을 불러오지 못했습니다. 새로고침해 주세요.';render();}}
+      logins=result;loginsLoaded=true;loginsLoading=false;if(currentTab()==='logins')render();
+    }catch(error){if(currentLogins(s,v)){loginsLoading=false;loginsMessage=error?.code==='PGRST202'?'로그인 내역 기능이 아직 서버에 적용되지 않았습니다.':'로그인 내역을 불러오지 못했습니다. 새로고침해 주세요.';if(currentTab()==='logins')render();}}
   }
   function switchTab(tab,presetQuery,presetUserId){
     if(!active||!session)return;
@@ -153,11 +351,28 @@
     } else if(tab==='logins'){
       if(selectedUserId){selectedUserId='';query='';}
     }
-    const target=tab==='logins'?'#admin/logins':'#admin/students';
+    const target=ADMIN_TAB_HASHES[tab]||'#admin/students';
     if(window.location.hash!==target)history.replaceState(null,'',target);
     route();
   }
+  function exportCurrentCsv(){
+    const dl=window.CodeWikiAdminInsights?.downloadCsv;
+    if(!dl)return;
+    const q=query.trim().toLocaleLowerCase();
+    const matches=u=>(!q||`${u.full_name||''} ${u.username||''}`.toLocaleLowerCase().includes(q))&&(!classFilter||(u.class_name||'기본반')===classFilter)&&(!statusFilter||u.status===statusFilter);
+    if(currentTab()==='logins'){
+      const filtered=logins.filter(e=>(!selectedUserId||e.user_id===selectedUserId)&&matches(e));
+      dl('codewiki-login-history.csv',['로그인 시각(KST)','번호','이름','반','아이디','가입 상태'],filtered.map(e=>[formatDateTime(e.logged_in_at),e.student_number??'',e.full_name,e.class_name||'기본반',e.username,statuses[e.status]||e.status]));
+      return;
+    }
+    const filtered=rows.filter(matches).sort(compareRows);
+    dl('codewiki-students.csv',['번호','이름','반','아이디','생년월일','MBTI','가입 상태','완료 문서','최근 로그인(KST)','누적 로그인','가입일'],filtered.map(u=>[u.student_number??'',u.full_name,u.class_name||'기본반',u.username,u.birth_date||'',u.mbti||'',statuses[u.status]||u.status,u.completed_docs??0,formatDateTime(u.last_login_at),u.login_count??0,formatDate(u.created_at)]));
+  }
   function route(){
+    if(session&&isAdminRoute()&&window.CodeWikiAuth?.isAdminPreviewMode?.()){
+      window.CodeWikiAuth.setAdminPreviewMode(false,window.location.hash);
+      return;
+    }
     if(!visible()){if(active)clear();return;}
     host.hidden=false;shell.classList.add('members-hidden');
     const entering=!active;
@@ -165,6 +380,7 @@
       window.CodeWikiBoard?.closeIfActive();
       window.CodeWikiStudy?.leave();
       window.CodeWikiMentoring?.leave();
+      window.CodeWikiFoundation?.leave?.();
       window.CodeWikiObjectGame?.leave();
       window.CodeWikiKnowledgeMap?.leave?.();
       document.getElementById('quizModeBtn')?.classList.add('hidden');
@@ -178,16 +394,23 @@
       active=true;
     }
     syncSidebarActive();
-    if(currentTab()==='logins'){
+    const tab=currentTab();
+    if(tab==='logins'){
       // Reuse complete global cache (<100 rows) without an extra RPC; fetch exact
       // per-user history whenever global history was truncated or uncached.
       const canReuseGlobal=loginsLoaded&&!loginsUserId&&logins.length<100;
       const canReuseSameUser=loginsLoaded&&loginsUserId===selectedUserId;
       if((!loginsLoading||loginsUserId!==selectedUserId)&&!canReuseSameUser&&!(selectedUserId&&canReuseGlobal))void loadLogins(selectedUserId);
       else render();
-    }else{
+    }else if(tab==='students'||tab==='accounts'){
       if(!rowsLoaded&&!loading)void load();
       else render();
+    }else if(tab==='approvals'){
+      render();
+      void getApprovalCtrl()?.ensureLoaded();
+    }else{
+      render();
+      getInsightsCtrl()?.ensureLoaded(tab);
     }
   }
   function openReset(id){
@@ -303,14 +526,29 @@
     (dialog.querySelector('.profile-dialog-actions [data-logout-close]')||confirmBtn)?.focus?.();
   }
   host.addEventListener('click',e=>{
+    const previewStu=e.target.closest('[data-preview-student]');if(previewStu){const stu=rows.find(u=>u.id===previewStu.dataset.previewStudent);if(stu)window.CodeWikiAuth?.setAdminPreviewMode?.(true,stu);return;}
+    if(e.target.closest('[data-export-csv]')){exportCurrentCsv();return;}
     if(e.target.closest('[data-logout-all]')){openLogoutAllConfirm();return;}
     const tab=e.target.closest('[data-members-tab]');if(tab){switchTab(tab.dataset.membersTab);return;}
     const viewLogins=e.target.closest('[data-view-logins]');if(viewLogins){switchTab('logins',viewLogins.dataset.viewLogins,viewLogins.dataset.viewLoginsId);return;}
     const sort=e.target.closest('[data-members-sort]');if(sort){sortBy(sort.dataset.membersSort);return;}
+    const toolBtn=e.target.closest('[data-toggle-tool]');if(toolBtn){void toggleStudentTool(toolBtn.dataset.toolUid,toolBtn.dataset.toggleTool);return;}
     const editUsername=e.target.closest('[data-edit-username]');if(editUsername){openUsernameEdit(editUsername.dataset.editUsername);return;}
-    const b=e.target.closest('[data-reset-student]');if(b)openReset(b.dataset.resetStudent);
+    const dmBtn=e.target.closest('[data-send-dm]');if(dmBtn){const stu=rows.find(u=>u.id===dmBtn.dataset.sendDm);if(stu)getInsightsCtrl()?.openDirectMessageDialog(stu);return;}
+    const singleLogout=e.target.closest('[data-logout-student]');if(singleLogout){const stu=rows.find(u=>u.id===singleLogout.dataset.logoutStudent);if(stu)getInsightsCtrl()?.openSingleLogoutDialog(stu);return;}
+    const b=e.target.closest('[data-reset-student]');if(b){openReset(b.dataset.resetStudent);return;}
+    if(currentTab()==='approvals'){getApprovalCtrl()?.handleClick(e);return;}
+    void getInsightsCtrl()?.handleClick(e);
   });
   host.addEventListener('input',e=>{
+    if(e.target.id==='adminApprovalSearch'&&currentTab()==='approvals'){
+      getApprovalCtrl()?.handleInput(e);
+      return;
+    }
+    if((e.target.id==='adminDmRecipientSearch'&&currentTab()==='notices')||(e.target.id==='adminSecEventSearch'&&currentTab()==='security')){
+      getInsightsCtrl()?.handleInput?.(e);
+      return;
+    }
     if(e.target.id==='membersSearch'){
       query=e.target.value;
       if(selectedUserId){
@@ -320,12 +558,30 @@
       renderRows();
     }
   });
-  host.addEventListener('change',e=>{if(e.target.id==='membersClass')classFilter=e.target.value;else if(e.target.id==='membersStatus')statusFilter=e.target.value;else return;renderRows();});
+  host.addEventListener('change',e=>{
+    if(e.target.id==='membersClass'){classFilter=e.target.value;renderRows();return;}
+    if(e.target.id==='membersStatus'){statusFilter=e.target.value;renderRows();return;}
+    void getInsightsCtrl()?.handleChange(e);
+  });
+  host.addEventListener('submit',e=>{void getInsightsCtrl()?.handleSubmit(e);});
   window.addEventListener('hashchange',route);
-  function invalidate(){
+  function invalidate(options={}){
     version++;loginsVersion++;
     rowsLoaded=false;loading=false;loginsLoaded=false;loginsLoading=false;
-    if(active&&session){if(currentTab()==='logins')void loadLogins(selectedUserId,true);else void load(true);}
+    insightsCtrl?.invalidate?.();
+    if(!options?.skipApprovals)approvalCtrl?.invalidate?.();
+    if(active&&session){
+      const tab=currentTab();
+      if(tab==='logins')void loadLogins(selectedUserId,true);
+      else if(tab==='students'||tab==='accounts')void load(true);
+      else if(tab==='approvals'){if(!options?.skipApprovals)void getApprovalCtrl()?.ensureLoaded(true);}
+      else getInsightsCtrl()?.ensureLoaded(tab);
+    }
   }
-  window.CodeWikiAdminMembers={setUser,openHome,invalidate,setPresence(value){online=value;if(active)renderPresence();},leave(){if(active){if(isAdminRoute())history.replaceState(null,'','#doc/'+(window.CodeWikiApp?.getCurrentDocId()||'welcome-abap'));clear();}}};
+  window.CodeWikiAdminMembers={
+    setUser,openHome,openRoute,invalidate,
+    setPresence(value){online=value;if(value===null||value===false)livePresence=null;if(active)renderPresence();},
+    setLivePresence(value){livePresence=value;if(active)renderPresence();},
+    leave(){if(active){if(isAdminRoute())history.replaceState(null,'','#doc/'+(window.CodeWikiApp?.getCurrentDocId()||'welcome-abap'));clear();}}
+  };
 })();

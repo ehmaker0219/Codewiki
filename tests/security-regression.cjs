@@ -47,15 +47,16 @@ async function logoutTest() {
       if(mode==='replaced') saved.set('codewiki_supa_token_v1','new-token');
       return {error: mode==='rpc-error' ? {message:'failed'} : null};
     }};
-    const context = {window:{supabase:{createClient:()=>client}, CodeWikiApp:{resetTrackChoice:()=>calls.push('reset')}, alert:()=>calls.push('alert')},
+    const context = {window:{supabase:{createClient:()=>client}, CodeWikiApp:{syncAccess:()=>calls.push('sync')}, alert:()=>calls.push('alert')},
       localStorage:{getItem:k=>saved.get(k), setItem:(k,v)=>saved.set(k,v), removeItem:k=>saved.delete(k)},
       document:{body:element(),getElementById:element}, console};
     // Expose the actual closure only in the test harness; replace unrelated UI rendering.
     vm.runInNewContext(auth.replace(/  renderAuthState\(\);\s*\}\)\(\);\s*$/, '  renderAuthState = async () => {}; window.testLogout = logout;\n})();'),context);
+    calls.length = 0; // Ignore initial boot syncUserFeatures(null).
     await context.window.testLogout();
     if(mode==='success'||mode==='empty') {
       assert.equal(saved.has('codewiki_supa_token_v1'),false);
-      assert.deepEqual(calls,mode==='empty'?['reset']:['cw_logout','reset']);
+      assert.deepEqual(calls,mode==='empty'?['sync']:['cw_logout','sync']);
     } else if(mode==='replaced') {
       assert.equal(saved.get('codewiki_supa_token_v1'),'new-token');
       assert.deepEqual(calls,['cw_logout','alert']);

@@ -20,6 +20,14 @@ try {
       const data = await response.json();
       if (!response.ok && !data?.code?.startsWith('CW_')) throw Error('rpc-unavailable');
       return data;
+    },
+    reportSecurityEvent: (args: unknown) => {
+      const task = fetch(`${url}/rest/v1/rpc/cw_log_edge_security_event`, {
+        method:'POST', headers:{apikey:serviceKey, Authorization:`Bearer ${serviceKey}`, 'Content-Type':'application/json'},
+        body:JSON.stringify(args), signal:AbortSignal.timeout(3000), redirect:'error'
+      }).then(res => res.body?.cancel()).catch(() => {});
+      const edgeRuntime = (globalThis as { EdgeRuntime?: { waitUntil?: (p: Promise<unknown>) => void } }).EdgeRuntime;
+      if (typeof edgeRuntime?.waitUntil === 'function') edgeRuntime.waitUntil(task);
     }
   });
 } catch {

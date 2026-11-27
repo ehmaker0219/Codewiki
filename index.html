@@ -7,10 +7,10 @@
   <link rel="icon" type="image/svg+xml" href="assets/logo-symbol.svg?v=32baec3f0703" />
   <link rel="stylesheet" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/style.css?v=e4e7273baa68" />
-  <link rel="stylesheet" href="css/theme.css?v=31b65578f1b5" />
-  <link rel="stylesheet" href="css/profile.css?v=386bcc74d5e6" />
-  <link rel="stylesheet" href="css/admin-members.css?v=d464a61444f8" />
+  <link rel="stylesheet" href="css/style.css?v=094c664a31e5" />
+  <link rel="stylesheet" href="css/theme.css?v=c98735960bf9" />
+  <link rel="stylesheet" href="css/profile.css?v=6aca51bce008" />
+  <link rel="stylesheet" href="css/admin-members.css?v=42ab43a4ba95" />
   <link rel="stylesheet" href="css/birthdays.css?v=af6aabee8ae3" />
   <link rel="stylesheet" href="css/schedule.css?v=94e44bd6da32" />
   <link rel="stylesheet" href="css/study.css?v=39cb323a015c" />
@@ -106,6 +106,7 @@
               <div id="studySidebarSlot"></div>
               <button type="button" id="openObjectGameBtn" class="sb-menu-item" hidden><svg class="sb-icon" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 3 9 9-9 9-9-9Z"/><path d="M9 12h6M12 9v6"/></svg><span>DATA 미니게임</span></button>
               <button type="button" id="openMentoringBtn" class="sb-menu-item" hidden><svg class="sb-icon" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 4H5v17h14V4h-4M9 3h6v4H9zM8 12h8M8 16h5"/></svg><span>멘토링</span></button>
+              <button type="button" id="openFoundationBtn" class="sb-menu-item" hidden><svg class="sb-icon" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 3 7.5 12 12l9-4.5L12 3Z"/><path d="M3 12l9 4.5 9-4.5"/><path d="M3 16.5 12 21l9-4.5"/></svg><span>파운데이션</span></button>
               <a class="sb-menu-item" id="openTextbookSiteLink" href="https://abapsharebyreza.blogspot.com/" target="_blank" rel="noopener noreferrer" aria-label="교재 사이트 (새 탭에서 열기)"><svg class="sb-icon" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20M6.5 3H20v19H6.5A2.5 2.5 0 0 1 4 19.5v-14A2.5 2.5 0 0 1 6.5 3Z"/><path d="M9 8h6M9 12h4"/></svg><span>교재 사이트 ↗</span></a>
             </div>
           </details>
@@ -197,8 +198,11 @@
       </header>
 
       <!-- 본문 + 우측 보조 패널 (데이터가 있을 때만 우측 패널 노출) -->
+      <div id="adminPreviewBanner" class="admin-preview-banner" hidden></div>
+      <div id="liveSpotlightBanner" class="live-spotlight-banner" hidden></div>
       <section id="studyWorkspace" class="study-workspace" aria-label="개인 공부방" hidden></section>
       <section id="mentoringPage" class="mentoring-page" aria-label="멘토링 활동 기록" hidden></section>
+      <section id="foundationPage" class="foundation-page" aria-label="파운데이션" hidden></section>
       <section id="adminMembersPage" class="members-page" aria-label="학생 정보" hidden></section>
       <section id="knowledgeMapPage" class="kmap-page" aria-label="ABAP 개념 지도" hidden></section>
       <section id="objectGamePage" class="object-game-page" hidden aria-labelledby="objectGameTitle" aria-describedby="objectGameIntro">
@@ -235,7 +239,7 @@
           </div>
         </aside>
       </div>
-      <footer class="site-footer">최근 업데이트 <time id="siteUpdatedAt" datetime="2026-11-26T12:44:23.318Z" data-version="07fdcdb8fa56b432">2026.11.26 21:44 (KST)</time></footer>
+      <footer class="site-footer">최근 업데이트 <time id="siteUpdatedAt" datetime="2026-11-27T11:49:59.393Z" data-version="8913f0282b53ede0">2026.11.27 20:49 (KST)</time></footer>
     </div>
   </div>
 
@@ -245,12 +249,6 @@
   <!-- 로그인 전 미니멀 심볼 + Auth 랜딩페이지 -->
   <div id="authGateOverlay" class="auth-gate-overlay hidden"></div>
 
-  <!-- 로그인 직후 학습 트랙(ABAP vs UI5/Fiori) 대형 선택 화면 -->
-  <div id="trackSelectOverlay" class="track-select-overlay hidden"></div>
-
-  <!-- 관리자 전용 [우리 반 학생 승인 관리] 모달 -->
-  <div id="adminModal" class="admin-modal-backdrop hidden"></div>
-
   <!-- 수정·업데이트 건의글 작성 모달 -->
   <div id="boardWriteModal" class="admin-modal-backdrop hidden"></div>
 
@@ -259,6 +257,12 @@
 
   <!-- 관리자 강제 로그아웃 안내 팝업 모달 -->
   <div id="forcedLogoutModal" class="admin-modal-backdrop hidden"></div>
+
+  <!-- 관리자 1:1 운영 알림 모달 -->
+  <div id="directMessageModal" class="admin-modal-backdrop hidden"></div>
+
+  <!-- 원격 사이트 점검 오버레이 -->
+  <div id="maintenanceOverlay" class="admin-modal-backdrop hidden"></div>
 
   <dialog id="practiceDialog" aria-labelledby="practiceTitle">
     <div class="practice-dialog-header"><h2 id="practiceTitle">연습문제</h2><button type="button" id="closePracticeBtn" class="icon-btn" aria-label="연습문제 닫기">✕</button></div>
@@ -280,30 +284,33 @@
   <script src="js/progress.js?v=b7f8969118e4"></script>
   <script src="js/visualizers.js?v=8d536050355f"></script>
   <script src="js/sql-practice-bank.js?v=6784ba12af23"></script>
-  <script src="js/sql-practice.js?v=edb666e6ba0a"></script>
+  <script src="js/sql-practice.js?v=4a2ad5ec602e"></script>
   <script src="js/schedule-data.js?v=03cf62a15b32"></script>
   <script src="js/schedule.js?v=c90d69ce0ad8"></script>
-  <script src="js/app.js?v=fa607bb40594"></script>
-  <script src="js/admin.js?v=d70917d3f85c"></script>
-  <script src="js/admin-members.js?v=e25997bfcfe3"></script>
-  <script src="js/presence.js?v=b095f08ea2a3"></script>
+  <script src="js/app.js?v=679cddb4d188"></script>
+  <script src="js/admin.js?v=caa22f8b764f"></script>
+  <script src="js/admin-insights.js?v=6da62250c342"></script>
+  <script src="js/admin-members.js?v=4b2e0d8f96dc"></script>
+  <script src="js/presence.js?v=76fae24e1d5b"></script>
+  <script src="js/telemetry.js?v=6d5b8f0d03b5"></script>
   <script type="application/json" id="studyEditorSource" data-src="js/study-editor.js?v=ac7ac071cd33"></script>
   <script src="js/study-store.js?v=095394bae9d4"></script>
   <script src="js/study-folders.js?v=540517f5a4bb"></script>
-  <script src="js/study.js?v=81f76bb3cfaa"></script>
+  <script src="js/study.js?v=3e6c5d1badf1"></script>
   <script src="js/mentoring-store.js?v=ce90f52eae26"></script>
-  <script src="js/mentoring-model.js?v=e3543e0c9b04"></script>
+  <script src="js/mentoring-model.js?v=3d2214b63a80"></script>
   <script src="js/mentoring-team-store.js?v=fb8484901f14"></script>
   <script src="js/mentoring-pdf.js?v=41486f557157"></script>
-  <script src="js/mentoring.js?v=5a9f9c612ea8"></script>
+  <script src="js/mentoring.js?v=8c56b1362aeb"></script>
+  <script src="js/foundation.js?v=499ad4b45679"></script>
   <script src="js/secure-auth.js?v=989ab8c4228a"></script>
-  <script src="js/notice.js?v=7733ebe334c6"></script>
-  <script src="js/auth.js?v=032be4691cf8"></script>
-  <script src="js/board.js?v=1af245490a3b"></script>
+  <script src="js/notice.js?v=beb78e3640d1"></script>
+  <script src="js/auth.js?v=61b8318806c4"></script>
+  <script src="js/board.js?v=b596eb8c9e45"></script>
   <script src="js/practice.js?v=09b4e58c2a07"></script>
   <script src="js/practice-ui.js?v=a003c4c7695f"></script>
   <script type="application/json" id="objectGameBankSource" data-src="js/object-game-bank.js?v=d4fd14170feb"></script>
-  <script src="js/object-game.js?v=de8ce5cd4d0b"></script>
-  <script src="js/knowledge-map.js?v=f5cfdfe92077"></script>
+  <script src="js/object-game.js?v=227f109aa50c"></script>
+  <script src="js/knowledge-map.js?v=310c71cf7974"></script>
 </body>
 </html>

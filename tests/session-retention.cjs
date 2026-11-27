@@ -6,18 +6,27 @@ const key = 'codewiki_supa_token_v1';
 function boot(storage, rpc) {
   const nodes = new Map();
   const get = id => {
-    if (!nodes.has(id)) nodes.set(id, {innerHTML:'', events:{}, classList:{add(){},remove(){}},
-      addEventListener(name,fn){this.events[name]=fn;},querySelectorAll:()=>[]});
+    if (!nodes.has(id)) {
+      const classes = new Set();
+      nodes.set(id, {innerHTML:'', events:{},
+        classList:{add(...n){n.forEach(c=>classes.add(c));},remove(...n){n.forEach(c=>classes.delete(c));},contains:c=>classes.has(c)},
+        addEventListener(name,fn){this.events[name]=fn;},querySelectorAll:()=>[]});
+    }
     return nodes.get(id);
   };
   const timers=new Map();let timerId=0;
-  const context = {window:{location:{hash:'#study'},supabase:{createClient:(url,key,options)=>{assert.equal(typeof options.accessToken,'function');return {rpc};}},scrollTo(){},CodeWikiApp:{hasSelectedTrack:()=>true}},
+  let noticeShownFor = null;
+  let readyEvents = 0;
+  const context = {window:{location:{hash:'#study'},supabase:{createClient:(url,key,options)=>{assert.equal(typeof options.accessToken,'function');return {rpc};}},scrollTo(){},
+      CodeWikiNotice:{maybeShow(u){noticeShownFor=u?.id||null;}},
+      dispatchEvent(ev){if(ev?.type==='cw-workspace-ready')readyEvents++;}},
+    Event: class Event { constructor(type){ this.type = type; } },
     AbortController,setTimeout:fn=>{const id=++timerId;timers.set(id,fn);return id;},clearTimeout:id=>timers.delete(id),
     document:{getElementById:get,body:get('body')},
     localStorage:{getItem:k=>storage.get(k),setItem:(k,v)=>storage.set(k,v),removeItem:k=>storage.delete(k)}};
   vm.runInNewContext(source.replace(/  renderAuthState\(\);\s*\}\)\(\);\s*$/,
     '  renderPreLoginLanding = () => {}; window.refresh = renderAuthState;\n})();'),context);
-  return {...context,get,timers};
+  return {...context,get,timers,getNoticeShownFor:()=>noticeShownFor,getReadyEvents:()=>readyEvents};
 }
 (async()=>{
   const saved = new Map([[key,'saved-session']]);
@@ -32,6 +41,11 @@ function boot(storage, rpc) {
   let app = boot(saved,rpc);
   await app.window.refresh();
   assert.equal(app.window.CodeWikiAuth.getCurrentUser().id,'student');
+  assert.equal(app.get('body').classList.contains('authenticated'),true,'approved student enters workspace directly');
+  assert.equal(app.get('body').classList.contains('track-selecting'),false,'retired track-selection gate must not activate');
+  assert.equal(app.get('authGateOverlay').classList.contains('hidden'),true);
+  assert.equal(app.getNoticeShownFor(),'student','login notice runs immediately without a track gate');
+  assert.equal(app.getReadyEvents(),1,'workspace-ready event fires for deferred runtime modals');
   assert.equal(app.get('learningContentsGroup').hidden,false);
   assert.equal(app.get('sbThinkingFlowItem').hidden,false);
   assert.equal(app.get('sbProgramCatalogItem').hidden,false);

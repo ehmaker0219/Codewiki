@@ -2,9 +2,11 @@
 (() => {
   const SIGNAL_CHANNEL = 'cw:session-signal';
   const SIGNAL_EVENT = 'session_check';
-  let session=null,timer=null,wakeTimer=null,signalChannel=null,signalClient=null;
-  const listing=s=>s?.role==='admin'&&(window.location.hash==='#admin/students'||window.location.hash==='#admin/logins');
+  let session=null,timer=null,wakeTimer=null,signalChannel=null,signalClient=null,liveSeq=0;
+  const ADMIN_HASHES = new Set(['#admin/students','#admin/accounts','#admin/approvals','#admin/logins','#admin/notices','#admin/dashboard','#admin/controls','#admin/insights','#admin/security']);
+  const listing=s=>s?.role==='admin'&&ADMIN_HASHES.has(window.location.hash);
   const publish=value=>window.CodeWikiAdminMembers?.setPresence(value);
+  const publishLive=value=>window.CodeWikiAdminMembers?.setLivePresence?.(value);
   function teardownSignal(){
     clearTimeout(wakeTimer);wakeTimer=null;
     const ch=signalChannel,client=signalClient;
@@ -73,7 +75,18 @@
       if(session!==s)return;
       const doneAt=Date.now();
       s.at=doneAt;if(list)s.listAt=doneAt;s.retryAt=0;
-      if(list&&listing(s))publish(Array.isArray(result.data)?result.data:false);
+      if(list&&listing(s)){
+        publish(Array.isArray(result.data)?result.data:false);
+        if(typeof window.CodeWikiAdminMembers?.setLivePresence==='function'){
+          const seq=++liveSeq;
+          Promise.resolve(client.rpc('cw_admin_live_presence',{p_token:s.token}))
+            .then(liveRes=>{
+              if(session===s&&seq===liveSeq&&listing(s)&&!liveRes?.error&&liveRes?.data&&Array.isArray(liveRes.data.online)){
+                publishLive(liveRes.data);
+              }
+            }).catch(()=>{});
+        }
+      }
     }catch(error){
       failed=true;
       if(session===s){
@@ -104,7 +117,7 @@
   function setUser(user){
     const token=window.CodeWikiAuth?.getSessionToken();
     if(session?.id===user?.id&&session?.token===token&&session?.role===user?.role&&session?.status===user?.status)return;
-    clearTimeout(timer);teardownSignal();session?.controller?.abort();session=null;publish(null);
+    clearTimeout(timer);teardownSignal();session?.controller?.abort();liveSeq++;session=null;publish(null);
     if(token&&(user?.role==='admin'||(user?.role==='student'&&user.status==='approved'))){
       session={id:user.id,role:user.role,status:user.status,token,at:0,listAt:0,retryAt:0,wakeAt:0,needsVerify:false,busy:false,stopped:false};
       setupSignal(session);

@@ -31,7 +31,7 @@ for (const [id, blocks] of Object.entries(backlinkFixtures)) {
   context.window.WIKI_DOCS[id] = { id, title: id, track: 'abap', sections: [{ title: 'DATA TYPE', blocks }] };
 }
 const app = fs.readFileSync('js/app.js', 'utf8');
-const setup = app.slice(app.indexOf('  const TRACK_SESSION_KEY'), app.indexOf('  const categoryNav'));
+const setup = app.slice(app.indexOf('  let currentTrack'), app.indexOf('  const categoryNav'));
 const helpers = app.slice(app.indexOf('  function escapeRegExp'), app.indexOf('  // 좌측 고정 사이드바'));
 vm.runInContext(setup + helpers + `
 let parseCalls = 0;
