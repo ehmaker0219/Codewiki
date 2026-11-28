@@ -50,6 +50,34 @@
 .members-live-doc-pill {display:inline-flex;align-items:center;gap:5px;padding:4px 9px;border-radius:999px;background:var(--toss-blue-soft, rgba(49,130,246,0.1));color:var(--toss-blue);font-size:11.5px;font-weight:600;}
 .members-live-doc-pill b {font-weight:700;}
 .members-dev-tag {display:inline-block;margin-left:4px;padding:1px 5px;border-radius:3px;background:var(--bg-subtle);color:var(--text-muted);font-size:10.5px;font-weight:600;}
+.members-cell-muted {color:var(--text-muted);}
+.members-login-type {display:inline-block;margin-top:3px;padding:1px 6px;border-radius:999px;font-size:10.5px;font-weight:700;line-height:1.4;}
+.members-login-type.is-direct {background:var(--toss-blue-soft, rgba(49,130,246,0.12));color:var(--toss-blue);}
+.members-login-type.is-signup {background:var(--toss-green-soft, rgba(16,185,129,0.14));color:#047857;}
+.members-login-type.is-revisit {background:var(--bg-subtle);border:1px solid var(--border-subtle);color:var(--text-muted);}
+.members-dev-pill {display:inline-block;padding:1px 6px;border-radius:4px;background:var(--bg-subtle);border:1px solid var(--border-subtle);color:var(--text-sub);font-size:10.5px;font-weight:700;vertical-align:middle;}
+.members-country-pill {display:inline-block;padding:1px 5px;border-radius:4px;background:var(--toss-blue-soft, rgba(49,130,246,0.12));color:var(--toss-blue);font-size:10.5px;font-weight:700;font-family:'JetBrains Mono',monospace;vertical-align:middle;}
+.members-login-env {line-height:1.38;}
+.members-login-env strong {color:var(--text-strong);font-weight:600;}
+.members-ip-cell {display:inline-flex;align-items:center;gap:5px;white-space:nowrap;}
+.members-logins-table {min-width:920px;table-layout:auto;}
+.members-logins-table th,.members-logins-table td {padding:12px 16px;vertical-align:middle;}
+.members-logins-table th:first-child,.members-logins-table td:first-child {padding-left:18px;}
+.members-logins-table th:last-child,.members-logins-table td:last-child {padding-right:18px;}
+.members-logins-table .col-login-time {width:17%;min-width:170px;}
+.members-logins-table .col-login-num {width:6%;min-width:56px;}
+.members-logins-table .col-login-name {width:9%;min-width:78px;}
+.members-logins-table .col-login-class {width:7%;min-width:60px;}
+.members-logins-table .col-login-id {width:12%;min-width:110px;}
+.members-logins-table .col-login-device {width:17%;min-width:152px;}
+.members-logins-table .col-login-browser {width:12%;min-width:116px;}
+.members-logins-table .col-login-ip {width:12%;min-width:124px;}
+.members-logins-table .col-login-status {width:8%;min-width:82px;}
+.members-col-center {text-align:center!important;}
+.members-col-right {text-align:right!important;}
+.members-col-nowrap {white-space:nowrap;font-variant-numeric:tabular-nums;}
+.members-name-cell {color:var(--text-strong);font-weight:600;}
+.members-id-cell {color:var(--text-sub);word-break:break-all;}
 
 /* Full-page Student Approval view (#admin/approvals) */
 .admin-approval-page .sr-only {position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;}
@@ -253,7 +281,8 @@
 :root[data-theme="dark"] .admin-sec-sub.is-unreg {color:var(--toss-amber);}
 :root[data-theme="dark"] .admin-dm-pill,
 :root[data-theme="dark"] .admin-status-pill.is-on,
-:root[data-theme="dark"] .admin-sev-pill.is-safe {color:var(--toss-green);}
+:root[data-theme="dark"] .admin-sev-pill.is-safe,
+:root[data-theme="dark"] .members-login-type.is-signup {color:var(--toss-green);}
 
 @media(max-width:960px){.admin-panel-grid {grid-template-columns:1fr;}.admin-reads-grid {grid-template-columns:1fr;}}
 @media(max-width:680px){.members-page {margin:12px;padding:18px;}.members-heading {align-items:flex-start;}.members-filters label:first-child {width:100%;}.members-filters input {flex:1;min-width:0;}.members-count {margin-left:0;}.admin-form-row {grid-template-columns:1fr;}}

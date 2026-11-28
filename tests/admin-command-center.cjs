@@ -334,6 +334,7 @@ async function testReorganizedAdminViews() {
     audit_logs: [{ created_at: '2026-11-27T09:00:00Z', admin_name: '관리자', action: 'publish_notice', target_label: '전체', details: { target_class: '전체' } }]
   };
   let reportedSecBadgeCount = null;
+  let secAckCalls = 0;
 
   const windowObj = {
     WIKI_DOCS: {
@@ -365,6 +366,7 @@ async function testReorganizedAdminViews() {
       if (name === 'cw_admin_controls_state') return controlsPayload;
       if (name === 'cw_admin_learning_overview') return dashPayload;
       if (name === 'cw_admin_insights_and_security') return insPayload;
+      if (name === 'cw_admin_ack_security_alerts') { secAckCalls++; return { ok: true, ack_at: '2026-11-27T09:15:00Z' }; }
       if (name === 'cw_admin_send_direct_message') { dmCalls.push(args); return { ok: true }; }
       if (name === 'cw_admin_update_setting') { settingCalls.push(args); return { ok: true, value: args.p_value }; }
       return {};
@@ -420,27 +422,76 @@ async function testReorganizedAdminViews() {
   activeTab = 'insights';
   ctrl.ensureLoaded('insights');
   await flush();
+  assert.equal(reportedSecBadgeCount, 3, 'viewing insights reports unread 24h security alerts without auto-clearing them');
+  assert.equal(secAckCalls, 0, 'insights tab must not auto-ack security alerts');
   assert.ok(tableEl.innerHTML.includes('단원별 학습 완료율'), 'analytics includes unit completion rate');
   assert.ok(tableEl.innerHTML.includes('학습 병목 · 집중 체류 레이더'), 'analytics includes bottleneck & dwell-time radar');
   assert.ok(tableEl.innerHTML.includes('검색 충족률'), 'analytics includes search fulfillment rate KPI');
   assert.equal(tableEl.innerHTML.includes('다중 기기 / 세션 전환 감지'), false, 'security panels are separated out of analytics');
 
-  // 4) Security inspection (#admin/security): detailed SOC banner, KPIs, targeted accounts, sources, 30d event timeline, severity filter, multi-device, rate limits, client errors, audit logs
+  // 4) Security inspection (#admin/security): viewing clears sidebar badge via cw_admin_ack_security_alerts;
+  //    explicit confirm button immediately calms the threat banner.
   activeTab = 'security';
   ctrl.ensureLoaded('security');
   await flush();
-  assert.equal(reportedSecBadgeCount, 4, 'sidebar security alert badge receives 24h alerts (3) + multi-device (1)');
-  assert.ok(tableEl.innerHTML.includes('악의적 접근 시도 또는 Rate Limit 차단이 감지되었습니다'), 'threat banner shows danger state');
+  assert.equal(secAckCalls, 1, 'opening security tab auto-acknowledges unread sidebar alerts');
+  assert.equal(reportedSecBadgeCount, 0, 'sidebar security alert badge clears immediately upon viewing security tab');
+  assert.ok(tableEl.innerHTML.includes('악의적 접근 시도 또는 Rate Limit 차단이 감지되었습니다'), 'first visit still displays threat banner with confirm button');
+  assert.ok(tableEl.innerHTML.includes('data-ack-security-alerts'), 'renders manual confirm & dismiss button');
   assert.ok(tableEl.innerHTML.includes('집중 표적 계정 TOP 10'));
   assert.ok(tableEl.innerHTML.includes('계정 대입 의심'), 'flags source probing >=3 accounts as credential stuffing suspect');
   assert.ok(tableEl.innerHTML.includes('실시간 보안 이벤트 타임라인'));
   assert.ok(tableEl.innerHTML.includes('CW_SUSPICIOUS_INPUT') && tableEl.innerHTML.includes('https://evil.test'));
-  assert.ok(tableEl.innerHTML.includes('다중 기기 / 세션 전환 감지'));
+  assert.equal(tableEl.innerHTML.includes('다중 기기 / 세션 전환 감지'), false, 'multi-device alert panel is removed');
   assert.ok(tableEl.innerHTML.includes('실시간 Rate Limit 버킷 모니터 (최근 1시간)'));
   assert.ok(tableEl.innerHTML.includes('10</strong> / 10회'));
   assert.ok(tableEl.innerHTML.includes('실시간 클라이언트 에러 수집기'));
   assert.ok(tableEl.innerHTML.includes('관리자 작업 감사 로그'));
   assert.equal(tableEl.innerHTML.includes('단원별 학습 완료율'), false, 'analytics panels are not duplicated in security view');
+
+  // Clicking manual confirm button immediately switches banner from danger to confirmed/safe (when no active rate-limit block).
+  const prevLimits = insPayload.rate_limits;
+  insPayload.rate_limits = [];
+  await ctrl.handleClick({ target: { closest: sel => sel === '[data-ack-security-alerts]' ? {} : null } });
+  await flush();
+  assert.equal(secAckCalls, 2);
+  assert.ok(tableEl.innerHTML.includes('admin-sec-banner is-safe'), 'manual confirm switches banner to calm confirmed state');
+  insPayload.rate_limits = prevLimits;
+
+  // 4b) Up to 5 login failures on an account must stay 'safe' (non-risk); 6+ failures elevates to 'warn'.
+  const origInsPayload = structuredClone(insPayload);
+  ctrl.reset();
+  Object.assign(insPayload, {
+    security_ack_at: null,
+    security_summary: {
+      total_events: 5, alerts_24h: 0, unacked_alerts_24h: 0, unacked_high_or_critical: 0, critical_count: 0, high_count: 0, warn_count: 0, info_count: 5,
+      login_failures: 5, rate_limit_blocks: 0, tamper_or_origin: 0, unauthorized_admin: 0, suspicious_inputs: 0,
+      unique_sources: 1, targeted_accounts_count: 1
+    },
+    security_events: [],
+    targeted_accounts: [
+      { target_account: 'ga', user_id: 's1', full_name: '김가', class_name: '6반', role: 'student', status: 'approved', total_events: 5, login_failures: 5, high_or_critical: 0, unique_sources: 1, event_types: ['login_failed'], last_seen_at: '2026-11-27T09:01:00Z' }
+    ],
+    rate_limits: [],
+    multi_device_alerts: [{ user_id: 's1', full_name: '김가', class_name: '6반', username: 'ga', distinct_devices: 3, switches_24h: 4, device_types: ['desktop', 'mobile'] }]
+  });
+  ctrl.ensureLoaded('security');
+  await flush();
+  assert.equal(reportedSecBadgeCount, 0, '5 login failures and multi-device activity produce 0 sidebar security alerts');
+  assert.ok(tableEl.innerHTML.includes('admin-sec-banner is-safe'), '5 login failures stay safe');
+
+  insPayload.targeted_accounts[0].login_failures = 6;
+  insPayload.security_summary.login_failures = 6;
+  ctrl.invalidate();
+  ctrl.ensureLoaded('security');
+  await flush();
+  assert.ok(tableEl.innerHTML.includes('admin-sec-banner is-warn'), '6 login failures elevate banner to warn');
+
+  Object.assign(insPayload, origInsPayload);
+  delete insPayload.security_ack_at;
+  ctrl.reset();
+  ctrl.ensureLoaded('security');
+  await flush();
 
   // Filter timeline to critical only & test live security search wiring
   await ctrl.handleClick({ target: { closest: sel => sel === '[data-sec-severity]' ? { dataset: { secSeverity: 'critical' } } : null } });

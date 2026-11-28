@@ -530,11 +530,25 @@
     showApprovedWorkspace(profile, profile.pending_count || 0);
   }
 
+  function effectiveAdminSecurityAlerts(user) {
+    if (!user || user.role !== "admin") return 0;
+    const raw = Number(user.security_alert_count) || 0;
+    if (raw <= 0) return 0;
+    if (Object.prototype.hasOwnProperty.call(user, "security_ack_at")) return raw;
+    try {
+      const saved = JSON.parse(localStorage.getItem(`codewiki_sec_ack_v1:${user.id}`) || "null");
+      if (saved && saved.ackAt && (Date.now() - new Date(saved.ackAt).getTime()) < 86400000 && raw <= (Number(saved.ackedCount) || 0)) {
+        return 0;
+      }
+    } catch {}
+    return raw;
+  }
+
   // 좌측 사이드바 내 [학생 승인 관리 메뉴] + [하단 유저 프로필 카드]
   function renderTopbarAuthControls(user, pendingCount) {
     if (!user) return;
     const isAdmin = user.role === "admin";
-    const securityAlerts = Number(user.security_alert_count) || 0;
+    const securityAlerts = effectiveAdminSecurityAlerts(user);
     syncStudySidebarSlot(user, isAdmin && adminPreviewMode);
 
     if (adminSidebarSlot) {

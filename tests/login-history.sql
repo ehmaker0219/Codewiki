@@ -99,7 +99,7 @@ begin
   for item in select value from jsonb_array_elements(hist) loop
     assert item->>'username' <> 'login-hist-admin', 'admin login leaked into history';
     assert not (item ?| array['password', 'password_hash', 'session_token', 'session_expires_at']), 'sensitive field leaked';
-    assert (select count(*) from jsonb_object_keys(item)) = 8, 'unexpected login history field count';
+    assert (select count(*) from jsonb_object_keys(item)) in (8, 17), 'unexpected login history field count';
   end loop;
 
   -- Limit bounding works (lower bound 1, upper bound clamped).

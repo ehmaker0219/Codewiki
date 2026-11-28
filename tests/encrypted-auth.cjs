@@ -53,9 +53,41 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('nod
     return new EncryptJWT({operation:'cw_login',args:cases[0][1],iat:now,exp:now+60,jti:crypto.randomUUID(),iss:'codewiki-browser',aud:'codewiki-secure-auth'})
       .setProtectedHeader({alg:'RSA-OAEP-256',enc:'A256GCM',kid:'test-key',typ:'JWT'}).encrypt(publicKey);})();
   result={session_token:crypto.randomUUID()};
-  await handler(new Request(endpoint,{method:'POST',headers:{Origin:origin,'Content-Type':'application/json','cf-connecting-ip':'203.0.113.7'},body:JSON.stringify({envelope:ipEnvelope})}));
+  await handler(new Request(endpoint,{method:'POST',headers:{
+    Origin:origin,'Content-Type':'application/json','cf-connecting-ip':'203.0.113.7','cf-ipcountry':'KR',
+    'user-agent':'Mozilla/5.0 (iPhone; CPU iPhone OS 18_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.1 Mobile/15E148 Safari/604.1',
+    'accept-language':'ko-KR,ko;q=0.9,en-US;q=0.8'
+  },body:JSON.stringify({envelope:ipEnvelope})}));
   assert.equal(seen.at(-1).p_client,k1,'HMAC-keyed client key forwarded');
-  assert.ok(!JSON.stringify(seen.at(-1)).includes('203.0.113.7'),'raw IP never forwarded');
+  assert.ok(!String(seen.at(-1).p_client).includes('203.0.113.7'),'rate-limit client key must stay HMAC-hashed');
+  assert.equal(seen.at(-1).p_meta?.ip,'203.0.113.7','validated connecting IP forwarded in admin login metadata');
+  assert.equal(seen.at(-1).p_meta?.country,'KR','country code extracted from cf-ipcountry');
+  assert.equal(seen.at(-1).p_meta?.device_type,'mobile');
+  assert.equal(seen.at(-1).p_meta?.device_model,'iPhone');
+  assert.equal(seen.at(-1).p_meta?.os,'iOS 18.1');
+  assert.equal(seen.at(-1).p_meta?.browser,'Safari 18');
+  assert.equal(seen.at(-1).p_meta?.language,'ko-KR');
+  assert.ok(!JSON.stringify(seen.at(-1).p_meta).includes(fixturePassword),'login metadata never contains passwords');
+  // Korean Galaxy + Whale / Samsung Internet & Windows PC User-Agent parsing checks.
+  const {extractLoginMeta}=await import('../supabase/functions/secure-auth/handler.mjs');
+  const galMeta=extractLoginMeta(new Request(endpoint,{headers:{
+    'cf-connecting-ip':'::ffff:198.51.100.12','cf-ipcountry':'KR',
+    'user-agent':'Mozilla/5.0 (Linux; Android 14; SM-S928N) AppleWebKit/537.36 (KHTML, like Gecko) SamsungBrowser/25.0 Chrome/121.0.0.0 Mobile Safari/537.36'
+  }}));
+  assert.equal(galMeta.ip,'198.51.100.12');
+  assert.equal(galMeta.device_type,'mobile');
+  assert.equal(galMeta.device_model,'Galaxy (SM-S928N)');
+  assert.equal(galMeta.os,'Android 14');
+  assert.equal(galMeta.browser,'Samsung Internet 25');
+  const pcMeta=extractLoginMeta(new Request(endpoint,{headers:{
+    'cf-connecting-ip':'2001:DB8::42',
+    'user-agent':'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Whale/3.29.282.14 Safari/537.36'
+  }}));
+  assert.equal(pcMeta.ip,'2001:db8::42');
+  assert.equal(pcMeta.device_type,'desktop');
+  assert.equal(pcMeta.device_model,'Windows PC');
+  assert.equal(pcMeta.os,'Windows 10/11');
+  assert.equal(pcMeta.browser,'Whale 3');
   const response=await handler(new Request(endpoint,{headers:{Origin:origin}}));
   const keyResponse=await response.json();assert.deepEqual(Object.keys(keyResponse.jwk).sort(),['alg','e','kid','kty','n','use']);
   assert.equal(response.headers.get('cache-control'),'no-store');

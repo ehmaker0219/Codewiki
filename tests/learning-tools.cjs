@@ -230,6 +230,12 @@ assert.ok(tools.search(index,'COALESCE').some(r=>r.doc.id==='abap-sql-guide'));
 assert.ok(tools.search(index,'DESCRIBE TABLE').some(r=>r.doc.id==='abap-sql-guide'));
 assert.equal(docs['sap-gui-programs'].title,'SAP GUI 프로그램 정리표');
 assert.ok(tools.search(index,'ZABAP_F##_19').some(r=>r.doc.id==='sap-gui-programs'));
+for(const [prog, unitId] of [['ZABAP_F##_20','bc430-03'],['ZABAP_F##_21','unit-05'],['ZABAP_F##_22','bc430-09'],['ZABAP_F##_23','unit-09']]){
+  const hits=tools.search(index,prog).map(r=>r.doc.id);
+  assert.ok(hits.includes('sap-gui-programs'),`${prog} must appear in sap-gui-programs`);
+  assert.ok(hits.includes(unitId),`${prog} must link back to ${unitId}`);
+}
+assert.ok(tools.search(index,'CL_SALV_TABLE').some(r=>r.doc.id==='unit-09'));
 assert.ok(!JSON.stringify(docs['sap-gui-programs']).toLowerCase().includes('f22'));
 assert.ok(JSON.stringify(docs['abap-thinking-flow']).includes("sy-datum(4) && '0101'"));
 const overview=docs['abap-thinking-flow'].sections[0].blocks[0];

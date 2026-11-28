@@ -30,6 +30,7 @@
   const current=(s,v)=>session===s&&version===v&&active;
   const currentLogins=(s,v)=>session===s&&loginsVersion===v&&active;
   const DEVICE_LABELS={desktop:'PC',mobile:'모바일',tablet:'태블릿'};
+  const LOGIN_TYPE_LABELS={login:'직접 로그인',signup:'가입 로그인',revisit:'자동 재방문'};
   const STUDENT_TOOL_META=[['mentoring','멘토링'],['foundation','파운데이션']];
   const toolBusyUsers=new Set();
   function resolveStudentTools(u){
@@ -140,7 +141,14 @@
   function syncSecuritySidebarBadge(count){
     const badge=document.getElementById('adminSecurityAlertBadge');
     if(!badge)return;
-    const n=typeof count==='number'?count:Number(window.CodeWikiAuth?.getCurrentUser?.()?.security_alert_count)||0;
+    const user=window.CodeWikiAuth?.getCurrentUser?.();
+    let n=typeof count==='number'?count:Number(user?.security_alert_count)||0;
+    if(typeof count!=='number'&&n>0&&user?.role==='admin'&&!Object.prototype.hasOwnProperty.call(user,'security_ack_at')){
+      try{
+        const saved=JSON.parse(localStorage.getItem(`codewiki_sec_ack_v1:${user.id}`)||'null');
+        if(saved&&saved.ackAt&&(Date.now()-new Date(saved.ackAt).getTime())<86400000&&n<=(Number(saved.ackedCount)||0))n=0;
+      }catch{}
+    }
     badge.textContent=n>0?String(n):'';
     badge.hidden=!(n>0);
   }
@@ -175,7 +183,7 @@
     const token=window.CodeWikiAuth?.getSessionToken()||'';
     if(user?.role==='admin'&&session?.id===user.id&&session.token===token){
       syncApprovalSidebarBadge(approvalCtrl?.getPendingCount?.()??(Number(user.pending_count)||0));
-      syncSecuritySidebarBadge(Number(user.security_alert_count)||0);
+      syncSecuritySidebarBadge();
       return;
     }
     clear();online=null;livePresence=null;
@@ -237,19 +245,19 @@
       students:['학생 정보','가입한 학생의 기본 프로필, 학습 진도, 최근 접속 현황을 확인합니다.'],
       accounts:['계정 관리','학생별 화면 미리보기, 아이디 변경, 비밀번호 재설정 및 세션 로그아웃을 관리합니다.'],
       approvals:['학생 승인 관리','가입 신청 학생의 승인·반려 처리와 거절된 요청 정리를 한눈에 관리합니다.'],
-      logins:['학생 로그인 내역','학생들의 최근 로그인 및 자동 재방문 기록을 시간순으로 확인합니다.'],
+      logins:['학생 로그인 내역','학생들의 로그인 및 자동 재방문 기록(접속 기기 · OS · 브라우저 · IP · 국가)을 시간순으로 확인합니다.'],
       notices:['공지 · 1:1 알림','전체 공지 팝업, 수업 스포트라이트 배너, 1:1 학생 알림 발송 및 통합 발송 내역을 관리합니다.'],
       dashboard:['출석부','일별 순방문자, 접속 히트맵, 출석부 가입률, 미가입자 명단 및 장기 미접속 학생을 확인합니다.'],
       controls:['원격 제어','원격 점검 모드(Maintenance)와 학생 메뉴 원격 잠금(Feature Flags)을 제어합니다.'],
       insights:['학습 분석','단원별 학습 완료율, 이해 병목 레이더, 인기 문서, 검색 충족률, 코드 복사 및 퀴즈 오답률을 분석합니다.'],
-      security:['보안 검사','로그인 실패·무차별 시도, 암호화 패킷 위변조, 비인가 API 접근, SQLi/XSS 의심 입력, 다중 기기 전환 및 감사 로그를 상세 관제합니다.']
+      security:['보안 검사','로그인 실패(6회 이상 위험)·무차별 시도, 암호화 패킷 위변조, 비인가 API 접근, SQLi/XSS 의심 입력 및 감사 로그를 상세 관제합니다.']
     }[tab]||['학생 정보','가입한 학생의 기본 프로필과 학습 현황을 확인합니다.'];
     const [title,desc]=meta;
     const statusText=tab==='logins'?(loginsLoading?'로그인 내역을 불러오는 중…':loginsMessage):(isDirectoryTab?(loading?'학생 정보를 불러오는 중…':rowsMessage):(tab==='approvals'?'':insightsMessage));
     const hasInsights=Boolean(window.CodeWikiAdminInsights);
     const headingActions=`${(tab==='students'||tab==='logins')&&hasInsights?'<button type="button" class="toss-chip-btn" data-export-csv>CSV 내보내기</button>':''}${tab==='accounts'?`<button type="button" class="toss-chip-btn members-danger-btn" data-logout-all ${logoutAllBusy?'disabled':''}>전원 로그아웃</button>`:''}`;
     host.innerHTML=`<header class="members-heading"><div><h1>${title}</h1><p>${desc}</p></div>${headingActions?`<div class="members-heading-actions">${headingActions}</div>`:''}</header><section id="membersPresence" class="members-presence" aria-label="현재 접속자"></section>
-      ${isTableTab?`<div class="members-filters"><label>검색<input id="membersSearch" type="search" placeholder="이름 또는 아이디" value="${esc(query)}"></label><label>반<select id="membersClass"><option value="">전체 반</option>${classes.map(c=>`<option value="${esc(c)}" ${classFilter===c?'selected':''}>${esc(c)}</option>`).join('')}</select></label><label>상태<select id="membersStatus"><option value="">전체 상태</option>${Object.entries(statuses).map(([id,name])=>`<option value="${id}" ${statusFilter===id?'selected':''}>${name}</option>`).join('')}</select></label><span class="members-count" id="membersCount"></span></div>`:''}
+      ${isTableTab?`<div class="members-filters"><label>검색<input id="membersSearch" type="search" placeholder="${tab==='logins'?'이름, 아이디, IP, 기기, 브라우저':'이름 또는 아이디'}" value="${esc(query)}"></label><label>반<select id="membersClass"><option value="">전체 반</option>${classes.map(c=>`<option value="${esc(c)}" ${classFilter===c?'selected':''}>${esc(c)}</option>`).join('')}</select></label><label>상태<select id="membersStatus"><option value="">전체 상태</option>${Object.entries(statuses).map(([id,name])=>`<option value="${id}" ${statusFilter===id?'selected':''}>${name}</option>`).join('')}</select></label><span class="members-count" id="membersCount"></span></div>`:''}
       <p id="membersMessage" role="status"></p><div class="members-table-wrap" id="membersTable"></div>`;
     const msg=host.querySelector('#membersMessage');if(msg)msg.textContent=statusText;
     renderPresence();
@@ -268,11 +276,45 @@
     if(!tableEl)return;
     const q=query.trim().toLocaleLowerCase();
     const matches=u=>(!q||`${u.full_name||''} ${u.username||''}`.toLocaleLowerCase().includes(q))&&(!classFilter||(u.class_name||'기본반')===classFilter)&&(!statusFilter||u.status===statusFilter);
+    const matchesLogin=e=>{
+      const typeLabel=LOGIN_TYPE_LABELS[e.login_type]||e.login_type||'';
+      const devLabel=DEVICE_LABELS[e.device_type]||e.device_type||'';
+      const hay=`${e.full_name||''} ${e.username||''} ${e.ip_address||''} ${e.country_code||''} ${devLabel} ${e.device_model||''} ${e.os_name||''} ${e.browser_name||''} ${e.language||''} ${typeLabel} ${e.user_agent||''}`.toLocaleLowerCase();
+      return (!q||hay.includes(q))&&(!classFilter||(e.class_name||'기본반')===classFilter)&&(!statusFilter||e.status===statusFilter);
+    };
     if(currentTab()==='logins'){
-      const filtered=logins.filter(e=>(!selectedUserId||e.user_id===selectedUserId)&&matches(e));
+      const filtered=logins.filter(e=>(!selectedUserId||e.user_id===selectedUserId)&&matchesLogin(e));
       if(countEl)countEl.textContent=`${filtered.length}건 / 전체 ${logins.length}건`;
+      const renderLoginDevice=e=>{
+        const devLabel=DEVICE_LABELS[e.device_type]||'';
+        const model=e.device_model||'';
+        const os=e.os_name||'';
+        const uaAttr=e.user_agent?` title="${esc(e.user_agent)}"`:'';
+        if(!devLabel&&!model&&!os)return `<span class="members-cell-muted"${uaAttr}>—</span>`;
+        const head=[devLabel?`<span class="members-dev-pill">${esc(devLabel)}</span>`:'',model?`<strong>${esc(model)}</strong>`:''].filter(Boolean).join(' ');
+        const sub=os?`<span class="admin-sec-sub">${esc(os)}</span>`:'';
+        return `<div class="members-login-env"${uaAttr}>${head||`<strong>${esc(os)}</strong>`}${head?sub:''}</div>`;
+      };
+      const renderLoginBrowser=e=>{
+        const br=e.browser_name||'';
+        const lang=e.language||'';
+        const uaAttr=e.user_agent?` title="${esc(e.user_agent)}"`:'';
+        if(!br&&!lang)return `<span class="members-cell-muted"${uaAttr}>—</span>`;
+        return `<div class="members-login-env"${uaAttr}><strong>${esc(br||'브라우저 미확인')}</strong>${lang?`<span class="admin-sec-sub">${esc(lang)}</span>`:''}</div>`;
+      };
+      const renderLoginIp=e=>{
+        if(!e.ip_address&&!e.country_code)return '<span class="members-cell-muted">—</span>';
+        const ipHtml=e.ip_address?`<code class="admin-sec-fp">${esc(e.ip_address)}</code>`:'<span class="members-cell-muted">IP 미확인</span>';
+        const countryHtml=e.country_code?` <span class="members-country-pill">${esc(e.country_code)}</span>`:'';
+        return `<div class="members-ip-cell">${ipHtml}${countryHtml}</div>`;
+      };
       tableEl.innerHTML=filtered.length
-        ? `<table class="members-table"><caption>${selectedUserId?'선택한 학생 로그인 내역 · 최대 100건 (한국 시간 기준)':'최근 학생 로그인 내역 · 최대 100건 (한국 시간 기준)'}</caption><thead><tr><th scope="col">로그인 시각</th><th scope="col">번호</th><th scope="col">이름</th><th scope="col">반</th><th scope="col">아이디</th><th scope="col">가입 상태</th></tr></thead><tbody>${filtered.map(e=>`<tr><td class="members-time-cell">${esc(formatDateTime(e.logged_in_at))}</td><td>${esc(e.student_number??'—')}</td><td>${esc(e.full_name)}</td><td>${esc(e.class_name||'기본반')}</td><td>${esc(e.username)}</td><td>${esc(statuses[e.status]||e.status)}</td></tr>`).join('')}</tbody></table>`
+        ? `<table class="members-table members-logins-table"><caption>${selectedUserId?'선택한 학생 로그인 내역 · 최대 100건 (한국 시간 기준 · 기기/브라우저에 마우스를 올리면 상세 User-Agent 확인)':'최근 학생 로그인 내역 · 최대 100건 (한국 시간 기준 · 기기/브라우저에 마우스를 올리면 상세 User-Agent 확인)'}</caption><colgroup><col class="col-login-time"><col class="col-login-num"><col class="col-login-name"><col class="col-login-class"><col class="col-login-id"><col class="col-login-device"><col class="col-login-browser"><col class="col-login-ip"><col class="col-login-status"></colgroup><thead><tr><th scope="col">로그인 시각</th><th scope="col" class="members-col-center">번호</th><th scope="col">이름</th><th scope="col" class="members-col-center">반</th><th scope="col">아이디</th><th scope="col">기기 · OS</th><th scope="col">브라우저</th><th scope="col">접속 IP</th><th scope="col" class="members-col-right">가입 상태</th></tr></thead><tbody>${filtered.map(e=>{
+            const ltype=e.login_type||'login';
+            const typeText=LOGIN_TYPE_LABELS[ltype]||'직접 로그인';
+            const typeCls=ltype==='revisit'?'is-revisit':(ltype==='signup'?'is-signup':'is-direct');
+            return `<tr><td class="members-time-cell"><div>${esc(formatDateTime(e.logged_in_at))}</div><span class="members-login-type ${typeCls}">${esc(typeText)}</span></td><td class="members-col-center members-col-nowrap">${esc(e.student_number??'—')}</td><td class="members-col-nowrap members-name-cell">${esc(e.full_name)}</td><td class="members-col-center members-col-nowrap">${esc(e.class_name||'기본반')}</td><td class="members-id-cell">${esc(e.username)}</td><td>${renderLoginDevice(e)}</td><td>${renderLoginBrowser(e)}</td><td class="members-col-nowrap">${renderLoginIp(e)}</td><td class="members-col-right members-col-nowrap">${esc(statuses[e.status]||e.status)}</td></tr>`;
+          }).join('')}</tbody></table>`
         : loginsLoading||loginsMessage?'':`<p class="members-reset-note">${logins.length?'조건에 맞는 로그인 내역이 없습니다.':'기록된 학생 로그인 내역이 없습니다. 로그인 기록 적용 이후의 로그인이 여기에 표시됩니다.'}</p>`;
       return;
     }
@@ -361,8 +403,14 @@
     const q=query.trim().toLocaleLowerCase();
     const matches=u=>(!q||`${u.full_name||''} ${u.username||''}`.toLocaleLowerCase().includes(q))&&(!classFilter||(u.class_name||'기본반')===classFilter)&&(!statusFilter||u.status===statusFilter);
     if(currentTab()==='logins'){
-      const filtered=logins.filter(e=>(!selectedUserId||e.user_id===selectedUserId)&&matches(e));
-      dl('codewiki-login-history.csv',['로그인 시각(KST)','번호','이름','반','아이디','가입 상태'],filtered.map(e=>[formatDateTime(e.logged_in_at),e.student_number??'',e.full_name,e.class_name||'기본반',e.username,statuses[e.status]||e.status]));
+      const matchesLogin=e=>{
+        const typeLabel=LOGIN_TYPE_LABELS[e.login_type]||e.login_type||'';
+        const devLabel=DEVICE_LABELS[e.device_type]||e.device_type||'';
+        const hay=`${e.full_name||''} ${e.username||''} ${e.ip_address||''} ${e.country_code||''} ${devLabel} ${e.device_model||''} ${e.os_name||''} ${e.browser_name||''} ${e.language||''} ${typeLabel} ${e.user_agent||''}`.toLocaleLowerCase();
+        return (!q||hay.includes(q))&&(!classFilter||(e.class_name||'기본반')===classFilter)&&(!statusFilter||e.status===statusFilter);
+      };
+      const filtered=logins.filter(e=>(!selectedUserId||e.user_id===selectedUserId)&&matchesLogin(e));
+      dl('codewiki-login-history.csv',['로그인 시각(KST)','구분','번호','이름','반','아이디','가입 상태','접속 IP','국가','기기 유형','기기 모델','운영체제(OS)','브라우저','언어','User-Agent'],filtered.map(e=>[formatDateTime(e.logged_in_at),LOGIN_TYPE_LABELS[e.login_type]||e.login_type||'직접 로그인',e.student_number??'',e.full_name,e.class_name||'기본반',e.username,statuses[e.status]||e.status,e.ip_address||'',e.country_code||'',DEVICE_LABELS[e.device_type]||e.device_type||'',e.device_model||'',e.os_name||'',e.browser_name||'',e.language||'',e.user_agent||'']));
       return;
     }
     const filtered=rows.filter(matches).sort(compareRows);

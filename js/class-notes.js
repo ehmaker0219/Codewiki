@@ -1566,6 +1566,7 @@ ENDLOOP.`)),
       ['`ZABAP_F##_14`', 'ABAP Internal Table'],
       ['`ZABAP_F##_15`', 'ABAP Header Line'],
       ['`ZABAP_F##_16`', 'ABAP Internal table & Work area'],
+      ['`ZABAP_F##_21`', 'ABAP No -'],
       ['`ZBC400_F##_STRUCTURE`', 'Program ZBC400_F##_STRUCTURE (Exercise 13)'],
       ['`ZBC430S_ITAB_SORTED`', 'Program SAPBC430S_ITAB_SORTED (Exercise 14 연계)']
     ]
@@ -1682,7 +1683,7 @@ ENDLOOP.`)),
 
   putUnit(9, 'SAP List Viewer (ALV)', 'SAP List Viewer', 459,
     'ABAP Report에서 Internal Table을 표 형태로 출력하고 정렬·필터·합계 등 표준 UI 기능을 제공하는 SAP List Viewer(ALV)와 Exercise 25–26을 다룹니다.',
-    ['SAP List Viewer', 'ALV'],
+    ['SAP List Viewer', 'ALV', 'CL_SALV_TABLE'],
     [
       { id: 'l1', kind: 'lesson', badge: 'L1', page: 'p. 460', pending: true, label: 'SAP List Viewer 활용', desc: 'Lesson: Using the SAP List Viewer (p. 460) — 준비 중' },
       { id: 'ex', kind: 'exercise', badge: 'Ex 25–26', page: 'p. 473 · 481', pending: true, label: 'Exercise 25–26', desc: 'Exercise 25–26 — 준비 중' }
@@ -1690,7 +1691,12 @@ ENDLOOP.`)),
     [
       pendingSec('l1', 'Lesson 1', 'p. 460', 'Using the SAP List Viewer (ALV 활용)'),
       pendingSec('ex', 'Exercise 25', 'p. 473', 'Exercise 25: Use SAP List Viewer in an ABAP Report'),
-      pendingSec('ex', 'Exercise 26', 'p. 481', 'Exercise 26: Display an Internal Table with the SAP List Viewer')
+      pendingSec('ex', 'Exercise 26', 'p. 481', 'Exercise 26: Display an Internal Table with the SAP List Viewer'),
+      section('참고 자료',
+        table(['실습 Program (`SE80` · `ZBC400_F##`)', '내용'], [
+          ['`ZABAP_F##_23`', 'ABAP ALV (`CL_SALV_TABLE`)']
+        ])
+      )
     ]
   );
 
@@ -1828,7 +1834,10 @@ ENDLOOP.`)),
           { step: '2', action: 'Technical Settings → Activate → Create Entries', detail: 'Data Class(APPL0/USER) · Size Category를 저장한 뒤 활성화하고 Utilities → Table Contents → Create Entries로 테스트 데이터를 입력합니다.' }
         ] })
     ],
-    '11/24'
+    '11/24',
+    [
+      ['`ZABAP_F##_20`', 'ABAP KRW Currency']
+    ]
   );
 
   putBc430(4, '테이블 접근 성능', 'Performance During Table Access', 91,
@@ -2221,7 +2230,10 @@ START-OF-SELECTION.
       pendingSec('ex', 'Exercise 19', 'p. 289', 'Exercise 19: Create Collective Search Helps (준비 중)', '준비 중 · BC430 교재 p. 289 실습은 Collective Search Help 진도에 맞춰 정리할 예정입니다.'),
       pendingSec('ex', 'Exercise 20', 'p. 293', 'Exercise 20: Create Append Search Helps (준비 중)', '준비 중 · BC430 교재 p. 293 실습은 Append Search Help 진도에 맞춰 정리할 예정입니다.')
     ],
-    '11/26'
+    '11/26',
+    [
+      ['`ZABAP_F##_22`', 'ABAP Search Help']
+    ]
   );
 
   const unitOrder = [
@@ -2590,13 +2602,16 @@ END-OF-SELECTION.
           ['Unit 2 · Workbench · 기초 문법', '[[unit-02|Unit 2 · ABAP Workbench]]', '`ZABAP_F##_01`, `02`<br>`ZBC400_F##_HELLO`'],
           ['Unit 3 · 자료형 · 연산 · 반복문 · 시스템 필드', '[[unit-03|Unit 3 · ABAP 기본 언어 요소]]', '`ZABAP_F##_03`, `04`, `05`, `06`, `07`<br>`ZBC400_F##_COMPUTE`, `ZBC400_F##_LOOP`'],
           ['Unit 4 · 모듈화 (FORM · Function Module · Class)', '[[unit-04|Unit 4 · ABAP 모듈화 기법]]', '`ZABAP_F##_08`, `09`, `10`, `11`, `12`<br>`ZBC400_F##_SUBROUTINE`, `ZBC400_F##_FUNCTION_MODULE`, `ZBC400_F##_FUNCTION_MODULE_2`, `ZBC400_F##_GLOBAL_CLASS_1`, `ZBC400_F##_GLOBAL_CLASS_2`'],
-          ['Unit 5 · Structure · Internal Table', '[[unit-05|Unit 5 · 복합 데이터 객체]]', '`ZABAP_F##_13`, `14`, `15`, `16`<br>`ZBC400_F##_STRUCTURE`, `ZBC430S_ITAB_SORTED`'],
+          ['Unit 5 · Structure · Internal Table', '[[unit-05|Unit 5 · 복합 데이터 객체]]', '`ZABAP_F##_13`, `14`, `15`, `16`, `21`<br>`ZBC400_F##_STRUCTURE`, `ZBC430S_ITAB_SORTED`'],
           ['BC400 Unit 6 · Open SQL', '[[unit-06|BC400 Unit 6 · 데이터 모델링과 데이터 조회]]', '[[abap-sql-guide|ABAP SQL 가이드]] 연계'],
           ['BC430 Unit 2 · ABAP Dictionary 타입 · Structure', '[[bc430-02|BC430 Unit 2 · ABAP Dictionary 데이터 타입]]', '`ZABAP_F##_18`, `19`<br>`ZBC430S_DATA_ELEMENTS`, `ZBC430S_F##_STRUCT_NESTED`, `ZBC430S_F##_STRUCT_DEEP`'],
-          ['Unit 7 · Classic ABAP Report · Select-Options', '[[unit-07|Unit 7 · Classic ABAP Reports]]', '`ZABAP_F##_17`<br>`ZBC400_F##_REP_A`, `ZBC400_F##_REP_B`']
+          ['BC430 Unit 3 · 데이터베이스 테이블 · 통화 서식', '[[bc430-03|BC430 Unit 3 · 데이터베이스 테이블]]', '`ZABAP_F##_20`'],
+          ['BC430 Unit 9 · Search Help · Selection Screen 컨트롤', '[[bc430-09|BC430 Unit 9 · Search Help]]', '`ZABAP_F##_22`'],
+          ['Unit 7 · Classic ABAP Report · Select-Options', '[[unit-07|Unit 7 · Classic ABAP Reports]]', '`ZABAP_F##_17`<br>`ZBC400_F##_REP_A`, `ZBC400_F##_REP_B`'],
+          ['Unit 9 · SAP List Viewer (ALV)', '[[unit-09|Unit 9 · SAP List Viewer (ALV)]]', '`ZABAP_F##_23`']
         ])
       ),
-      section('ZABAP_F##_01 ~ 19 · 수업 진도별 Program',
+      section('ZABAP_F##_01 ~ 23 · 수업 진도별 Program',
         text('강사님과 수업 순서대로 작성한 핵심 개념별 Program 목록입니다.'),
         table(['Program', '설명 (Description)', '교재 Unit', '확인 포인트'], [
           ['`ZABAP_F##_01`', 'ABAP Write statement', '[[unit-02|Unit 2]]', '기본 `WRITE` 출력과 줄바꿈(`/`)'],
@@ -2617,7 +2632,11 @@ END-OF-SELECTION.
           ['`ZABAP_F##_16`', 'ABAP Internal table & Work area', '[[unit-05|Unit 5]]', '글로벌/로컬 `TYPE`, `TYPE TABLE OF`, `TYPE LINE OF`, `LIKE` 선언 비교'],
           ['`ZABAP_F##_17`', 'ABAP Select-Options', '[[unit-07|Unit 7]]', '`SELECT-OPTIONS`(`SIGN`·`OPTION`·`LOW`·`HIGH`), `WHERE ... IN`과 Selection Screen'],
           ['`ZABAP_F##_18`', 'ABAP Flat(Simple & Nested) Structure', '[[bc430-02|BC430 Unit 2]]', '`Simple structure` vs `Nested structure`와 `.INCLUDE` 접근 비교'],
-          ['`ZABAP_F##_19`', 'ABAP Deep Structure', '[[bc430-02|BC430 Unit 2]]', '컴포넌트에 `Table Type`이 포함된 `Deep structure` 구성과 활용']
+          ['`ZABAP_F##_19`', 'ABAP Deep Structure', '[[bc430-02|BC430 Unit 2]]', '컴포넌트에 `Table Type`이 포함된 `Deep structure` 구성과 활용'],
+          ['`ZABAP_F##_20`', 'ABAP KRW Currency', '[[bc430-03|BC430 Unit 3]]', '`SELECT SINGLE` 조회 후 `WRITE ... CURRENCY`로 `KRW`(소수 자릿수 0) 금액 필드 통화 서식 출력'],
+          ['`ZABAP_F##_21`', 'ABAP No -', '[[unit-05|Unit 5]]', '`TYPES` 없이 `DATA: BEGIN OF ... END OF`로 `Work Area` 직접 선언, 모든 컴포넌트가 문자형(`CHAR`-like)일 때 `-` 없이 `WRITE: gs_data.` 일괄 출력'],
+          ['`ZABAP_F##_22`', 'ABAP Search Help', '[[bc430-09|BC430 Unit 9]]', 'Table · Structure · Data Element 연결 `Search Help` (`PARAMETERS`) 및 `AS LISTBOX VISIBLE LENGTH` · `AS CHECKBOX` · `RADIOBUTTON GROUP` 구성'],
+          ['`ZABAP_F##_23`', 'ABAP ALV', '[[unit-09|Unit 9]]', '`SELECT-OPTIONS` · `SFLIGHT` 조회 · `LOOP AT` / `MODIFY`로 점유율(`percentage`) 계산 후 `CL_SALV_TABLE`로 ALV 출력']
         ])
       ),
       section('ZBC400_F##_* · BC400 교재 실습 Program',
@@ -4131,7 +4150,7 @@ ENDLOOP.`)
     related(['unit-05', 'unit-06', 'unit-07', 'bc430-02', 'abap-sql-guide', 'basic-session-review', 'sap-tcode-reference'])
   );
   docs['sap-gui-programs'].sections.push(
-    related(['unit-02', 'unit-04', 'unit-05', 'unit-07', 'bc430-02', 'basic-session-review', 'abap-thinking-flow', 'abap-sql-guide', 'sap-tcode-reference'])
+    related(['unit-02', 'unit-04', 'unit-05', 'unit-07', 'unit-09', 'bc430-02', 'bc430-03', 'bc430-09', 'basic-session-review', 'abap-thinking-flow', 'abap-sql-guide', 'sap-tcode-reference'])
   );
   docs['basic-session-review'].sections.push(
     related(['unit-02', 'unit-03', 'unit-04', 'unit-05', 'unit-06', 'unit-07', 'bc430-02', 'abap-sql-guide', 'abap-thinking-flow', 'sap-tcode-reference'])

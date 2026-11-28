@@ -165,8 +165,16 @@ begin
   r := public.cw_client_sync(s1, 'abap-sql-guide', 'ABAP SQL', 'mobile', 'client-beta-2222');
   assert (r->'active_notice'->>'id')::uuid = v_notice_id;
 
-  -- Student 2 syncs: sees notice, does NOT see student 1's private 1:1 DM.
+  -- Student 2 syncs after 10 days away with simulated PostgREST request.headers:
+  -- records revisit with IP/country/device/OS/browser, sees notice, does NOT see student 1's private 1:1 DM.
+  perform set_config('request.headers', jsonb_build_object(
+    'cf-connecting-ip', '198.51.100.77',
+    'cf-ipcountry', 'KR',
+    'user-agent', 'Mozilla/5.0 (Macintosh; Intel Mac OS X 14_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
+    'accept-language', 'ko-KR,ko;q=0.9'
+  )::text, true);
   r := public.cw_client_sync(s2, 'basic-session-review', 'Basic Session Review', 'desktop', 'client-stu2-3333');
+  perform set_config('request.headers', '', true);
   assert (r->'active_notice'->>'id')::uuid = v_notice_id;
   assert jsonb_array_length(r->'direct_messages') = 0, 'other student saw private 1:1 DM';
 
@@ -211,7 +219,7 @@ begin
   assert exists (select 1 from jsonb_array_elements(r->'top_copies') e where e->>'doc_id' = 'basic-session-review');
   assert exists (select 1 from jsonb_array_elements(r->'hardest_quizzes') e where e->>'target_key' = 'obj-q1' and (e->>'wrong_rate')::numeric = 100);
   assert exists (select 1 from jsonb_array_elements(r->'client_errors') e where e->>'message' = 'TypeError: demo');
-  assert exists (select 1 from jsonb_array_elements(r->'multi_device_alerts') e where (e->>'user_id')::uuid = id1 and (e->>'switches_24h')::int >= 1);
+  assert jsonb_array_length(r->'multi_device_alerts') = 0, 'multi-device detection must be disabled';
   assert exists (select 1 from jsonb_array_elements(r->'audit_logs') e where e->>'action' = 'update_student_tools');
   assert jsonb_array_length(r->'audit_logs') >= 4, 'audit logs missing admin actions';
 
@@ -265,16 +273,65 @@ end;
 $test$;
 
 -- 11. Service-role secure-auth & edge security event logging (zero raw password/IP stored).
+--     Verifies login failures 1..5 stay 'info' (non-risk) and 6th failure escalates to 'high'/'critical'.
 set local role service_role;
 do $sec_events$
 declare
   r jsonb;
   v_fp text := repeat('a', 64);
   v_req uuid := gen_random_uuid();
+  v_i integer;
 begin
-  -- Failed login against existing admin account & SQLi probe & replay attack.
+  -- 5 failed logins against admin account must ALL stay 'info' (not flagged as risk).
   r := public.cw_secure_auth('cw_login', jsonb_build_object('p_username', 'cmd_admin', 'p_password', 'Wrong-Secret-Pass-99!'), v_req, clock_timestamp() + interval '60 seconds', v_fp);
   assert r->>'code' = 'CW_INVALID_CREDENTIALS';
+  for v_i in 2..5 loop
+    r := public.cw_secure_auth('cw_login', jsonb_build_object('p_username', 'cmd_admin', 'p_password', 'Wrong-Secret-Pass-99!'), gen_random_uuid(), clock_timestamp() + interval '60 seconds', v_fp);
+    assert r->>'code' = 'CW_INVALID_CREDENTIALS';
+  end loop;
+  -- 5 failed logins against student account must ALL stay 'info'.
+  for v_i in 1..5 loop
+    r := public.cw_secure_auth('cw_login', jsonb_build_object('p_username', 'cmd_stu2', 'p_password', 'Wrong-Stu-Pass-11!'), gen_random_uuid(), clock_timestamp() + interval '60 seconds', v_fp);
+    assert r->>'code' = 'CW_INVALID_CREDENTIALS';
+  end loop;
+  perform set_config('test.sec_replay_req', v_req::text, true);
+end;
+$sec_events$;
+
+set local role anon;
+do $verify_five_fails_safe$
+declare
+  a uuid := current_setting('test.cmd_admin')::uuid;
+  sec jsonb;
+  v_admin_sevs text[];
+  v_stu_sevs text[];
+begin
+  sec := public.cw_admin_insights_and_security(a, 14);
+  select array_agg(e->>'severity' order by (e->>'id')::bigint) into v_admin_sevs
+  from jsonb_array_elements(sec->'security_events') e
+  where e->>'event_type' = 'login_failed' and lower(e->>'target_account') = 'cmd_admin';
+  assert v_admin_sevs = array['info','info','info','info','info'], '1..5 admin login failures must stay info, got ' || coalesce(v_admin_sevs::text, 'null');
+
+  select array_agg(e->>'severity' order by (e->>'id')::bigint) into v_stu_sevs
+  from jsonb_array_elements(sec->'security_events') e
+  where e->>'event_type' = 'login_failed' and lower(e->>'target_account') = 'cmd_stu2';
+  assert v_stu_sevs = array['info','info','info','info','info'], '1..5 student login failures must stay info, got ' || coalesce(v_stu_sevs::text, 'null');
+end;
+$verify_five_fails_safe$;
+
+set local role service_role;
+do $sec_events_escalate$
+declare
+  r jsonb;
+  v_fp text := repeat('a', 64);
+  v_req uuid := current_setting('test.sec_replay_req')::uuid;
+begin
+  -- 6th failed login against admin escalates to 'critical'; 6th against student escalates to 'high'.
+  r := public.cw_secure_auth('cw_login', jsonb_build_object('p_username', 'cmd_admin', 'p_password', 'Wrong-Secret-Pass-99!'), gen_random_uuid(), clock_timestamp() + interval '60 seconds', v_fp);
+  assert r->>'code' = 'CW_INVALID_CREDENTIALS';
+  r := public.cw_secure_auth('cw_login', jsonb_build_object('p_username', 'cmd_stu2', 'p_password', 'Wrong-Stu-Pass-11!'), gen_random_uuid(), clock_timestamp() + interval '60 seconds', v_fp);
+  assert r->>'code' = 'CW_INVALID_CREDENTIALS';
+
   -- Replay same request_id triggers CW_REPLAY log.
   r := public.cw_secure_auth('cw_login', jsonb_build_object('p_username', 'cmd_admin', 'p_password', 'Wrong-Secret-Pass-99!'), v_req, clock_timestamp() + interval '60 seconds', v_fp);
   assert r->>'code' = 'CW_REPLAY';
@@ -286,20 +343,79 @@ begin
   assert (r->>'ok')::boolean = true;
   r := public.cw_log_edge_security_event('envelope_tampered', 'CW_ENVELOPE_INVALID', v_fp, jsonb_build_object('reason', 'decrypt_failed', 'method', 'POST'));
   assert (r->>'ok')::boolean = true;
+
+  -- Successful 6-arg login with rich device/IP/country/browser metadata stores all fields in login_logs.
+  r := public.cw_secure_auth(
+    'cw_login',
+    jsonb_build_object('p_username', 'cmd_stu1', 'p_password', 'Stu-Cmd-42!'),
+    gen_random_uuid(),
+    clock_timestamp() + interval '60 seconds',
+    v_fp,
+    jsonb_build_object(
+      'ip', '203.0.113.55',
+      'country', 'KR',
+      'device_type', 'mobile',
+      'device_model', 'Galaxy (SM-S928N)',
+      'os', 'Android 14',
+      'browser', 'Samsung Internet 25',
+      'language', 'ko-KR',
+      'user_agent', 'Mozilla/5.0 (Linux; Android 14; SM-S928N) SamsungBrowser/25.0'
+    )
+  );
+  assert r->>'session_token' is not null, '6-arg cw_secure_auth login with metadata failed';
 end;
-$sec_events$;
+$sec_events_escalate$;
 
 set local role anon;
 do $verify_sec_center$
 declare
   a uuid := current_setting('test.cmd_admin')::uuid;
+  id1 uuid := current_setting('test.cmd_stu1_id')::uuid;
+  s2 uuid := current_setting('test.cmd_stu2')::uuid;
+  id2 uuid := current_setting('test.cmd_stu2_id')::uuid;
   me jsonb;
   sec jsonb;
+  hist jsonb;
+  v_admin_6th text;
+  v_stu_6th text;
 begin
+  hist := public.cw_admin_login_history(a, 20, id1);
+  assert hist->0->>'login_type' = 'login', 'expected direct login_type';
+  assert hist->0->>'ip_address' = '203.0.113.55', 'expected direct login IP';
+  assert hist->0->>'country_code' = 'KR';
+  assert hist->0->>'device_type' = 'mobile';
+  assert hist->0->>'device_model' = 'Galaxy (SM-S928N)';
+  assert hist->0->>'os_name' = 'Android 14';
+  assert hist->0->>'browser_name' = 'Samsung Internet 25';
+  assert hist->0->>'language' = 'ko-KR';
+
+  hist := public.cw_admin_login_history(a, 20, id2);
+  assert exists (
+    select 1 from jsonb_array_elements(hist) e
+    where e->>'login_type' = 'revisit'
+      and e->>'ip_address' = '198.51.100.77'
+      and e->>'country_code' = 'KR'
+      and e->>'device_model' = 'Mac'
+      and e->>'os_name' = 'macOS 14.5'
+      and e->>'browser_name' = 'Chrome 131'
+      and e->>'language' = 'ko-KR'
+  ), 'revisit login must extract IP, country, device, OS, and browser from request.headers';
   me := public.cw_me(a);
   assert (me->>'security_alert_count')::int >= 4, 'cw_me must report 24h security alerts for admin sidebar badge';
 
   sec := public.cw_admin_insights_and_security(a, 14);
+  assert jsonb_array_length(sec->'multi_device_alerts') = 0, 'multi_device_alerts must remain empty';
+  select e->>'severity' into v_admin_6th
+  from jsonb_array_elements(sec->'security_events') e
+  where e->>'event_type' = 'login_failed' and lower(e->>'target_account') = 'cmd_admin'
+  order by (e->>'id')::bigint desc limit 1;
+  assert v_admin_6th = 'critical', '6th admin login failure must be critical, got ' || coalesce(v_admin_6th, 'null');
+
+  select e->>'severity' into v_stu_6th
+  from jsonb_array_elements(sec->'security_events') e
+  where e->>'event_type' = 'login_failed' and lower(e->>'target_account') = 'cmd_stu2'
+  order by (e->>'id')::bigint desc limit 1;
+  assert v_stu_6th = 'high', '6th student login failure must be high, got ' || coalesce(v_stu_6th, 'null');
   assert (sec->'security_summary'->>'login_failures')::int >= 2, 'login_failures aggregated';
   assert (sec->'security_summary'->>'tamper_or_origin')::int >= 3, 'replay/origin/tamper aggregated';
   assert (sec->'security_summary'->>'unauthorized_admin')::int >= 4, 'unauthorized admin RPC & route probe aggregated';
@@ -312,6 +428,21 @@ begin
   assert exists (select 1 from jsonb_array_elements(sec->'top_sources') e where e->>'client_fp' = repeat('a', 12));
   assert not exists (select 1 from jsonb_array_elements(sec->'rate_limits') e where e->>'category' = '기타 보안 버킷' and (e->>'attempts')::int > 0 and sec::text like '%sec-log:%'), 'internal sec-log buckets excluded';
   assert sec::text not like '%Wrong-Secret-Pass-99!%' and sec::text not like '%Another-Secret-77!%', 'raw passwords must never be stored in security_events';
+
+  -- Admin alert acknowledgement clears cw_me.security_alert_count & unacked_alerts_24h to 0, while student call is blocked.
+  assert (public.cw_admin_ack_security_alerts(s2)->>'code') = 'CW_ADMIN_REQUIRED', 'student cannot ack admin security alerts';
+  assert (public.cw_admin_ack_security_alerts(a)->>'ok')::boolean = true;
+  me := public.cw_me(a);
+  assert (me->>'security_alert_count')::int = 0, 'cw_me security_alert_count must drop to 0 after admin ack, got ' || (me->>'security_alert_count');
+  assert me->>'security_ack_at' is not null, 'cw_me must return security_ack_at after ack';
+  sec := public.cw_admin_insights_and_security(a, 14);
+  assert (sec->'security_summary'->>'unacked_alerts_24h')::int = 0, 'unacked_alerts_24h must be 0 after ack';
+  assert (sec->'security_summary'->>'alerts_24h')::int >= 4, 'historical alerts_24h count preserved after ack';
+
+  -- A brand-new high-severity event after ack immediately re-increments security_alert_count to 1.
+  perform public.cw_track_event(s2, 'search_empty', '<script>alert(2)</script>', jsonb_build_object('results', 0), 'desktop');
+  me := public.cw_me(a);
+  assert (me->>'security_alert_count')::int = 1, 'new high event after ack must re-trigger sidebar badge to 1, got ' || (me->>'security_alert_count');
 end;
 $verify_sec_center$;
 

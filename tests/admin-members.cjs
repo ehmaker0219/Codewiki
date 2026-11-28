@@ -71,11 +71,15 @@ const fixtures=[{id:'s1',username:'student-one',full_name:'<img onerror=alert(1)
  assert.equal(requests[0].name,'cw_admin_login_history');assert.equal(requests[0].args.p_limit,100);
  click('[data-members-tab]','logins');assert.equal(requests.length,1,'login history read coalescing');
  const loginFixtures=[
-  {id:2,user_id:'n1',username:'user10',full_name:'<svg onload=alert(1)>',class_name:'10반',student_number:10,status:'approved',logged_in_at:'2026-11-21T10:00:00Z'},
-  {id:1,user_id:'n2',username:'user2',full_name:'김나',class_name:'2반',student_number:2,status:'pending',logged_in_at:'2026-11-20T10:00:00Z'}];
+  {id:2,user_id:'n1',username:'user10',full_name:'<svg onload=alert(1)>',class_name:'10반',student_number:10,status:'approved',logged_in_at:'2026-11-21T10:00:00Z',login_type:'login',ip_address:'203.0.113.7',country_code:'KR',device_type:'mobile',device_model:'iPhone',os_name:'iOS 18.1',browser_name:'Safari 18',language:'ko-KR',user_agent:'<img onerror=1>'},
+  {id:1,user_id:'n2',username:'user2',full_name:'김나',class_name:'2반',student_number:2,status:'pending',logged_in_at:'2026-11-20T10:00:00Z',login_type:'revisit',ip_address:'198.51.100.9',country_code:'KR',device_type:'desktop',device_model:'Windows PC',os_name:'Windows 10/11',browser_name:'Whale 3',language:'ko-KR',user_agent:'Mozilla/5.0'}];
  requests.shift().resolve({data:loginFixtures});await flush();
  assert.ok(node('membersTable').innerHTML.includes('&lt;svg'));assert.ok(!node('membersTable').innerHTML.includes('<svg'));
+ assert.ok(node('membersTable').innerHTML.includes('203.0.113.7')&&node('membersTable').innerHTML.includes('iPhone')&&node('membersTable').innerHTML.includes('Safari 18')&&node('membersTable').innerHTML.includes('자동 재방문'),'login table displays IP, device, OS, browser, and login type');
+ assert.ok(!node('membersTable').innerHTML.includes('<img onerror=1>'),'user-agent tooltip escaped');
  assert.match(node('membersCount').textContent,/2건 \/ 전체 2건/);
+ input('membersSearch','203.0.113.7');assert.match(node('membersCount').textContent,/1건 \/ 전체 2건/,'login search matches IP');
+ input('membersSearch','whale');assert.match(node('membersCount').textContent,/1건 \/ 전체 2건/,'login search matches browser');
  input('membersSearch','user2');assert.match(node('membersCount').textContent,/1건 \/ 전체 2건/);
  input('membersClass','10반');assert.match(node('membersCount').textContent,/0건 \/ 전체 2건/);
  input('membersSearch','');input('membersClass','');assert.equal(requests.length,0,'login filters must be local');

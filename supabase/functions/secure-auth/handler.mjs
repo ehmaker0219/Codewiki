@@ -108,6 +108,117 @@ export function normalizeClientIp(raw) {
   return 'v6:' + groups.slice(0, 4).map(g => g.toString(16).padStart(4, '0')).join(':');
 }
 
+export function extractDisplayIp(raw) {
+  const ip = String(raw || '').trim();
+  if (!ip || ip.length > 45 || ip.includes('%')) return null;
+  const v4 = parseIpv4(ip);
+  if (v4) return v4.join('.');
+  const normalized = normalizeClientIp(ip);
+  if (!normalized) return null;
+  if (normalized.startsWith('v4:')) return normalized.slice(3);
+  return ip.toLowerCase();
+}
+
+export function extractLoginMeta(request) {
+  const headers = request?.headers;
+  if (!headers) return null;
+  const cleanStr = (val, max) => String(val || '').replace(/[\x00-\x1f\x7f]/g, ' ').trim().slice(0, max);
+  const rawIp = headers.get('cf-connecting-ip')
+    || headers.get('x-real-ip')
+    || String(headers.get('x-forwarded-for') || '').split(',')[0];
+  const ip = extractDisplayIp(rawIp);
+
+  const rawCountry = cleanStr(headers.get('cf-ipcountry'), 4).toUpperCase();
+  const country = rawCountry === 'T1' ? 'TOR' : (/^[A-Z]{2}$/.test(rawCountry) && rawCountry !== 'XX' ? rawCountry : null);
+
+  const ua = cleanStr(headers.get('user-agent'), 260) || null;
+  const chPlat = cleanStr(headers.get('sec-ch-ua-platform'), 48).replace(/^"+|"+$/g, '') || null;
+  const chMob = cleanStr(headers.get('sec-ch-ua-mobile'), 8);
+  const chModelRaw = cleanStr(headers.get('sec-ch-ua-model'), 48).replace(/^"+|"+$/g, '');
+  const chModel = chModelRaw && chModelRaw !== 'K' ? chModelRaw : null;
+
+  const langCandidate = cleanStr(String(headers.get('accept-language') || '').split(',')[0].split(';')[0], 24);
+  const language = /^[a-zA-Z]{2,3}(?:-[a-zA-Z0-9]{2,8})?$/.test(langCandidate) ? langCandidate : null;
+
+  let device_type = null, device_model = null, os = null, browser = null;
+  if (ua) {
+    if (/iPhone/i.test(ua)) {
+      device_type = 'mobile';
+      device_model = 'iPhone';
+      const m = ua.match(/OS (\d+)[._](\d+)/);
+      os = m ? `iOS ${m[1]}.${m[2]}` : 'iOS';
+    } else if (/iPad/i.test(ua)) {
+      device_type = 'tablet';
+      device_model = 'iPad';
+      const m = ua.match(/OS (\d+)[._](\d+)/);
+      os = m ? `iPadOS ${m[1]}.${m[2]}` : 'iPadOS';
+    } else if (/Android/i.test(ua)) {
+      const mVer = ua.match(/Android (\d+(?:\.\d+)?)/i);
+      os = mVer ? `Android ${mVer[1]}` : 'Android';
+      const mSam = ua.match(/\b(SM-[A-Z0-9]+)\b/);
+      if (mSam) {
+        if (/^SM-[TX]/.test(mSam[1])) {
+          device_type = 'tablet';
+          device_model = `Galaxy Tab (${mSam[1]})`;
+        } else {
+          device_type = /Mobile/i.test(ua) ? 'mobile' : 'tablet';
+          device_model = `Galaxy (${mSam[1]})`;
+        }
+      } else {
+        device_type = (/Tablet/i.test(ua) || !/Mobile/i.test(ua)) ? 'tablet' : 'mobile';
+        const mPix = ua.match(/\b(Pixel \d+[a-zA-Z0-9 ]{0,12})/);
+        device_model = mPix ? mPix[1].trim() : (chModel || (device_type === 'tablet' ? 'Android 태블릿' : 'Android 기기'));
+      }
+    } else if (/Windows NT/i.test(ua)) {
+      device_type = 'desktop';
+      device_model = 'Windows PC';
+      os = /Windows NT 10\.0/i.test(ua) ? 'Windows 10/11' : (/Windows NT 6\.[123]/i.test(ua) ? 'Windows 7/8' : 'Windows');
+    } else if (/Macintosh|Mac OS X/i.test(ua)) {
+      device_type = 'desktop';
+      device_model = 'Mac';
+      const m = ua.match(/Mac OS X (\d+)[._](\d+)/);
+      os = m ? `macOS ${m[1]}.${m[2]}` : 'macOS';
+    } else if (/CrOS/i.test(ua)) {
+      device_type = 'desktop';
+      device_model = 'Chromebook';
+      os = 'ChromeOS';
+    } else if (/Linux/i.test(ua)) {
+      device_type = 'desktop';
+      device_model = 'Linux PC';
+      os = 'Linux';
+    }
+
+    if (/KAKAOTALK/i.test(ua)) browser = 'KakaoTalk 인앱';
+    else if (/NAVER\(|NAVER\//i.test(ua)) browser = 'NAVER 앱';
+    else if (/Instagram/i.test(ua)) browser = 'Instagram 인앱';
+    else if (/Whale\//i.test(ua)) { const m = ua.match(/Whale\/(\d+)/i); browser = m ? `Whale ${m[1]}` : 'Whale'; }
+    else if (/SamsungBrowser\//i.test(ua)) { const m = ua.match(/SamsungBrowser\/(\d+)/i); browser = m ? `Samsung Internet ${m[1]}` : 'Samsung Internet'; }
+    else if (/Edg(?:A|iOS)?\//i.test(ua)) { const m = ua.match(/Edg(?:A|iOS)?\/(\d+)/i); browser = m ? `Edge ${m[1]}` : 'Edge'; }
+    else if (/OPR\//i.test(ua)) { const m = ua.match(/OPR\/(\d+)/i); browser = m ? `Opera ${m[1]}` : 'Opera'; }
+    else if (/CriOS\//i.test(ua)) { const m = ua.match(/CriOS\/(\d+)/i); browser = m ? `Chrome ${m[1]}` : 'Chrome'; }
+    else if (/(?:FxiOS|Firefox)\//i.test(ua)) { const m = ua.match(/(?:FxiOS|Firefox)\/(\d+)/i); browser = m ? `Firefox ${m[1]}` : 'Firefox'; }
+    else if (/Chrome\//i.test(ua)) { const m = ua.match(/Chrome\/(\d+)/i); browser = m ? `Chrome ${m[1]}` : 'Chrome'; }
+    else if (/Safari\//i.test(ua)) { const m = ua.match(/Version\/(\d+)/i); browser = m ? `Safari ${m[1]}` : 'Safari'; }
+  }
+
+  if (!device_type) {
+    if (chMob === '?1') device_type = 'mobile';
+    else if (chMob === '?0') device_type = 'desktop';
+  }
+  if (!os && chPlat) os = chPlat;
+
+  const meta = {};
+  if (ip) meta.ip = ip;
+  if (country) meta.country = country;
+  if (device_type) meta.device_type = device_type;
+  if (device_model) meta.device_model = device_model;
+  if (os) meta.os = os;
+  if (browser) meta.browser = browser;
+  if (language) meta.language = language;
+  if (ua) meta.user_agent = ua;
+  return Object.keys(meta).length ? meta : null;
+}
+
 async function importHmacKey(secret) {
   if (secret && typeof secret === 'object' && secret.type === 'secret') return secret;
   const raw = typeof secret === 'string' && secret ? secret : null;
@@ -216,7 +327,9 @@ export async function createHandler({privateKeys, origins, rpc, clock=Date.now, 
     try{
       const args={p_operation:payload.operation,p_args:payload.args,p_request_id:payload.jti,p_expires_at:new Date(payload.exp*1000).toISOString()};
       const client=await clientKey(request,hmacKey);
-      if(client)args.p_client=client;
+      const loginMeta=(payload.operation==='cw_login'||payload.operation==='cw_signup_with_roster')?extractLoginMeta(request):null;
+      if(loginMeta){args.p_client=client||null;args.p_meta=loginMeta;}
+      else if(client){args.p_client=client;}
       const result=await rpc(args);
       if(result?.code){const status=Object.hasOwn(errorStatuses,result.code)?errorStatuses[result.code]:null;return reply({code:status?result.code:'CW_AUTH_UNAVAILABLE'},status||503);}
       if(payload.operation==='cw_admin_reset_student_password'){
