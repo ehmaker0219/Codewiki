@@ -31,7 +31,7 @@ window.WIKI_DOCS = {
           ["strlen( text )", "문자열 전체 길이", "고정 길이 문자 필드의 뒤쪽 공백은 제외하고, string의 뒤쪽 공백은 포함"],
           ["charlen( text )", "첫 번째 문자의 길이", "전체 문자열 길이가 아님. 문자 표현과 코드 페이지에 따라 달라짐"]
         ] },
-        { type: "code", label: "길이 비교", code: "DATA lv_text TYPE string VALUE `ABAP`.\nDATA(lv_length) = strlen( lv_text ).  \" 4\nDATA(lv_first) = charlen( lv_text ).  \" 1" }
+        { type: "code", label: "길이 비교", code: "DATA: lv_text   TYPE string VALUE 'ABAP',\n      lv_length TYPE i,\n      lv_first  TYPE i.\nlv_length = strlen( lv_text ).  \" 4\nlv_first  = charlen( lv_text ). \" 1" }
       ] },
       { title: "문자열 연결 · &&와 CONCATENATE", blocks: [
         { type: "text", paragraphs: ["&&는 문자열을 이어 붙이는 연산자입니다. 구분자가 필요하면 공백 등을 직접 넣습니다. CONCATENATE는 여러 값을 INTO 뒤의 변수에 합치며, SEPARATED BY로 구분자를 지정할 수 있습니다."] },
@@ -46,7 +46,7 @@ window.WIKI_DOCS = {
           ["abs( n )", "절대값", "abs( -7 ) → 7"],
           ["ipow( base = n exp = m )", "정수 지수 m으로 n의 거듭제곱 계산", "ipow( base = 2 exp = 3 ) → 8"]
         ] },
-        { type: "code", label: "계산 결과 저장", code: "DATA(lv_absolute) = abs( -7 ).\nDATA(lv_power) = ipow( base = 2 exp = 3 )." }
+        { type: "code", label: "계산 결과 저장", code: "DATA: lv_absolute TYPE i,\n      lv_power    TYPE i.\nlv_absolute = abs( -7 ).\nlv_power    = ipow( base = 2 exp = 3 )." }
       ] },
       { title: "조건식 · 초기값·범위·같지 않음", blocks: [
         { type: "table", headers: ["표현", "의미", "주의"], rows: [
@@ -59,7 +59,7 @@ window.WIKI_DOCS = {
       ] },
       { title: "문자 포함 검사 · CA", blocks: [
         { type: "text", paragraphs: ["CA는 Contains Any입니다. text CA 'abc'는 a, b, c 중 하나라도 들어 있으면 참입니다. 'abc'라는 문자열 전체가 연속으로 포함됐는지를 검사하는 표현은 아닙니다. CA는 대소문자를 구분합니다."] },
-        { type: "code", label: "문자 집합과 부분 문자열 구분", code: "DATA lv_text TYPE string VALUE `cat`.\nIF lv_text CA 'abc'.\n  WRITE / 'a, b, c 중 하나 이상 포함'.\nENDIF.\n\nIF lv_text CS 'abc'.\n  WRITE / 'abc라는 연속 문자열 포함'.\nENDIF.\n\" cat: CA 조건은 참, CS 조건은 거짓" }
+        { type: "code", label: "문자 집합과 부분 문자열 구분", code: "DATA lv_text TYPE string VALUE 'cat'.\nIF lv_text CA 'abc'.\n  WRITE / 'a, b, c 중 하나 이상 포함'.\nENDIF.\n\nIF lv_text CS 'abc'.\n  WRITE / 'abc라는 연속 문자열 포함'.\nENDIF.\n\" cat: CA 조건은 참, CS 조건은 거짓" }
       ] },
       { title: "반복문 · CONTINUE", blocks: [
         { type: "text", paragraphs: ["CONTINUE는 현재 반복 회차의 남은 문장을 건너뛰고 다음 회차로 진행합니다. 반복문 자체를 종료하지 않습니다. LOOP에서는 다음 행으로, DO나 WHILE에서는 다음 반복으로 넘어갑니다. 반복문을 끝내려면 EXIT를 사용합니다."] },

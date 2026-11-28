@@ -102,7 +102,7 @@
       name+'는 항공 실습용으로 가정한 커스텀 Domain입니다. Data Type·길이 등의 기술 속성을 정의하며, 필드의 의미와 레이블을 정하는 Data Element와 구분합니다.');
   }
   for(const name of ['SCARR','SPFLI','SFLIGHT','SBOOK','SCUSTOM','SAPLANE','SAIRPORT']) {
-    add('databaseTable',name,'SELECT * FROM '+name.toLowerCase()+' INTO TABLE @DATA(lt_result).',
+    add('databaseTable',name,'SELECT * FROM '+name.toLowerCase()+' INTO TABLE lt_result.',
       'FROM 뒤의 조회 원본과 INTO TABLE 뒤의 결과 변수를 구분하세요.',
       name+'는 SAP 항공 모델의 DB Table입니다. TYPE 뒤에서 행 구조를 참조할 수도 있지만, 이 문제는 SELECT의 조회 원본을 묻습니다.');
   }

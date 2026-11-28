@@ -88,8 +88,10 @@ CLEAR lv_count.
 WRITE: / lv_count, / lv_copy, / lc_limit.`), text('TYPE은 타입을, LIKE는 기존 데이터 객체의 타입을 참조합니다. VALUE는 선언 시 값을 지정합니다. 대입은 = 로 표현할 수 있으며 MOVE 원본 TO 대상도 기존 코드에서 볼 수 있습니다.', 'CLEAR는 빈 문자열을 일괄 대입하는 명령이 아니라 타입별 초기값으로 되돌리는 명령입니다. 자세한 값은 [[abap-types|자료형과 초기값]]을 참고하세요.')),
     section('입력과 출력', code('Selection Screen에서 숫자 입력받기', `REPORT zabap_f##_##.
 PARAMETERS p_count TYPE i DEFAULT 3.
+DATA lv_double TYPE i.
+
 START-OF-SELECTION.
-  DATA(lv_double) = p_count * 2.
+  lv_double = p_count * 2.
   WRITE: / '입력:', p_count,
          / '두 배:', lv_double.`), text('PARAMETERS는 Report의 Selection Screen 입력 필드를 정의합니다. WRITE는 클래식 리스트 출력을 만듭니다. 문자열 함수와 조건 표현은 [[abap-useful-syntax|유용한 함수 · 문법 모음]]으로 연결됩니다.'))
   ], '11/11 · 11/12', [
@@ -473,13 +475,17 @@ ENDLOOP.`), text('이 예제의 기본 키는 carrid와 connid입니다. 키가 
     section('Header Line과 OCCURS — 기존 코드 읽기', text('15번 Program 필기: WITH HEADER LINE을 사용한 옛 문법에서는 테이블과 같은 이름의 Work Area가 함께 생깁니다. 문장에 따라 같은 이름이 Work Area 또는 본문을 가리켜 혼동하기 쉽습니다. 새 코드에서는 gs_ Work Area와 gt_ 테이블을 분리하세요.'),
       code('Header Line과 테이블 본문 구분', `REPORT zabap_f##_##.
 DATA gt_scarr TYPE STANDARD TABLE OF scarr WITH HEADER LINE.
+DATA gv_lines TYPE i.
+
 gt_scarr-carrid   = 'LH'.       " Header Line에 값 대입
 gt_scarr-carrname = 'Lufthansa'.
 APPEND gt_scarr.                " Header Line을 본문에 추가
 CLEAR gt_scarr.                 " Header Line만 초기화, 본문 1행 유지
-WRITE / lines( gt_scarr[] ).
+DESCRIBE TABLE gt_scarr[] LINES gv_lines.
+WRITE / gv_lines.
 CLEAR gt_scarr[].               " 테이블 본문 초기화
-WRITE / lines( gt_scarr[] ).`),
+DESCRIBE TABLE gt_scarr[] LINES gv_lines.
+WRITE / gv_lines.`),
       text('OCCURS n은 과거 Internal Table 선언에서 초기 메모리 할당 규모를 지정하던 문법입니다. 최대 n건까지만 저장한다는 의미가 아니며 필요하면 테이블은 늘어납니다. 단순 Structure Type 선언에 저장 건수 제한으로 붙이지 않습니다. Header Line과 OCCURS는 기존 Standard ABAP 코드를 읽기 위한 내용입니다.')),
     section('Classic ABAP Report와 Selection Screen', text(
       'Classic ABAP Report는 실행 시 사용자 입력을 받는 Selection Screen을 제공합니다. 입력 방식은 단일 값을 받는 Single Value(PARAMETERS)와 범위·복수 조건을 받는 Selection Condition(SELECT-OPTIONS)으로 구분합니다.'),
@@ -491,18 +497,28 @@ WRITE / lines( gt_scarr[] ).`),
       table(['Sign', 'Option', 'Low', 'High'], [
         ['I (포함) 또는 E (제외)', '부등호 · 비교 연산자 (EQ, NE, BT, CP, GT 등)', '~부터 (단일 값 또는 하한)', '~까지 (상한 값)']
       ]),
-      text('FOR 뒤에는 타입 이름이 아니라 이미 선언된 데이터 객체(변수 또는 TABLES 선언 필드)를 지정합니다. 화면 입력을 비워 두면 WHERE ... IN @so_carr 조건은 제한 없이 전체 데이터를 통과시킵니다.', 'Selection Screen에 변수명 대신 의미 있는 라벨(예: Airline, Flight Date)을 표시하려면 SE38 메뉴 `Goto → Text Elements → Selection Texts`에서 라벨을 입력하거나 `DDIC Ref.`를 체크한 뒤 활성화하세요. 또한 `SELECT-OPTIONS`를 `PERFORM` Subroutine으로 전달할 때는 헤더(`so_carr`)가 아니라 바디(`so_carr[]`)를 넘겨야 합니다([[basic-session-review|Basic Session Review]] 참고).'),
+      text('FOR 뒤에는 타입 이름이 아니라 이미 선언된 데이터 객체(변수 또는 TABLES 선언 필드)를 지정합니다. 화면 입력을 비워 두면 WHERE ... IN so_carr 조건은 제한 없이 전체 데이터를 통과시킵니다.', 'Selection Screen에 변수명 대신 의미 있는 라벨(예: Airline, Flight Date)을 표시하려면 SE38 메뉴 `Goto → Text Elements → Selection Texts`에서 라벨을 입력하거나 `DDIC Ref.`를 체크한 뒤 활성화하세요. 또한 `SELECT-OPTIONS`를 `PERFORM` Subroutine으로 전달할 때는 헤더(`so_carr`)가 아니라 바디(`so_carr[]`)를 넘겨야 합니다([[basic-session-review|Basic Session Review]] 참고).'),
       code('SELECT-OPTIONS와 cl_demo_output 출력', `REPORT zabap_f##_##.
 
-DATA gv_carrid TYPE spfli-carrid.
+TYPES: BEGIN OF ts_conn,
+         carrid   TYPE spfli-carrid,
+         connid   TYPE spfli-connid,
+         cityfrom TYPE spfli-cityfrom,
+         cityto   TYPE spfli-cityto,
+       END OF ts_conn.
+
+DATA gv_carrid      TYPE spfli-carrid.
+DATA gt_connections TYPE STANDARD TABLE OF ts_conn.
+
 SELECT-OPTIONS so_carr FOR gv_carrid.
 
-SELECT carrid, connid, cityfrom, cityto
-  FROM spfli
-  WHERE carrid IN @so_carr
-  INTO TABLE @DATA(gt_connections).
+START-OF-SELECTION.
+  SELECT carrid connid cityfrom cityto
+    FROM spfli
+    INTO TABLE gt_connections
+    WHERE carrid IN so_carr.
 
-cl_demo_output=>display( gt_connections ).`),
+  cl_demo_output=>display( gt_connections ).`),
       text('cl_demo_output=>display( gt_connections ).은 학습·테스트용으로 Internal Table을 빠르게 화면에 출력하는 Static Method입니다. 실무 조회 화면용 ALV와는 구분해서 사용하세요.')),
     section('Report 처리 순서', text('Classic ABAP Report는 REPORT 선언 이후 PARAMETERS·SELECT-OPTIONS·DATA 선언을 거쳐 아래 이벤트 순서대로 처리됩니다.'),
       table(['단계', '역할'], [
@@ -515,7 +531,16 @@ cl_demo_output=>display( gt_connections ).`),
       ]),
       code('Classic ABAP Report 이벤트 흐름', `REPORT zabap_f##_##.
 
-DATA gv_carrid TYPE spfli-carrid.
+TYPES: BEGIN OF ts_conn,
+         carrid   TYPE spfli-carrid,
+         connid   TYPE spfli-connid,
+         cityfrom TYPE spfli-cityfrom,
+         cityto   TYPE spfli-cityto,
+       END OF ts_conn.
+
+DATA gv_carrid      TYPE spfli-carrid.
+DATA gt_connections TYPE STANDARD TABLE OF ts_conn.
+
 SELECT-OPTIONS so_carr FOR gv_carrid.
 
 INITIALIZATION.
@@ -530,10 +555,10 @@ AT SELECTION-SCREEN.
   ENDIF.
 
 START-OF-SELECTION.
-  SELECT carrid, connid, cityfrom, cityto
+  SELECT carrid connid cityfrom cityto
     FROM spfli
-    WHERE carrid IN @so_carr
-    INTO TABLE @DATA(gt_connections).
+    INTO TABLE gt_connections
+    WHERE carrid IN so_carr.
   cl_demo_output=>display( gt_connections ).`),
       text('so_carr는 Header Line과 Internal Table 본문을 함께 가지므로 INITIALIZATION에서는 Header Line(so_carr-sign 등)에 값을 채운 뒤 APPEND so_carr.로 본문에 넣고, AT SELECTION-SCREEN에서는 본문이 비었는지 so_carr[] IS INITIAL로 검사합니다.')),
     section('리스트 아이콘과 컬럼 서식 참고', text(
@@ -554,112 +579,166 @@ START-OF-SELECTION.
     ['ABAP SQL', 'SELECT SINGLE', 'CORRESPONDING FIELDS', 'APPENDING TABLE', 'GROUP BY', 'HAVING', 'FOR ALL ENTRIES', 'OUTER JOIN'], [
     section('Open SQL과 Transparent Table', text(
       '11월 19일 필기의 SELECT·집계·조건·MODIFY 내용을 중심으로, JOIN·서브쿼리·트랜잭션 등 연결되는 내용을 보완했습니다. Open SQL은 현재 문서에서 ABAP SQL이라고도 부릅니다. ABAP Program의 DB 인터페이스를 통해 데이터베이스를 조회하고 변경합니다.',
-      '예제 기준은 Standard ABAP 7.52입니다. @ 호스트 변수, 쉼표로 구분한 필드 목록, 인라인 DATA 선언을 사용합니다. 구버전이나 ABAP Cloud에서는 사용 가능한 문법·테이블·API가 다르므로 시스템의 F1 도움말을 확인하세요. SCARR·SPFLI·SFLIGHT는 교육용 항공 데이터가 설치된 환경을 전제로 하며, 현재 클라이언트에 데이터가 없으면 조회 결과가 비어 있을 수 있습니다.'),
+      '예제는 수업 기준인 구문법(Classic Open SQL)으로 작성했습니다. 컬럼을 공백으로 구분하고, ABAP 변수 앞에 @를 붙이지 않으며, INTO 절을 FROM 뒤·WHERE 앞에 두고 TYPES/DATA로 변수를 먼저 선언합니다. SCARR·SPFLI·SFLIGHT는 교육용 항공 데이터가 설치된 환경을 전제로 하며, 현재 클라이언트에 데이터가 없으면 조회 결과가 비어 있을 수 있습니다.'),
       table(['구분', '의미', '예'], [
         ['Transparent Table', 'DDIC에서 정의하며 DB에 실제 행을 저장하는 테이블', 'SCARR'],
         ['행의 Structure Type', 'DB 테이블 이름을 TYPE 뒤에 쓰면 한 행의 구조로 사용', 'DATA gs_carrier TYPE scarr.'],
-        ['Internal Table', 'Program 메모리에 여러 행을 보관하는 변수', 'DATA gt_carriers TYPE STANDARD TABLE OF scarr WITH EMPTY KEY.']
+        ['Internal Table', 'Program 메모리에 여러 행을 보관하는 변수', 'DATA gt_carriers TYPE STANDARD TABLE OF scarr.']
       ]), text('Transparent Table 자체가 단순 Structure라는 뜻은 아닙니다. DB 테이블의 행 구조를 ABAP 변수의 타입으로 활용하는 것입니다. SELECT의 FROM은 DB 데이터 소스, INTO는 결과를 받을 ABAP 변수를 지정합니다.')),
     section('SELECT 기본 구조와 호스트 변수', text(
-      'SELECT는 열, FROM은 데이터 소스, WHERE는 행 조건, INTO는 결과 저장 위치입니다. SQL 안에서 ABAP 변수는 @로 구분합니다. WHERE carrid = @p_carr의 carrid는 DB 열이고 p_carr는 Program 변수입니다. 여기서 =는 대입이 아닌 비교입니다.',
-      '예제는 INTO를 뒤에 쓰는 문법으로 통일합니다. 과거 코드의 INTO ... WHERE ... 순서와 섞지 마세요. 한 열은 단일 변수로, 여러 열은 Structure로, 여러 행은 Internal Table로 받을 수 있습니다.'),
+      'SELECT는 열, FROM은 데이터 소스, INTO는 결과 저장 위치, WHERE는 행 조건입니다. 수업 기준 구문법(Classic Open SQL)에서는 SELECT 컬럼을 공백으로 구분하고, INTO 절을 FROM 뒤·WHERE 앞에 배치하며 ABAP 변수 앞에 @를 붙이지 않습니다. WHERE carrid = p_carr의 carrid는 DB 열이고 p_carr는 Program 변수입니다. 여기서 =는 대입이 아닌 비교입니다.',
+      '결과를 받을 Structure나 Internal Table은 SELECT 전에 TYPES와 DATA로 미리 선언해 둡니다. 한 열은 단일 변수로, 여러 열은 Structure로, 여러 행은 Internal Table로 받을 수 있습니다.'),
       code('Open SQL 기본 조회', `REPORT zabap_f##_##.
+
 PARAMETERS p_carr TYPE scarr-carrid DEFAULT 'LH'.
 
-SELECT carrid, carrname, currcode
-  FROM scarr
-  WHERE carrid = @p_carr
-  INTO TABLE @DATA(gt_carriers).
+TYPES: BEGIN OF ts_carrier,
+         carrid   TYPE scarr-carrid,
+         carrname TYPE scarr-carrname,
+         currcode TYPE scarr-currcode,
+       END OF ts_carrier.
 
-IF sy-subrc = 0.
-  LOOP AT gt_carriers INTO DATA(gs_carrier).
-    WRITE: / gs_carrier-carrid,
-             gs_carrier-carrname, gs_carrier-currcode.
-  ENDLOOP.
-ELSE.
-  WRITE / '조회 결과가 없습니다.'.
-ENDIF.`), text('sy-subrc는 후속 문장으로 바뀔 수 있으므로 조회 직후 확인합니다. 클라이언트 종속 테이블은 일반 Open SQL에서 현재 클라이언트로 자동 제한됩니다. 이것이 업무 권한 검사까지 대신하는 것은 아닙니다.')),
+DATA: gt_carriers TYPE STANDARD TABLE OF ts_carrier,
+      gs_carrier  TYPE ts_carrier.
+
+START-OF-SELECTION.
+  SELECT carrid carrname currcode
+    FROM scarr
+    INTO TABLE gt_carriers
+    WHERE carrid = p_carr.
+
+  IF sy-subrc = 0.
+    LOOP AT gt_carriers INTO gs_carrier.
+      WRITE: / gs_carrier-carrid,
+               gs_carrier-carrname, gs_carrier-currcode.
+    ENDLOOP.
+  ELSE.
+    WRITE / '조회 결과가 없습니다.'.
+  ENDIF.`), text('sy-subrc는 후속 문장으로 바뀔 수 있으므로 조회 직후 확인합니다. 클라이언트 종속 테이블은 일반 Open SQL에서 현재 클라이언트로 자동 제한됩니다. 이것이 업무 권한 검사까지 대신하는 것은 아닙니다.')),
     section('한 행 조회와 정렬된 첫 행', table(['목적', '문법', '주의'], [
-      ['키로 한 행 조회', 'SELECT SINGLE ...', '키를 모두 지정하지 않으면 여러 후보 중 어느 행인지 보장되지 않음'],
-      ['정렬 기준에 따른 첫 행', 'ORDER BY ... INTO TABLE ... UP TO 1 ROWS', '동점까지 구분하도록 정렬 열 지정'],
-      ['여러 행 제한', 'ORDER BY ... INTO TABLE ... UP TO n ROWS', 'ORDER BY가 없으면 반환 순서 보장 안 됨']
+      ['키로 한 행 조회', 'SELECT SINGLE ... FROM ... INTO ... WHERE ...', '키를 모두 지정하지 않으면 여러 후보 중 어느 행인지 보장되지 않음'],
+      ['정렬 기준에 따른 첫 행', 'INTO TABLE ... UP TO 1 ROWS ... ORDER BY ...', '동점까지 구분하도록 정렬 열 지정'],
+      ['여러 행 제한', 'INTO TABLE ... UP TO n ROWS ... ORDER BY ...', 'ORDER BY가 없으면 반환 순서 보장 안 됨']
     ]), code('항공사 이름과 가장 빠른 운항일', `REPORT zabap_f##_##.
+
 PARAMETERS p_carr TYPE scarr-carrid DEFAULT 'LH'.
-DATA gv_name TYPE scarr-carrname.
 
-CLEAR gv_name.
-SELECT SINGLE carrname FROM scarr
-  WHERE carrid = @p_carr
-  INTO @gv_name.
-IF sy-subrc = 0.
-  WRITE / gv_name.
-ENDIF.
+TYPES: BEGIN OF ts_first,
+         carrid TYPE sflight-carrid,
+         connid TYPE sflight-connid,
+         fldate TYPE sflight-fldate,
+       END OF ts_first.
 
-SELECT carrid, connid, fldate FROM sflight
-  WHERE carrid = @p_carr
-  ORDER BY fldate ASCENDING, connid ASCENDING
-  INTO TABLE @DATA(gt_first)
-  UP TO 1 ROWS.
-LOOP AT gt_first INTO DATA(gs_first).
-  WRITE: / gs_first-carrid, gs_first-connid, gs_first-fldate.
-ENDLOOP.`), text('SINGLE은 최대 한 행이며 결과가 없으면 0행입니다. 기존 변수에 INTO 했을 때 조회 실패로 이전 값이 남을 수 있으므로 반환 코드를 확인하세요. 단일 값을 변수에 받는 것은 가능하지만 SELECT를 VALUE 생성자의 내부 표현식처럼 넣는 것은 아닙니다.')),
+DATA: gv_name  TYPE scarr-carrname,
+      gt_first TYPE STANDARD TABLE OF ts_first,
+      gs_first TYPE ts_first.
+
+START-OF-SELECTION.
+  CLEAR gv_name.
+  SELECT SINGLE carrname
+    FROM scarr
+    INTO gv_name
+    WHERE carrid = p_carr.
+  IF sy-subrc = 0.
+    WRITE / gv_name.
+  ENDIF.
+
+  SELECT carrid connid fldate
+    FROM sflight
+    INTO TABLE gt_first
+    UP TO 1 ROWS
+    WHERE carrid = p_carr
+    ORDER BY fldate ASCENDING connid ASCENDING.
+  LOOP AT gt_first INTO gs_first.
+    WRITE: / gs_first-carrid, gs_first-connid, gs_first-fldate.
+  ENDLOOP.`), text('SINGLE은 최대 한 행이며 결과가 없으면 0행입니다. 기존 변수에 INTO 했을 때 조회 실패로 이전 값이 남을 수 있으므로 조회 전 CLEAR 하고 반환 코드를 확인하세요.')),
     section('Work Area·Internal Table·CORRESPONDING', text(
       '일반 다중 행 SELECT를 Work Area로 받으면 SELECT ... ENDSELECT에서 한 행씩 처리합니다. INTO TABLE은 결과를 Internal Table에 모으므로 일반적으로 ENDSELECT가 없습니다. PACKAGE SIZE를 쓰는 단위(패킷) 처리에는 별도 반복 규칙이 적용됩니다.',
       '명시한 열들을 CORRESPONDING 없이 Structure로 받으면 열 순서와 대상 컴포넌트의 타입이 맞아야 합니다. CORRESPONDING FIELDS OF는 결과 열의 이름(AS 별칭 포함)과 대상 컴포넌트 이름을 연결합니다. OF 뒤는 필드명이 아니라 대상 Work Area 또는 Internal Table입니다.'),
       code('이름 기준으로 Work Area와 테이블에 받기', `REPORT zabap_f##_##.
+
 TYPES: BEGIN OF ts_carrier,
          carrname TYPE scarr-carrname,
          carrid   TYPE scarr-carrid,
        END OF ts_carrier.
-DATA gs_carrier TYPE ts_carrier.
-DATA gt_carriers TYPE STANDARD TABLE OF ts_carrier WITH EMPTY KEY.
 
-SELECT carrid, carrname FROM scarr
-  WHERE carrid = 'LH'
-  INTO CORRESPONDING FIELDS OF @gs_carrier.
-  WRITE: / gs_carrier-carrid, gs_carrier-carrname.
-ENDSELECT.
+DATA: gs_carrier  TYPE ts_carrier,
+      gt_carriers TYPE STANDARD TABLE OF ts_carrier,
+      gv_lines    TYPE i.
 
-SELECT carrid, carrname FROM scarr
-  WHERE carrid = 'LH'
-  INTO CORRESPONDING FIELDS OF TABLE @gt_carriers.
-WRITE: / '테이블 행 수:', lines( gt_carriers ).`), text('Work Area에서 매칭되지 않은 필드는 이전 값이 남을 수 있습니다. 재사용할 때 필요한 초기화를 하세요. 여러 행을 보관하려는 목적이라면 SELECT 루프에서 APPEND를 반복하기보다 INTO TABLE이 간결합니다. 대량 조회는 메모리 크기도 고려합니다.')),
+START-OF-SELECTION.
+  SELECT carrid carrname
+    FROM scarr
+    INTO CORRESPONDING FIELDS OF gs_carrier
+    WHERE carrid = 'LH'.
+    WRITE: / gs_carrier-carrid, gs_carrier-carrname.
+  ENDSELECT.
+
+  SELECT carrid carrname
+    FROM scarr
+    INTO CORRESPONDING FIELDS OF TABLE gt_carriers
+    WHERE carrid = 'LH'.
+  DESCRIBE TABLE gt_carriers LINES gv_lines.
+  WRITE: / '테이블 행 수:', gv_lines.`), text('Work Area에서 매칭되지 않은 필드는 이전 값이 남을 수 있습니다. 재사용할 때 필요한 초기화를 하세요. 여러 행을 보관하려는 목적이라면 SELECT 루프에서 APPEND를 반복하기보다 INTO TABLE이 간결합니다. 대량 조회는 메모리 크기도 고려합니다.')),
     section('INTO TABLE과 APPENDING TABLE', text(
       '일반 SELECT ... INTO TABLE은 대상 Internal Table의 기존 행을 비운 뒤 조회 결과로 채웁니다. APPENDING TABLE은 기존 행을 유지하고 조회한 행을 추가합니다. 변수를 두 번 정의해서 덮어쓰는 현상과는 다릅니다.',
       'APPENDING이 중복을 자동 제거하지는 않습니다. 아래 Standard Table에는 같은 행이 두 번 들어갈 수 있고, UNIQUE 키를 가진 대상은 키 충돌도 고려해야 합니다.'),
       code('조회 결과를 이어 담기', `REPORT zabap_f##_##.
-DATA gt_carriers TYPE STANDARD TABLE OF scarr WITH EMPTY KEY.
 
-SELECT * FROM scarr WHERE carrid = 'LH'
-  INTO TABLE @gt_carriers.
-SELECT * FROM scarr WHERE carrid = 'AA'
-  APPENDING TABLE @gt_carriers.
-WRITE: / '합친 행 수:', lines( gt_carriers ).
+DATA: gt_carriers TYPE STANDARD TABLE OF scarr,
+      gv_lines    TYPE i.
 
-SELECT * FROM scarr WHERE carrid = 'LH'
-  INTO TABLE @gt_carriers.
-WRITE: / '다시 채운 행 수:', lines( gt_carriers ).`), text('이 예제의 *는 행 전체와 SCARR 타입을 비교하기 위한 것입니다. 실제 Program에서는 필요한 열을 명시하는 것을 우선하세요.')),
+START-OF-SELECTION.
+  SELECT *
+    FROM scarr
+    INTO TABLE gt_carriers
+    WHERE carrid = 'LH'.
+  SELECT *
+    FROM scarr
+    APPENDING TABLE gt_carriers
+    WHERE carrid = 'AA'.
+  DESCRIBE TABLE gt_carriers LINES gv_lines.
+  WRITE: / '합친 행 수:', gv_lines.
+
+  SELECT *
+    FROM scarr
+    INTO TABLE gt_carriers
+    WHERE carrid = 'LH'.
+  DESCRIBE TABLE gt_carriers LINES gv_lines.
+  WRITE: / '다시 채운 행 수:', gv_lines.`), text('이 예제의 *는 행 전체와 SCARR 타입을 비교하기 위한 것입니다. 실제 Program에서는 필요한 열을 명시하는 것을 우선하세요.')),
     section('WHERE 조건과 NULL', table(['조건', '의미 / 예'], [
       ['= / EQ · <> / NE', '같음 / 다름'],
       ['< / LT · > / GT · <= / LE · >= / GE', '크기 비교'],
       ['AND · OR · NOT', '논리 결합. NOT → AND → OR 순으로 결합하므로 괄호로 의도 표현'],
       ['BETWEEN ... AND ...', '양 끝을 포함한 범위'],
-      ['IN (...) · IN @range', '값 목록 또는 선택 범위 테이블'],
+      ['IN (...) · IN s_carr', '값 목록 또는 선택 범위 테이블 (SELECT-OPTIONS / Range)'],
       ['LIKE', '%는 길이 0 이상 문자열, _는 한 문자. ABAP의 CP 패턴과 구분'],
       ['IS NULL · IS NOT NULL', 'DB의 NULL 여부. 공백이나 숫자 0 여부와 다름']
     ]), code('선택 범위와 문자열 조건', `REPORT zabap_f##_##.
-DATA gv_carrid TYPE scarr-carrid.
+
+TYPES: BEGIN OF ts_carrier,
+         carrid   TYPE scarr-carrid,
+         carrname TYPE scarr-carrname,
+       END OF ts_carrier.
+
+DATA: gv_carrid   TYPE scarr-carrid,
+      gt_carriers TYPE STANDARD TABLE OF ts_carrier,
+      gs_carrier  TYPE ts_carrier.
+
 SELECT-OPTIONS s_carr FOR gv_carrid.
 
-SELECT carrid, carrname FROM scarr
-  WHERE carrid IN @s_carr
-    AND ( carrname LIKE 'L%' OR carrname LIKE 'A%' )
-  ORDER BY carrid
-  INTO TABLE @DATA(gt_carriers).
-LOOP AT gt_carriers INTO DATA(gs_carrier).
-  WRITE: / gs_carrier-carrid, gs_carrier-carrname.
-ENDLOOP.`), text('선택 범위는 SIGN·OPTION·LOW·HIGH로 포함/제외와 비교 방법을 표현합니다. 빈 선택 범위의 IN 조건은 제한을 걸지 않으므로 빈 입력이 곧 0건이라는 뜻은 아닙니다.',
-      'NULL은 값이 없거나 미정임을 나타냅니다. = NULL로 비교하지 않습니다. OUTER JOIN에서 상대 행이 없을 때도 생깁니다. 보통 ABAP 변수로 전달되면 타입의 초기값으로 보이므로 SQL에서 IS NULL이나 COALESCE로 처리할지 먼저 결정하세요.')),
+START-OF-SELECTION.
+  SELECT carrid carrname
+    FROM scarr
+    INTO TABLE gt_carriers
+    WHERE carrid IN s_carr
+      AND ( carrname LIKE 'L%' OR carrname LIKE 'A%' )
+    ORDER BY carrid.
+
+  LOOP AT gt_carriers INTO gs_carrier.
+    WRITE: / gs_carrier-carrid, gs_carrier-carrname.
+  ENDLOOP.`), text('선택 범위는 SIGN·OPTION·LOW·HIGH로 포함/제외와 비교 방법을 표현합니다. 빈 선택 범위의 IN 조건은 제한을 걸지 않으므로 빈 입력이 곧 0건이라는 뜻은 아닙니다.',
+      'NULL은 값이 없거나 미정임을 나타냅니다. = NULL로 비교하지 않습니다. OUTER JOIN에서 상대 행이 없을 때도 생깁니다. 보통 ABAP 변수로 전달되면 타입의 초기값으로 보이므로 SQL에서 IS NULL 조건으로 처리할지 먼저 결정하세요.')),
     section('DISTINCT·집계·GROUP BY·HAVING', text(
       'DISTINCT는 SELECT에 나열한 열 조합 전체가 같은 행을 제거합니다. 한 열의 중복 제거와 여러 열 조합의 중복 제거는 결과가 다릅니다. 필기의 disting는 DISTINCT로 정정합니다.'),
       table(['함수 / 절', '역할'], [
@@ -668,94 +747,167 @@ ENDLOOP.`), text('선택 범위는 SIGN·OPTION·LOW·HIGH로 포함/제외와 �
         ['GROUP BY', '지정한 열 조합별로 묶기. 단순 열 조회에서 집계하지 않는 열은 그룹에도 지정'],
         ['WHERE / HAVING', '집계 전 원본 행 필터 / 집계 후 그룹 필터']
       ]), code('항공사별 좌석 집계', `REPORT zabap_f##_##.
-SELECT carrid, COUNT( * ) AS flight_count,
-       MIN( seatsocc ) AS min_occupied,
-       MAX( seatsocc ) AS max_occupied,
-       SUM( seatsocc ) AS total_occupied,
-       AVG( seatsocc ) AS avg_occupied
-  FROM sflight
-  WHERE seatsmax > 0
-  GROUP BY carrid
-  HAVING COUNT( * ) >= 2
-  ORDER BY carrid
-  INTO TABLE @DATA(gt_totals).
-LOOP AT gt_totals INTO DATA(gs_total).
-  WRITE: / gs_total-carrid, gs_total-flight_count,
-           gs_total-min_occupied, gs_total-max_occupied,
-           gs_total-total_occupied, gs_total-avg_occupied.
-ENDLOOP.`), text('예제는 좌석 수를 집계합니다. 금액을 합치거나 평균을 낼 때는 통화가 다른 값을 그대로 섞지 말고 통화별 그룹이나 환산 기준을 정해야 합니다.')),
+
+TYPES: BEGIN OF ts_total,
+         carrid         TYPE sflight-carrid,
+         flight_count   TYPE i,
+         min_occupied   TYPE sflight-seatsocc,
+         max_occupied   TYPE sflight-seatsocc,
+         total_occupied TYPE i,
+         avg_occupied   TYPE f,
+       END OF ts_total.
+
+DATA: gt_totals TYPE STANDARD TABLE OF ts_total,
+      gs_total  TYPE ts_total.
+
+START-OF-SELECTION.
+  SELECT carrid COUNT( * ) AS flight_count
+         MIN( seatsocc ) AS min_occupied
+         MAX( seatsocc ) AS max_occupied
+         SUM( seatsocc ) AS total_occupied
+         AVG( seatsocc ) AS avg_occupied
+    FROM sflight
+    INTO TABLE gt_totals
+    WHERE seatsmax > 0
+    GROUP BY carrid
+    HAVING COUNT( * ) >= 2
+    ORDER BY carrid.
+
+  LOOP AT gt_totals INTO gs_total.
+    WRITE: / gs_total-carrid, gs_total-flight_count,
+             gs_total-min_occupied, gs_total-max_occupied,
+             gs_total-total_occupied, gs_total-avg_occupied.
+  ENDLOOP.`), text('예제는 좌석 수를 집계합니다. 금액을 합치거나 평균을 낼 때는 통화가 다른 값을 그대로 섞지 말고 통화별 그룹이나 환산 기준을 정해야 합니다.')),
     section('조회 결과가 없을 때와 시스템 필드', table(['조회 형태', '데이터가 없을 때'], [
       ['일반 SELECT', 'sy-subrc = 4, sy-dbcnt = 0'],
       ['GROUP BY 없는 집계만의 SELECT', '일반적으로 집계 결과 한 행. COUNT는 0, 나머지는 대상 타입 초기값. sy-subrc = 0, sy-dbcnt = 1'],
       ['GROUP BY가 있는 집계', '그룹 자체가 없으면 결과 0행'],
       ['별칭 없는 COUNT( * )만 단독 조회, GROUP BY 없음', '예외: sy-dbcnt가 집계한 원본 행 수. 0건이면 sy-subrc = 4, sy-dbcnt = 0']
-    ]), text('따라서 집계 후 sy-dbcnt가 1이라고 해서 원본 데이터가 한 건 있었다고 판단하면 안 됩니다. COUNT 단독 예외는 INTO를 생략할 수 있는 기존 형식과 연결됩니다. 새 코드에서는 개수를 명시적인 변수에 받아 판단하는 편이 읽기 쉽습니다.'),
+    ]), text('따라서 집계 후 sy-dbcnt가 1이라고 해서 원본 데이터가 한 건 있었다고 판단하면 안 됩니다. COUNT 단독 예외는 INTO를 생략할 수 있는 기존 형식과 연결됩니다. 개수를 명시적인 변수에 받아 판단하는 편이 읽기 쉽습니다.'),
       code('집계 결과와 실제 원본 건수 비교', `REPORT zabap_f##_##.
-SELECT COUNT( * ) AS matched,
-       MAX( seatsocc ) AS max_occupied
-  FROM sflight
-  WHERE carrid = 'LH' AND carrid = 'AA'
-  INTO @DATA(gs_summary).
-DATA(gv_subrc) = sy-subrc.
-DATA(gv_dbcnt) = sy-dbcnt.
-WRITE: / gs_summary-matched, gs_summary-max_occupied,
-         gv_subrc, gv_dbcnt.`), text('같은 carrid가 LH와 AA일 수 없으므로 원본은 0건입니다. 별칭 있는 COUNT와 MAX를 함께 쓴 결과는 0, 0, 0, 1입니다. COUNT 결과 0으로 데이터 부재를 판별합니다.')),
+
+TYPES: BEGIN OF ts_summary,
+         matched      TYPE i,
+         max_occupied TYPE sflight-seatsocc,
+       END OF ts_summary.
+
+DATA: gs_summary TYPE ts_summary,
+      gv_subrc   TYPE sy-subrc,
+      gv_dbcnt   TYPE sy-dbcnt.
+
+START-OF-SELECTION.
+  SELECT COUNT( * ) AS matched
+         MAX( seatsocc ) AS max_occupied
+    FROM sflight
+    INTO gs_summary
+    WHERE carrid = 'LH' AND carrid = 'AA'.
+
+  gv_subrc = sy-subrc.
+  gv_dbcnt = sy-dbcnt.
+  WRITE: / gs_summary-matched, gs_summary-max_occupied,
+           gv_subrc, gv_dbcnt.`), text('같은 carrid가 LH와 AA일 수 없으므로 원본은 0건입니다. 별칭 있는 COUNT와 MAX를 함께 쓴 결과는 0, 0, 0, 1입니다. COUNT 결과 0으로 데이터 부재를 판별합니다.')),
     section('JOIN과 ON·WHERE의 차이', table(['종류', '결과'], [
       ['INNER JOIN', 'ON 조건에 서로 맞는 행만'],
       ['LEFT OUTER JOIN', '왼쪽 행을 유지하고 오른쪽이 없으면 해당 열은 NULL'],
-      ['RIGHT OUTER JOIN', '오른쪽 행을 유지. ABAP 7.52 공식 문서에서 지원'],
+      ['RIGHT OUTER JOIN', '오른쪽 행을 유지. 일부 구버전·구문법 환경에서는 제한되므로 테이블 순서를 바꾼 LEFT OUTER JOIN으로 표현하는 경우가 많음'],
       ['CROSS JOIN', '양쪽의 모든 조합. 결과가 급격히 커질 수 있음']
-    ]), text('필기의 “Right Outer Join 사용 불가”는 모든 ABAP 버전에 적용되지 않습니다. 수업 시스템의 릴리스와 문법 검사로 확인하세요. 같은 의미를 테이블 순서를 바꾼 LEFT OUTER JOIN으로 표현할 수도 있습니다.',
+    ]), text('수업 필기의 “Right Outer Join 사용 불가”처럼 구문법 환경에서는 RIGHT OUTER JOIN이 제한될 수 있으므로, 같은 의미를 테이블 순서를 바꾼 LEFT OUTER JOIN으로 표현하는 편이 안전합니다.',
       'AS는 별칭, 별칭~열은 소속 테이블을 명시합니다. ON은 행을 연결하는 조건이고 WHERE는 연결된 결과를 걸러냅니다. LEFT JOIN 오른쪽 열에 대한 WHERE 조건은 NULL 행을 제외해 왼쪽 보존 효과를 잃게 할 수 있습니다.'),
       code('항공사와 독일 출발 노선 연결', `REPORT zabap_f##_##.
-SELECT a~carrid, a~carrname, b~connid, b~cityfrom, b~cityto
-  FROM scarr AS a
-  LEFT OUTER JOIN spfli AS b
-    ON a~carrid = b~carrid AND b~countryfr = 'DE'
-  ORDER BY a~carrid, b~connid
-  INTO TABLE @DATA(gt_routes).
-LOOP AT gt_routes INTO DATA(gs_route).
-  WRITE: / gs_route-carrid, gs_route-carrname,
-           gs_route-connid, gs_route-cityfrom, gs_route-cityto.
-ENDLOOP.`), text('독일 출발 노선이 없는 항공사도 남습니다. countryfr 조건을 WHERE b~countryfr = ...로 옮기면 그 행들이 제외됩니다. 한 항공사에 여러 노선이 있으면 항공사 정보가 여러 행에 반복되는 것은 정상입니다.')),
+
+TYPES: BEGIN OF ts_route,
+         carrid   TYPE scarr-carrid,
+         carrname TYPE scarr-carrname,
+         connid   TYPE spfli-connid,
+         cityfrom TYPE spfli-cityfrom,
+         cityto   TYPE spfli-cityto,
+       END OF ts_route.
+
+DATA: gt_routes TYPE STANDARD TABLE OF ts_route,
+      gs_route  TYPE ts_route.
+
+START-OF-SELECTION.
+  SELECT a~carrid a~carrname b~connid b~cityfrom b~cityto
+    FROM scarr AS a
+    LEFT OUTER JOIN spfli AS b
+      ON a~carrid = b~carrid AND b~countryfr = 'DE'
+    INTO TABLE gt_routes
+    ORDER BY a~carrid b~connid.
+
+  LOOP AT gt_routes INTO gs_route.
+    WRITE: / gs_route-carrid, gs_route-carrname,
+             gs_route-connid, gs_route-cityfrom, gs_route-cityto.
+  ENDLOOP.`), text('독일 출발 노선이 없는 항공사도 남습니다. countryfr 조건을 WHERE b~countryfr = ...로 옮기면 그 행들이 제외됩니다. 한 항공사에 여러 노선이 있으면 항공사 정보가 여러 행에 반복되는 것은 정상입니다.')),
     section('보완: 서브쿼리와 FOR ALL ENTRIES', text(
       'EXISTS는 하위 조회에 맞는 행이 하나라도 있는지 검사합니다. IN ( SELECT ... )는 하위 조회의 값 집합과 비교합니다. JOIN처럼 상대쪽 열을 함께 표시할 필요 없이 존재 여부로 걸러낼 때 유용합니다.'),
       code('노선이 있는 항공사만 조회', `REPORT zabap_f##_##.
-SELECT a~carrid, a~carrname FROM scarr AS a
-  WHERE EXISTS ( SELECT * FROM spfli AS b
-                   WHERE b~carrid = a~carrid )
-  ORDER BY a~carrid
-  INTO TABLE @DATA(gt_carriers).
-LOOP AT gt_carriers INTO DATA(gs_carrier).
-  WRITE: / gs_carrier-carrid, gs_carrier-carrname.
-ENDLOOP.`), text('FOR ALL ENTRIES는 이미 가진 Internal Table의 각 행을 조건으로 조회하고 결과의 중복 행을 제거합니다. 기준 테이블이 비어 있으면 WHERE 전체가 무시될 수 있으므로 반드시 비어 있지 않은지 먼저 검사합니다.'),
-      code('빈 기준 테이블을 막는 FOR ALL ENTRIES', `REPORT zabap_f##_##.
-SELECT carrid, connid FROM spfli
-  WHERE countryfr = 'DE'
-  INTO TABLE @DATA(gt_keys).
 
-IF gt_keys IS NOT INITIAL.
-  SELECT carrid, connid, fldate FROM sflight
-    FOR ALL ENTRIES IN @gt_keys
-    WHERE carrid = @gt_keys-carrid
-      AND connid = @gt_keys-connid
-    INTO TABLE @DATA(gt_flights).
-  WRITE: / '조회 건수:', lines( gt_flights ).
-ELSE.
-  WRITE / '조회할 노선이 없습니다.'.
-ENDIF.`), text('SELECT 열에 키를 빼면 원래 서로 다른 행이 같은 결과 행으로 합쳐질 수 있습니다. 필요 키를 포함하고 JOIN과 비교하세요. FOR ALL ENTRIES는 집계·정렬 등과 결합할 때 제한이 있으므로 일반 SELECT와 똑같이 조합하면 안 됩니다.')),
+TYPES: BEGIN OF ts_carrier,
+         carrid   TYPE scarr-carrid,
+         carrname TYPE scarr-carrname,
+       END OF ts_carrier.
+
+DATA: gt_carriers TYPE STANDARD TABLE OF ts_carrier,
+      gs_carrier  TYPE ts_carrier.
+
+START-OF-SELECTION.
+  SELECT a~carrid a~carrname
+    FROM scarr AS a
+    INTO TABLE gt_carriers
+    WHERE EXISTS ( SELECT * FROM spfli AS b
+                     WHERE b~carrid = a~carrid )
+    ORDER BY a~carrid.
+
+  LOOP AT gt_carriers INTO gs_carrier.
+    WRITE: / gs_carrier-carrid, gs_carrier-carrname.
+  ENDLOOP.`), text('FOR ALL ENTRIES는 이미 가진 Internal Table의 각 행을 조건으로 조회하고 결과의 중복 행을 제거합니다. 기준 테이블이 비어 있으면 WHERE 전체가 무시될 수 있으므로 반드시 비어 있지 않은지 먼저 검사합니다.'),
+      code('빈 기준 테이블을 막는 FOR ALL ENTRIES', `REPORT zabap_f##_##.
+
+TYPES: BEGIN OF ts_key,
+         carrid TYPE spfli-carrid,
+         connid TYPE spfli-connid,
+       END OF ts_key.
+
+TYPES: BEGIN OF ts_flight,
+         carrid TYPE sflight-carrid,
+         connid TYPE sflight-connid,
+         fldate TYPE sflight-fldate,
+       END OF ts_flight.
+
+DATA: gt_keys    TYPE STANDARD TABLE OF ts_key,
+      gt_flights TYPE STANDARD TABLE OF ts_flight,
+      gv_lines   TYPE i.
+
+START-OF-SELECTION.
+  SELECT carrid connid
+    FROM spfli
+    INTO TABLE gt_keys
+    WHERE countryfr = 'DE'.
+
+  IF gt_keys IS NOT INITIAL.
+    SELECT carrid connid fldate
+      FROM sflight
+      INTO TABLE gt_flights
+      FOR ALL ENTRIES IN gt_keys
+      WHERE carrid = gt_keys-carrid
+        AND connid = gt_keys-connid.
+    DESCRIBE TABLE gt_flights LINES gv_lines.
+    WRITE: / '조회 건수:', gv_lines.
+  ELSE.
+    WRITE / '조회할 노선이 없습니다.'.
+  ENDIF.`), text('SELECT 열에 키를 빼면 원래 서로 다른 행이 같은 결과 행으로 합쳐질 수 있습니다. 필요 키를 포함하고 JOIN과 비교하세요. FOR ALL ENTRIES는 집계·정렬 등과 결합할 때 제한이 있으므로 일반 SELECT와 똑같이 조합하면 안 됩니다.')),
     section('INSERT·UPDATE·MODIFY·DELETE', table(['DB 변경 문장', '의미', '확인할 점'], [
-      ['INSERT dbtab FROM @wa', '새 행 삽입', '기본 키·고유 인덱스 중복'],
+      ['INSERT dbtab FROM wa', '새 행 삽입', '기본 키·고유 인덱스 중복'],
       ['UPDATE dbtab SET ... WHERE ...', '기존 행의 지정 열 변경', '조건과 실제 변경 행 수'],
-      ['MODIFY dbtab FROM @wa', '기본 키가 있으면 덮어쓰고 없으면 삽입', '전달한 행의 초기값도 덮어쓸 수 있음'],
+      ['MODIFY dbtab FROM wa', '기본 키가 있으면 덮어쓰고 없으면 삽입', '전달한 행의 초기값도 덮어쓸 수 있음'],
       ['DELETE FROM dbtab WHERE ...', '조건에 맞는 행 삭제', 'WHERE 누락·과도한 범위 주의']
     ]), text('이 문장들은 DB 테이블을 대상으로 합니다. [[abap-data-report|Internal Table]]의 INSERT·MODIFY·DELETE와 문장이 비슷해도 저장 위치와 트랜잭션이 다릅니다. 일부 필드만 바꾸려면 완성되지 않은 Work Area로 MODIFY하기보다 UPDATE ... SET으로 의도를 드러내세요.',
       '변경 예제는 별도 Z 연습용 테이블을 정의한 뒤 실습해야 합니다. SCARR·SFLIGHT나 업무 표준 테이블을 실습용으로 직접 변경하지 마세요. 결과 코드는 문장·단일/일괄 처리별로 다르며 DB 오류는 예외로 발생할 수도 있습니다. sy-subrc와 sy-dbcnt를 바로 확인하고 예외 처리도 설계합니다.'),
       table(['문법 형태 — 그대로 실행하는 코드가 아님', '전제'], [
-        ['INSERT zcw_scarr_demo FROM @gs_scarr.', 'ZCW_SCARR_DEMO의 키(carrid 등)와 모든 필수 값이 준비된 Work Area'],
-        ['UPDATE zcw_scarr_demo SET carrname = @gv_carrname WHERE carrid = @gv_carrid.', '정확한 키 조건과 입력 검증'],
-        ['MODIFY zcw_scarr_demo FROM @gs_scarr.', '초기값까지 포함한 행 전체를 저장하려는 경우'],
-        ['DELETE FROM zcw_scarr_demo WHERE carrid = @gv_carrid.', '삭제 권한·대상 확인·복구 계획']
+        ['INSERT zcw_scarr_demo FROM gs_scarr.', 'ZCW_SCARR_DEMO의 키(carrid 등)와 모든 필수 값이 준비된 Work Area'],
+        ['UPDATE zcw_scarr_demo SET carrname = gv_carrname WHERE carrid = gv_carrid.', '정확한 키 조건과 입력 검증'],
+        ['MODIFY zcw_scarr_demo FROM gs_scarr.', '초기값까지 포함한 행 전체를 저장하려는 경우'],
+        ['DELETE FROM zcw_scarr_demo WHERE carrid = gv_carrid.', '삭제 권한·대상 확인·복구 계획']
       ])),
     section('보완: 트랜잭션과 안전한 변경', text(
       'COMMIT WORK는 현재 작업 단위의 변경을 확정하고, ROLLBACK WORK는 현재 DB LUW의 미확정 변경을 되돌립니다. 이미 커밋한 변경까지 되돌리는 기능은 아닙니다. 화면 전환·RFC 등에서 암묵적인 커밋이 생길 수 있어 “COMMIT을 안 썼으니 영구 저장되지 않는다”라고 가정하면 안 됩니다.',
@@ -767,15 +919,15 @@ ENDIF.`), text('SELECT 열에 키를 빼면 원래 서로 다른 행이 같은 �
       ['키와 인덱스', '키 조건은 유리할 수 있지만 자동으로 빠르지는 않음. 조건의 선택도·인덱스·실행 계획에 따라 판단'],
       ['정렬', '결과 순서가 필요하면 ORDER BY. Internal Table 순서는 SORT와 구분'],
       ['측정', 'ST05 SQL Trace 등으로 호출 횟수·실행 시간 확인. JOIN이 항상 최선이라고 단정하지 않음'],
-      ['입력과 권한', '값은 @변수로 전달. 동적 테이블/열/WHERE 문자열은 별도 검증. Open SQL 자체가 업무 권한을 자동 보장하지 않음']
-    ]), text('추가 문법은 필요할 때 확장하세요. CASE·COALESCE는 SQL 안의 조건/NULL 처리, UNION·UNION ALL은 조회 결과 결합, WITH는 공통 테이블 식, OFFSET은 정렬된 결과의 앞부분 건너뛰기에 사용됩니다. UNION은 중복 제거, UNION ALL은 중복 유지입니다. 필드 수와 타입 호환성도 맞춰야 합니다.',
-      '이들 문법과 최신 SQL 함수·Internal Table을 FROM에 사용하는 기능은 릴리스별 지원 범위가 다릅니다. 이 페이지의 기본 예제와 구분해 대상 시스템의 키워드 문서를 확인하세요.')),
-    section('최신 문법(Strict Mode)과 쉼표·@ 규칙', text(
-      'Open SQL에서 INTO 절을 SELECT 문의 마지막에 작성하거나, SELECT 절에 일반 컬럼과 집계 함수를 함께 쓰는 등 최신 문법 요소가 들어가면 컴파일러가 최신 문법(Strict Mode)으로 간주합니다.',
-      '최신 문법으로 판정되면 SELECT 컬럼 목록에 쉼표(,)를 붙여 구분하고 ABAP 호스트 변수 앞에도 모두 @를 붙여야 합니다. 한 SELECT 문 안에서 구문법과 최신 문법을 섞어 쓰면 문법 오류가 발생합니다.'),
-      table(['최신 문법으로 간주되는 예', '함께 지켜야 하는 규칙'], [
-        ['INTO ~ 절을 SELECT 문 마지막에 작성', 'SELECT 컬럼 목록을 쉼표(,)로 구분'],
-        ['SELECT 절에 일반 컬럼 + 집계 함수 함께 작성', 'ABAP 호스트 변수 앞에 모두 @ 붙이기 (@p_carr, @so_carr, @DATA(...))']
+      ['입력과 권한', '값은 ABAP 호스트 변수로 전달(구문법에서는 @ 미사용). 동적 테이블/열/WHERE 문자열은 별도 검증. Open SQL 자체가 업무 권한을 자동 보장하지 않음']
+    ]), text('구문법(Classic Open SQL)에서는 DB에서 필요한 원본 컬럼을 먼저 조회한 뒤 `LOOP AT` 안에서 계산·분기·기본값 처리를 수행하는 방식이 기본입니다. SQL 단계에서 `CASE`·`COALESCE`·`UNION`·`WITH` 등을 쓰는 확장 문법은 추후 심화 과정에서 필요할 때 [[abap-sql-guide|ABAP SQL 가이드]]와 시스템 F1 문서를 참고해 확장하세요.')),
+    section('구문법(Classic Open SQL) 작성 순서와 문법 오류 주의', text(
+      '수업에서 사용하는 구문법(Classic Open SQL)에서는 SELECT 컬럼과 ORDER BY·GROUP BY 목록을 공백으로 구분하고, INTO 절을 FROM 뒤·WHERE 앞에 두며, ABAP 변수 앞에 @를 붙이지 않습니다.',
+      'INTO 절을 SELECT 문 맨 끝에 적거나, SELECT 컬럼 사이에 쉼표(,) 또는 변수 앞 @를 일부만 섞어 쓰면 컴파일러가 문법 오류를 발생시키므로 하나의 SELECT 문 안에서 구문법 규칙을 일관되게 지켜야 합니다.'),
+      table(['자주 발생하는 오류 원인', '구문법(Classic Open SQL) 올바른 작성 방법'], [
+        ['`INTO` 절을 `WHERE` 뒤(문장 끝)에 작성함', '`SELECT ... FROM ... INTO [TABLE] ... WHERE ...` 순서로 `INTO`를 `WHERE` 앞에 배치'],
+        ['컬럼 사이에 쉼표(`,`)나 변수 앞 `@`를 섞어 씀', '컬럼·`GROUP BY`·`ORDER BY`는 **공백** 구분, ABAP 변수는 `@` 없이 그대로 작성(`p_carr`, `so_carr`, `gt_tab`)'],
+        ['결과를 받을 변수를 미리 선언하지 않음', '`SELECT` 전에 `TYPES` · `DATA`로 Work Area 또는 Internal Table을 먼저 선언']
       ]))
   ], '11/19 · 11/20');
 
@@ -870,11 +1022,11 @@ DATA gv_cityfrom TYPE spfli-cityfrom.
 DATA gv_cityto   TYPE spfli-cityto.
 
 START-OF-SELECTION.
-  SELECT SINGLE cityfrom, cityto
+  SELECT SINGLE cityfrom cityto
     FROM spfli
-    WHERE carrid = @p_carr
-      AND connid = @p_conn
-    INTO (@gv_cityfrom, @gv_cityto).
+    INTO (gv_cityfrom, gv_cityto)
+    WHERE carrid = p_carr
+      AND connid = p_conn.
 
   IF sy-subrc = 0.
     WRITE: / p_carr, p_conn, gv_cityfrom, '->', gv_cityto.
@@ -975,22 +1127,24 @@ TYPES: BEGIN OF ts_carrier_deep,
          routes   TYPE tt_routes,
        END OF ts_carrier_deep.
 
-DATA gs_carrier TYPE ts_carrier_deep.
+DATA: gs_carrier TYPE ts_carrier_deep,
+      gv_lines   TYPE i.
 
 START-OF-SELECTION.
-  SELECT SINGLE carrid, carrname
+  SELECT SINGLE carrid carrname
     FROM scarr
-    WHERE carrid = 'LH'
-    INTO (@gs_carrier-carrid, @gs_carrier-carrname).
+    INTO (gs_carrier-carrid, gs_carrier-carrname)
+    WHERE carrid = 'LH'.
 
-  SELECT connid, cityfrom, cityto
+  SELECT connid cityfrom cityto
     FROM spfli
+    INTO TABLE gs_carrier-routes
     WHERE carrid = 'LH'
-    ORDER BY connid
-    INTO TABLE @gs_carrier-routes.
+    ORDER BY connid.
 
+  DESCRIBE TABLE gs_carrier-routes LINES gv_lines.
   WRITE: / gs_carrier-carrid, gs_carrier-carrname,
-         / '보유 노선 수:', lines( gs_carrier-routes ).`),
+         / '보유 노선 수:', gv_lines.`),
       text('위 예제의 tt_routes처럼 Internal Table 타입을 SE11에 전역 Table Type(예: BC400_T_FLIGHTS)으로 만들어 두면 여러 Program과 글로벌 Structure(Deep structure 컴포넌트)·함수/Method 인터페이스에서 그대로 재사용할 수 있습니다.')),
     section('Transparent Table 생성과 Technical Settings', text(
       'SE11에서 Database Table(Transparent Table)을 생성할 때는 Delivery Class와 Data Browser(SE16) 유지보수 설정, Key·일반 Fields, Currency/Quantity 참조, Technical Settings를 순서대로 지정한 뒤 Activate합니다.'),
@@ -1086,8 +1240,8 @@ START-OF-SELECTION.
   " 1) 일반적인 단일 레코드 조회 (버퍼가 활성화된 테이블이면 Table Buffer 활용)
   SELECT SINGLE *
     FROM scarr
-    WHERE carrid = 'LH'
-    INTO @gs_scarr.
+    INTO gs_scarr
+    WHERE carrid = 'LH'.
 
   IF sy-subrc = 0.
     WRITE: / '버퍼/표준 조회:', gs_scarr-carrid, gs_scarr-carrname.
@@ -1096,9 +1250,9 @@ START-OF-SELECTION.
   " 2) 버퍼를 우회해 DB 원본에서 최신 값을 직접 읽어야 할 때
   SELECT SINGLE *
     FROM scarr
+    INTO gs_scarr
     BYPASSING BUFFER
-    WHERE carrid = 'LH'
-    INTO @gs_scarr.
+    WHERE carrid = 'LH'.
 
   IF sy-subrc = 0.
     WRITE: / 'DB 직접 조회 :', gs_scarr-carrid, gs_scarr-carrname.
@@ -1573,13 +1727,13 @@ ENDLOOP.`)),
   );
 
   putUnit(6, '데이터 모델링과 데이터 조회', 'Data Modeling and Data Retrieval', 283,
-    'SAP 항공 데이터 모델과 Open SQL(단건·다건 조회, 조건·집계, JOIN·서브쿼리·FOR ALL ENTRIES, CUD·트랜잭션·Strict Mode) 및 Exercise 15–19를 정리합니다. ABAP Dictionary 심화 전체는 BC430 Unit 1–9로 분리되어 있습니다.',
+    'SAP 항공 데이터 모델과 Open SQL(단건·다건 조회, 조건·집계, JOIN·서브쿼리·FOR ALL ENTRIES, CUD·트랜잭션·구문법 규칙) 및 Exercise 15–19를 정리합니다. ABAP Dictionary 심화 전체는 BC430 Unit 1–9로 분리되어 있습니다.',
     ['Open SQL', 'ABAP SQL', 'SELECT SINGLE', 'CORRESPONDING FIELDS', 'APPENDING TABLE', 'GROUP BY', 'HAVING', 'FOR ALL ENTRIES', 'OUTER JOIN'],
     [
       { id: 'l1', kind: 'lesson', badge: 'L1', page: 'p. 285', label: '데이터 모델 개요', desc: 'Lesson: Explaining Data Models (p. 285) — SAP 항공 데이터 모델(SCARR·SPFLI·SFLIGHT·SBOOK·SCUSTOM)과 BC430 ABAP Dictionary 연계 목차를 안내합니다.' },
-      { id: 'l2', kind: 'lesson', badge: 'L2', page: 'p. 301', label: '단건 DB 조회', desc: 'Lesson: Retrieving Single Database Records (p. 301) — Open SQL 기본 구조, @ 호스트 변수, SELECT SINGLE과 UP TO 1 ROWS를 정리합니다.' },
+      { id: 'l2', kind: 'lesson', badge: 'L2', page: 'p. 301', label: '단건 DB 조회', desc: 'Lesson: Retrieving Single Database Records (p. 301) — Open SQL 구문법 기본 구조, 호스트 변수, SELECT SINGLE과 UP TO 1 ROWS를 정리합니다.' },
       { id: 'l3', kind: 'lesson', badge: 'L3', page: 'p. 315', label: '다건 DB 조회 · 집계', desc: 'Lesson: Retrieving Multiple Database Records (p. 315) — INTO TABLE, APPENDING, WHERE·NULL, DISTINCT·GROUP BY·HAVING과 0건 시 시스템 필드를 정리합니다.' },
-      { id: 'l4', kind: 'lesson', badge: 'L4', page: 'p. 331', label: 'JOIN · CUD · Strict Mode', desc: 'Lesson: Describing Other Aspects of Database Access (p. 331) — JOIN, 서브쿼리·FOR ALL ENTRIES, DB 변경(CUD), 트랜잭션·성능·Strict Mode를 정리합니다.' },
+      { id: 'l4', kind: 'lesson', badge: 'L4', page: 'p. 331', label: 'JOIN · CUD · 구문법 규칙', desc: 'Lesson: Describing Other Aspects of Database Access (p. 331) — JOIN, 서브쿼리·FOR ALL ENTRIES, DB 변경(CUD), 트랜잭션·성능·구문법(Classic Open SQL) 규칙을 정리합니다.' },
       { id: 'l5', kind: 'lesson', badge: 'L5', page: 'p. 342', pending: true, label: '권한 검사 (준비 중)', desc: 'Lesson: Implementing Authorization Checks (p. 342) — AUTHORITY-CHECK와 권한 객체 내용은 수업 진도에 맞춰 보강할 예정입니다.' },
       { id: 'ex', kind: 'exercise', badge: 'Ex 15–19', page: 'p. 295–349', label: 'Exercise 15–19', desc: '교재 Exercise 15(Transparent Table 분석), Exercise 16(단건 조회), Exercise 17–18(SELECT Loop · Array Fetch), Exercise 19(권한 체크 · 준비 중)를 정리합니다.' }
     ],
@@ -1610,19 +1764,19 @@ ENDLOOP.`)),
       take('abap-open-sql', 'INSERT·UPDATE·MODIFY·DELETE', 'l4', 'Lesson 4', 'p. 331'),
       take('abap-open-sql', '보완: 트랜잭션과 안전한 변경', 'l4', 'Lesson 4', 'p. 331'),
       take('abap-open-sql', '보완: 성능과 다음 문법', 'l4', 'Lesson 4', 'p. 331'),
-      take('abap-open-sql', '최신 문법(Strict Mode)과 쉼표·@ 규칙', 'l4', 'Lesson 4', 'p. 331'),
+      take('abap-open-sql', '구문법(Classic Open SQL) 작성 순서와 문법 오류 주의', 'l4', 'Lesson 4', 'p. 331'),
       pendingSec('l5', 'Lesson 5', 'p. 342', 'AUTHORITY-CHECK와 권한 검사 (준비 중)', '준비 중 · 교재 p. 342 (Implementing Authorization Checks) 수업 진도에 맞춰 정리할 예정입니다.'),
       exSec('ex', 'Exercise 15', 'p. 295', 'Exercise 15: Analyze Transparent Tables in the Data Dictionary',
         text('SE11에서 항공 모델 표준 테이블(`SCARR`, `SPFLI`, `SFLIGHT`, `SBOOK`)의 Key Field, Data Element, Domain, Foreign Key, Technical Settings를 분석합니다. 자세한 테이블 생성·설계는 [[bc430-03|BC430 Unit 3 · 데이터베이스 테이블]]에서 이어집니다.'),
         { type: 'callout', style: 'tip', title: 'SE11 분석 체크포인트', body: '`SCARR` → `SPFLI` → `SFLIGHT` → `SBOOK` 순으로 Primary Key(`MANDT`, `CARRID`, `CONNID`, `FLDATE`, `BOOKID`)가 어떻게 계층적으로 확장되는지 확인하세요.' }),
       exSec('ex', 'Exercise 16', 'p. 309', 'Exercise 16: Implement Single Record Access',
-        text('Primary Key 전체 조건으로 `SELECT SINGLE`을 실행하고 직후 `IF sy-subrc = 0.`으로 조회 성공 여부를 판별합니다. 구문법·신문법 비교 예제는 [[abap-sql-guide|ABAP SQL 가이드]]의 `SELECT · INTO` 탭에서도 바로 전환해 볼 수 있습니다.'),
+        text('Primary Key 전체 조건으로 `SELECT SINGLE`을 실행하고 직후 `IF sy-subrc = 0.`으로 조회 성공 여부를 판별합니다. 단건 조회 구문법 패턴은 [[abap-sql-guide|ABAP SQL 가이드]]의 구문법 `SELECT · INTO` 탭에서도 바로 복습할 수 있습니다.'),
         { type: 'callout', style: 'tip', title: '실습 확인 포인트', body: '조회 결과가 없을 때 기존 Work Area에 이전 값이 남지 않도록 조회 전 `CLEAR` 하거나 `sy-subrc` 분기 처리를 빠뜨리지 마세요.' }),
       exSec('ex', 'Exercise 17–18', 'p. 317 · 325', 'Exercise 17–18: SELECT Loop & Array Fetch',
         text('한 행씩 읽는 `SELECT ... ENDSELECT` 루프(Ex 17)와 Internal Table에 한 번에 담는 `INTO TABLE` Array Fetch(Ex 18)의 구조·성능 차이를 비교 실습합니다.'),
         table(['구분', '문법 형태', '실무 권장 여부'], [
-          ['Ex 17: SELECT Loop', '`SELECT ... INTO @gs_row ... ENDSELECT.`', 'DB 커서를 열어 한 행씩 처리 — 대량·일반 목록 조회에는 비권장'],
-          ['Ex 18: Array Fetch', '`SELECT ... INTO TABLE @gt_rows.`', '한 번에 Internal Table로 수신 — 실무 기본 권장 패턴']
+          ['Ex 17: SELECT Loop', '`SELECT ... FROM ... INTO gs_row WHERE ... ENDSELECT.`', 'DB 커서를 열어 한 행씩 처리 — 대량·일반 목록 조회에는 비권장'],
+          ['Ex 18: Array Fetch', '`SELECT ... FROM ... INTO TABLE gt_rows WHERE ...`', '한 번에 Internal Table로 수신 — 실무 기본 권장 패턴']
         ])),
       pendingSec('ex', 'Exercise 19', 'p. 349', 'Exercise 19: Implement an Authorization Check (준비 중)', '준비 중 · 교재 p. 349 권한 검사 실습은 Lesson 5 학습 후 정리할 예정입니다.')
     ],
@@ -1924,27 +2078,50 @@ ENDLOOP.`)),
 
 PARAMETERS p_carr TYPE spfli-carrid DEFAULT 'LH'.
 
-" SPFLI 출발 국가 코드(countryfr)에 대응하는 표준 Text Table(T005T)을
-" 현재 로그온 언어(sy-langu) 기준으로 LEFT OUTER JOIN 조회
-SELECT a~carrid,
-       a~connid,
-       a~countryfr,
-       t~landx AS country_name,
-       a~cityfrom,
-       a~cityto
-  FROM spfli AS a
-  LEFT OUTER JOIN t005t AS t
-    ON t~land1 = a~countryfr
-   AND t~spras = @sy-langu
-  WHERE a~carrid = @p_carr
-  ORDER BY a~connid
-  INTO TABLE @DATA(gt_routes).
+TYPES: BEGIN OF ts_route,
+         carrid    TYPE spfli-carrid,
+         connid    TYPE spfli-connid,
+         countryfr TYPE spfli-countryfr,
+         cityfrom  TYPE spfli-cityfrom,
+         cityto    TYPE spfli-cityto,
+       END OF ts_route.
 
-LOOP AT gt_routes INTO DATA(gs_route).
-  WRITE: / gs_route-carrid, gs_route-connid,
-           gs_route-countryfr, gs_route-country_name,
-           gs_route-cityfrom, '->', gs_route-cityto.
-ENDLOOP.`)
+TYPES: BEGIN OF ts_country_text,
+         land1 TYPE t005t-land1,
+         landx TYPE t005t-landx,
+       END OF ts_country_text.
+
+DATA: gt_routes TYPE STANDARD TABLE OF ts_route,
+      gs_route  TYPE ts_route,
+      gt_texts  TYPE STANDARD TABLE OF ts_country_text,
+      gs_text   TYPE ts_country_text.
+
+START-OF-SELECTION.
+  " 1) SPFLI 노선 조회
+  SELECT carrid connid countryfr cityfrom cityto
+    FROM spfli
+    INTO TABLE gt_routes
+    WHERE carrid = p_carr
+    ORDER BY connid.
+
+  " 2) 출발 국가 코드(countryfr)에 대응하는 표준 Text Table(T005T)을
+  "    현재 로그온 언어(sy-langu) 기준으로 조회
+  IF gt_routes IS NOT INITIAL.
+    SELECT land1 landx
+      FROM t005t
+      INTO TABLE gt_texts
+      FOR ALL ENTRIES IN gt_routes
+      WHERE land1 = gt_routes-countryfr
+        AND spras = sy-langu.
+  ENDIF.
+
+  LOOP AT gt_routes INTO gs_route.
+    CLEAR gs_text.
+    READ TABLE gt_texts INTO gs_text WITH KEY land1 = gs_route-countryfr.
+    WRITE: / gs_route-carrid, gs_route-connid,
+             gs_route-countryfr, gs_text-landx,
+             gs_route-cityfrom, '->', gs_route-cityto.
+  ENDLOOP.`)
         ]
       },
       exSec('ex', 'Exercise 8', 'p. 129', 'Exercise 8: Create Fixed Values',
@@ -2177,11 +2354,18 @@ ENDLOOP.`)
           text('ABAP Report의 Selection Screen에서는 Dictionary 객체에 Search Help를 붙이지 않았거나 다른 Search Help를 적용하고 싶을 때 **`MATCHCODE OBJECT <Search Help명>.`** 또는 **`AS LISTBOX VISIBLE LENGTH <개수>.`** 옵션을 사용해 코드에서 직접 적용할 수 있습니다. `SELECT-OPTIONS`에도 `MATCHCODE OBJECT`를 붙일 수 있으며, `AS LISTBOX`는 `PARAMETERS` 필드를 드롭다운 목록 형태로 표시합니다.'),
           code('MATCHCODE OBJECT와 AS LISTBOX로 Search Help 적용', `REPORT zabap_f##_##.
 
+TYPES: BEGIN OF ts_scarr,
+         carrid   TYPE scarr-carrid,
+         carrname TYPE scarr-carrname,
+         currcode TYPE scarr-currcode,
+       END OF ts_scarr.
+
 PARAMETERS:
   p_carr   TYPE s_carr_id MATCHCODE OBJECT h_scarr, " 직접 만든 Z/Y Search Help명 지정 가능
   p_carrlb TYPE s_carr_id AS LISTBOX VISIBLE LENGTH 20.
 
-DATA lv_carr TYPE s_carr_id.
+DATA: lv_carr  TYPE s_carr_id,
+      ls_scarr TYPE ts_scarr.
 
 START-OF-SELECTION.
   IF p_carr IS NOT INITIAL.
@@ -2190,10 +2374,10 @@ START-OF-SELECTION.
     lv_carr = p_carrlb.
   ENDIF.
 
-  SELECT SINGLE carrid, carrname, currcode
+  SELECT SINGLE carrid carrname currcode
     FROM scarr
-    INTO @DATA(ls_scarr)
-    WHERE carrid = @lv_carr.
+    INTO ls_scarr
+    WHERE carrid = lv_carr.
 
   IF sy-subrc = 0.
     WRITE: / ls_scarr-carrid, ls_scarr-carrname, ls_scarr-currcode.
@@ -2419,22 +2603,22 @@ SELECT-OPTIONS: so_id   FOR gs_output-id,
                     badge: 'SELECT 1',
                     title: '출력용 뼈대 테이블 채우기 (`gt_output` ← `SCUSTOM`)',
                     code: 'SCUSTOM',
-                    snippet: `SELECT id, name
+                    snippet: `SELECT id name
   FROM scustom
-  WHERE id IN @so_id
-  INTO CORRESPONDING FIELDS OF TABLE @gt_output.`
+  INTO CORRESPONDING FIELDS OF TABLE gt_output
+  WHERE id IN so_id.`
                   },
                   {
                     badge: 'SELECT 2',
                     title: '계산용 테이블 채우기 (`gt_data` ← `SBOOK`)',
                     code: 'SBOOK',
                     desc: '취소 예약을 제외해야 하면 `WHERE` 절에 `AND cancelled <> \'X\'` 추가',
-                    snippet: `SELECT customid, COUNT( * ) AS bookcnt
+                    snippet: `SELECT customid COUNT( * ) AS bookcnt
   FROM sbook
-  WHERE customid   IN @so_id
-    AND order_date IN @so_date
-  GROUP BY customid
-  INTO CORRESPONDING FIELDS OF TABLE @gt_data.`
+  INTO CORRESPONDING FIELDS OF TABLE gt_data
+  WHERE customid   IN so_id
+    AND order_date IN so_date
+  GROUP BY customid.`
                   },
                   {
                     badge: 'LOOP AT ~ ENDLOOP',
@@ -2534,18 +2718,18 @@ AT SELECTION-SCREEN.
 " [START-OF-SELECTION] 메인 데이터 조회 및 가공
 START-OF-SELECTION.
   " 1) 출력용 뼈대 테이블 채우기 (SCUSTOM 기준)
-  SELECT id, name
+  SELECT id name
     FROM scustom
-    WHERE id IN @so_id
-    INTO CORRESPONDING FIELDS OF TABLE @gt_output.
+    INTO CORRESPONDING FIELDS OF TABLE gt_output
+    WHERE id IN so_id.
 
   " 2) 계산용 테이블 채우기 (SBOOK 조건별 예약 건수 집계)
-  SELECT customid, COUNT( * ) AS bookcnt
+  SELECT customid COUNT( * ) AS bookcnt
     FROM sbook
-    WHERE customid   IN @so_id
-      AND order_date IN @so_date
-    GROUP BY customid
-    INTO CORRESPONDING FIELDS OF TABLE @gt_data.
+    INTO CORRESPONDING FIELDS OF TABLE gt_data
+    WHERE customid   IN so_id
+      AND order_date IN so_date
+    GROUP BY customid.
 
   " 3) 계산용 테이블을 출력용 테이블에 합치기
   LOOP AT gt_output INTO gs_output.
@@ -3199,21 +3383,21 @@ ENDFORM.`)
     tcodes: ['SE11', 'SE16', 'SE38', 'ST05'],
     specs: {},
     summary: 'ABAP Program 안에서 데이터베이스를 읽고 변경할 때 사용하는 Open SQL 문법을 **구문법(Classic)** · **신문법(7.40+ · Strict Mode)** 탭으로 나누어 정리했고, **연습문제** 탭에서 테이블과 기대 결과를 보며 직접 SQL을 작성·채점할 수 있습니다.',
-    defaultSyntaxMode: 'new',
+    defaultSyntaxMode: 'classic',
     syntaxModes: [
       {
         id: 'classic',
         label: '구문법',
-        badge: 'Classic',
+        badge: 'Classic · 수업 기준',
         bannerTitle: '구문법 (Classic Open SQL)',
-        desc: 'ABAP 7.40 SP05 이전·비-Strict Mode 기준입니다. 컬럼 공백 구분, @ 미사용, INTO 절을 FROM 뒤·WHERE 앞에 배치하며 사전 TYPES/DATA 선언이 필요합니다.'
+        desc: '현재 수업 기준 문법입니다. 컬럼 공백 구분, @ 미사용, INTO 절을 FROM 뒤·WHERE 앞에 배치하며 사전 TYPES/DATA 선언을 사용합니다.'
       },
       {
         id: 'new',
         label: '신문법',
-        badge: '7.40+ · 권장',
+        badge: '7.40+ · 참고',
         bannerTitle: '신문법 (ABAP 7.40+ / 7.5+ · Strict Mode)',
-        desc: '현재 수업·실무 권장 기준입니다. 쉼표(,)로 컬럼을 구분하고 ABAP 변수 앞에 @를 붙이며, INTO 절을 문장 끝에 두고 @DATA(...) 인라인 선언·SQL 표현식을 활용합니다.'
+        desc: 'ABAP 7.40+ / 7.5+ 환경에서 사용하는 신문법 참고용입니다. 쉼표(,)로 컬럼을 구분하고 ABAP 변수 앞에 @를 붙이며, INTO 절을 문장 끝에 두고 @DATA(...) 인라인 선언·SQL 표현식을 활용합니다.'
       },
       {
         id: 'practice',

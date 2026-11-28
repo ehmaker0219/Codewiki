@@ -100,7 +100,7 @@
       from('unit-07', 'Classic ABAP Report와 Selection Screen'),
       from('unit-07', 'Report 처리 순서'),
       from('unit-02', 'SE80에서 Program이 안 보일 때'),
-      from('unit-06', '최신 문법(Strict Mode)과 쉼표·@ 규칙')
+      from('unit-06', '구문법(Classic Open SQL) 작성 순서와 문법 오류 주의')
     ]},
     {date: '2026-11-23', source: '261123 월요일.md', sections: [
       from('unit-07', '리스트 아이콘과 컬럼 서식 참고'),

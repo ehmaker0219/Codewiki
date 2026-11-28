@@ -212,7 +212,7 @@ assert.equal(docs['abap-sql-guide'].studentOnly,true);
 assert.equal(docs['abap-sql-guide'].sectionTabs.length,5);
 assert.deepEqual(Array.from(docs['abap-sql-guide'].syntaxModes,m=>m.id),['classic','new','practice']);
 assert.equal(docs['abap-sql-guide'].syntaxModes[2].widgetId,'abap-sql-practice');
-assert.equal(docs['abap-sql-guide'].defaultSyntaxMode,'new');
+assert.equal(docs['abap-sql-guide'].defaultSyntaxMode,'classic');
 assert.ok(docs['abap-sql-guide'].sections.every(s=>docs['abap-sql-guide'].sectionTabs.some(t=>t.id===s.tab)),'every SQL guide section must belong to a declared tab');
 assert.ok(docs['abap-sql-guide'].sections.every(s=>['classic','new','both'].includes(s.mode)),'every SQL guide section must declare a valid syntax mode');
 for(const tab of docs['abap-sql-guide'].sectionTabs){
@@ -225,6 +225,15 @@ assert.equal(classicSqlCodes.length,7);
 assert.equal(newSqlCodes.length,7);
 assert.ok(classicSqlCodes.every(b=>!b.code.includes('@')&&!/\bDATA\(/.test(b.code)),'classic SQL examples must not mix Strict Mode @ or inline DATA()');
 assert.ok(newSqlCodes.every(b=>b.code.includes('@DATA(')),'new SQL examples use Strict Mode inline declarations');
+for(const doc of Object.values(docs).filter(d=>d.track==='abap'&&d.id!=='abap-sql-guide'&&d.id!=='basic-session-review')){
+  for(const sec of doc.sections||[]){
+    for(const b of sec.blocks||[]){
+      if(b.type==='code'){
+        assert.ok(!/@[a-zA-Z_]/.test(b.code)&&!/\bDATA\s*\(/.test(b.code)&&!/WITH EMPTY KEY/i.test(b.code)&&!/\blines\s*\(/i.test(b.code),`${doc.id}/${b.label}: main body code must use Classic ABAP syntax`);
+      }
+    }
+  }
+}
 assert.ok(tools.search(index,'FOR ALL ENTRIES').some(r=>r.doc.id==='abap-sql-guide'));
 assert.ok(tools.search(index,'COALESCE').some(r=>r.doc.id==='abap-sql-guide'));
 assert.ok(tools.search(index,'DESCRIBE TABLE').some(r=>r.doc.id==='abap-sql-guide'));
